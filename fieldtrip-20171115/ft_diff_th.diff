@@ -1,0 +1,190 @@
+Index: fileio/ft_read_data.m
+===================================================================
+--- fileio/ft_read_data.m	(revision 7063)
++++ fileio/ft_read_data.m	(working copy)
+@@ -996,6 +996,49 @@
+       end
+     end
+     
++  case {'plexon_plx_v2'}
++    % check if Plexon Offline SDK is there...
++    ft_hastoolbox('PLEXON', 1);
++    
++    % determine the continuous channels
++    contlabel = {hdr.orig.SlowChannelHeader.Name};
++    for i=1:length(contlabel)
++      contlabel{i} = deblank(contlabel{i});
++    end
++    [contindx, contsel]  = match_str(contlabel, hdr.label(chanindx));
++    
++    % determine the channels with spike waveforms
++    spikelabel = {hdr.orig.ChannelHeader.Name};
++    for i=1:length(spikelabel)
++      spikelabel{i} = deblank(spikelabel{i});
++    end
++    [spikeindx, spikesel] = match_str(spikelabel, hdr.label(chanindx));
++    
++    if (length(contindx)+length(spikeindx))<length(chanindx)
++      error('not all selected channels could be located in the data');
++    end
++    
++    % allocate memory to hold all data
++    dat = zeros(length(chanindx), endsample-begsample+1);
++    
++    for i=1:length(contsel)
++      [~, ~, tempdat] = plx_ad_span_v(filename, contindx(i)-1, begsample, endsample);
++      dat(contsel(i), :) = tempdat;
++    end %for
++    
++    for i=1:length(spikesel)
++      for k=1:size(hdr.orig.TSCounts, 1)
++        if hdr.orig.TSCounts(k, i+1) > 0
++          [~, ts] = plx_ts(filename,i, k-1);
++          sample = round(ts*hdr.Fs);
++          sample = sample(sample>=begsample & sample<=endsample) - begsample + 1;
++          for j=sample(:)'
++            dat(spikesel(i),j) = dat(spikesel(i),j) + 1;
++          end %for
++        end %if
++      end %for
++    end %for 
++    
+   case {'yokogawa_ave', 'yokogawa_con', 'yokogawa_raw'}
+     
+     % the data can be read with three toolboxes: Yokogawa MEG Reader, Maryland sqdread,
+Index: fileio/ft_read_spike.m
+===================================================================
+--- fileio/ft_read_spike.m	(revision 7063)
++++ fileio/ft_read_spike.m	(working copy)
+@@ -201,10 +201,46 @@
+     end
+     spike.hdr = hdr;
+     
++  case 'plexon_plx_v2'
++    ft_hastoolbox('PLEXON', 1);
++    hdr = ft_read_header(filename);
++    hdr = hdr.orig;
++    nchan = length(hdr.WFCounts)-1;
++    
++    for i=1:nchan
++      spike.label{i} = deblank(hdr.ChannelHeader(i).Name);
++      if sum(hdr.WFCounts(:, i+1)) ~= 0
++        spike.timestamp{i} = [];
++        spike.unit{i} = [];
++        spike.waveform{i} = [];
++        for k=1:5
++          if hdr.WFCounts(k, i+1) ~= 0
++            [n, npw, ts, wave] = plx_waves_v(filename, i, k-1);
++            spike.timestamp{i}(end+1:end+n) = uint64(round(ts*hdr.ADFrequency));
++            spike.unit{i}(end+1:end+n) = int16(k-1);
++            if isempty(spike.waveform{i})
++              spike.waveform{i}(1, :, :) = wave';
++            else
++              spike.waveform{i}(1, :, end+1:end+n) = wave';
++            end %if
++          end %if
++        end %for
++        % sort by timestamps...
++        [~, idx] = sort([spike.timestamp{i}]);
++        spike.timestamp{i} = uint64(spike.timestamp{i}(idx));
++        spike.unit{i} = int16(spike.unit{i}(idx));
++        spike.waveform{i} = spike.waveform{i}(:, :, idx);
++      else
++        spike.timestamp{i} = [];
++        spike.unit{i} = [];
++      end %if
++    end %for
++    
++    
+   case 'neuroshare' % NOTE: still under development
+     % check that the required neuroshare toolbox is available
+     ft_hastoolbox('neuroshare', 1);
+-
++    
+     tmp = read_neuroshare(filename, 'readspike', 'yes');
+     spike.label = {tmp.hdr.entityinfo(tmp.list.segment).EntityLabel};
+     for i=1:length(spike.label)
+Index: fileio/ft_read_event.m
+===================================================================
+--- fileio/ft_read_event.m	(revision 7063)
++++ fileio/ft_read_event.m	(working copy)   
+@@ -1526,6 +1526,29 @@
+   case 'bucn_nirs'
+     event = read_bucn_nirsevent(filename);
+     
++  case 'plexon_plx_v2'
++    ft_hastoolbox('PLEXON', 1);
++    if isempty(hdr)
++      hdr = ft_read_header(filename, 'headerformat', headerformat);
++    end %if
++    [~, evchans] = plx_event_chanmap(filename);
++    [~, names] = plx_event_names(filename);
++    
++    for i=1:length(hdr.orig.EVCounts)
++      if hdr.orig.EVCounts(i) > 0
++        [n, ts, sv] = plx_event_ts(filename, i-1);
++        type = names(find(evchans == i-1), :);
++        
++        for j=1:n
++          event(end+1).type = type;
++          event(end).sample = round(ts(j)*hdr.Fs) + 1;
++          if sv(j) ~= 0
++            event(end).value = sv(j);
++          end %if
++        end %for
++      end %if
++    end %for
++    
+   otherwise
+     warning('unsupported event format (%s)', eventformat);
+     event = [];
+Index: fileio/ft_read_header.m
+===================================================================
+--- fileio/ft_read_header.m	(revision 7063)
++++ fileio/ft_read_header.m	(working copy)
+@@ -1575,6 +1575,45 @@
+     hdr.label = hdr.label(:);
+     hdr.nChans = length(hdr.label);
+     
++  case {'plexon_plx_v2'}
++    ft_hastoolbox('PLEXON', 1);
++    
++    orig = plx_orig_header(filename);
++    
++    if orig.NumSlowChannels==0
++      error('file does not contain continuous channels');
++    end
++    fsample = [orig.SlowChannelHeader.ADFreq];
++    if any(fsample~=fsample(1))
++      error('different sampling rates in continuous data not supported');
++    end
++    for i=1:length(orig.SlowChannelHeader)
++      label{i} = deblank(orig.SlowChannelHeader(i).Name);
++    end
++    % continuous channels don't always contain data, remove the empty ones
++    [~, scounts] = plx_adchan_samplecounts(filename);
++    chansel = scounts > 0;
++    chansel = find(chansel); % this is required for timestamp selection
++    label = label(chansel);
++    % only the continuous channels are returned as visible
++    hdr.nChans      = length(label);
++    hdr.Fs          = fsample(1);
++    hdr.label       = label;
++    % also remember the original header
++    hdr.orig        = orig;
++    
++    hdr.nSamples = max(scounts);
++    hdr.nSamplesPre = 0;      % continuous
++    hdr.nTrials     = 1;      % continuous
++    hdr.TimeStampPerSample = double(orig.ADFrequency) / hdr.Fs;
++    
++    % also make the spike channels visible
++    for i=1:length(orig.ChannelHeader)
++      hdr.label{end+1} = deblank(orig.ChannelHeader(i).Name);
++    end
++    hdr.label = hdr.label(:);
++    hdr.nChans = length(hdr.label);
++    
+   case {'tdt_tsq', 'tdt_tev'}
+     % FIXME the code below is not yet functional, it requires more input from the ESI in Frankfurt
+     %     tsq = read_tdt_tsq(headerfile);
