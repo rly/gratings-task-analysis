@@ -51,6 +51,7 @@ end
 [cueOnset,trialsToKeep] = removeHandStartedTrials(D, cueOnset, firstJuiceEvent);
 firstJuiceEvent = firstJuiceEvent(trialsToKeep);
 trialParamsAllCorrect = trialParamsAllCorrect(trialsToKeep,:);
+fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), numel(trialsToKeep));
 
 %%
 % TODO get only trials that are not repeats
@@ -85,7 +86,7 @@ for i = 1:numel(firstJuiceEvent)
 end
 
 % split release and hold shapes - not the best way, but works for now
-maxArrayOnsetToJuiceTimeReleaseShape = 0.95;
+maxArrayOnsetToJuiceTimeReleaseShape = 0.925;
 isHoldTrial = firstJuiceEvent - arrayOnset >= maxArrayOnsetToJuiceTimeReleaseShape;
 assert(all(isHoldTrial == (trialParamsAllCorrect(:,7) ~= -1)));
 

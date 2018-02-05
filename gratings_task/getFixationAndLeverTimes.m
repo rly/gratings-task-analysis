@@ -1,19 +1,24 @@
 function fixationAndLeverTimes = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc)
 
 %% find mean fixation and lever voltage
-% look at voltages -1.0 seconds to -0.5 seconds from first juice event
+% look at voltages -1.5 seconds to -0.5 seconds from first juice event
 % should not be contaminated with fixation breaks or lever releases
-direct1LockedToJuice = createdatamatc(D.adjDirects(1,:)', firstJuiceEvent, D.directFs, [1 -0.5]);
-direct2LockedToJuice = createdatamatc(D.adjDirects(2,:)', firstJuiceEvent, D.directFs, [1 -0.5]);
-direct3LockedToJuice = createdatamatc(D.adjDirects(3,:)', firstJuiceEvent, D.directFs, [1 -0.5]);
+% for at least session M20170311, -1.5 seconds is the largest time before
+% first juice event to look before there are saccades or lever movement
+direct1LockedToJuice = createdatamatc(D.adjDirects(1,:)', firstJuiceEvent, D.directFs, [1.5 -0.5]);
+direct2LockedToJuice = createdatamatc(D.adjDirects(2,:)', firstJuiceEvent, D.directFs, [1.5 -0.5]);
+direct3LockedToJuice = createdatamatc(D.adjDirects(3,:)', firstJuiceEvent, D.directFs, [1.5 -0.5]);
 
 fixationXVoltage = mean(direct1LockedToJuice(:));
 fixationYVoltage = mean(direct2LockedToJuice(:));
 leverPressedVoltage = mean(direct3LockedToJuice(:));
 
-rangeFixationXVoltage = max(abs(fixationXVoltage - direct1LockedToJuice(:))) + 1;
-rangeFixationYVoltage = max(abs(fixationYVoltage - direct2LockedToJuice(:))) + 1;
-rangeLeverPressedVoltage = max(abs(leverPressedVoltage - direct3LockedToJuice(:))) + 1; % could make smaller or bigger
+% rangeFixationXVoltage = max(abs(fixationXVoltage - direct1LockedToJuice(:))) + 2; % could make smaller or bigger
+% rangeFixationYVoltage = max(abs(fixationYVoltage - direct2LockedToJuice(:))) + 2; % could make smaller or bigger
+% rangeLeverPressedVoltage = max(abs(leverPressedVoltage - direct3LockedToJuice(:))) + 1; % could make smaller or bigger
+rangeFixationXVoltage = min(6, 5*std(direct1LockedToJuice(:))); % could make smaller or bigger
+rangeFixationYVoltage = min(6, 5*std(direct2LockedToJuice(:))); % could make smaller or bigger
+rangeLeverPressedVoltage = max(4, 15*std(direct3LockedToJuice(:))); % could make smaller or bigger
 
 fprintf('\tX, Y bounds: %0.2f +/- %0.2f, %0.2f +/- %0.2f\n', ...
         fixationXVoltage, rangeFixationXVoltage, fixationYVoltage, rangeFixationYVoltage);
@@ -87,7 +92,7 @@ leverReleaseTimes = leverReleaseInds(~badLeverRelease) / directFs; % assume star
 
 %% find enter/exit fixation times around trial start/juice
 isEnterFixationTimesFirstPreCue = false(size(enterFixationTimes));
-maxEnterFixationTimesToCueOnset = 3;
+maxEnterFixationTimesToCueOnset = 4;
 minEnterFixationTimesToCueOnset = 0.35;
 for i = 1:numel(cueOnset)
     % enter fixation must precede trial start by 325+ ms
@@ -138,7 +143,7 @@ firstExitFixationRightTimesAroundJuice = firstExitFixationTimesAroundJuice(isExi
 
 %% find lever press/release around trial start/juice
 isLeverPressTimesFirstPreCue = false(size(leverPressTimes));
-maxLeverPressTimesToCueOnset = 5;
+maxLeverPressTimesToCueOnset = 4;
 minLeverPressTimesToCueOnset = 0.35;
 for i = 1:numel(cueOnset)
     leverPressTimesToCueOnset = cueOnset(i) - leverPressTimes;

@@ -8,7 +8,7 @@ function [cueOnsetClean,trialsToKeep] = removeHandStartedTrials(D, cueOnset, fir
 direct3LockedToJuice = createdatamatc(D.adjDirects(3,:)', firstJuiceEvent, D.directFs, [1 -0.5]);
 
 leverPressedVoltage = mean(direct3LockedToJuice(:));
-rangeLeverPressedVoltage = max(abs(leverPressedVoltage - direct3LockedToJuice(:))) + 1; % could make smaller or bigger
+rangeLeverPressedVoltage = max(4, 15*std(direct3LockedToJuice(:))); % could make smaller or bigger
 
 directFs = D.directFs;
 removeEdgeTime = 0.5;
