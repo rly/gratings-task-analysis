@@ -1,4 +1,4 @@
-function D = loadPL2(fileName, dataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
+function D = loadPL2(fileName, muaDataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
         spikeChannelPrefix, spikeChannelsToLoad, muaChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad)
 
 fprintf('----------- %s -----------\n', fileName);
@@ -237,8 +237,8 @@ end
 %% TODO
 if isLoadMua
     
-    muaDir = sprintf('%s/%s/MUA', dataDirRoot, sessionName);
-    muaDirContents = dir(muaDir);
+    muaDirString = sprintf('%s/%s-*-MUA.mat', muaDataDirRoot, sessionName);
+    muaDirContents = dir(muaDirString);
     muaDirContents = muaDirContents(~cellfun('isempty', {muaDirContents.date}) & cell2mat({muaDirContents.bytes}) > 0); % rm invalid entries
     D.nActiveMUAChannels = numel(muaDirContents);
     fprintf('Found data for %d MUA channels.\n', D.nActiveMUAChannels);
@@ -250,7 +250,7 @@ if isLoadMua
     D.allMUAStructs = cell(D.nMUACh, 1);
     muaInd = 0;
     for i = muaChannelsToLoad
-        muaFilePath = sprintf('%s/%s-SPKC%03d-MUA.mat', muaDir, sessionName, i);
+        muaFilePath = sprintf('%s/%s-SPKC%03d-MUA.mat', muaDataDirRoot, sessionName, i);
         muaData = load(muaFilePath);
         
         muaInd = muaInd + 1;

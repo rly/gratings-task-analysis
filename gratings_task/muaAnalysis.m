@@ -1,4 +1,4 @@
-function muaAnalysis(processedDataRootDir, dataDirRoot, sessionInd, muaChannelsToLoad, v)
+function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, sessionInd, muaChannelsToLoad)
 % 325ms fixation before pre-cue marker
 % 25-125ms fixation between pre-cue marker and cue onset
 % 100ms cue onset to cue offset
@@ -15,6 +15,7 @@ function muaAnalysis(processedDataRootDir, dataDirRoot, sessionInd, muaChannelsT
 % evt7 = target dim
 % evt8 = juice
 
+v = 9;
 nLoc = 4;
 
 %% input check
@@ -29,6 +30,10 @@ pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
 fprintf('\n-------------------------------------------------------\n');
 fprintf('Gratings Task Analysis\n');
 fprintf('Loading %s...\n', pl2FilePath);
+fprintf('Session index: %d\n', sessionInd);
+fprintf('MUA Channel to Load: %d\n', muaChannelsToLoad);
+fprintf('Version: %d\n', v);
+
 tic;
 isLoadSpikes = 0;
 isLoadMua = 1;
@@ -38,7 +43,7 @@ isLoadDirect = 1;
 spikeChannelsToLoad = [];
 lfpChannelsToLoad = [];
 spkcChannelsToLoad = [];
-D = loadPL2(pl2FilePath, dataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
+D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
         spikeChannelPrefix, spikeChannelsToLoad, muaChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
 
 processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);

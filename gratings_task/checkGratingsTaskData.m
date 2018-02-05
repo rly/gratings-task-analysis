@@ -3,6 +3,7 @@
 clear;
 processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
 dataDirRoot = 'Z:/ryanly/McCartney/originals';
+muaDataDirRoot = processedDataRootDir;
 
 v = 9;
 sessionIndAll = 1:37;
@@ -29,7 +30,7 @@ isLoadMua = 0;
 isLoadLfp = 0;
 isLoadSpkc = 0;
 isLoadDirect = 1;
-D = loadPL2(pl2FilePath, dataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
+D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
         spikeChannelPrefix, spikeChannelsToLoad, muaChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
 
 processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
