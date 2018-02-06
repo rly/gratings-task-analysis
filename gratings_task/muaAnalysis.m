@@ -1,4 +1,4 @@
-function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, sessionInd, muaChannelsToLoad)
+function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
 % 325ms fixation before pre-cue marker
 % 25-125ms fixation between pre-cue marker and cue onset
 % 100ms cue onset to cue offset
@@ -22,7 +22,7 @@ nLoc = 4;
 assert(numel(muaChannelsToLoad) == 1);
 
 %% load recording information
-recordingInfo = readRecordingInfo();
+recordingInfo = readRecordingInfo(recordingInfoFileName);
 struct2var(recordingInfo(sessionInd));
 pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
 

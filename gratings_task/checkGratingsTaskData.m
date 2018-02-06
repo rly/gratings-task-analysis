@@ -4,6 +4,7 @@ clear;
 processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
 dataDirRoot = 'Z:/ryanly/McCartney/originals';
 muaDataDirRoot = processedDataRootDir;
+recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 
 v = 9;
 sessionIndAll = 1:37;
@@ -14,7 +15,7 @@ for k = 1:numel(sessionIndAll)
 nLoc = 4;
 
 %% load recording information
-recordingInfo = readRecordingInfo();
+recordingInfo = readRecordingInfo(recordingInfoFileName);
 struct2var(recordingInfo(sessionInd));
 pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
 
