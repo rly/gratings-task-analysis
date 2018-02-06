@@ -1,11 +1,14 @@
 
 clear;
-processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
-dataDirRoot = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-data/';
+% processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
+processedDataRootDir = 'Y:/rly/gratings-task-analysis/processed_data/';
+dataDirRoot = 'Z:/ryanly/McCartney/originals';
+muaDataDirRoot = 'Y:/rly/simple-mua-detection/processed_data/';
+recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 
-v = 5;
+v = 9;
 
-nUnitsApprox = 10; % make sure this is an underestimate
+nUnitsApprox = 900; % make sure this is an underestimate
 unitNamesAll = cell(nUnitsApprox, 1);
 isCell = false(nUnitsApprox, 1);
 isBroadSpiking = false(nUnitsApprox, 1);
@@ -71,12 +74,12 @@ statAlpha = 0.05/2; % reduce from 0.05 to account for multiple comparisons... bu
 fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 
-sessionIndAll = 1:8;%[1 2 3 4 5 6 8 9];
+sessionIndAll = 1:37;
 for k = 1:numel(sessionIndAll)
     sessionInd = sessionIndAll(k);
 
     %% load recording information
-    recordingInfo = readRecordingInfo();
+    recordingInfo = readRecordingInfo(recordingInfoFileName);
     struct2var(recordingInfo(sessionInd));
     pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
 
@@ -84,13 +87,16 @@ for k = 1:numel(sessionIndAll)
     fprintf('\n-------------------------------------------------------\n');
     fprintf('Gratings Task Analysis\n');
     fprintf('Loading %s...\n', pl2FilePath);
+    fprintf('Session index: %d\n', sessionInd);
+
     tic;
-    isLoadSpikes = 1;
+    isLoadSpikes = 0;
+    isLoadMua = 1;
     isLoadLfp = 0;
     isLoadSpkc = 0;
     isLoadDirect = 0;
-    D = loadPL2(pl2FilePath, sessionName, areaName, isLoadSpikes, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-            spikeChannelPrefix, spikeChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
+    D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
+             spikeChannelPrefix, spikeChannelsToLoad, muaChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
 
     processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
     if exist(processedDataDir, 'dir') == 0
@@ -109,12 +115,12 @@ for k = 1:numel(sessionIndAll)
     totalTimeOverall = sum(D.blockStopTimes(gratingsTask3DIndices) - D.blockStartTimes(gratingsTask3DIndices));
     minFiringRateOverall = 0.2;
 
-    nUnits = numel(D.allSpikeStructs);
+    nUnits = numel(D.allMUAStructs);
     fprintf('-------------------------------------------------------------\n');
     fprintf('Processing %d units...\n', nUnits);
 
     for i = 1:nUnits
-        spikeStruct = D.allSpikeStructs{i};
+        spikeStruct = D.allMUAStructs{i};
         unitName = spikeStruct.name;
         spikeTimes = spikeStruct.ts;
         firingRateOverall = numel(spikeTimes) / totalTimeOverall;
@@ -171,11 +177,11 @@ for k = 1:numel(sessionIndAll)
                         min([ES.arrayHoldResponseVsBaselineRankSumTestStatsByLoc.p]) < statAlpha / numel([ES.arrayHoldResponseVsBaselineRankSumTestStatsByLoc.p]) ...
                         min([ES.targetDimDelayVsBaselineRankSumTestStatsByLoc.p]) < statAlpha / numel([ES.targetDimDelayVsBaselineRankSumTestStatsByLoc.p]) ...
                         min([ES.targetDimResponseVsBaselineRankSumTestStatsByLoc.p]) < statAlpha / numel([ES.targetDimResponseVsBaselineRankSumTestStatsByLoc.p]) ...
-                        ES.cueResponseInfoRatePValueByShuffleSpdf < statAlpha ...
-                        ES.cueTargetDelayInfoRatePValueByShuffleSpdf < statAlpha ...
-                        ES.arrayHoldResponseInfoRatePValueByShuffleSpdf < statAlpha ...
-                        ES.targetDimDelayInfoRatePValueByShuffleSpdf < statAlpha ...
-                        ES.targetDimResponseInfoRatePValueByShuffleSpdf < statAlpha];
+                        ES.cueResponseInfoRateStruct.infoRatePValueByShuffleSpdf < statAlpha ...
+                        ES.cueTargetDelayInfoRateStruct.infoRatePValueByShuffleSpdf < statAlpha ...
+                        ES.arrayHoldResponseInfoRateStruct.infoRatePValueByShuffleSpdf < statAlpha ...
+                        ES.targetDimDelayInfoRateStruct.infoRatePValueByShuffleSpdf < statAlpha ...
+                        ES.targetDimResponseInfoRateStruct.infoRatePValueByShuffleSpdf < statAlpha];
                 
                 % correct for multiple comparisons: 4 loc x 5 periods
 %                 baseAlpha = 0.05;
@@ -187,11 +193,11 @@ for k = 1:numel(sessionIndAll)
 %                         min([ES.targetDimResponseVsBaselineRankSumTestStatsByLoc.p]) < baseAlpha / numel([ES.targetDimResponseVsBaselineRankSumTestStatsByLoc.p]) / 5;
 
                 infoRates(unitCount,:) = [...
-                        ES.cueResponseInfoRate ...
-                        ES.cueTargetDelayInfoRate ...
-                        ES.arrayHoldResponseInfoRate ...
-                        ES.targetDimDelayInfoRate ...
-                        ES.targetDimResponseInfoRate];
+                        ES.cueResponseInfoRateStruct.infoRate ...
+                        ES.cueTargetDelayInfoRateStruct.infoRate ...
+                        ES.arrayHoldResponseInfoRateStruct.infoRate ...
+                        ES.targetDimDelayInfoRateStruct.infoRate ...
+                        ES.targetDimResponseInfoRateStruct.infoRate];
                     
                 attnIndices(unitCount,:) = [...
                         ES.cueTargetDelayAI ...
@@ -353,35 +359,35 @@ for k = 1:numel(sessionIndAll)
                 inRFNormFactor = max([ES.maxFiringRateBySpdfInclMotor - inRFPreCueBaseline; inRFPreCueBaseline - ES.minFiringRateBySpdfInclMotor]);
                 exRFNormFactor = max([ES.maxFiringRateBySpdfInclMotor - exRFPreCueBaseline; exRFPreCueBaseline - ES.minFiringRateBySpdfInclMotor]);
                 
-                enterFixationSpdfInRFNorm(unitCount,:) = (ES.enterFixationSpdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-                enterFixationSpdfExRFNorm(unitCount,:) = (ES.enterFixationSpdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+                enterFixationSpdfInRFNorm(unitCount,:) = (ES.enterFixation.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+                enterFixationSpdfExRFNorm(unitCount,:) = (ES.enterFixation.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
                 
-                enterFixationSpdfInRFNormErr(unitCount,:) = ES.enterFixationSpdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-                enterFixationSpdfExRFNormErr(unitCount,:) = ES.enterFixationSpdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+                enterFixationSpdfInRFNormErr(unitCount,:) = ES.enterFixation.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+                enterFixationSpdfExRFNormErr(unitCount,:) = ES.enterFixation.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
                 
-                cueOnsetSpdfInRFNorm(unitCount,:) = (ES.cueOnsetSpdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-                cueOnsetSpdfExRFNorm(unitCount,:) = (ES.cueOnsetSpdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+                cueOnsetSpdfInRFNorm(unitCount,:) = (ES.cueOnset.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+                cueOnsetSpdfExRFNorm(unitCount,:) = (ES.cueOnset.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
                     
-                cueOnsetSpdfInRFNormErr(unitCount,:) = ES.cueOnsetSpdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-                cueOnsetSpdfExRFNormErr(unitCount,:) = ES.cueOnsetSpdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+                cueOnsetSpdfInRFNormErr(unitCount,:) = ES.cueOnset.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+                cueOnsetSpdfExRFNormErr(unitCount,:) = ES.cueOnset.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
                 
-                arrayOnsetHoldSpdfInRFNorm(unitCount,:) = (ES.arrayOnsetHoldSpdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-                arrayOnsetHoldSpdfExRFNorm(unitCount,:) = (ES.arrayOnsetHoldSpdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+                arrayOnsetHoldSpdfInRFNorm(unitCount,:) = (ES.arrayOnsetHold.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+                arrayOnsetHoldSpdfExRFNorm(unitCount,:) = (ES.arrayOnsetHold.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
                     
-                arrayOnsetHoldSpdfInRFNormErr(unitCount,:) = ES.arrayOnsetHoldSpdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-                arrayOnsetHoldSpdfExRFNormErr(unitCount,:) = ES.arrayOnsetHoldSpdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+                arrayOnsetHoldSpdfInRFNormErr(unitCount,:) = ES.arrayOnsetHold.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+                arrayOnsetHoldSpdfExRFNormErr(unitCount,:) = ES.arrayOnsetHold.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
                 
-                targetDimSpdfInRFNorm(unitCount,:) = (ES.targetDimSpdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-                targetDimSpdfExRFNorm(unitCount,:) = (ES.targetDimSpdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+                targetDimSpdfInRFNorm(unitCount,:) = (ES.targetDim.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+                targetDimSpdfExRFNorm(unitCount,:) = (ES.targetDim.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
                 
-                targetDimSpdfInRFNormErr(unitCount,:) = ES.targetDimSpdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-                targetDimSpdfExRFNormErr(unitCount,:) = ES.targetDimSpdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+                targetDimSpdfInRFNormErr(unitCount,:) = ES.targetDim.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+                targetDimSpdfExRFNormErr(unitCount,:) = ES.targetDim.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
                 
-                exitFixationSpdfInRFNorm(unitCount,:) = (ES.exitFixationSpdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-                exitFixationSpdfExRFNorm(unitCount,:) = (ES.exitFixationSpdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+                exitFixationSpdfInRFNorm(unitCount,:) = (ES.exitFixation.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+                exitFixationSpdfExRFNorm(unitCount,:) = (ES.exitFixation.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
                 
-                exitFixationSpdfInRFNormErr(unitCount,:) = ES.exitFixationSpdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-                exitFixationSpdfExRFNormErr(unitCount,:) = ES.exitFixationSpdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+                exitFixationSpdfInRFNormErr(unitCount,:) = ES.exitFixation.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+                exitFixationSpdfExRFNormErr(unitCount,:) = ES.exitFixation.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
                 
                 meanNormSpdfInRFAllWindowsAll(unitCount,:) = ([...
                         ES.averageFiringRatesBySpdf.preEnterFixation.byLoc(inRFLoc) ...
