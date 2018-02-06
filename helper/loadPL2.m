@@ -246,7 +246,7 @@ if isLoadMua
     D.nMUACh = numel(muaChannelsToLoad);
 
     % save each unit into D
-    fprintf('\tProcessing %d MUAs into D.allMUAStructs...\n', D.nSpikeCh);
+    fprintf('\tProcessing %d MUAs into D.allMUAStructs...\n', D.nMUACh);
     D.allMUAStructs = cell(D.nMUACh, 1);
     muaInd = 0;
     for i = muaChannelsToLoad

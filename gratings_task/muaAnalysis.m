@@ -31,8 +31,10 @@ assert(numel(muaChannelsToLoad) == 1);
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
-struct2var(recordingInfo(sessionInd));
-pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
+recordingInfo = rmfield(recordingInfo, 'muaChannelsToLoad'); % remove b/c we're using passed value
+R = recordingInfo(sessionInd);
+sessionName = R.sessionName;
+pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
 fprintf('Loading %s...\n', pl2FilePath);
 
 %% load recording data
@@ -43,11 +45,12 @@ isLoadMua = 1;
 isLoadLfp = 0;
 isLoadSpkc = 0;
 isLoadDirect = 1;
-spikeChannelsToLoad = [];
-lfpChannelsToLoad = [];
-spkcChannelsToLoad = [];
-D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        spikeChannelPrefix, spikeChannelsToLoad, muaChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
+R.spikeChannelsToLoad = NaN;
+R.muaChannelsToLoad = muaChannelsToLoad;
+R.lfpChannelsToLoad = NaN;
+R.spkcChannelsToLoad = NaN;
+D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, R.areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
+        R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
 
 processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
 if exist(processedDataDir, 'dir') == 0
@@ -55,12 +58,12 @@ if exist(processedDataDir, 'dir') == 0
 end
 fprintf('... done (%0.2f s).\n', toc);
 
-assert(numel(blockNames) == numel(D.blockStartTimes));
-blockName = strjoin(blockNames(gratingsTask3DIndices), '-');
+assert(numel(R.blockNames) == numel(D.blockStartTimes));
+blockName = strjoin(R.blockNames(R.gratingsTask3DIndices), '-');
 fprintf('Analyzing block names: %s.\n', blockName);
 
 %% remove spike and event times not during task to save memory
-D = trimSpikeTimesAndEvents(D, gratingsTask3DIndices);
+D = trimSpikeTimesAndEvents(D, R.gratingsTask3DIndices);
 
 %%  
 fprintf('Processing %s...\n', sessionName);
@@ -70,7 +73,7 @@ logDir = sprintf('%s/%s', dataDir, sessionName(2:end));
 load('params.mat');
 
 % process events and sort them into different conditions
-UE = getUsefulEvents2(logDir, gratingsTask3DLogIndices, 4, D);
+UE = getUsefulEvents2(logDir, R.gratingsTask3DLogIndices, 4, D);
 
 % unload these variables to workspace
 % (cueOnset, cueOnsetByLoc, ...
@@ -83,7 +86,7 @@ UE = getUsefulEvents2(logDir, gratingsTask3DLogIndices, 4, D);
 % struct2var(usefulEvents);
 % stop
 
-totalTimeOverall = sum(D.blockStopTimes(gratingsTask3DIndices) - D.blockStartTimes(gratingsTask3DIndices));
+totalTimeOverall = sum(D.blockStopTimes(R.gratingsTask3DIndices) - D.blockStartTimes(R.gratingsTask3DIndices));
 minFiringRateOverall = 0.2;
 minFiringRate = 1;
 
