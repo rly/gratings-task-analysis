@@ -16,6 +16,14 @@ function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordin
 % evt8 = juice
 
 v = 9;
+
+fprintf('\n-------------------------------------------------------\n');
+fprintf('Gratings Task Analysis\n');
+fprintf('Session index: %d\n', sessionInd);
+fprintf('MUA Channel to Load: %d\n', muaChannelsToLoad);
+fprintf('Version: %d\n', v);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+
 nLoc = 4;
 
 %% input check
@@ -25,14 +33,9 @@ assert(numel(muaChannelsToLoad) == 1);
 recordingInfo = readRecordingInfo(recordingInfoFileName);
 struct2var(recordingInfo(sessionInd));
 pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
+fprintf('Loading %s...\n', pl2FilePath);
 
 %% load recording data
-fprintf('\n-------------------------------------------------------\n');
-fprintf('Gratings Task Analysis\n');
-fprintf('Loading %s...\n', pl2FilePath);
-fprintf('Session index: %d\n', sessionInd);
-fprintf('MUA Channel to Load: %d\n', muaChannelsToLoad);
-fprintf('Version: %d\n', v);
 
 tic;
 isLoadSpikes = 0;
