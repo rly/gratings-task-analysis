@@ -10,7 +10,8 @@ for j = 1:numel(blockInds)
     blockStopTime = D.blockStopTimes(blockInds(j));
     
     for i = 1:numel(D.allSpikeStructs)
-        overallFiringRateByBlock(j,i) = sum(D.allSpikeStructs{i}.ts >= blockStartTime & D.allSpikeStructs{i}.ts <= blockStopTime) / (blockStopTime - blockStartTime);
+        overallFiringRateByBlock(j,i) = sum(D.allSpikeStructs{i}.ts >= blockStartTime & D.allSpikeStructs{i}.ts <= blockStopTime) / ...
+                (blockStopTime - blockStartTime);
     end
 end
 

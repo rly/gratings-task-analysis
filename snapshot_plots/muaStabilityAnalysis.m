@@ -1,6 +1,6 @@
 function muaStabilityAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
 
-v = 9;
+v = 10;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');
@@ -13,9 +13,6 @@ fprintf('Data root dir: %s\n', dataDirRoot);
 fprintf('MUA data root dir: %s\n', muaDataDirRoot);
 fprintf('Version: %d\n', v);
 fprintf('------------------------\n');
-
-%% input check
-% assert(numel(muaChannelsToLoad) == 1);
 
 %% load recording information
 [R, D] = loadRecordingData(...

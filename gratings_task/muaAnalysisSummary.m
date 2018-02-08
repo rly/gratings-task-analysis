@@ -417,8 +417,10 @@ end
 
 %% summarize
 nUnitsAll = unitCount;
-nCells = sum(isBroadSpiking | isNarrowSpiking);
-assert(sum(isCell) == nCells);
+nCells = nUnitsAll;%sum(isBroadSpiking | isNarrowSpiking);
+% assert(sum(isCell) == nCells);
+isCell = true(nCells, 1);
+isInPulvinar = true(nCells, 1); %TEMP
 
 isSignificantAnyTaskMod = isCell & any(isSignificantStats(:,1:5), 2);
 isSignificantCueActivity = isCell & isSignificantStats(:,1); % note that this uses the stricter statAlpha
@@ -714,7 +716,7 @@ figure_tr_inch(4, 4);
 subaxis(1, 1, 1, 'ML', 0.25, 'MB', 0.22, 'MT', 0.05);
 set(gcf, 'Color', 'white');
 hold on;
-g1 = isCell & ~isSignificantDelaySelectivity & isInPulvinar;
+g1 = isCell & ~isSignificantDelaySelectivity;% & isInPulvinar;
 g2 = isSignificantDelaySelectivity & strcmp(localization, 'PM');
 g3 = isSignificantDelaySelectivity & strcmp(localization, 'PLd');
 g4 = isSignificantDelaySelectivity & strcmp(localization, 'PLv');
@@ -732,7 +734,7 @@ plot(infoRates(g5, 2), infoRates(g5, 4), ...
         '.', 'MarkerSize', 20, 'Color', [0.2 0.7 0]);
 currXLim = xlim();
 currYLim = ylim();
-maxLim = 0.2;
+maxLim = 0.2;%0.5;
 plot([0 maxLim], [0 maxLim], '-', 'Color', 0.3 * ones(3, 1));
 xlim([0 maxLim]);
 ylim([0 maxLim]);
@@ -789,7 +791,7 @@ set(gcf, 'Color', 'white');
 hold on;
 % TODO for now use significance based on info rate BUT should use AI
 % shuffle
-g1 = isCell & ~isSignificantDelaySelectivity & isInPulvinar;
+g1 = isCell & ~isSignificantDelaySelectivity;% & isInPulvinar;
 g2 = isSignificantDelaySelectivity & strcmp(localization, 'PLd');
 g3 = isSignificantDelaySelectivity & strcmp(localization, 'PM');
 g4 = isSignificantDelaySelectivity & strcmp(localization, 'PI');
@@ -804,7 +806,7 @@ plot(attnIndices(g4, 1), attnIndices(g4, 2), ...
         '.', 'MarkerSize', 20, 'Color', [0.2 0 1]);
 currXLim = xlim();
 currYLim = ylim();
-maxLim = 0.7; % set manually
+maxLim = 0.3; % set manually
 assert(~any(any(abs(attnIndices(g1 | g2 | g3 | g4,:) > maxLim))));
 plot([0 0], [-maxLim maxLim], '-', 'Color', 0.3 * ones(3, 1));
 plot([-maxLim maxLim], [0 0], '-', 'Color', 0.3 * ones(3, 1));
@@ -1103,7 +1105,8 @@ end
 
 %% mega figure of tiny bc normalized plots per unit by subdivision
 fprintf('\n');
-subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
+% subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
+subdivisions = {'all'};
 for i = 1:numel(subdivisions)
     subdivision = subdivisions{i};
     if strcmp(subdivision, 'all')
@@ -1140,11 +1143,11 @@ for i = 1:numel(subdivisions)
 
     fprintf('\t%s: %d cells\n', subdivision, sum(condition));
     
-    enterFixationT = ES.enterFixationT - ES.enterFixationWindow(1);
-    cueOnsetT = ES.cueOnsetT - ES.cueOnsetWindow(1);
-    arrayOnsetT = ES.arrayOnsetT - ES.arrayOnsetWindow(1);
-    targetDimT = ES.targetDimT - ES.targetDimWindow(1);
-    exitFixationT = ES.exitFixationT - ES.exitFixationWindow(1);
+    enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
+    cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
+    arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
+    targetDimT = ES.targetDim.t - ES.targetDim.window(1);
+    exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
     
     titleBase = sprintf('%s Cells: Enter Fixation', subdivision);
     plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf1-enterFixation-v%d', processedDataRootDir, subdivision, v);

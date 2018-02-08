@@ -1,4 +1,6 @@
 function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
+% MUA gratings task analysis, one channel at a time
+
 % 325ms fixation before pre-cue marker
 % 25-125ms fixation between pre-cue marker and cue onset
 % 100ms cue onset to cue offset
@@ -15,14 +17,19 @@ function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordin
 % evt7 = target dim
 % evt8 = juice
 
-v = 9;
+v = 10;
+tic;
 
 fprintf('\n-------------------------------------------------------\n');
-fprintf('Gratings Task Analysis\n');
+fprintf('Gratings Task MUA Analysis\n');
 fprintf('Session index: %d\n', sessionInd);
 fprintf('MUA Channel to Load: %d\n', muaChannelsToLoad);
-fprintf('Version: %d\n', v);
 fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Data root dir: %s\n', dataDirRoot);
+fprintf('MUA data root dir: %s\n', muaDataDirRoot);
+fprintf('Version: %d\n', v);
+fprintf('------------------------\n');
 
 nLoc = 4;
 
@@ -30,61 +37,18 @@ nLoc = 4;
 assert(numel(muaChannelsToLoad) == 1);
 
 %% load recording information
-recordingInfo = readRecordingInfo(recordingInfoFileName);
-recordingInfo = rmfield(recordingInfo, 'muaChannelsToLoad'); % remove b/c we're using passed value
-R = recordingInfo(sessionInd);
+[R, D, processedDataDir, blockName] = loadRecordingData(...
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad);
 sessionName = R.sessionName;
-pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
-fprintf('Loading %s...\n', pl2FilePath);
 
-%% load recording data
-
-tic;
-isLoadSpikes = 0;
-isLoadMua = 1;
-isLoadLfp = 0;
-isLoadSpkc = 0;
-isLoadDirect = 1;
-R.spikeChannelsToLoad = NaN;
-R.muaChannelsToLoad = muaChannelsToLoad;
-R.lfpChannelsToLoad = NaN;
-R.spkcChannelsToLoad = NaN;
-D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, R.areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
-
-processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
-if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
-end
-fprintf('... done (%0.2f s).\n', toc);
-
-assert(numel(R.blockNames) == numel(D.blockStartTimes));
-blockName = strjoin(R.blockNames(R.gratingsTask3DIndices), '-');
-fprintf('Analyzing block names: %s.\n', blockName);
-
-%% remove spike and event times not during task to save memory
-D = trimSpikeTimesAndEvents(D, R.gratingsTask3DIndices);
-
-%%  
+%% 
 fprintf('Processing %s...\n', sessionName);
 
 dataDir = sprintf('%s/%s/', dataDirRoot, sessionName);
-logDir = sprintf('%s/%s', dataDir, sessionName(2:end));
-load('params.mat');
+gratingsTaskLogDir = sprintf('%s/%s', dataDir, sessionName(2:end));
 
 % process events and sort them into different conditions
-UE = getUsefulEvents2(logDir, R.gratingsTask3DLogIndices, 4, D);
-
-% unload these variables to workspace
-% (cueOnset, cueOnsetByLoc, ...
-%         arrayOnset, arrayOnsetRel, arrayOnsetHold, arrayOnsetByLoc, ...
-%         arrayOnsetRelByLoc, arrayOnsetHoldByLoc, ...
-%         arrayOnsetShortHoldByLoc, arrayOnsetLongHoldByLoc, ...
-%         targetDim, targetDimByLoc, ...
-%         targetDimShortHoldByLoc, targetDimLongHoldByLoc, ...
-%         nTrialShortHold, nTrialLongHold, rt);
-% struct2var(usefulEvents);
-% stop
+UE = getUsefulEvents2(gratingsTaskLogDir, R.gratingsTask3DLogIndices, 4, D);
 
 totalTimeOverall = sum(D.blockStopTimes(R.gratingsTask3DIndices) - D.blockStartTimes(R.gratingsTask3DIndices));
 minFiringRateOverall = 0.2;
@@ -96,69 +60,58 @@ assert(nMUA == 1);
 fprintf('-------------------------------------------------------------\n');
 fprintf('Processing %d MUAs...\n', nMUA);
 
-for i = 1:nMUA
-    muaStruct = D.allMUAStructs{i};
-    unitName = muaStruct.name;
-    spikeTimes = muaStruct.ts;
-    nTrials = numel(UE.cueOnset);
-    firingRateOverall = numel(spikeTimes) / totalTimeOverall;
-    fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
-            nMUA, round(i/nMUA*100));
-    
-    if firingRateOverall >= minFiringRateOverall
-        tic;
-        saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
-                processedDataDir, unitName, blockName, v);
-        fprintf('\tWriting file %s...\n', saveFileName);
-        
-        computeEvokedSpiking(saveFileName, muaStruct, nLoc, UE);
-        
-        ES = load(saveFileName);
-        if (any(ES.averageFiringRatesBySpdf.preEnterFixation.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.postEnterFixation.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.postEnterFixationLate.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.preCueBaseline.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.cueResponse.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.cueTargetDelay.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.arrayHoldResponse.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.arrayRelResponse.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.targetDimDelay.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.targetDimResponse.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.preExitFixation.byLoc >= minFiringRate) || ...
-                any(ES.averageFiringRatesBySpdf.postExitFixation.byLoc >= minFiringRate))
-            
-            plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
-        	fprintf('\tSaving figure to file %s...\n', plotFileName);
-            
-            quickSpdfAllEvents(saveFileName, blockName, ...
-                    D, i, muaStruct, nLoc, nTrials, plotFileName);
-            close;
+i = 1;
+muaStruct = D.allMUAStructs{i};
+unitName = muaStruct.name;
+spikeTimes = muaStruct.ts;
+nTrials = numel(UE.cueOnset);
+firingRateOverall = numel(spikeTimes) / totalTimeOverall;
+fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
+        nMUA, round(i/nMUA*100));
 
-            plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
-        	fprintf('\tSaving figure to file %s...\n', plotFileName);
-                
-            quickSpdfAllMotorEvents(saveFileName, blockName, ...
-                    D, i, muaStruct, nLoc, nTrials, plotFileName);
-            close;
-        else
-            fprintf('\tTask-related firing rate < minimum task-related firing rate = %0.2f Hz - skipping.\n', ...
-                    minFiringRate);
-        end
-        fprintf('\tTime elapsed: %0.2f s.\n', toc);
+if firingRateOverall >= minFiringRateOverall
+    tic;
+    saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
+            processedDataDir, unitName, blockName, v);
+    fprintf('\tWriting file %s...\n', saveFileName);
+
+    computeEvokedSpiking(saveFileName, muaStruct, nLoc, UE);
+
+    ES = load(saveFileName);
+    if (any(ES.averageFiringRatesBySpdf.preEnterFixation.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.postEnterFixation.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.postEnterFixationLate.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.preCueBaseline.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.cueResponse.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.cueTargetDelay.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.arrayHoldResponse.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.arrayRelResponse.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.targetDimDelay.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.targetDimResponse.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.preExitFixation.byLoc >= minFiringRate) || ...
+            any(ES.averageFiringRatesBySpdf.postExitFixation.byLoc >= minFiringRate))
+
+        plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
+        fprintf('\tSaving figure to file %s...\n', plotFileName);
+
+        quickSpdfAllEvents(saveFileName, blockName, ...
+                D, i, muaStruct, nLoc, nTrials, plotFileName);
+        close;
+
+        plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
+        fprintf('\tSaving figure to file %s...\n', plotFileName);
+
+        quickSpdfAllMotorEvents(saveFileName, blockName, ...
+                D, i, muaStruct, nLoc, nTrials, plotFileName);
+        close;
     else
-        fprintf('\tOverall firing rate = %0.2f Hz < minimum firing rate = %0.2f Hz in these blocks - skipping.\n', ...
-                firingRateOverall, minFiringRateOverall);
+        fprintf('\tTask-related firing rate < minimum task-related firing rate = %0.2f Hz - skipping.\n', ...
+                minFiringRate);
     end
+else
+    fprintf('\tOverall firing rate = %0.2f Hz < minimum firing rate = %0.2f Hz in these blocks - skipping.\n', ...
+            firingRateOverall, minFiringRateOverall);
 end
 
-end
-
-
-
-
-
-
-
-
-
+fprintf('\tTime elapsed: %0.2f s.\n', toc);
 
