@@ -32,10 +32,12 @@ lastGTaskBlockStopTime = D.blockStopTimes(R.gratingsTask3DIndices(end));
 windowSize = 300; % seconds
 movingWindowStep = floor(windowSize/2);
 
+isUnitStable = false(nUnits, 1);
+unitNames = cell(nUnits, 1);
 for j = 1:nUnits
     spikeStruct = D.allMUAStructs{j};
-    unitName = spikeStruct.name;
-    fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, j, ...
+    unitNames{j} = spikeStruct.name;
+    fprintf('Processing %s (%d/%d = %d%%)... \n', unitNames{j}, j, ...
             nUnits, round(j/nUnits*100));
     
     spikeIndices = spikeStruct.ts >= firstGTaskBlockStartTime & ...
@@ -75,6 +77,7 @@ for j = 1:nUnits
     minMeanSpikeRate = 0.2;
     if ~hIsSpikeRateTrend && mean(spikesPerBin) / windowSize >= minMeanSpikeRate
         fprintf('Hooray! Null hypothesis not rejected...\n');
+        isUnitStable(j) = 1;
     end
     
     if (hIsSpikeRateStationaryFwd && hIsSpikeRateStationaryRev) && mean(spikesPerBin) / windowSize >= minMeanSpikeRate
@@ -94,3 +97,6 @@ for j = 1:nUnits
 %         title('Spike rate has a unit root. It is not stationary.');
 %     end
 end
+
+fprintf('\nStable units:\n');
+cellfun(@(x) fprintf('%s\n', x), unitNames(isUnitStable));
