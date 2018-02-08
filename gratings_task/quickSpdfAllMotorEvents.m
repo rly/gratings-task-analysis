@@ -1,8 +1,5 @@
-function quickSpdfAllMotorEvents(evokedSpikingSaveFileName, ...
-        blockName, ...
+function quickSpdfAllMotorEvents(ES, blockName, ...
         D, spikeStructInd, spikeStruct, nLoc, nTrials, plotFileName)
-
-ES = load(evokedSpikingSaveFileName);
 
 unitName = spikeStruct.name;
 cols = lines(6);
@@ -223,6 +220,11 @@ ylim(axExitFixationSpdf, yBounds);
 
 %% add response metrics text
 
+textParams = {'Units', 'normalized', 'FontSize', 8, 'VerticalAlignment', 'top'};
+text(axBig, -0.03, infoText2Top, {...
+        sprintf('Blocks: %s', blockName) ...
+        }, ...
+        textParams{:});
 
 %% save
 if ~isempty(plotFileName)

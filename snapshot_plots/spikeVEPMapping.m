@@ -1,43 +1,28 @@
-% function spikeVEPMapping(sessionInd)
+function spikeVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, spikeChannelsToLoad)
 
-clear;
-processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
-dataDirRoot = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-data/';
+%% setup and load data
 
-sessionInd = 10;
+v = 10;
+
+fprintf('\n-------------------------------------------------------\n');
+fprintf('VEP Mapping Analysis - Spikes\n');
+fprintf('Session index: %d\n', sessionInd);
+fprintf('Spike Channels to Load: %d\n', spikeChannelsToLoad);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Data root dir: %s\n', dataDirRoot);
+fprintf('MUA data root dir: %s\n', muaDataDirRoot);
+fprintf('Version: %d\n', v);
+fprintf('------------------------\n');
+
 doPlot = 1;
 
 %% load recording information
-recordingInfo = readRecordingInfo();
-struct2var(recordingInfo(sessionInd));
-pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
-
-%% setup and load data
-fprintf('\n-------------------------------------------------------\n');
-fprintf('VEP Mapping Analysis - Spikes\n');
-fprintf('Loading %s...\n', pl2FilePath);
-
-tic;
-isLoadSpikes = 1;
-isLoadLfp = 0;
-isLoadSpkc = 0;
-isLoadDirect = 0;
-D = loadPL2(pl2FilePath, sessionName, areaName, isLoadSpikes, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        spikeChannelPrefix, spikeChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
-
-processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
-if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
-end
-fprintf('... done (%0.2f s).\n', toc);
-
-blockName = strjoin(blockNames(vepmIndices), '-');
-
-%% remove spike and event times not during RFM task to save memory
-D = trimSpikeTimesAndEvents(D, vepmIndices);
+[R, D, sessionName, processedDataDir, blockName] = loadRecordingData(...
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad);
 
 %% find nonsparse blocks
-isFiringNonsparseByBlock = findNonsparseBlocks(D, vepmIndices);
+isFiringNonsparseByBlock = findNonsparseBlocks(D, R.vepmIndices);
 
 %% extract flash events
 % Flash mapping events pre 20170202

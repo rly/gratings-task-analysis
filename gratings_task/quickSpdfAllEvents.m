@@ -1,8 +1,5 @@
-function quickSpdfAllEvents(evokedSpikingSaveFileName, ...
-        blockName, ...
+function quickSpdfAllEvents(ES, blockName, ...
         D, spikeStructInd, spikeStruct, nLoc, nTrials, plotFileName)
-
-ES = load(evokedSpikingSaveFileName);
 
 unitName = spikeStruct.name;
 cols = lines(4);

@@ -543,6 +543,7 @@ clear nTrialsInRF nTrialsExRF nTrialsInRFExRF shuffleIndices;
 clear randSpikeTimesInRF randSpikeTimesExRF shufflePsthInRF shufflePsthExRF;
 clear meanResponseShufflePsthInRF meanResponseShufflePsthExRF;
 
+% save all workspace variables not cleared above into mat file
 save(saveFileName);
 
 end

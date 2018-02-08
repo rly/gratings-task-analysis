@@ -1,5 +1,6 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
+        sessionInd, muaChannelsToLoad)
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);

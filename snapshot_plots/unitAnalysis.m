@@ -1,3 +1,44 @@
+function muaStabilityAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
+% 325ms fixation before pre-cue marker
+% 25-125ms fixation between pre-cue marker and cue onset
+% 100ms cue onset to cue offset
+% 500-800ms cue offset to array onset
+% 850-1050ms array onset to target dim for long hold trials
+% 650-850ms array onset to target dim for long hold trials
+% hold shape response window 280-730ms
+% release shape response window 280-730ms
+% min 280ms before saccade allowed
+
+% evt5 = cue onset
+% evt1,2,3,4 = cue offset
+% evt6 = array onset and also release shape resp win start
+% evt7 = target dim
+% evt8 = juice
+
+v = 9;
+tic;
+
+fprintf('\n-------------------------------------------------------\n');
+fprintf('Gratings Task MUA Analysis\n');
+fprintf('Session index: %d\n', sessionInd);
+fprintf('MUA Channel to Load: %d\n', muaChannelsToLoad);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Data root dir: %s\n', dataDirRoot);
+fprintf('MUA data root dir: %s\n', muaDataDirRoot);
+fprintf('Version: %d\n', v);
+fprintf('------------------------\n');
+
+nLoc = 4;
+
+%% input check
+assert(numel(muaChannelsToLoad) == 1);
+
+%% load recording information
+[R, D, processedDataDir, blockName] = loadRecordingData(...
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad);
+sessionName = R.sessionName;
+areaName = R.areaName;
 
 clear;
 processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';

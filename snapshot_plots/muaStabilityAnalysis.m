@@ -15,13 +15,12 @@ fprintf('Version: %d\n', v);
 fprintf('------------------------\n');
 
 %% load recording information
-[R, D] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad);
+[R, D] = loadRecordingData(processedDataRootDir, dataDirRoot, muaDataDirRoot, ...
+        recordingInfoFileName, sessionInd, muaChannelsToLoad);
+assert(numel(R.blockNames) == numel(D.blockStartTimes));
 
-%% 
 nUnits = numel(D.allMUAStructs);
 fprintf('Processing %d multi-units...\n', nUnits);
-assert(numel(R.blockNames) == numel(D.blockStartTimes));
 
 %% test for significant spike rate drift over the gratings task blocks
 firstGTaskBlockStartTime = D.blockStartTimes(R.gratingsTask3DIndices(1));
@@ -37,6 +36,7 @@ for j = 1:nUnits
     fprintf('Processing %s (%d/%d = %d%%)... \n', unitNames{j}, j, ...
             nUnits, round(j/nUnits*100));
     
+    % get all spike times 
     spikeIndices = spikeStruct.ts >= firstGTaskBlockStartTime & ...
                 spikeStruct.ts <= lastGTaskBlockStopTime;
     spikeTimes = spikeStruct.ts(spikeIndices);
@@ -51,7 +51,7 @@ for j = 1:nUnits
     end
     spikeTimesAdj = spikeTimes - adjustFactor;    
     
-    % bin spikes
+    % bin spikes in moving, overlapping windows
     binStartTimes = firstGTaskBlockStartTime:movingWindowStep:lastGTaskBlockStopTime-windowSize;
     numWindows = numel(binStartTimes);
     spikesPerBin = nan(numWindows, 1);
@@ -72,20 +72,23 @@ for j = 1:nUnits
     [hIsSpikeRateTrend,pIsSpikeRateTrend] = Mann_Kendall(spikesPerBin, 0.005);
     
     minMeanSpikeRate = 0.2;
-    if ~hIsSpikeRateTrend && mean(spikesPerBin) / windowSize >= minMeanSpikeRate
-        fprintf('Hooray! Null hypothesis not rejected...\n');
-        isUnitStable(j) = 1;
-    end
-    
-    if (hIsSpikeRateStationaryFwd && hIsSpikeRateStationaryRev) && mean(spikesPerBin) / windowSize >= minMeanSpikeRate
-        fprintf('Hooray! Spike rate is stationary.\n');
+    if mean(spikesPerBin) / windowSize >= minMeanSpikeRate
+        if ~hIsSpikeRateTrend
+            fprintf('Hooray! Null hypothesis not rejected...\n');
+            isUnitStable(j) = 1;
+        end
+
+        if hIsSpikeRateStationaryFwd && hIsSpikeRateStationaryRev
+            fprintf('Hooray! Spike rate is stationary.\n');
+        end
     end
     
     % alternatively, test whether bins are drawn from a uniform
     % distribution
     
-    figure;
-    plot(spikesPerBin);
+%     figure;
+%     plot(spikesPerBin);
+
 %     if hIsSpikeRateStationary
 %         title('Hooray! Spike rate is stationary.');
 %         fprintf('Hooray! Spike rate is stationary.\n');
