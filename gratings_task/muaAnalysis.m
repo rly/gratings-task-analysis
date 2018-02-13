@@ -1,5 +1,5 @@
 function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
-% MUA gratings task analysis, one channel at a time
+% MUA gratings task analysis, one channel
 
 % 325ms fixation before pre-cue marker
 % 25-125ms fixation between pre-cue marker and cue onset
@@ -38,7 +38,7 @@ assert(numel(muaChannelsToLoad) == 1);
 
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
-        dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad);
+        dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, 'Gratings');
 sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);
@@ -81,7 +81,7 @@ if firingRateOverall >= minFiringRateOverall
         plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
         fprintf('\tSaving figure to file %s...\n', plotFileName);
 
-        quickSpdfAllEvents(ES, blockName, ...
+        quickSpdfAllVisualEvents(ES, blockName, ...
                 D, i, muaStruct, nLoc, nTrials, plotFileName);
         close;
 
@@ -100,5 +100,5 @@ else
             firingRateOverall, minFiringRateOverall);
 end
 
-fprintf('\tTime elapsed: %0.2f s.\n', toc);
+fprintf('Time elapsed: %0.2f s.\n', toc);
 

@@ -1,6 +1,8 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, muaChannelsToLoad)
+        sessionInd, muaChannelsToLoad, taskName)
+% loads MUA data and eyetracking/lever data into D struct and recording
+% metadata into R struct
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
@@ -31,9 +33,18 @@ if exist(processedDataDir, 'dir') == 0
 end
 fprintf('... done (%0.2f s).\n', toc);
 
+%% get block indices
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
-blockName = strjoin(R.blockNames(R.gratingsTask3DIndices), '-');
-fprintf('Analyzing block names: %s.\n', blockName);
+if strcmp(taskName, 'Gratings')
+    blockIndices = R.gratingsTask3DIndices;
+elseif strcmp(taskName, 'VEPM')
+    blockIndices = R.vepmIndices;
+else
+    error('Unknown task name: %s\n', taskName);
+end
+
+blockName = strjoin(R.blockNames(blockIndices), '-');
+fprintf('Analyzing task name: %s, block names: %s.\n', taskName, blockName);
 
 %% remove spike and event times not during task to save memory
-D = trimSpikeTimesAndEvents(D, R.gratingsTask3DIndices);
+D = trimSpikeTimesAndEvents(D, blockIndices);
