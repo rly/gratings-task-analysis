@@ -1,27 +1,53 @@
+function muaVEPMappingSessionSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
+% Session Summary of MUA VEP Mapping
 
-%% write updated D struct
-% remove wf and ts to save space
-for j = 1:nUnits
-    D.allMUAStructs{j}.wf = [];
-    D.allMUAStructs{j}.ts = [];
-end
-saveFileName = sprintf('%s/D-afterSpikeVEPM-%s.mat', processedDataDir, blockName);
-fprintf('Writing post-processed data file: %s ...', saveFileName);
+%% setup and load data
+v = 10;
 tic;
-save(saveFileName, 'D');
-fprintf(' done (%0.2f s).\n', toc);
+
+fprintf('\n-------------------------------------------------------\n');
+fprintf('Gratings Task MUA Analysis\n');
+fprintf('Session index: %d\n', sessionInd);
+fprintf('MUA Channels to Load: %d\n', muaChannelsToLoad);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Data root dir: %s\n', dataDirRoot);
+fprintf('MUA data root dir: %s\n', muaDataDirRoot);
+fprintf('Version: %d\n', v);
+fprintf('------------------------\n');
+
+nUnits = numel(muaChannelsToLoad);
+
+%% load recording information
+recordingInfo = readRecordingInfo(recordingInfoFileName);
+recordingInfo = rmfield(recordingInfo, 'muaChannelsToLoad'); % remove b/c we're using passed value
+R = recordingInfo(sessionInd);
+sessionName = R.sessionName;
+areaName = R.areaName;
+
+processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
+
+blockIndices = R.vepmIndices;
+blockName = strjoin(R.blockNames(blockIndices), '-');
+
+%% load data from individual mat files
+allMUAStructs = cell(nUnits, 1);
+for j = 1:nUnits
+    unitName = sprintf('%s_%s_%dM', sessionName, areaName, muaChannelsToLoad(j)); % ideally find a better way
+    saveFileName = sprintf('%s/%s-%s-vepm-v%d.mat', processedDataDir, unitName, blockName, v);
+    fprintf('(%d/%d = %d%%) Loading %s...\n', j, nUnits, round(j/nUnits * 100), saveFileName);
+    S = load(saveFileName, 'muaStruct');
+    allMUAStructs{j} = S.muaStruct;
+end
+
+latencyWindowOffset = allMUAStructs{1}.vepmPsthParams.latencyWindowOffset;
 
 %% plot cdf of latencies
-nUnits = numel(D.allMUAStructs);
 fprintf('Processing %d units...\n', nUnits);
 
 latencies = nan(nUnits, 3); % latency, channel number, spike struct index
 for j = 1:nUnits
-    spikeStruct = D.allMUAStructs{j};
-    unitName = spikeStruct.name;
-    spikeTimes = spikeStruct.ts;
-    fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, j, ...
-            nUnits, round(j/nUnits*100));
+    spikeStruct = allMUAStructs{j};
     
     if isstruct(spikeStruct.latencyInfo)
         latencies(j,1) = spikeStruct.latencyInfo.latency * 1000;
@@ -45,19 +71,20 @@ xlabel('Response Latency to Flash (ms)');
 ylabel('Proportion of Units');
 title(sprintf('%s %s - Flash Latencies (N=%d)', sessionName, areaName, size(latencies, 1)));
 
-plotFileName = sprintf('%s/%s_%s-latencies-%s.png', processedDataDir, sessionName, areaName, blockName);
+plotFileName = sprintf('%s/%s_%s-latencies-%s-v%d.png', processedDataDir, sessionName, areaName, blockName, v);
+fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% scatter plot of latencies by channel
 
 % get mean latency by channel
 % assume channel numbering starts at 1
-meanLatenciesByChannel = nan(D.nMUACh, 1);
+meanLatenciesByChannel = nan(numel(muaChannelsToLoad), 1);
 for i = 1:numel(meanLatenciesByChannel)
-    meanLatenciesByChannel(i) = nanmean(latencies(latencies(:,2) == R.muaChannelsToLoad(i)), 1);
+    meanLatenciesByChannel(i) = nanmean(latencies(latencies(:,2) == muaChannelsToLoad(i)), 1);
 end
 
-channelIndices = R.muaChannelsToLoad;
+channelIndices = muaChannelsToLoad;
 channelIndices(isnan(meanLatenciesByChannel)) = [];
 meanLatenciesByChannel(isnan(meanLatenciesByChannel)) = [];
 
@@ -74,9 +101,9 @@ grid on;
 ylim(channelIndices([1 end]) + [-1 1]);
 title(sprintf('%s %s - Flash Latencies (N=%d)', sessionName, areaName, numel(meanLatenciesByChannel)));
 
-plotFileName = sprintf('%s/%s_%s-latenciesByChannel-%s.png', processedDataDir, sessionName, areaName, blockName);
+plotFileName = sprintf('%s/%s_%s-latenciesByChannel-%s-v%d.png', processedDataDir, sessionName, areaName, blockName, v);
+fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
-
 
 %% joyplot of spdfs by channel, scaled by SDs of baseline
 
@@ -91,14 +118,12 @@ col = lines(1);
 cmap = winter();
 cmap = flipud(cmap(floor(size(cmap, 1)/2):end,:));
 % cmap = getCoolWarmMap();
+xBounds = [-0.2 0.27];
 for j = 1:nUnits
-    spikeStruct = D.allMUAStructs{j};
+    spikeStruct = allMUAStructs{j};
     unitName = spikeStruct.name;
     nameParts = strfind(unitName, '_');
     unitNameShort = unitName((nameParts(end)+1):end);
-    spikeTimes = spikeStruct.ts;
-    fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, j, ...
-            nUnits, round(j/nUnits*100));
     
     % include all units even if there was insignificant response
     % but exclude if no firing or super sparse firing
@@ -131,204 +156,8 @@ xlim(xBounds);
 ylim([0 plotCount + 1]);
 title(sprintf('%s %s - Flash Responses (N=%d)', sessionName, areaName, plotCount));
 
-plotFileName = sprintf('%s/%s_%s-spdfByChannelJoyplotFilled-all-%s.png', processedDataDir, sessionName, areaName, blockName);
-export_fig(plotFileName, '-nocrop');
-
-%% joyplot of spdfs by channel, scaled by SDs of baseline, cells only
-
-figure_tr_inch(8, 10);
-subaxis(1, 1, 1, 'ML', 0.10, 'MB', 0.10, 'MR', 0.05);
-hold on;
-plotCount = 0;
-yScale = 1/15;
-col = lines(1);
-cmap = winter();
-cmap = flipud(cmap(floor(size(cmap, 1)/2):end,:));
-% cmap = getCoolWarmMap();
-for j = 1:nUnits
-    spikeStruct = D.allMUAStructs{j};
-    unitName = spikeStruct.name;
-    nameParts = strfind(unitName, '_');
-    unitNameShort = unitName((nameParts(end)+1):end);
-    spikeTimes = spikeStruct.ts;
-    fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, j, ...
-            nUnits, round(j/nUnits*100));
-    
-    % include all units even if there was insignificant response
-    % but exclude if no firing or super sparse firing
-    if any(isnan(spikeStruct.vepmPsthParams.normPsthResponse)) || ...
-            spikeStruct.vepmPsthParams.meanResponseByPsth < minResponseByPsth
-        continue;
-    end
-    
-    % exclude if axon
-    if ~(strcmp(spikeStruct.physClass, 'Broad-Spiking') || strcmp(spikeStruct.physClass, 'Narrow-Spiking'))
-        continue;
-    end
-    
-    plotCount = plotCount + 1;
-    % reverse yVal since we reverse the axis
-    yVal = -1 * spikeStruct.vepmPsthParams.normPsthResponse * yScale + plotCount;
-    plot(spikeStruct.vepmPsthParams.t, yVal, '-', 'Color', col);
-    fillX = [spikeStruct.vepmPsthParams.t spikeStruct.vepmPsthParams.t([end 1])];
-    fillY = [yVal plotCount plotCount];
-    fillC = [spikeStruct.vepmPsthParams.normPsthResponse 0 0];
-    fill(fillX, fillY, fillC, 'FaceAlpha', 0.85);
-    text(xBounds(1) - range(xBounds)/100, plotCount, unitNameShort, 'FontSize', 10, 'HorizontalAlignment', 'right');
-end
-cBounds = max(abs(caxis)) * [-1 1];
-caxis(cBounds); % symmetric cmap
-colormap(cmap);
-plot([0 0], [0 plotCount+1], '-', 'Color', 0.3*ones(3, 1)); 
-set(gca, 'FontSize', 16);
-set(gca, 'YDir', 'reverse');
-xlabel('Time from Flash Onset (s)');
-ylabel({'Unit (Ordered by Depth)', ''});
-set(gca, 'YTickLabel', '');
-grid on;
-xlim(xBounds);
-ylim([0 plotCount + 1]);
-title(sprintf('%s %s - Flash Responses (N=%d)', sessionName, areaName, plotCount));
-
-plotFileName = sprintf('%s/%s_%s-spdfByChannelJoyplotFilled-cellsOnly-%s.png', processedDataDir, sessionName, areaName, blockName);
-export_fig(plotFileName, '-nocrop');
-
-%% joyplot of spdfs by channel, scaled by SDs of baseline, cells only
-
-figure_tr_inch(8, 10);
-subaxis(1, 1, 1, 'ML', 0.10, 'MB', 0.10, 'MR', 0.05);
-hold on;
-plotCount = 0;
-yScale = 1/10;
-cols = lines(2);
-bsCol = cols(1,:);
-nsCol = cols(2,:);
-cmap = gray();
-cmap = flipud(cmap(floor(size(cmap, 1)/2):end,:));
-% cmap = getCoolWarmMap();
-for j = 1:nUnits
-    spikeStruct = D.allMUAStructs{j};
-    unitName = spikeStruct.name;
-    nameParts = strfind(unitName, '_');
-    unitNameShort = unitName((nameParts(end)+1):end);
-    spikeTimes = spikeStruct.ts;
-    fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, j, ...
-            nUnits, round(j/nUnits*100));
-    
-    % include all units even if there was insignificant response
-    % but exclude if no firing or super sparse firing
-    if any(isnan(spikeStruct.vepmPsthParams.normPsthResponse)) || ...
-            spikeStruct.vepmPsthParams.meanResponseByPsth < minResponseByPsth
-        continue;
-    end
-    
-    % exclude if axon
-    if ~(strcmp(spikeStruct.physClass, 'Broad-Spiking') || strcmp(spikeStruct.physClass, 'Narrow-Spiking'))
-        continue;
-    end
-    
-    if strcmp(spikeStruct.physClass, 'Broad-Spiking')
-        col = bsCol;
-    else
-        col = nsCol;
-    end
-    
-    plotCount = plotCount + 1;
-    % reverse yVal since we reverse the axis
-    yVal = -1 * spikeStruct.vepmPsthParams.normPsthResponse * yScale + plotCount;
-    plot(spikeStruct.vepmPsthParams.t, yVal, '-', 'Color', col, 'LineWidth', 1);
-%     fillX = [spikeStruct.vepmPsthParams.t spikeStruct.vepmPsthParams.t([end 1])];
-%     fillY = [yVal plotCount plotCount];
-%     fillC = [spikeStruct.vepmPsthParams.normPsthResponse 0 0];
-%     fill(fillX, fillY, fillC, 'FaceAlpha', 0.85);
-    text(xBounds(1) - range(xBounds)/100, plotCount, unitNameShort, 'FontSize', 10, 'HorizontalAlignment', 'right');
-end
-cBounds = max(abs(caxis)) * [-1 1];
-caxis(cBounds); % symmetric cmap
-colormap(cmap);
-plot([0 0], [0 plotCount+1], '-', 'Color', 0.3*ones(3, 1)); 
-set(gca, 'FontSize', 16);
-set(gca, 'YDir', 'reverse');
-xlabel('Time from Flash Onset (s)');
-ylabel({'Unit (Ordered by Depth)', ''});
-set(gca, 'YTickLabel', '');
-grid on;
-xlim(xBounds);
-ylim([0 plotCount + 1]);
-title(sprintf('%s %s - Flash Responses, Cells Only (N=%d)', sessionName, areaName, plotCount));
-legendTextBS = sprintf('{\\color[rgb]{%f,%f,%f}%s}', bsCol, 'Broad-Spiking');
-legendTextNS = sprintf('{\\color[rgb]{%f,%f,%f}%s}', nsCol, 'Narrow-Spiking');
-text(0.85, -0.07, {legendTextBS, legendTextNS}, 'FontSize', 10, 'Units', 'normalized');
-
-plotFileName = sprintf('%s/%s_%s-spdfByChannelJoyplot_cellsOnly-%s.png', processedDataDir, sessionName, areaName, blockName);
-export_fig(plotFileName, '-nocrop');
-
-%% joyplot of spdfs by channel, scaled by SDs of baseline, cells only
-
-figure_tr_inch(8, 10);
-subaxis(1, 1, 1, 'ML', 0.10, 'MB', 0.10, 'MR', 0.05);
-hold on;
-plotCount = 0;
-yScale = 1/10;
-cols = lines(5);
-bsCol = cols(1,:);
-nsCol = cols(2,:);
-otherCol = cols(5,:);
-cmap = gray();
-cmap = flipud(cmap(floor(size(cmap, 1)/2):end,:));
-% cmap = getCoolWarmMap();
-for j = 1:nUnits
-    spikeStruct = D.allMUAStructs{j};
-    unitName = spikeStruct.name;
-    nameParts = strfind(unitName, '_');
-    unitNameShort = unitName((nameParts(end)+1):end);
-    spikeTimes = spikeStruct.ts;
-    fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, j, ...
-            nUnits, round(j/nUnits*100));
-    
-    % include all units even if there was insignificant response
-    % but exclude if no firing or super sparse firing
-    if any(isnan(spikeStruct.vepmPsthParams.normPsthResponse)) || ...
-            spikeStruct.vepmPsthParams.meanResponseByPsth < minResponseByPsth
-        continue;
-    end
-    
-    if strcmp(spikeStruct.physClass, 'Broad-Spiking')
-        col = bsCol;
-    elseif strcmp(spikeStruct.physClass, 'Narrow-Spiking')
-        col = nsCol;
-    else
-        col = otherCol;
-    end
-    
-    plotCount = plotCount + 1;
-    % reverse yVal since we reverse the axis
-    yVal = -1 * spikeStruct.vepmPsthParams.normPsthResponse * yScale + plotCount;
-    plot(spikeStruct.vepmPsthParams.t, yVal, '-', 'Color', col, 'LineWidth', 1);
-%     fillX = [spikeStruct.vepmPsthParams.t spikeStruct.vepmPsthParams.t([end 1])];
-%     fillY = [yVal plotCount plotCount];
-%     fillC = [spikeStruct.vepmPsthParams.normPsthResponse 0 0];
-%     fill(fillX, fillY, fillC, 'FaceAlpha', 0.85);
-    text(xBounds(1) - range(xBounds)/100, plotCount, unitNameShort, 'FontSize', 10, 'HorizontalAlignment', 'right');
-end
-cBounds = max(abs(caxis)) * [-1 1];
-caxis(cBounds); % symmetric cmap
-colormap(cmap);
-plot([0 0], [0 plotCount+1], '-', 'Color', 0.3*ones(3, 1)); 
-set(gca, 'FontSize', 16);
-set(gca, 'YDir', 'reverse');
-xlabel('Time from Flash Onset (s)');
-ylabel({'Unit (Ordered by Depth)', ''});
-set(gca, 'YTickLabel', '');
-grid on;
-xlim(xBounds);
-ylim([0 plotCount + 1]);
-title(sprintf('%s %s - Flash Responses (N=%d)', sessionName, areaName, plotCount));
-legendTextBS = sprintf('{\\color[rgb]{%f,%f,%f}%s}', bsCol, 'Broad-Spiking');
-legendTextNS = sprintf('{\\color[rgb]{%f,%f,%f}%s}', nsCol, 'Narrow-Spiking');
-legendTextOther = sprintf('{\\color[rgb]{%f,%f,%f}%s}', otherCol, 'Other');
-text(0.85, -0.07, {legendTextBS, legendTextNS, legendTextOther}, 'FontSize', 10, 'Units', 'normalized');
-
-plotFileName = sprintf('%s/%s_%s-spdfByChannelJoyplot_allColorCoded-%s.png', processedDataDir, sessionName, areaName, blockName);
+plotFileName = sprintf('%s/%s_%s-spdfByChannelJoyplotFilled-all-%s-v%d.png', ...
+        processedDataDir, sessionName, areaName, blockName, v);
+fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
