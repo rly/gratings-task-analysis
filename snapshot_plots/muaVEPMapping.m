@@ -76,7 +76,7 @@ latencyIndices = getTimeLogicalWithTolerance(psthT, latencyWindow);
 minAbsNormMaxRespVisuallyDriven = 3; % normed value is z-scored (SD units)
 minProportionFlashesWithSpikeVisuallyDriven = 0.1;
 
-numRandomizations = 200;
+numRandomizations = 500;
 
 %% iterate through each unit
 nUnits = numel(D.allMUAStructs);
@@ -87,9 +87,9 @@ j = 1; % just one unit at a time in this script
 fprintf('-------------------------------------------------------------\n');
 fprintf('Processing %d MUAs...\n', nUnits);
 
-spikeStruct = D.allMUAStructs{j};
-unitName = spikeStruct.name;
-spikeTimes = spikeStruct.ts;
+muaStruct = D.allMUAStructs{j};
+unitName = muaStruct.name;
+spikeTimes = muaStruct.ts;
 fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, j, ...
         nUnits, round(j/nUnits*100));
 
@@ -231,7 +231,7 @@ end
 %% save ALL the values
 % there's gotta be a better way
 vepmIndices = R.vepmIndices;
-D.allMUAStructs{j}.vepmPsthParams = var2struct(vepmIndices, psthWindow, ...
+muaStruct.vepmPsthParams = var2struct(vepmIndices, psthWindow, ...
         analysisWindowOffset, baselineWindowOffset, ...
         latencyWindowOffset, kernelSigma, psthT, t, spikeTimesClean, ...
         origFlashEventsClean, allAlignedSpikeTimes, allAlignedSpikeTimesClean, ...
@@ -283,7 +283,7 @@ if doPlot
     plotSpikeWaveform(D, j, 1);
 
     %% info
-    writeUnitInfo(spikeStruct, axBig, -0.03, infoTextTop);
+    writeUnitInfo(muaStruct, axBig, -0.03, infoTextTop);
 
     %% plot raster
     axes('Position', [rasterByTimeLeft1 rasterByTimeBtm rasterByTimeW rasterByTimeH]); 
@@ -378,10 +378,10 @@ if doPlot
 end
 
 %% add response metrics text
-D.allMUAStructs{j}.isVisuallyDriven = -1;
-D.allMUAStructs{j}.peakLatencyInfo = NaN;
-D.allMUAStructs{j}.troughLatencyInfo = NaN;
-D.allMUAStructs{j}.latencyInfo = NaN;
+muaStruct.isVisuallyDriven = -1;
+muaStruct.peakLatencyInfo = NaN;
+muaStruct.troughLatencyInfo = NaN;
+muaStruct.latencyInfo = NaN;
 
 if ~isempty(psthResponse)
     %% classify cell
@@ -395,11 +395,11 @@ if ~isempty(psthResponse)
             abs(normMinResponseByPsth) >= minAbsNormMaxRespVisuallyDriven)
         visRespText = 'Visually Driven';
         visRespTextCol = [0.05 0.5 0.05];
-        D.allMUAStructs{j}.isVisuallyDriven = 1;
+        muaStruct.isVisuallyDriven = 1;
     else
         visRespText = 'Not Visually Driven';
         visRespTextCol = [0.9 0.2 0.05];
-        D.allMUAStructs{j}.isVisuallyDriven = 0;
+        muaStruct.isVisuallyDriven = 0;
     end
     
     %% compute latency
@@ -407,7 +407,7 @@ if ~isempty(psthResponse)
     maxTroughForLatency = -minAbsNormMaxRespVisuallyDriven;
     latencyCol = zeros(3, 1);
     
-    if D.allMUAStructs{j}.isVisuallyDriven
+    if muaStruct.isVisuallyDriven
         % check peak
         peakLatencyInfo = computeLatencyPeakMethod(normPsthResponse, psthT, ...
                 psthWindow, latencyIndices, 0, minPeakForLatency, 0);
@@ -419,9 +419,9 @@ if ~isempty(psthResponse)
         % get the earlier one
         latencyInfo = getEarlierPeakTroughLatencyInfo(peakLatencyInfo, troughLatencyInfo);
         
-        D.allMUAStructs{j}.peakLatencyInfo = peakLatencyInfo;
-        D.allMUAStructs{j}.troughLatencyInfo = troughLatencyInfo;
-        D.allMUAStructs{j}.latencyInfo = latencyInfo;
+        muaStruct.peakLatencyInfo = peakLatencyInfo;
+        muaStruct.troughLatencyInfo = troughLatencyInfo;
+        muaStruct.latencyInfo = latencyInfo;
         
         if doPlot && ~isnan(latencyInfo.latency)
             latencyCol = [0.6 0.05 0.6];
@@ -435,8 +435,8 @@ if ~isempty(psthResponse)
         latencyText = 'None';
     end
     
-    fprintf('\t\t%s - %s, %s, Latency = %s\n', D.allMUAStructs{j}.name, ...
-            D.allMUAStructs{j}.physClass, visRespText, latencyText);
+    fprintf('\t\t%s - %s, %s, Latency = %s\n', muaStruct.name, ...
+            muaStruct.physClass, visRespText, latencyText);
 
     %% text
     if doPlot
@@ -472,7 +472,7 @@ if ~isempty(psthResponse)
                 textParams{:});
     end
 else
-    fprintf('\t\t%s - No response.\n', D.allMUAStructs{j}.name);
+    fprintf('\t\t%s - No response.\n', muaStruct.name);
     
     %% text
     if doPlot
@@ -486,11 +486,16 @@ else
     end
 end
 
-%% save
+%% save plot
 if doPlot
-    plotFileName = sprintf('%s/%s-%s.png', processedDataDir, unitName, blockName);
+    plotFileName = sprintf('%s/%s-%s-vepm-v%d.png', processedDataDir, unitName, blockName, v);
     fprintf('Saving to %s...\n', plotFileName);
     export_fig(plotFileName, '-nocrop');
     close;
 end
+
+%% save data
+saveFileName = sprintf('%s/%s-%s-vepm-v%d.mat', processedDataDir, unitName, blockName, v);
+fprintf('Saving to %s...\n', saveFileName);
+save(saveFileName, 'muaStruct');
 
