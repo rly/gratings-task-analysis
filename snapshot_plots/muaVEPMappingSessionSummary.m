@@ -17,6 +17,7 @@ fprintf('Version: %d\n', v);
 fprintf('------------------------\n');
 
 nUnits = numel(muaChannelsToLoad);
+muaChannelRangeStr = sprintf('%d_%d', muaChannelsToLoad([1 end]));
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
@@ -71,7 +72,7 @@ xlabel('Response Latency to Flash (ms)');
 ylabel('Proportion of Units');
 title(sprintf('%s %s - Flash Latencies (N=%d)', sessionName, areaName, size(latencies, 1)));
 
-plotFileName = sprintf('%s/%s_%s-latencies-%s-v%d.png', processedDataDir, sessionName, areaName, blockName, v);
+plotFileName = sprintf('%s/%s_%s_%s-latencies-%s-v%d.png', processedDataDir, sessionName, areaName, muaChannelRangeStr, blockName, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -101,7 +102,7 @@ grid on;
 ylim(channelIndices([1 end]) + [-1 1]);
 title(sprintf('%s %s - Flash Latencies (N=%d)', sessionName, areaName, numel(meanLatenciesByChannel)));
 
-plotFileName = sprintf('%s/%s_%s-latenciesByChannel-%s-v%d.png', processedDataDir, sessionName, areaName, blockName, v);
+plotFileName = sprintf('%s/%s_%s_%s-latenciesByChannel-%s-v%d.png', processedDataDir, sessionName, areaName, muaChannelRangeStr, blockName, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -156,8 +157,8 @@ xlim(xBounds);
 ylim([0 plotCount + 1]);
 title(sprintf('%s %s - Flash Responses (N=%d)', sessionName, areaName, plotCount));
 
-plotFileName = sprintf('%s/%s_%s-spdfByChannelJoyplotFilled-all-%s-v%d.png', ...
-        processedDataDir, sessionName, areaName, blockName, v);
+plotFileName = sprintf('%s/%s_%s_%s-spdfByChannelJoyplotFilled-all-%s-v%d.png', ...
+        processedDataDir, sessionName, areaName, muaChannelRangeStr, blockName, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
