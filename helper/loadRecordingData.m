@@ -39,6 +39,11 @@ if strcmp(taskName, 'Gratings')
     blockIndices = R.gratingsTask3DIndices;
 elseif strcmp(taskName, 'VEPM')
     blockIndices = R.vepmIndices;
+elseif strcmp(taskName, 'RFM_OLD')
+    blockIndices = R.rfmOldIndices;
+    if isnan(blockIndices)
+        error('No Block Indices defined for RF Mapping Old Task');
+    end
 else
     error('Unknown task name: %s\n', taskName);
 end
