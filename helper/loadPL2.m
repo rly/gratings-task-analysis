@@ -317,7 +317,7 @@ if isLoadLfp
     D.lfpFs = 0;
     for i = 1:numel(dataInfo.AnalogChannels)
         if dataInfo.AnalogChannels{i}.Enabled && strcmp(dataInfo.AnalogChannels{i}.SourceName, 'FP') && ...
-                dataInfo.AnalogChannels{i}.Channel <= 125
+                dataInfo.AnalogChannels{i}.NumValues > 0 && dataInfo.AnalogChannels{i}.Channel <= 125
             D.lfpChannelIndices(dataInfo.AnalogChannels{i}.Channel) = i;
             if ~D.nLfpTime
                 D.nLfpTime = dataInfo.AnalogChannels{i}.NumValues;
