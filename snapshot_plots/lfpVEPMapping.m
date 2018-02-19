@@ -1,18 +1,10 @@
-% function lfpVEPMapping(pl2FileName, sessionName, areaName, blockNames, blockInds)
+function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
 % LFP VEP Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
 
-sessionInd = 1;
-channelsToLoad = 1:32;
-recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
-processedDataRootDir = 'Y:/rly/gratings-task-analysis/processed_data/';
-dataDirRoot = 'Z:/ryanly/McCartney/originals/';
-muaDataDirRoot = 'Y:/rly/simple-mua-detection/processed_data/';
-
 %% LFP VEP mapping parameters
 ref = 'RAW'; % CAR, BIP, or some other code, e.g. RAW. CAR recommended
-doOutlierCheckPlot = 0;
 
 %% setup and load data
 v = 10;
