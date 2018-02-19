@@ -1,43 +1,31 @@
-
-clear;
-processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
-dataDirRoot = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-data/';
-
-% sessionInd = 1; blockInds = [3 10]; % until there is a better way
-% sessionInd = 2; blockInds = 2; % until there is a better way
-% sessionInd = 3; blockInds = 2; % until there is a better way
-sessionInd = 2; blockInds = 2; % until there is a better way
-
-
-%% load recording information
-recordingInfo = readRecordingInfo();
-struct2var(recordingInfo(sessionInd));
-pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
+function lfpRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
+% MUA RF Mapping, one channel
+% can't really do one channel at a time because of Common Average
+% Referencing
 
 %% setup and load data
-fprintf('\n-------------------------------------------------------\n');
-fprintf('RF Mapping Analysis - LFPs\n');
-fprintf('Loading %s...\n', pl2FileName);
-
+v = 10;
 tic;
-isLoadSpikes = 1;
-isLoadLfp = 1;
-isLoadSpkc = 0;
-isLoadDirect = 0;
-D = loadPL2(pl2FilePath, sessionName, areaName, isLoadSpikes, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        spikeChannelPrefix, spikeChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
 
-processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
-if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
-end
-fprintf('... done (%0.2f s).\n', toc);
+fprintf('\n-------------------------------------------------------\n');
+fprintf('RF Mapping Analysis - LFP\n');
+fprintf('Session index: %d\n', sessionInd);
+fprintf('LFP Channel to Load: %d\n', channelsToLoad);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Data root dir: %s\n', dataDirRoot);
+fprintf('MUA data root dir: %s\n', muaDataDirRoot);
+fprintf('Version: %d\n', v);
+fprintf('------------------------\n');
 
-blockName = strjoin(blockNames(blockInds), '-');
+%% input check
+% assert(numel(channelsToLoad) == 1);
+assert(numel(channelsToLoad) > 1);
 
-%% remove spike and event times not during RFM task to save memory
-D = trimSpikeTimesAndEvents(D, blockInds);
-D = adjustSpikeTimesLfpsAndEvents(D, blockInds);
+%% load recording information
+[R, D, processedDataDir, blockName] = loadRecordingData(...
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
+        sessionInd, channelsToLoad, 'RFM_OLD', 1, 1);
 
 %%
 % task as of 1/10/17 (or earlier)
@@ -56,10 +44,7 @@ D = adjustSpikeTimesLfpsAndEvents(D, blockInds);
 % EVT07 - FP dim
 % EVT08 - juice onset
 
-baselineWindowOffset = [-0.2 0]; % ms - 200ms minimum between flashes and before first flash
-
 origFlashEvents = D.events{6};
-preFlashesEvents = D.events{5};
 
 % update based on the PCL code
 % 4 possible, coded in events 9-10: 01, 01, 10, 11, in the order below
@@ -81,10 +66,9 @@ nFlashes = numel(flashOnsets);
 % nFlashes = numel(flashOnsets);
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
+% assert(nChannels == 1);
 
-plotFileNamePrefix = sprintf('%s_%s_%s_FPall', sessionName, areaName, blockName);
-
-D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, D.allSpikeStructs);
+D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
 %%
 [~,channelDataNorm,flashOnsetsClean,isEventOutlier] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, flashOnsets);
@@ -95,6 +79,7 @@ flashStatsClean = flashStats(~isEventOutlier,:);
 assert(numel(flashOnsetsClean) == size(flashStatsClean, 1));
 
 %% process RF for each channel
+
 for j = 1:nChannels
 
 channelName = D.lfpNames{j};
@@ -404,49 +389,9 @@ axis(heatAx, 'square'); % shouldn't do much if i set the dims properly
 colorbar;
 caxis([0 2*sdAllResponses]); 
 
-% % iterate through all orientations
-% maxRfmapSmooth = 0;
-% miniHeatAx = nan(numel(gratingAngles), 1);
-% for m = 1:numel(gratingAngles)
-%     if m == 1
-%         miniHeatAx(m) = axes('Position', [miniHeatLeft1 miniHeatBtm2 miniHeatW miniHeatH]); 
-%         oriText = '-';
-%     elseif m == 2
-%         miniHeatAx(m) = axes('Position', [miniHeatLeft2 miniHeatBtm2 miniHeatW miniHeatH]); 
-%         oriText = '/';
-%     elseif m == 3
-%         miniHeatAx(m) = axes('Position', [miniHeatLeft1 btm miniHeatW miniHeatH]); 
-%         oriText = '|';
-%     elseif m == 4
-%         miniHeatAx(m) = axes('Position', [miniHeatLeft2 btm miniHeatW miniHeatH]); 
-%         oriText = '\';
-%     else
-%         error('unknown m');
-%     end
-%     hold on;
-%     
-%     rfmapSmoothThisOri = squeeze(rfmapSmoothByOriAll(m,:,:));
-%     rfmapThisOriCount = squeeze(rfmapByOriCountAll(m,:,:));
-% 
-%     plotRfMapSmooth(rfmapSmoothThisOri, rfmapThisOriCount, numPixelsPerDegree, mapScale, mapDim, mapXOffset, mapYOffset);
-% 
-%     title(sprintf('Orientation: %0.2f %s', gratingAngles(m), oriText), 'Interpreter', 'none');
-%     axis(miniHeatAx(m), 'square'); % shouldn't do much if i set the dims properly
-%     xlabel('');
-%     ylabel('');
-%     colorbar off;
-%     
-%     if max(rfmapSmoothThisOri(:)) > maxRfmapSmooth
-%         maxRfmapSmooth = max(rfmapSmoothThisOri(:));
-%     end
-% end
-% 
-% % set colorbar axis to be the same for all individual ori plots
-% for m = 1:numel(gratingAngles)
-%     caxis(miniHeatAx(m), [0 maxRfmapSmooth]);
-% end
-% 
+%%
 plotFileName = sprintf('%s/%s-%s.png', processedDataDir, channelName, blockName);
+fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 close;
 

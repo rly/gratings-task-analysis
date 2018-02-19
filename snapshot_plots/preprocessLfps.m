@@ -9,6 +9,9 @@ outlierCheckWindowOffset = [-0.25 0.3]; % around event
 
 nEvents = numel(eventOnset);
 nChannels = size(adjLfps, 1);
+assert(nChannels > 1);
+
+isNanOrig = isnan(adjLfps);
 
 %% do common average reference first
 adjLfpsCAR = adjLfps - nanmean(adjLfps, 1);
@@ -40,6 +43,9 @@ bFirLowPassCustom = fir1(3*fix(Fs/hiCutoffFreqCustom), hiCutoffFreqCustom/(Fs/2)
 adjLfpsCAR(isnan(adjLfpsCAR)) = 0; % zero out nans
 adjLfpsLP = filtfilt(bFirLowPassCustom, 1, adjLfpsCAR')';
 clear adjLfpsCAR;
+
+% set missing vals back to nan
+adjLfpsLP(isNanOrig) = NaN;
 
 %% temp
 % for j = 1:nChannels, figure; plot(adjLfpsLP(j,:)); end

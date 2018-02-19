@@ -21,11 +21,8 @@ assert(numel(muaChannelsToLoad) == 1);
 
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, 'RFM_OLD');
-sessionName = R.sessionName;
-
-%% find nonsparse blocks
-isFiringNonsparseByBlock = findNonsparseBlocks(D, D.allMUAStructs, R.vepmIndices);
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
+        sessionInd, muaChannelsToLoad, 'RFM_OLD', 1, 0);
 
 %%
 % task as of 1/10/17 (or earlier)
@@ -390,7 +387,7 @@ axis(heatAx, 'square'); % shouldn't do much if i set the dims properly
 colorbar;
 caxis([0 6]); 
 
-
+%%
 plotFileName = sprintf('%s/%s-%s.png', processedDataDir, unitName, blockName);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');

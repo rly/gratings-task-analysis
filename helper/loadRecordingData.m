@@ -1,11 +1,12 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, muaChannelsToLoad, taskName)
+        sessionInd, channelsToLoad, taskName, isLoadMua, isLoadLfp)
 % loads MUA data and eyetracking/lever data into D struct and recording
 % metadata into R struct
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
+recordingInfo = rmfield(recordingInfo, 'lfpChannelsToLoad'); % remove b/c we're using passed value
 recordingInfo = rmfield(recordingInfo, 'muaChannelsToLoad'); % remove b/c we're using passed value
 R = recordingInfo(sessionInd);
 sessionName = R.sessionName;
@@ -14,14 +15,12 @@ fprintf('Loading %s...\n', pl2FilePath);
 
 %% load recording data
 isLoadSpikes = 0;
-isLoadMua = 1;
-isLoadLfp = 0;
 isLoadSpkc = 0;
 isLoadDirect = 1;
 
 R.spikeChannelsToLoad = NaN;
-R.muaChannelsToLoad = muaChannelsToLoad;
-R.lfpChannelsToLoad = NaN;
+R.muaChannelsToLoad = channelsToLoad;
+R.lfpChannelsToLoad = channelsToLoad;
 R.spkcChannelsToLoad = NaN;
 
 D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, R.areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
@@ -53,3 +52,6 @@ fprintf('Analyzing task name: %s, block names: %s.\n', taskName, blockName);
 
 %% remove spike and event times not during task to save memory
 D = trimSpikeTimesAndEvents(D, blockIndices);
+if isLoadLfp
+    D = adjustSpikeTimesLfpsAndEvents(D, blockIndices);
+end
