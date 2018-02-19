@@ -1,5 +1,5 @@
 function lfpRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
-% MUA RF Mapping, one channel
+% LFP RF Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
 
@@ -58,7 +58,7 @@ gratingAnglesUnique = (0:3)*pi/4;
         D.events, distsToFixUnique, polarAnglesUnique, gratingAnglesUnique);
 nFlashes = numel(flashOnsets);
 
-%%
+%% preprocess LFPs
 % assert(numel(D.fragTs) == 1);
 % origFlashEvents = D.events{6} - D.fragTs(1); % adjust so that fragTs is not needed - just index
 % preFlashesEvents = D.events{5} - D.fragTs(1);
@@ -66,11 +66,9 @@ nFlashes = numel(flashOnsets);
 % nFlashes = numel(flashOnsets);
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
-% assert(nChannels == 1);
 
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
-%%
 [~,channelDataNorm,flashOnsetsClean,isEventOutlier] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, flashOnsets);
 D.adjLfps = [];
 D.adjLfpsClean = [];
@@ -79,7 +77,6 @@ flashStatsClean = flashStats(~isEventOutlier,:);
 assert(numel(flashOnsetsClean) == size(flashStatsClean, 1));
 
 %% process RF for each channel
-
 for j = 1:nChannels
 
 channelName = D.lfpNames{j};

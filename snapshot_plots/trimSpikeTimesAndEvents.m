@@ -40,7 +40,7 @@ for j = 1:numel(blockInds)
         end
     end
     if isfield(D, 'adjLfps')
-        blockLfpIndices = floor(blockStartTime * D.lfpFs):ceil(blockStopTime * D.lfpFs);
+        blockLfpIndices = max(1, floor(blockStartTime * D.lfpFs)):ceil(blockStopTime * D.lfpFs);
         lfpIndicesToKeep(blockLfpIndices) = true;
     end
 end

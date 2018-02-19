@@ -11,6 +11,7 @@ hold on;
 for j = 1:nChannels
     plot(t, yScale*averageResponses(j,:) - j*yOffset);
 end
+xlim(t([1 end]));
 xlabel('Time from event onset (s)');
 ylabel('Channel Number');
 set(gca, 'YTickMode', 'manual');

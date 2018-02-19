@@ -1,47 +1,45 @@
 % function lfpVEPMapping(pl2FileName, sessionName, areaName, blockNames, blockInds)
+% LFP VEP Mapping, all channels on a probe
+% can't really do one channel at a time because of Common Average
+% Referencing
 
-clear;
-processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
-dataDirRoot = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-data/';
-
-sessionInd = 8;
-
-%% load recording information
-recordingInfo = readRecordingInfo();
-struct2var(recordingInfo(sessionInd));
-pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
+sessionInd = 1;
+channelsToLoad = 1:32;
+recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+processedDataRootDir = 'Y:/rly/gratings-task-analysis/processed_data/';
+dataDirRoot = 'Z:/ryanly/McCartney/originals/';
+muaDataDirRoot = 'Y:/rly/simple-mua-detection/processed_data/';
 
 %% LFP VEP mapping parameters
 ref = 'RAW'; % CAR, BIP, or some other code, e.g. RAW. CAR recommended
 doOutlierCheckPlot = 0;
 
 %% setup and load data
-fprintf('\n-------------------------------------------------------\n');
-fprintf('VEP Mapping Analysis - LFPs\n');
-fprintf('Loading %s...\n', pl2FilePath);
-
+v = 10;
 tic;
-isLoadSpikes = 1;
-isLoadLfp = 1;
-isLoadSpkc = 0;
-isLoadDirect = 0;
-D = loadPL2(pl2FilePath, sessionName, areaName, isLoadSpikes, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        spikeChannelPrefix, spikeChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
 
-processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
-if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
-end
-fprintf('... done (%0.2f s).\n', toc);
-
-blockName = strjoin(blockNames(vepmIndices), '-');
-
+fprintf('\n-------------------------------------------------------\n');
+fprintf('VEP Mapping Analysis - LFP\n');
+fprintf('Session index: %d\n', sessionInd);
+fprintf('LFP Channel to Load: %d\n', channelsToLoad);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Data root dir: %s\n', dataDirRoot);
+fprintf('MUA data root dir: %s\n', muaDataDirRoot);
 fprintf('Reference: %s\n', ref);
+fprintf('Version: %d\n', v);
+fprintf('------------------------\n');
 
-%% remove spike and event times not during RFM task to save memory
-D = trimSpikeTimesAndEvents(D, vepmIndices);
-% TODO should trim LFPs too!!!
-% TODO show individual trials
+%% input check
+% assert(numel(channelsToLoad) == 1);
+assert(numel(channelsToLoad) > 1);
+
+%% load recording information
+[R, D, processedDataDir, blockName] = loadRecordingData(...
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
+        sessionInd, channelsToLoad, 'VEPM', 1, 1);
+sessionName = R.sessionName;
+areaName = R.areaName;
 
 %% extract flash events
 % Flash mapping events pre 20170202
@@ -63,37 +61,39 @@ else
     origFlashEvents = D.events{3};
     preFlashesEvents = D.events{2};
 end
-nFlashes = numel(origFlashEvents);
 
 %%
-periFlashWindowOffset = [-0.25 0.3]; % ms around flash
-baselineWindowOffset = [-0.2 0]; % ms - 200ms minimum between flashes and before first flash
-expandedPlotWindowOffset = [-0.5 1.8]; % ms - 150ms minimum between flashes and before first flash
+periFlashWindowOffset = [-0.25 0.3]; % seconds around flash
+baselineWindowOffset = [-0.2 0]; % seconds - 200ms minimum between flashes and before first flash
+expandedPlotWindowOffset = [-0.5 1.5]; % seconds - 150ms minimum between flashes and before first flash
+% NOTE: for some early sessions, there were only 3 flashes per trial and so
+% expandedPlot should only go until 1.5 s
 
 maxAbsYNonOutlier = 1000;
 outlierMaxSD = 6;
 outlierCheckWindowOffset = periFlashWindowOffset; 
 
+plotFileNamePrefix = sprintf('%s_%s_ch%d-ch%d_%s-FPall', sessionName, areaName, channelsToLoad([1 end]), blockName);
+
+%% preprocess LFPs
+% assert(numel(D.fragTs) == 1);
+% origFlashEvents = D.events{6} - D.fragTs(1); % adjust so that fragTs is not needed - just index
+% preFlashesEvents = D.events{5} - D.fragTs(1);
+% flashOnsets = flashOnsets - D.fragTs(1);
+% nFlashes = numel(flashOnsets);
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
 
-plotFileNamePrefix = sprintf('%s_%s_ch%d-ch%d_%s-FPall', sessionName, areaName, lfpChannelsToLoad([1 end]), blockName);
+D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
-%% low-pass filter data even further - this is slow
-% ideally don't low-pass at 300 and then again at another freq
-tic;
-fprintf('Low-pass filtering data...');
-hiCutoffFreqCustom = 100; % low-pass filter at 100 Hz
-bFirLowPassCustom = fir1(3*fix(Fs/hiCutoffFreqCustom), hiCutoffFreqCustom/(Fs/2), 'low');
-D.adjLfps(isnan(D.adjLfps)) = 0;
-D.adjLfpsLP = filtfilt(bFirLowPassCustom, 1, D.adjLfps');
-D.adjLfpsLP = D.adjLfpsLP';
+[~,channelDataNorm,flashEventsClean,isEventOutlier] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, origFlashEvents);
 D.adjLfps = [];
-fprintf('... done (%0.2f s).\n', toc);
+D.adjLfpsClean = [];
+nFlashes = numel(flashEventsClean);
 
 %% calculate and plot per-trial baseline
 fPlot = figure_tr_inch(6, 10);
-[tBaseline,averageBaselineResponses] = computeResponsesInWindow(D.adjLfpsLP, preFlashesEvents, ...
+[tBaseline,averageBaselineResponses] = computeResponsesInWindow(channelDataNorm, preFlashesEvents, ...
         baselineWindowOffset, Fs);
 plotPeriEventTracesLinearArray(fPlot, tBaseline, averageBaselineResponses, 'yScale', 500);
 xlabel('Time from Pre-Flashes Marker (s)');
@@ -114,7 +114,7 @@ export_fig(plotFileName);
 
 %% plot expanded range around trial onset
 fPlot = figure_tr_inch(16, 5, 0, 6);
-[tBaselineExp,averageBaselineResponsesExp] = computeResponsesInWindow(D.adjLfpsLP, preFlashesEvents, ...
+[tBaselineExp,averageBaselineResponsesExp] = computeResponsesInWindow(channelDataNorm, preFlashesEvents, ...
         expandedPlotWindowOffset, Fs);
 plotPeriEventTracesLinearArray(fPlot, tBaselineExp, averageBaselineResponsesExp, 'yScale', 100);
 xlabel('Time from Pre-Flashes Marker (s)');
@@ -136,7 +136,7 @@ export_fig(plotFileName);
 
 %% plot expanded range around trial onset after cross-channel CAR
 fPlot = figure_tr_inch(16, 5, 0, 6);
-[tBaselineExp,averageBaselineResponsesCARExp] = computeResponsesInWindow(D.adjLfpsLP - nanmean(D.adjLfpsLP, 1), preFlashesEvents, ...
+[tBaselineExp,averageBaselineResponsesCARExp] = computeResponsesInWindow(channelDataNorm - nanmean(channelDataNorm, 1), preFlashesEvents, ...
         expandedPlotWindowOffset, Fs);
 plotPeriEventTracesLinearArray(fPlot, tBaselineExp, averageBaselineResponsesCARExp, 'yScale', 500);
 xlabel('Time from Pre-Flashes Marker (s)');
@@ -149,7 +149,7 @@ export_fig(plotFileName);
 %% plot expanded range around trial onset after cross-channel BIP
 % works only for one channel right now
 fPlot = figure_tr_inch(16, 5, 0, 6);
-[tBaselineExp,averageBaselineResponsesBIPExp] = computeResponsesInWindow(D.adjLfpsLP(2:end,:) - D.adjLfpsLP(1:end-1,:), preFlashesEvents, ...
+[tBaselineExp,averageBaselineResponsesBIPExp] = computeResponsesInWindow(channelDataNorm(2:end,:) - channelDataNorm(1:end-1,:), preFlashesEvents, ...
         expandedPlotWindowOffset, Fs);
 plotPeriEventTracesLinearArray(fPlot, tBaselineExp, averageBaselineResponsesBIPExp, 'yScale', 100);
 xlabel('Time from Pre-Flashes Marker (s)');
@@ -160,82 +160,82 @@ plotFileName = sprintf('%s/%s_baselineBIPExpanded.png', processedDataDir, plotFi
 export_fig(plotFileName);
 
 %% detect events with outlier activity (e.g. amp saturated)
-fprintf('\nProcessing channel responses and removing outliers...\n');
-
-outlierCheckStartIndices = round((origFlashEvents + outlierCheckWindowOffset(1)) * Fs); 
-outlierCheckEndIndices = outlierCheckStartIndices + round(diff(outlierCheckWindowOffset) * Fs) - 1;
-outlierCheckT = outlierCheckWindowOffset(1):1/Fs:outlierCheckWindowOffset(2)-1/Fs;
-nOutlierCheckTime = numel(outlierCheckT);
-assert(all(nOutlierCheckTime == (outlierCheckEndIndices - outlierCheckStartIndices + 1)));
-
-isFlashEventOutlier = false(nFlashes, 1);
-fprintf('Checking for flashes with outlier activity (e.g. amp saturated)...');
-
-% do CAR for outlier removal
-meanLfpAcrossChannels = nanmean(D.adjLfpsLP, 1);
-for j = 1:nChannels
-    fprintf('Processing %s...\n', D.lfpNames{j});
-    
-    channelData = D.adjLfpsLP(j,:) - meanLfpAcrossChannels;
-    
-    % normalize each channel by its mean and standard deviation
-    % units are now standard deviations away from the mean
-    channelDataNorm = (channelData - nanmean(channelData)) / nanstd(channelData);
-    
-    % plot per channel responses before outlier removal
-    if doOutlierCheckPlot
-        fHandles(j) = figure_tr_inch(12,6);
-        suptitle(sprintf('Outlier Check on Channel %d', j));
-        subaxis(1,2,1);
-        hold on;
-    end
-    
-    for i = 1:nFlashes
-        dataInOutlierCheckPeriod = channelDataNorm(outlierCheckStartIndices(i):outlierCheckEndIndices(i));
-        % mark outlier flashes
-        if any(isnan(dataInOutlierCheckPeriod))
-            isFlashEventOutlier(i) = 1;
-            fprintf('\tDetected outlier flash (index %d) because of NaN (%d time points) in trial\n', ...
-                    i, sum(isnan(dataInOutlierCheckPeriod)));
-        elseif any(abs(dataInOutlierCheckPeriod) > maxAbsYNonOutlier)
-            isFlashEventOutlier(i) = 1;
-            fprintf('\tDetected outlier flash (index %d) because absolute value of voltage in trial is too high (%d time points > %0.1f)\n', ...
-                    i, sum(abs(dataInOutlierCheckPeriod) > maxAbsYNonOutlier), maxAbsYNonOutlier);
-        elseif any(abs(dataInOutlierCheckPeriod) > outlierMaxSD)
-            isFlashEventOutlier(i) = 1;
-            fprintf('\tDetected outlier flash (index %d) because voltage in trial is too extreme (%d time points > %d SDs)\n', ...
-                    i, sum(abs(dataInOutlierCheckPeriod) > outlierMaxSD), outlierMaxSD);
-        end
-    
-        if doOutlierCheckPlot
-            plot(outlierCheckT, dataInOutlierCheckPeriod);
-            xlim(outlierCheckWindowOffset);
-        end
-    end
-    
-    if doOutlierCheckPlot
-        title('Original Responses');
-        xlabel('Time from Flash Onset');
-        ylabel('SDs from Overall Mean');
-        origYLim = ylim();
-        plot([0 0], [-1000 1000], '-', 'Color', [0.5 0.5 0.5]);
-        ylim(origYLim);
-    end
-end
-clear channelData channelDataNorm;
-
-% remove outlier flashes
-fprintf('\tDetected %d outlier flashes. Removing those flashes.\n', sum(isFlashEventOutlier));
-flashEvents = origFlashEvents;
-flashEvents(isFlashEventOutlier) = [];
-nFlashes = numel(flashEvents);
+% fprintf('\nProcessing channel responses and removing outliers...\n');
+% 
+% outlierCheckStartIndices = round((flashEventsClean + outlierCheckWindowOffset(1)) * Fs); 
+% outlierCheckEndIndices = outlierCheckStartIndices + round(diff(outlierCheckWindowOffset) * Fs) - 1;
+% outlierCheckT = outlierCheckWindowOffset(1):1/Fs:outlierCheckWindowOffset(2)-1/Fs;
+% nOutlierCheckTime = numel(outlierCheckT);
+% assert(all(nOutlierCheckTime == (outlierCheckEndIndices - outlierCheckStartIndices + 1)));
+% 
+% isFlashEventOutlier = false(nFlashes, 1);
+% fprintf('Checking for flashes with outlier activity (e.g. amp saturated)...');
+% 
+% % do CAR for outlier removal
+% meanLfpAcrossChannels = nanmean(channelDataNorm, 1);
+% for j = 1:nChannels
+%     fprintf('Processing %s...\n', D.lfpNames{j});
+%     
+%     channelData = channelDataNorm(j,:) - meanLfpAcrossChannels;
+%     
+%     % normalize each channel by its mean and standard deviation
+%     % units are now standard deviations away from the mean
+%     channelDataNorm = (channelData - nanmean(channelData)) / nanstd(channelData);
+%     
+%     % plot per channel responses before outlier removal
+%     if doOutlierCheckPlot
+%         fHandles(j) = figure_tr_inch(12,6);
+%         suptitle(sprintf('Outlier Check on Channel %d', j));
+%         subaxis(1,2,1);
+%         hold on;
+%     end
+%     
+%     for i = 1:nFlashes
+%         dataInOutlierCheckPeriod = channelDataNorm(outlierCheckStartIndices(i):outlierCheckEndIndices(i));
+%         % mark outlier flashes
+%         if any(isnan(dataInOutlierCheckPeriod))
+%             isFlashEventOutlier(i) = 1;
+%             fprintf('\tDetected outlier flash (index %d) because of NaN (%d time points) in trial\n', ...
+%                     i, sum(isnan(dataInOutlierCheckPeriod)));
+%         elseif any(abs(dataInOutlierCheckPeriod) > maxAbsYNonOutlier)
+%             isFlashEventOutlier(i) = 1;
+%             fprintf('\tDetected outlier flash (index %d) because absolute value of voltage in trial is too high (%d time points > %0.1f)\n', ...
+%                     i, sum(abs(dataInOutlierCheckPeriod) > maxAbsYNonOutlier), maxAbsYNonOutlier);
+%         elseif any(abs(dataInOutlierCheckPeriod) > outlierMaxSD)
+%             isFlashEventOutlier(i) = 1;
+%             fprintf('\tDetected outlier flash (index %d) because voltage in trial is too extreme (%d time points > %d SDs)\n', ...
+%                     i, sum(abs(dataInOutlierCheckPeriod) > outlierMaxSD), outlierMaxSD);
+%         end
+%     
+%         if doOutlierCheckPlot
+%             plot(outlierCheckT, dataInOutlierCheckPeriod);
+%             xlim(outlierCheckWindowOffset);
+%         end
+%     end
+%     
+%     if doOutlierCheckPlot
+%         title('Original Responses');
+%         xlabel('Time from Flash Onset');
+%         ylabel('SDs from Overall Mean');
+%         origYLim = ylim();
+%         plot([0 0], [-1000 1000], '-', 'Color', [0.5 0.5 0.5]);
+%         ylim(origYLim);
+%     end
+% end
+% clear channelData channelDataNorm;
+% 
+% % remove outlier flashes
+% fprintf('\tDetected %d outlier flashes. Removing those flashes.\n', sum(isFlashEventOutlier));
+% flashEvents = origFlashEvents;
+% flashEvents(isFlashEventOutlier) = [];
+% nFlashes = numel(flashEvents);
 
 %% plot per channel responses after outlier removal
 fprintf('\nProcessing channel responses after outlier removal...\n');
 
 % recompute baseline (?)
 
-startIndices = round((flashEvents + periFlashWindowOffset(1)) * Fs); 
+startIndices = round((flashEventsClean + periFlashWindowOffset(1)) * Fs); 
 endIndices = startIndices + round(diff(periFlashWindowOffset) * Fs) - 1;
 t = periFlashWindowOffset(1):1/Fs:periFlashWindowOffset(2)-1/Fs;
 nTime = numel(t);
@@ -248,7 +248,7 @@ if strcmp(ref, 'BIP') % not the best method -- may be better to run this script 
         nChannels = 62;
     end
 end
-meanLfpAcrossChannels = nanmean(D.adjLfpsLP, 1);
+meanLfpAcrossChannels = nanmean(channelDataNorm, 1);
 responses = nan(nChannels, nTime, nFlashes);
 for j = 1:nChannels
     % normalize each channel by mean baseline across trials and time and
@@ -260,41 +260,41 @@ for j = 1:nChannels
 %     channelDataBaselined = (channelData - nanmean(averageBaselineResponses(j,:))) / nanstd(averageBaselineResponses(j,:));
 
     if strcmp(ref, 'CAR')
-        channelData = D.adjLfpsLP(j,:) - meanLfpAcrossChannels;
+        channelData = channelDataNorm(j,:) - meanLfpAcrossChannels;
     elseif strcmp(ref, 'BIP')
         if nChannels == 62 && j > 31 % separate the probes properly
-            channelData = D.adjLfpsLP(j+2,:) - D.adjLfpsLP(j+1,:);
+            channelData = channelDataNorm(j+2,:) - channelDataNorm(j+1,:);
         else
-            channelData = D.adjLfpsLP(j+1,:) - D.adjLfpsLP(j,:);
+            channelData = channelDataNorm(j+1,:) - channelDataNorm(j,:);
         end
-    else
-        channelData = D.adjLfpsLP(j,:);
+    else % RAW
+        channelData = channelDataNorm(j,:);
     end
-    channelDataNorm = (channelData - nanmean(channelData)) / nanstd(channelData);
+    channelDataRenorm = (channelData - nanmean(channelData)) / nanstd(channelData);
     
     % can vectorize???
     for i = 1:nFlashes
-        responses(j,:,i) = channelDataNorm(startIndices(i):endIndices(i));
+        responses(j,:,i) = channelDataRenorm(startIndices(i):endIndices(i));
     end
 end
 
 clear channelData channelDataNorm;
 
 % plot for sanity check
-if doOutlierCheckPlot
-    for j = 1:nChannels
-        figure(fHandles(j)); % recall the old figure handle
-        subaxis(1,2,2);
-        hold on;
-        plot(t, squeeze(responses(j,:,:)));
-        xlim(outlierCheckWindowOffset);
-        title('After Outlier Removal');
-        xlabel('Time from Flash Onset');
-        origYLim = ylim();
-        plot([0 0], [-1000 1000], '-', 'Color', [0.5 0.5 0.5]);
-        ylim(origYLim);
-    end
-end
+% if doOutlierCheckPlot
+%     for j = 1:nChannels
+%         figure(fHandles(j)); % recall the old figure handle
+%         subaxis(1,2,2);
+%         hold on;
+%         plot(t, squeeze(responses(j,:,:)));
+%         xlim(outlierCheckWindowOffset);
+%         title('After Outlier Removal');
+%         xlabel('Time from Flash Onset');
+%         origYLim = ylim();
+%         plot([0 0], [-1000 1000], '-', 'Color', [0.5 0.5 0.5]);
+%         ylim(origYLim);
+%     end
+% end
 
 %% subtract out baseline
 % units are standard deviations from baselined mean
@@ -408,6 +408,3 @@ end
 
 plotFileName = sprintf('%s/%s_%s_lfpColorBounds.png', processedDataDir, plotFileNamePrefix, ref);
 export_fig(plotFileName);
-
-
-
