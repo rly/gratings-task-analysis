@@ -11,11 +11,11 @@ for j = 1:nChannels
     isSpikeTimeThisCh = false(1, nTime);
     unitsThisCh = findAllUnitsOnCh(allSpikeStructs, channelIDs(j));
     for k = 1:numel(unitsThisCh)
-        if ceil(allSpikeStructs{k}.ts(end) * lfpFs) > nTime
+        if floor(allSpikeStructs{k}.ts(end) * lfpFs) > nTime
             error('Spikes extend past LFP array time');
         end
-        isSpikeTimeThisCh(floor(allSpikeStructs{k}.ts * lfpFs)) = true;
-        isSpikeTimeThisCh(ceil(allSpikeStructs{k}.ts * lfpFs)) = true;
+        isSpikeTimeThisCh(max(1, floor(allSpikeStructs{k}.ts * lfpFs))) = true;
+        isSpikeTimeThisCh(min(nTime, ceil(allSpikeStructs{k}.ts * lfpFs))) = true;
     end
     ix = 1:size(adjLfps, 2);
     adjLfpsClean(j,isSpikeTimeThisCh) = interp1(ix(~isSpikeTimeThisCh), adjLfps(j,~isSpikeTimeThisCh), ix(isSpikeTimeThisCh));
