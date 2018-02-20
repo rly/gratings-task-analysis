@@ -23,3 +23,8 @@ btm = max(0, scrsz(4) - hp - yp - 79); % adjust -79 for windows title bar
 
 fig_h = figure('Position', [left btm wp hp], 'Color', 'w');
 subaxis(1, 1, 1, 'MR', 0.2/w, 'ML', 0.8/w, 'MB', 0.6/h, 'MT', 0.5/h);
+
+fontSize = 10;
+defDpi = get(0, 'ScreenPixelsPerInch');
+fontSizeAdj = fontSize * dpi / defDpi;
+set(gca, 'FontSize', fontSizeAdj);
