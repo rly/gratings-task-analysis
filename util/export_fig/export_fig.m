@@ -195,6 +195,15 @@ else
     % Get the old InvertHardcopy mode
     old_mode = get(fig, 'InvertHardcopy');
 end
+
+% added by rly: adjust FontSize, LineWidth, SizeData, MarkerSize to match
+% DPI 96 (windows default)
+dpiScale = 96 / get(0, 'ScreenPixelsPerInch');
+ax = findall(gcf, 'Type', 'axes');
+for i = 1:numel(ax)
+    set(ax(i), 'FontSize', get(ax(i), 'FontSize') * dpiScale);
+end
+
 % Hack the font units where necessary (due to a font rendering bug in
 % print?). This may not work perfectly in all cases. Also it can change the
 % figure layout if reverted, so use a copy.
