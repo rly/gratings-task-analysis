@@ -83,7 +83,7 @@ xlabel('Time from Pre-Flashes Marker (s)');
 title('Mean Baseline Activity on Each Channel');
 
 plotFileName = sprintf('%s/%s_baseline.png', processedDataDir, plotFileNamePrefix);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% plot baseline responses overlaid
 figure_tr_inch(6, 5, 6, 0);
@@ -93,7 +93,7 @@ xlabel('Time from Pre-Flashes Marker (s)');
 title('Mean Baseline Activity on Each Channel');
 
 plotFileName = sprintf('%s/%s_baselineOverlaid.png', processedDataDir, plotFileNamePrefix);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% plot expanded range around trial onset
 fPlot = figure_tr_inch(16, 5, 0, 6);
@@ -105,7 +105,7 @@ title('Mean Baseline Activity on Each Channel');
 xlim(expandedPlotWindowOffset);
 
 plotFileName = sprintf('%s/%s_baselineExpanded.png', processedDataDir, plotFileNamePrefix);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% plot flash responses overlaid
 figure_tr_inch(6, 5, 6, 0);
@@ -115,7 +115,7 @@ xlabel('Time from Pre-Flashes Marker (s)');
 title('Mean Baseline Activity on Each Channel');
 
 plotFileName = sprintf('%s/%s_baselineExpandedOverlaid.png', processedDataDir, plotFileNamePrefix);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% plot expanded range around trial onset after cross-channel CAR
 fPlot = figure_tr_inch(16, 5, 0, 6);
@@ -127,7 +127,7 @@ title('Mean Baseline Activity on Each Channel (CAR)');
 xlim(expandedPlotWindowOffset);
 
 plotFileName = sprintf('%s/%s_baselineCARExpanded.png', processedDataDir, plotFileNamePrefix);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% plot expanded range around trial onset after cross-channel BIP
 % works only for one channel right now
@@ -140,7 +140,7 @@ title('Mean Baseline Activity on Each Channel (BIP)');
 xlim(expandedPlotWindowOffset);
 
 plotFileName = sprintf('%s/%s_baselineBIPExpanded.png', processedDataDir, plotFileNamePrefix);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% plot per channel responses after outlier removal
 fprintf('\nProcessing channel responses after outlier removal...\n');
@@ -242,7 +242,7 @@ plot([0.035 0.035], origYLim, 'm-');
 text(0.04, -(nChannels + 1), '35 ms', 'Color', 'm');
 
 plotFileName = sprintf('%s/%s_%s_lfpLines.png', processedDataDir, plotFileNamePrefix, ref);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% staggered channel color plot of average visually evoked LFP
 figure_tr_inch(8, 10);
@@ -271,7 +271,7 @@ plot([0.035 0.035], [0 nChannels+1], 'm-');
 text(0.04, nChannels+0.15, '35 ms', 'Color', 'm');
 
 plotFileName = sprintf('%s/%s_%s_lfpColor.png', processedDataDir, plotFileNamePrefix, ref);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% plot boxes around areas abs() > thresh over last plot and re-save
 boxAbsThresh = 0.25;
@@ -304,4 +304,4 @@ for k = 1:length(strongResponseGroupBoundaries)
 end
 
 plotFileName = sprintf('%s/%s_%s_lfpColorBounds.png', processedDataDir, plotFileNamePrefix, ref);
-export_fig(plotFileName);
+export_fig(plotFileName, '-nocrop');

@@ -200,6 +200,7 @@ end
 % DPI 96 (windows default)
 % not perfect -- the colorbar size and scatter point size don't match
 % across OS -- but good enough
+fig = copyobj(fig, 0);
 dpiAxAdjustProps = {'FontSize', 'LineWidth', 'SizeData', 'MarkerSize'};
 dpiScale = 96 / get(0, 'ScreenPixelsPerInch');
 ax = [findall(gcf, 'Type', 'axes'); findall(gcf, 'Type', 'text'); findall(gcf, 'Type', 'line'); ...
@@ -491,6 +492,7 @@ else
     for a = 1:numel(Hlims)
         set(Hlims(a), 'XLimMode', Xlims{a}, 'YLimMode', Ylims{a}, 'ZLimMode', Zlims{a}, 'XTickMode', Xtick{a}, 'YTickMode', Ytick{a}, 'ZTickMode', Ztick{a});
     end
+    close(fig); % close the clone -- added by rly
 end
 end
 
