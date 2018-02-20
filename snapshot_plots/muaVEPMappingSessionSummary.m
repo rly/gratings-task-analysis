@@ -26,7 +26,11 @@ R = recordingInfo(sessionInd);
 sessionName = R.sessionName;
 areaName = R.areaName;
 
-processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
+scriptName = 'MUA_VEPM';
+processedDataDir = sprintf('%s/%s/%s', processedDataRootDir, sessionName, scriptName);
+if exist(processedDataDir, 'dir') == 0
+    mkdir(processedDataDir);
+end
 
 blockIndices = R.vepmIndices;
 blockName = strjoin(R.blockNames(blockIndices), '-');

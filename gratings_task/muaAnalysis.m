@@ -38,7 +38,8 @@ assert(numel(muaChannelsToLoad) == 1);
 
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
-        dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, 'Gratings', 1, 0);
+        dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, ...
+        'Gratings', 'Gratings', 1, 0);
 sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);

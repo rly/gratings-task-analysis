@@ -1,6 +1,6 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, isLoadMua, isLoadLfp)
+        sessionInd, channelsToLoad, taskName, scriptName, isLoadMua, isLoadLfp)
 % loads MUA data and eyetracking/lever data into D struct and recording
 % metadata into R struct
 
@@ -26,7 +26,11 @@ R.spkcChannelsToLoad = NaN;
 D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, R.areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
         R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
 
-processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
+processedDataDirPre = sprintf('%s/%s', processedDataRootDir, sessionName);
+if exist(processedDataDirPre, 'dir') == 0
+    mkdir(processedDataDirPre);
+end
+processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
 if exist(processedDataDir, 'dir') == 0
     mkdir(processedDataDir);
 end

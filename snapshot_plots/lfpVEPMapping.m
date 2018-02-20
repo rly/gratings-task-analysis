@@ -29,7 +29,7 @@ assert(numel(channelsToLoad) > 1);
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, 'VEPM', 1, 1);
+        sessionInd, channelsToLoad, 'VEPM', 'LFP_VEPM', 1, 1);
 sessionName = R.sessionName;
 areaName = R.areaName;
 
@@ -61,24 +61,15 @@ expandedPlotWindowOffset = [-0.5 1.5]; % seconds - 150ms minimum between flashes
 % NOTE: for some early sessions, there were only 3 flashes per trial and so
 % expandedPlot should only go until 1.5 s
 
-maxAbsYNonOutlier = 1000;
-outlierMaxSD = 6;
-outlierCheckWindowOffset = periFlashWindowOffset; 
-
 plotFileNamePrefix = sprintf('%s_%s_ch%d-ch%d_%s-FPall', sessionName, areaName, channelsToLoad([1 end]), blockName);
 
 %% preprocess LFPs
-% assert(numel(D.fragTs) == 1);
-% origFlashEvents = D.events{6} - D.fragTs(1); % adjust so that fragTs is not needed - just index
-% preFlashesEvents = D.events{5} - D.fragTs(1);
-% flashOnsets = flashOnsets - D.fragTs(1);
-% nFlashes = numel(flashOnsets);
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
 
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
-[~,channelDataNorm,flashEventsClean,isEventOutlier] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, origFlashEvents);
+[channelDataNorm,flashEventsClean] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, origFlashEvents);
 D.adjLfps = [];
 D.adjLfpsClean = [];
 nFlashes = numel(flashEventsClean);
@@ -151,77 +142,6 @@ xlim(expandedPlotWindowOffset);
 plotFileName = sprintf('%s/%s_baselineBIPExpanded.png', processedDataDir, plotFileNamePrefix);
 export_fig(plotFileName);
 
-%% detect events with outlier activity (e.g. amp saturated)
-% fprintf('\nProcessing channel responses and removing outliers...\n');
-% 
-% outlierCheckStartIndices = round((flashEventsClean + outlierCheckWindowOffset(1)) * Fs); 
-% outlierCheckEndIndices = outlierCheckStartIndices + round(diff(outlierCheckWindowOffset) * Fs) - 1;
-% outlierCheckT = outlierCheckWindowOffset(1):1/Fs:outlierCheckWindowOffset(2)-1/Fs;
-% nOutlierCheckTime = numel(outlierCheckT);
-% assert(all(nOutlierCheckTime == (outlierCheckEndIndices - outlierCheckStartIndices + 1)));
-% 
-% isFlashEventOutlier = false(nFlashes, 1);
-% fprintf('Checking for flashes with outlier activity (e.g. amp saturated)...');
-% 
-% % do CAR for outlier removal
-% meanLfpAcrossChannels = nanmean(channelDataNorm, 1);
-% for j = 1:nChannels
-%     fprintf('Processing %s...\n', D.lfpNames{j});
-%     
-%     channelData = channelDataNorm(j,:) - meanLfpAcrossChannels;
-%     
-%     % normalize each channel by its mean and standard deviation
-%     % units are now standard deviations away from the mean
-%     channelDataNorm = (channelData - nanmean(channelData)) / nanstd(channelData);
-%     
-%     % plot per channel responses before outlier removal
-%     if doOutlierCheckPlot
-%         fHandles(j) = figure_tr_inch(12,6);
-%         suptitle(sprintf('Outlier Check on Channel %d', j));
-%         subaxis(1,2,1);
-%         hold on;
-%     end
-%     
-%     for i = 1:nFlashes
-%         dataInOutlierCheckPeriod = channelDataNorm(outlierCheckStartIndices(i):outlierCheckEndIndices(i));
-%         % mark outlier flashes
-%         if any(isnan(dataInOutlierCheckPeriod))
-%             isFlashEventOutlier(i) = 1;
-%             fprintf('\tDetected outlier flash (index %d) because of NaN (%d time points) in trial\n', ...
-%                     i, sum(isnan(dataInOutlierCheckPeriod)));
-%         elseif any(abs(dataInOutlierCheckPeriod) > maxAbsYNonOutlier)
-%             isFlashEventOutlier(i) = 1;
-%             fprintf('\tDetected outlier flash (index %d) because absolute value of voltage in trial is too high (%d time points > %0.1f)\n', ...
-%                     i, sum(abs(dataInOutlierCheckPeriod) > maxAbsYNonOutlier), maxAbsYNonOutlier);
-%         elseif any(abs(dataInOutlierCheckPeriod) > outlierMaxSD)
-%             isFlashEventOutlier(i) = 1;
-%             fprintf('\tDetected outlier flash (index %d) because voltage in trial is too extreme (%d time points > %d SDs)\n', ...
-%                     i, sum(abs(dataInOutlierCheckPeriod) > outlierMaxSD), outlierMaxSD);
-%         end
-%     
-%         if doOutlierCheckPlot
-%             plot(outlierCheckT, dataInOutlierCheckPeriod);
-%             xlim(outlierCheckWindowOffset);
-%         end
-%     end
-%     
-%     if doOutlierCheckPlot
-%         title('Original Responses');
-%         xlabel('Time from Flash Onset');
-%         ylabel('SDs from Overall Mean');
-%         origYLim = ylim();
-%         plot([0 0], [-1000 1000], '-', 'Color', [0.5 0.5 0.5]);
-%         ylim(origYLim);
-%     end
-% end
-% clear channelData channelDataNorm;
-% 
-% % remove outlier flashes
-% fprintf('\tDetected %d outlier flashes. Removing those flashes.\n', sum(isFlashEventOutlier));
-% flashEvents = origFlashEvents;
-% flashEvents(isFlashEventOutlier) = [];
-% nFlashes = numel(flashEvents);
-
 %% plot per channel responses after outlier removal
 fprintf('\nProcessing channel responses after outlier removal...\n');
 
@@ -272,29 +192,14 @@ end
 
 clear channelData channelDataNorm;
 
-% plot for sanity check
-% if doOutlierCheckPlot
-%     for j = 1:nChannels
-%         figure(fHandles(j)); % recall the old figure handle
-%         subaxis(1,2,2);
-%         hold on;
-%         plot(t, squeeze(responses(j,:,:)));
-%         xlim(outlierCheckWindowOffset);
-%         title('After Outlier Removal');
-%         xlabel('Time from Flash Onset');
-%         origYLim = ylim();
-%         plot([0 0], [-1000 1000], '-', 'Color', [0.5 0.5 0.5]);
-%         ylim(origYLim);
-%     end
-% end
-
 %% subtract out baseline
 % units are standard deviations from baselined mean
-averageResponse = mean(responses, 3);
+averageResponse = mean(responses, 3); % average across flashes
 
+% subtract mean baseline activity (-0.1, 0] seconds before flash
 flashBaselineWindowOffset = [-0.1 0];
 
-% baseline correct based on (-0.1, 0] mean activity before flash
+% TODO make so that baseline can have arbitrary end time
 indexFlashTime = -round(periFlashWindowOffset(1) * Fs);
 indexStartBaselineFlashTime = -round((periFlashWindowOffset(1) - flashBaselineWindowOffset(1)) * Fs) + 1;
 for j = 1:nChannels

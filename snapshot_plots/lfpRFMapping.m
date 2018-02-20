@@ -25,7 +25,7 @@ assert(numel(channelsToLoad) > 1);
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, 'RFM_OLD', 1, 1);
+        sessionInd, channelsToLoad, 'RFM_OLD', 'LFP_RFM', 1, 1);
 
 %%
 % task as of 1/10/17 (or earlier)
@@ -59,17 +59,12 @@ gratingAnglesUnique = (0:3)*pi/4;
 nFlashes = numel(flashOnsets);
 
 %% preprocess LFPs
-% assert(numel(D.fragTs) == 1);
-% origFlashEvents = D.events{6} - D.fragTs(1); % adjust so that fragTs is not needed - just index
-% preFlashesEvents = D.events{5} - D.fragTs(1);
-% flashOnsets = flashOnsets - D.fragTs(1);
-% nFlashes = numel(flashOnsets);
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
 
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
-[~,channelDataNorm,flashOnsetsClean,isEventOutlier] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, flashOnsets);
+[channelDataNorm,flashOnsetsClean,isEventOutlier] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, flashOnsets);
 D.adjLfps = [];
 D.adjLfpsClean = [];
 

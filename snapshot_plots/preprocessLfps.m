@@ -1,17 +1,18 @@
-function [adjLfpsLP,channelDataNorm,eventOnsetClean,isEventOutlier] = preprocessLfps(adjLfps, Fs, channelNames, eventOnset)
+function [channelDataNorm,eventOnsetClean,isEventOutlier] = preprocessLfps(adjLfps, Fs, channelNames, eventOnset)
+% remove events with outlier data and apply CAR and low-pass filtering to adjLfps
 
 doOutlierCheckPlot = 0;
 
 maxAbsYNonOutlier = 1000;%0.25;
-outlierMaxSDStep1 = 6;
-outlierMaxSDStep2 = 4.5;
-outlierCheckWindowOffset = [-0.25 0.3]; % around event
+outlierMaxSDStep1 = 6; % first-pass threshold before LPF
+outlierMaxSDStep2 = 4.5; % second-pass threshold after LPF
+outlierCheckWindowOffset = [-0.25 0.3]; % seconds around event
+
+isNanOrig = isnan(adjLfps); % track nans in original data
 
 nEvents = numel(eventOnset);
 nChannels = size(adjLfps, 1);
-assert(nChannels > 1);
-
-isNanOrig = isnan(adjLfps);
+%assert(nChannels == 32);
 
 %% do common average reference first
 adjLfpsCAR = adjLfps - nanmean(adjLfps, 1);
@@ -32,11 +33,13 @@ for j = 1:nChannels
     end
     % TODO probably bad just to zero it out instead of smoothly dealing
     % with it or NaNing it. fix this with filtering or case by case
+    % replace outlier time points with the average for this channel
     adjLfpsCAR(j,extremeIndices) = meanAdjLfp; 
 end
 
 %% low-pass filter data even further
-% ideally don't low-pass at 300 and then again at another freq
+% ideally don't low-pass at 300 Hz and then again at another freq
+% use FIR1 filter
 fprintf('Low-pass filtering...\n');
 hiCutoffFreqCustom = 100; % low-pass filter at 100 Hz
 bFirLowPassCustom = fir1(3*fix(Fs/hiCutoffFreqCustom), hiCutoffFreqCustom/(Fs/2), 'low');
@@ -50,6 +53,17 @@ adjLfpsLP(isNanOrig) = NaN;
 %% temp
 % for j = 1:nChannels, figure; plot(adjLfpsLP(j,:)); end
 
+%% redo common average reference
+adjLfpsLpCAR = adjLfpsLP - nanmean(adjLfpsLP, 1);
+clear adjLfpsLP;
+
+%% normalize
+% normalize each channel by its mean and standard deviation
+% units are now standard deviations away from the mean
+channelDataNorm = (adjLfpsLpCAR - nanmean(adjLfpsLpCAR, 2)) ./ nanstd(adjLfpsLpCAR, 0, 2);
+assert(all(size(adjLfpsLpCAR) == size(channelDataNorm)));
+clear adjLfpsLpCAR;
+
 %% detect events with outlier activity (e.g. amp saturated)
 outlierCheckStartIndices = round((eventOnset + outlierCheckWindowOffset(1)) * Fs); 
 outlierCheckEndIndices = outlierCheckStartIndices + round(diff(outlierCheckWindowOffset) * Fs) - 1;
@@ -59,14 +73,9 @@ assert(all(nOutlierCheckTime == (outlierCheckEndIndices - outlierCheckStartIndic
 
 isEventOutlier = false(nEvents, 1);
 fprintf('Checking for events with outlier activity (e.g. amp saturated)...\n');
-channelDataNorm = nan(size(adjLfpsLP));
 for j = 1:nChannels
     fprintf('\tProcessing %s...\n', channelNames{j});
-    
-    % normalize each channel by its mean and standard deviation
-    % units are now standard deviations away from the mean
-    channelDataNorm(j,:) = (adjLfpsLP(j,:) - nanmean(adjLfpsLP(j,:))) / nanstd(adjLfpsLP(j,:)); % re-CAR?
-    
+        
     % plot per channel responses before outlier removal
     if doOutlierCheckPlot
         fHandles(j) = figure_tr_inch(12,6);
@@ -79,7 +88,6 @@ for j = 1:nChannels
         dataInOutlierCheckPeriod = channelDataNorm(j,outlierCheckStartIndices(i):outlierCheckEndIndices(i));
         % mark outlier flashes
         if any(isnan(dataInOutlierCheckPeriod))
-            % shouldn't happen b/c of the zeroing out earlier
             isEventOutlier(i) = 1;
             fprintf('\t\tFlash %d: Detected %d outlier time points because of NaN in trial\n', ...
                     i, sum(isnan(dataInOutlierCheckPeriod)));
@@ -111,37 +119,33 @@ end
 % remove outlier flashes
 fprintf('Detected %d outlier events out of %d.\n', sum(isEventOutlier), nEvents);
 eventOnsetClean = eventOnset(~isEventOutlier);
-nEventsClean = numel(eventOnsetClean);
 
 %% plot per channel responses after outlier removal
-
 % TODO recompute baseline (?)
-
-startIndices = round((eventOnsetClean + outlierCheckWindowOffset(1)) * Fs); 
-endIndices = startIndices + round(diff(outlierCheckWindowOffset) * Fs) - 1;
-t = outlierCheckWindowOffset(1):1/Fs:outlierCheckWindowOffset(2)-1/Fs;
-nTime = numel(t);
-assert(all(nTime == (endIndices - startIndices + 1)));
-
-fprintf('Collecting flash responses...\n');
-responses = nan(nChannels, nTime, nEventsClean);
-for j = 1:nChannels
-    % normalize each channel by mean baseline across trials and time and
-    % std across time of mean baseline across trials
-    % TODO: bar plot of average baseline response and std by channel
-    fprintf('\tProcessing %s...\n', channelNames{j});
-    
-%     channelDataBaselined{j} = (channelData{j} - nanmean(averageBaselineResponses(j,:))) / nanstd(averageBaselineResponses(j,:));
-
-    % can vectorize???
-    for i = 1:nEventsClean
-        responses(j,:,i) = channelDataNorm(j,startIndices(i):endIndices(i));
-    end
-end
-
 % plot for sanity check
 if doOutlierCheckPlot
+    nEventsClean = numel(eventOnsetClean);
+    startIndices = round((eventOnsetClean + outlierCheckWindowOffset(1)) * Fs); 
+    endIndices = startIndices + round(diff(outlierCheckWindowOffset) * Fs) - 1;
+    t = outlierCheckWindowOffset(1):1/Fs:outlierCheckWindowOffset(2)-1/Fs;
+    nTime = numel(t);
+    assert(all(nTime == (endIndices - startIndices + 1)));
+
+    fprintf('Collecting flash responses...\n');
+    responses = nan(nChannels, nTime, nEventsClean);
     for j = 1:nChannels
+        % normalize each channel by mean baseline across trials and time and
+        % std across time of mean baseline across trials
+        % TODO: bar plot of average baseline response and std by channel
+        fprintf('\tProcessing %s...\n', channelNames{j});
+
+    %     channelDataBaselined{j} = (channelData{j} - nanmean(averageBaselineResponses(j,:))) / nanstd(averageBaselineResponses(j,:));
+
+        % can vectorize???
+        for i = 1:nEventsClean
+            responses(j,:,i) = channelDataNorm(j,startIndices(i):endIndices(i));
+        end
+
         figure(fHandles(j));
         subaxis(1,2,2);
         hold on;
