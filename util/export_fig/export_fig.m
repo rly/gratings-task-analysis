@@ -198,10 +198,15 @@ end
 
 % added by rly: adjust FontSize, LineWidth, SizeData, MarkerSize to match
 % DPI 96 (windows default)
+dpiAxAdjustProps = {'FontSize', 'LineWidth', 'SizeData', 'MarkerSize'};
 dpiScale = 96 / get(0, 'ScreenPixelsPerInch');
-ax = findall(gcf, 'Type', 'axes');
+ax = [findall(gcf, 'Type', 'axes'); findall(gcf, 'Type', 'text'); findall(gcf, 'Type', 'legend')];
 for i = 1:numel(ax)
-    set(ax(i), 'FontSize', get(ax(i), 'FontSize') * dpiScale);
+    for j = 1:numel(dpiAxAdjustProps)
+        if isprop(ax(i), dpiAxAdjustProps{j})
+            set(ax(i), dpiAxAdjustProps{j}, get(ax(i), dpiAxAdjustProps{j}) * dpiScale);
+        end
+    end
 end
 
 % Hack the font units where necessary (due to a font rendering bug in
