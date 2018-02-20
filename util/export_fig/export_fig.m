@@ -199,9 +199,11 @@ end
 % added by rly: adjust FontSize, LineWidth, SizeData, MarkerSize to match
 % DPI 96 (windows default)
 dpiAxAdjustProps = {'FontSize', 'LineWidth', 'SizeData', 'MarkerSize'};
-dpiScale = 96 / get(0, 'ScreenPixelsPerInch');
-ax = [findall(gcf, 'Type', 'axes'); findall(gcf, 'Type', 'text'); findall(gcf, 'Type', 'legend'); ...
-        findall(gcf, 'Type', 'line'); findall(gcf, 'Type', 'scatter'); findall(gcf, 'Type', 'colorbar')];
+dpiScale = 48 / get(0, 'ScreenPixelsPerInch');
+ax = [findall(gcf, 'Type', 'axes'); findall(gcf, 'Type', 'text'); findall(gcf, 'Type', 'line'); ...
+        findall(gcf, 'Type', 'scatter')];
+% ax = [findall(gcf, 'Type', 'axes'); findall(gcf, 'Type', 'text'); findall(gcf, 'Type', 'legend'); ...
+%         findall(gcf, 'Type', 'line'); findall(gcf, 'Type', 'scatter'); findall(gcf, 'Type', 'colorbar')];
 for i = 1:numel(ax)
     for j = 1:numel(dpiAxAdjustProps)
         if isprop(ax(i), dpiAxAdjustProps{j})
