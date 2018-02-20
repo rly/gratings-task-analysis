@@ -1,10 +1,10 @@
-function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
+function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ref)
 % LFP VEP Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
 
 %% LFP VEP mapping parameters
-ref = 'RAW'; % CAR, BIP, or some other code, e.g. RAW. CAR recommended
+% ref = 'RAW'; % CAR, BIP, or some other code, e.g. RAW. CAR recommended
 
 %% setup and load data
 v = 10;
