@@ -1,4 +1,4 @@
-% function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ref)
+function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ref)
 % LFP VEP Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
