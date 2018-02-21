@@ -1,4 +1,4 @@
-function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ref)
+% function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ref)
 % LFP VEP Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
@@ -237,9 +237,10 @@ origYLim = [minYLim maxYLim]; % ylim();
 plot([0 0], [-1000 1000], '-', 'Color', 0.3*ones(3, 1));
 ylim(origYLim);
 
-% plot early latency line at 35ms
-plot([0.035 0.035], origYLim, 'm-');
-text(0.04, -(nChannels + 1), '35 ms', 'Color', 'm');
+% plot early latency line at 35 ms, 45 ms
+plot([0.035 0.035], [-1000 1000], 'm-');
+plot([0.045 0.045], [-1000 1000], 'm-');
+text(0.050, minYLim+1, '35-45 ms', 'Color', 'm');
 
 plotFileName = sprintf('%s/%s_%s_lfpLines.png', processedDataDir, plotFileNamePrefix, ref);
 export_fig(plotFileName, '-nocrop');
@@ -266,9 +267,10 @@ if (nChannels > 31 && strcmp(ref, 'BIP')) || (nChannels > 32 && strcmp(ref, 'CAR
     plot(xlim(), [nChannels/2+0.5 nChannels/2+0.5], 'Color', 0.3*ones(3, 1));
 end
 
-% plot early latency line at 35ms
-plot([0.035 0.035], [0 nChannels+1], 'm-');
-text(0.04, nChannels+0.15, '35 ms', 'Color', 'm');
+% plot early latency line at 35 ms, 45 ms
+plot([0.035 0.035], [-1000 1000], 'm-');
+plot([0.045 0.045], [-1000 1000], 'm-');
+text(0.050, nChannels, '35-45 ms', 'Color', 'm');
 
 plotFileName = sprintf('%s/%s_%s_lfpColor.png', processedDataDir, plotFileNamePrefix, ref);
 export_fig(plotFileName, '-nocrop');
@@ -304,4 +306,29 @@ for k = 1:length(strongResponseGroupBoundaries)
 end
 
 plotFileName = sprintf('%s/%s_%s_lfpColorBounds.png', processedDataDir, plotFileNamePrefix, ref);
+export_fig(plotFileName, '-nocrop');
+
+%% plot vertical line plot of mean activity between 35 and 45 ms after flash
+% TODO mark which ones are more than 2 SDs from baseline for that channel
+
+earlyActivityWindowOffset = [0.035 0.045];
+earlyActivityTLogical = getTimeLogicalWithTolerance(t, earlyActivityWindowOffset);
+meanEarlyActivity = mean(averageResponse(:,earlyActivityTLogical), 2);
+channelIndices = 1:nChannels;
+
+figure_tr_inch(7, 8);
+subaxis(1, 1, 1, 'ML', 0.12, 'MB', 0.11, 'MR', 0.05);
+hold on;
+plot(meanEarlyActivity, channelIndices, '.--', 'MarkerSize', 25, 'LineWidth', 2, 'Color', lines(1));
+plot([0 0], channelIndices([1 end]) + [-1 1], '-', 'Color', 0.3*ones(3, 1));
+set(gca, 'FontSize', 16);
+set(gca, 'YDir', 'reverse');
+xlabel('Mean Early Response to Flash (Overall SDs)');
+ylabel('Channel Number');
+grid on;
+ylim(channelIndices([1 end]) + [-1 1]);
+xlim([-1 1] * max(abs(xlim())));
+title(sprintf('%s %s - Mean Early Response (%d-%d ms)', sessionName, areaName, earlyActivityWindowOffset * 1000));
+
+plotFileName = sprintf('%s/%s_%s_meanEarlyResponse.png', processedDataDir, plotFileNamePrefix, ref);
 export_fig(plotFileName, '-nocrop');
