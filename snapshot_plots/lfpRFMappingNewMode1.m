@@ -1,68 +1,50 @@
+% function lfpRFMappingNewMode1(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
+% LFP RF Mapping, all channels on a probe
+% can't really do one channel at a time because of Common Average
+% Referencing
 
-clear;
-processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
-dataDirRoot = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-data/';
+% TODO: incorporate shuffle test. what is probability of a peak in smoothed
+% map of that amplitude if there is no difference between conditions
+% computationally intensive: shuffle trials
+% easier: shuffle conditions around map
 
-% sessionInd = 1; blockInds = [3 10]; % until there is a better way
-% sessionInd = 2; blockInds = 2; % until there is a better way
-% sessionInd = 3; blockInds = 2; % until there is a better way
-% sessionInd = 4; blockInds = 2; % until there is a better way
-
-sessionInd = 8; blockInds = 4; % until there is a better way
-rfmResultsFiles = {'multi_flash_rf_mapping_results_20170608-155719.json'};%, ...
-%     'multi_flash_rf_mapping_results_20170608-160603.json', ...
-%     'multi_flash_rf_mapping_results_20170608-160844.json', ...
-%     'multi_flash_rf_mapping_results_20170608-161651.json'};
-
-%% load recording information
-recordingInfo = readRecordingInfo();
-struct2var(recordingInfo(sessionInd));
-pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
+sessionInd = 28;
+channelsToLoad = 33:64;%1:32;
+recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';%'Y:/rly/gratings-task-analysis/processed_data/';
+dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data';%'Z:/ryanly/McCartney/originals/';
+muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170608';%'Y:/rly/simple-mua-detection/processed_data/';
+rfMappingNewInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/rfMappingNewInfo.csv';
 
 %% setup and load data
-fprintf('\n-------------------------------------------------------\n');
-fprintf('RF Mapping Analysis - LFPs\n');
-fprintf('Loading %s...\n', pl2FileName);
-
+v = 11;
+rfMappingNewMode = 1;
 tic;
-isLoadSpikes = 1;
-isLoadLfp = 1;
-isLoadSpkc = 0;
-isLoadDirect = 0;
-D = loadPL2(pl2FilePath, sessionName, areaName, isLoadSpikes, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        spikeChannelPrefix, spikeChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
 
-processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
-if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
-end
-fprintf('... done (%0.2f s).\n', toc);
+fprintf('\n-------------------------------------------------------\n');
+fprintf('RF Mapping Analysis - LFP\n');
+fprintf('RF Mapping Mode: %d\n', rfMappingNewMode);
+fprintf('Session index: %d\n', sessionInd);
+fprintf('LFP Channel to Load: %d\n', channelsToLoad);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('RF Mapping New Info file name: %s\n', rfMappingNewInfoFileName);
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Data root dir: %s\n', dataDirRoot);
+fprintf('MUA data root dir: %s\n', muaDataDirRoot);
+fprintf('Version: %d\n', v);
+fprintf('------------------------\n');
 
-blockName = strjoin(blockNames(blockInds), '-');
+%% input check
+% assert(numel(channelsToLoad) == 1);
+assert(numel(channelsToLoad) > 1);
 
-rfmResultsRoot = sprintf('%s/%s/%s/', dataDirRoot, sessionName, sessionName(2:end));
-
-%% remove spike and event times not during RFM task to save memory
-D = trimSpikeTimesAndEvents(D, blockInds);
-D = adjustSpikeTimesLfpsAndEvents(D, blockInds);
+%% load recording information
+[R, D, processedDataDir, blockName] = loadRecordingData(...
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
+        sessionInd, channelsToLoad, 'RFM_NEW', 'LFP_RFM', 1, 1, rfMappingNewInfoFileName, rfMappingNewMode);
+sessionName = R.sessionName;
 
 %%
-% task as of 1/10/17 (or earlier)
-% 325ms fixation
-% 25ms of pre-flashes period (continued fixation)
-% up to N=4 flashes, each 100ms duration, separated by 200ms ISI
-% 250-500ms after 5th flash until FP dims
-% 260-775ms after FP dims is correct response window
-% 4 distances to fixation 150:60:330
-% 11 polar angles (-5:5)*pi/8
-% 4 grating orientations (0:3)*pi/4
-% 3 reps each
-
-% EVT05 - begin pre-cue period
-% EVT06 - flash onset
-% EVT07 - FP dim
-% EVT08 - juice onset
-
 doOutlierCheckPlot = 0;
 
 periFlashWindowOffset = [-0.25 0.3]; % ms around flash
@@ -74,37 +56,9 @@ maxAbsYNonOutlier = 1000;%0.25;
 outlierMaxSDStep1 = 6;
 outlierMaxSDStep2 = 4.5;
 outlierCheckWindowOffset = periFlashWindowOffset; 
-
-%%
-% task as of 1/10/17 (or earlier)
-% 325ms fixation
-% 25ms of pre-flashes period (continued fixation)
-% up to N=4 flashes, each 100ms duration, separated by 200ms ISI
-% 250-500ms after 5th flash until FP dims
-% 260-775ms after FP dims is correct response window
-% 4 distances to fixation 150:60:330
-% 11 polar angles (-5:5)*pi/8
-% 4 grating orientations (0:3)*pi/4
-% 3 reps each
-
-% EVT05 - begin pre-cue period
-% EVT06 - flash onset
-% EVT07 - FP dim
-% EVT08 - juice onset
-
-% % update based on the PCL code
-% % 4 possible, coded in events 9-10: 01, 01, 10, 11, in the order below
-% distsToFix = [180 240 320];
-% % 7 possible, coded in events 11-14: 0001, 0010, ..., 1011, in the order below
-% polarAngles = (-5:5)*pi/8;
-% % 4 possible, coded in events 15-16: 00, 01, 10, 11, in the order below
-% gratingAngles = (0:3)*pi/4;
-% 
-% [flashOnsets,flashStats] = decodeFlashParams(origFlashEvents, ...
-%         D.events, distsToFix, polarAngles, gratingAngles);
     
 %%
-trialStructs = loadjson([rfmResultsRoot rfmResultsFiles{1}]);
+trialStructs = loadjson(sprintf('%s/%s', R.rfmResultsRootDir, R.rfmResultsFileNames{1})); % for now, just the first file
 
 clear flashParams;
 flashCount = 0;
@@ -234,23 +188,20 @@ flashOnsets(flashesToSkip) = [];
 stimIDs(flashesToSkip) = [];
 nFlashes = numel(flashOnsets);
 
-%%
-% assert(numel(D.fragTs) == 1);
-% origFlashEvents = D.events{6} - D.fragTs(1); % adjust so that fragTs is not needed - just index
-% preFlashesEvents = D.events{5} - D.fragTs(1);
-% flashOnsets = flashOnsets - D.fragTs(1);
-% nFlashes = numel(flashOnsets);
+%% preprocess LFPs
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
 
-plotFileNamePrefix = sprintf('%s_%s_%s_FPall', sessionName, areaName, blockName);
+plotNumSpikesByChannel(channelsToLoad, D.allMUAStructs, processedDataDir, blockName, v);
+D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
-D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, Fs, D.allSpikeStructs);
-
-%%
-[~,channelDataNorm,flashOnsetsClean,isEventOutlier] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, flashOnsets);
+[channelDataNorm,flashOnsetsClean,isEventOutlier,isNoisyChannel] = preprocessLfps(D.adjLfpsClean, ...
+        Fs, D.lfpNames, flashOnsets, processedDataDir, blockName, rfMappingNewMode, v);
 D.adjLfps = [];
 D.adjLfpsClean = [];
+for j = 1:nChannels
+    fprintf('Channel %d: Mean: %0.2f, SD: %0.2f\n', j, nanmean(channelDataNorm(j,:)), nanstd(channelDataNorm(j,:)));
+end
 
 flashParamsClean = flashParams(~isEventOutlier);
 distsToFix = cell2mat({flashParamsClean.distToFix});
@@ -272,15 +223,18 @@ nTime = numel(t);
 analysisWindowOffset = [0.025 0.2];
 analysisWindowLogical = t >= analysisWindowOffset(1) & t < analysisWindowOffset(2); % TODO use getTimeLogicalWithTol fcn
 
-baselineWindowOffset = [-0.175 0];
+baselineWindowOffset = [-0.175 0]; % window size should be the same as above
 baselineWindowLogical = t >= baselineWindowOffset(1) & t < baselineWindowOffset(2);
 
 distsToFixUnique = sort(unique(distsToFix));
 polarAnglesUnique = sort(unique(polarAngles));
 
 averageFlashResponse = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), nTime);
-responseMetric = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
-baselineMetric = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
+averageFlashResponseNorm = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), nTime);
+meanMeanBaselineResponse = nan(numel(distsToFixUnique), numel(polarAnglesUnique));
+sdMeanBaselineResponse = nan(numel(distsToFixUnique), numel(polarAnglesUnique));
+flashResponseMetric = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
+baselineResponseMetric = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
 trialCounts = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
 
 for k = 1:numel(distsToFixUnique)
@@ -301,11 +255,19 @@ for k = 1:numel(distsToFixUnique)
             rawSignals(n,:) = channelDataNorm(j,startIndices(n):endIndices(n));
         end
         averageFlashResponse(k,l,:) = mean(rawSignals, 1); % mean over flashes
-%             averageFlashResponseMeanOverTime(k,l) = mean(abs(averageFlashResponse(k,l,:)));
-        responseMetric(k,l) = max(averageFlashResponse(k,l,analysisWindowLogical)) - ...
-                min(averageFlashResponse(k,l,analysisWindowLogical));
-        baselineMetric(k,l) = max(averageFlashResponse(k,l,baselineWindowLogical)) - ...
-                min(averageFlashResponse(k,l,baselineWindowLogical));
+        meanMeanBaselineResponse(k,l) = mean(averageFlashResponse(k,l,baselineWindowLogical));
+        sdMeanBaselineResponse(k,l) = std(averageFlashResponse(k,l,baselineWindowLogical));
+%         fprintf('Location (%d,%0.2f): Bsaeline Mean: %0.2f, Baseline SD: %0.2f\n', distsToFixUnique(k), polarAnglesUnique(l), ...
+%                 meanMeanBaselineResponse(k,l), sdMeanBaselineResponse(k,l));
+        
+        % per-condition z-score normalization of LFP
+        averageFlashResponseNorm(k,l,:) = (averageFlashResponse(k,l,:) - meanMeanBaselineResponse(k,l)) / sdMeanBaselineResponse(k,l);
+        
+        % response metric: max - min in window
+        flashResponseMetric(k,l) = max(averageFlashResponseNorm(k,l,analysisWindowLogical)) - ...
+                min(averageFlashResponseNorm(k,l,analysisWindowLogical));
+        baselineResponseMetric(k,l) = max(averageFlashResponseNorm(k,l,baselineWindowLogical)) - ...
+                min(averageFlashResponseNorm(k,l,baselineWindowLogical));
     end
 end
 
@@ -361,7 +323,7 @@ rasterByTimeBtm = btm + 0.25;
 waveformBtm = rasterByTimeBtm + rasterByTimeH + 0.1;
 % miniHeatBtm2 = btm + miniHeatH + 0.08;
 
-%%
+%% plot a select subset of trials regardless of condition, offset
 axes('Position', [rasterByTimeLeft1 rasterByTimeBtm rasterByTimeW rasterByTimeH]); 
 hold on;
 
@@ -393,18 +355,18 @@ textParams = {'Units', 'normalized', 'FontSize', 8, 'Interpreter', 'none'};
 text(axBig, -0.03, 0.11, {''}, ...
         textParams{:});
 
-%%
+%% plot b
 axes('Position', [rawLeft1 btm rawW rawH]); 
 hold on;
 channelSep = 1;
 groupSep = (numel(polarAnglesUnique) - 1) / (numel(distsToFixUnique) - 1) * 2;
 count1 = 1;
-yScale = 2;
+yScale = 0.25;
 cols = lines(numel(polarAnglesUnique));
 for k = 1:numel(distsToFixUnique)
     for l = 1:numel(polarAnglesUnique)
         count1 = count1 + channelSep;
-        plot(t, squeeze(averageFlashResponse(k,l,:))*yScale + count1, 'Color', cols(l,:));
+        plot(t, squeeze(averageFlashResponseNorm(k,l,:))*yScale + count1, 'Color', cols(l,:));
     end
     if k < numel(distsToFixUnique)
         count1 = count1 + groupSep;
@@ -426,12 +388,12 @@ hold on;
 channelSep = 1;
 groupSep = 2;
 count2 = 1;
-yScale = 2;
+yScale = 0.25;
 cols = lines(numel(polarAnglesUnique));
 for l = 1:numel(polarAnglesUnique)
     for k = 1:numel(distsToFixUnique)
         count2 = count2 + channelSep;
-        plot(t, squeeze(averageFlashResponse(k,l,:))*yScale + count2, 'Color', cols(l,:));
+        plot(t, squeeze(averageFlashResponseNorm(k,l,:))*yScale + count2, 'Color', cols(l,:));
     end
     if l < numel(polarAnglesUnique)
         count2 = count2 + groupSep;
@@ -451,20 +413,31 @@ assert(count1 == count2); % i.e. the y axes are the same for the two raw plots
 %% make heatmap
 mapScale = 1/10;
 mapDim = round(800 * mapScale) + 1; % x and y: -400 to 400 
-rfmapByOri = zeros(numel(distsToFixUnique), mapDim, mapDim); % extra dim uses all trials
-rfmapByOriCount = zeros(numel(distsToFixUnique), mapDim, mapDim);
-rfmapSmoothByOri = zeros(size(rfmapByOri));
+rfmapCount = zeros(mapDim, mapDim);
+rfmapSmoothAll = zeros(mapDim, mapDim);
 mapXOffset = (mapDim + 1)/2;
 mapYOffset = (mapDim + 1)/2;
 numPixelsPerDegree = 28;
 
-meanAllResponses = mean(responseMetric(:));
-baselineResponse = mean(baselineMetric(:));
-threshold = baselineResponse;
-thresholdName = 'baseline';
+% mean response across conditions with per condition baseline correction
+meanBaselineResponses = mean(baselineResponseMetric(:)); % mean baseline response across conditions
+sdBaselineResponses = std(baselineResponseMetric(:)); % sd baseline response across conditions
+
+% baseline correct and divide by overall SD of baseline responses across
+% conditions in order to account for channel-wise variability and allow for
+% comparisons across channels or sessions
+flashResponseMetricNorm = (flashResponseMetric - baselineResponseMetric) / sdBaselineResponses;
+meanAllFlashResponsesNorm = mean(flashResponseMetricNorm(:));
+sdAllFlashResponsesNorm = std(flashResponseMetricNorm(:));
+maxAllFlashResponsesNorm = max(flashResponseMetricNorm(:));
+
+threshold = 0;
+thresholdName = 'Response == Baseline';
 
 gaussianFilterExtent = mapDim;
+gaussianFiltersByDistToFix = cell(numel(distsToFixUnique), 1);
 for k = 1:numel(distsToFixUnique)
+    % maintain separate maps for each distsToFix because
     % each distToFix has a unique diameter
     matchingDiameters = diameters(distsToFix == distsToFixUnique(k));
     assert(all(matchingDiameters == matchingDiameters(1)))
@@ -476,7 +449,7 @@ for k = 1:numel(distsToFixUnique)
     gaussianFilterSigma = diskDiameter / 2;
     gaussianFilter = fspecial('gaussian', [gaussianFilterExtent gaussianFilterExtent], ...
             gaussianFilterSigma);
-    gaussianFilter = gaussianFilter / max(gaussianFilter(:));
+    gaussianFiltersByDistToFix{k} = gaussianFilter / max(gaussianFilter(:)); % normalize so max is 1
     
      % better way: gaussian filter after uniform filter
     
@@ -495,50 +468,80 @@ for k = 1:numel(distsToFixUnique)
 %     
 %     figure; imagesc(noisyEdgeUniformFilter3); colorbar;
 %     figure; plot(noisyEdgeUniformFilter3(floor(size(noisyEdgeUniformFilter3, 1)/2)+1,:))
-    
+end
+for k = 1:numel(distsToFixUnique)
     for l = 1:numel(polarAnglesUnique)
-        flashX = distsToFixUnique(k) * cos(polarAnglesUnique(l));
-        flashY = distsToFixUnique(k) * sin(polarAnglesUnique(l));
-        mapX = round(flashX * mapScale) + mapXOffset;
-        mapY = round(flashY * mapScale) + mapYOffset;
         if trialCounts(k,l) > 0
-            % weighted mean across orientations
-            % threshold at baseline
-            rfmapByOri(k,mapX,mapY) = max(0, responseMetric(k,l,:) - threshold);
-            rfmapByOriCount(k,mapX,mapY) = trialCounts(k,l); 
+            flashX = distsToFixUnique(k) * cos(polarAnglesUnique(l));
+            flashY = distsToFixUnique(k) * sin(polarAnglesUnique(l));
+            mapX = round(flashX * mapScale) + mapXOffset;
+            mapY = round(flashY * mapScale) + mapYOffset;
+            rfmap = zeros(mapDim, mapDim);
+            rfmap(mapX,mapY) = flashResponseMetricNorm(k,l); % can be negative
+            rfmapCount(mapX,mapY) = trialCounts(k,l);
+            rfmapSmooth = imfilter(rfmap, gaussianFiltersByDistToFix{k}, 'replicate');
+            % add to existing smooth map
+            rfmapSmoothAll = rfmapSmoothAll + rfmapSmooth;
+            clear rfmap rfmapSmooth;
         end
     end
-    rfmapSmoothByOri(k,:,:) = imfilter(squeeze(rfmapByOri(k,:,:)), gaussianFilter, 'replicate');
 end
+peakSmoothMapValue = max(rfmapSmoothAll(:));
 
-rfmapAllOri = squeeze(sum(rfmapByOri, 1));
-rfmapAllOriCount = squeeze(sum(rfmapByOriCount, 1));
-rfmapAllSmoothByOriAll = squeeze(sum(rfmapSmoothByOri(:,:,:), 1));
+%% permutation test, shuffling condition locations in map
+nRandomizations = 2;
+nullDistPeakSmoothMapValues = nan(nRandomizations, 1);
+fprintf('Generating null distribution...\n');
+for m = 1:nRandomizations
+    randpermk = randperm(numel(distsToFixUnique));
+    randperml = randperm(numel(polarAnglesUnique));
+    rfmapSmoothAllRand = zeros(mapDim, mapDim);
+    for k = 1:numel(distsToFixUnique)
+        for l = 1:numel(polarAnglesUnique)
+            if trialCounts(k,l) > 0
+                flashX = distsToFixUnique(randpermk(k)) * cos(polarAnglesUnique(randperml(l)));
+                flashY = distsToFixUnique(randpermk(k)) * sin(polarAnglesUnique(randperml(l)));
+                mapX = round(flashX * mapScale) + mapXOffset;
+                mapY = round(flashY * mapScale) + mapYOffset;
+                rfmap = zeros(mapDim, mapDim);
+                rfmap(mapX,mapY) = flashResponseMetricNorm(k,l); % can be negative
+%                 rfmapCount(mapX,mapY) = trialCounts(k,l);
+                rfmapSmooth = imfilter(rfmap, gaussianFiltersByDistToFix{randpermk(k)}, 'replicate');
+                % add to existing smooth map
+                rfmapSmoothAllRand = rfmapSmoothAllRand + rfmapSmooth;
+                clear rfmap rfmapSmooth;
+            end
+        end
+    end
+    nullDistPeakSmoothMapValues(m) = max(rfmapSmoothAllRand(:));
+end
+fprintf('\tP-value of seeing peak = %0.2f given null distribution (N=%d): %0.3f\n', ...
+        peakSmoothMapValue, nRandomizations, sum(nullDistPeakSmoothMapValues > peakSmoothMapValue) / nRandomizations);
 
 %% plot smoothed heatmap for all and individual orientations
 
-% compute lfp stats
-sdAllResponses = std(responseMetric(:));
-maxAllResponses = max(responseMetric(:));
-
 % start with all orientations together
-heatAx = axes('Position', [heatLeft btm heatW heatH]); 
+heatAx = axes('Position', [heatLeft btm heatW heatH]);
 hold on;
-plotRfMapSmooth(rfmapAllSmoothByOriAll, rfmapAllOriCount, numPixelsPerDegree, mapScale, mapDim, mapXOffset, mapYOffset);
+plotRfMapSmooth(rfmapSmoothAll, rfmapCount, numPixelsPerDegree, mapScale, mapDim, mapXOffset, mapYOffset);
 title(sprintf('VEP Heatmap (%d-%d ms after flash onset; all orientations)', round(analysisWindowOffset * 1000)), 'Interpreter', 'none');
 textParams = {'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]};
-text(0.02, 0.1, sprintf('Threshold: %s', thresholdName), 'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]);
-text(0.02, 0.08, sprintf('Baseline amp: %0.2f', baselineResponse), 'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]);
-text(0.02, 0.06, sprintf('Mean amp: %0.2f', meanAllResponses), 'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]);
-text(0.02, 0.04, sprintf('Std amp: %0.2f', sdAllResponses), 'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]);
-text(0.02, 0.02, sprintf('Max amp: %0.2f (%0.1f SDs)', ...
-        maxAllResponses, (maxAllResponses - meanAllResponses) / sdAllResponses), ...
-        textParams{:});
+text(0.02, 0.1, sprintf('Threshold: %s', thresholdName), textParams{:});
+text(0.02, 0.08, sprintf('Baseline diff, SD across cond: %0.2f', sdBaselineResponses), textParams{:});
+text(0.02, 0.06, sprintf('Response diff norm, mean across cond: %0.2f', meanAllFlashResponsesNorm), textParams{:});
+text(0.02, 0.04, sprintf('Response diff norm, SD across cond: %0.2f', sdAllFlashResponsesNorm), textParams{:});
+text(0.02, 0.02, sprintf('Max response diff norm: %0.2f', maxAllFlashResponsesNorm), textParams{:});
 axis(heatAx, 'square'); % shouldn't do much if i set the dims properly
 colorbar;
-caxis([0 6*sdAllResponses]); 
+caxis([0 30]);%6*sdAllFlashResponses]); 
 
-plotFileName = sprintf('%s/%s-%s.png', processedDataDir, channelName, blockName);
+%%
+if isNoisyChannel(j)
+    set(gcf, 'Color', [1 0.5 0.5]); % make background red
+end
+
+plotFileName = sprintf('%s/%s-%s-rfm_mode%d_v%d.png', processedDataDir, channelName, blockName, rfMappingNewMode, v);
+fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 close;
 

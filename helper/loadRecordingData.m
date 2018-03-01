@@ -1,6 +1,6 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadMua, isLoadLfp)
+        sessionInd, channelsToLoad, taskName, scriptName, isLoadMua, isLoadLfp, rfMappingNewInfoFileName, rfMappingNewMode)
 % loads MUA data and eyetracking/lever data into D struct and recording
 % metadata into R struct
 
@@ -47,6 +47,13 @@ elseif strcmp(taskName, 'RFM_OLD')
     if isnan(blockIndices)
         error('No Block Indices defined for RF Mapping Old Task');
     end
+elseif strcmp(taskName, 'RFM_NEW')
+    rfMappingNewInfo = readRFMappingNewInfo(rfMappingNewInfoFileName);
+    matchSession = cellfun(@(x) strcmp(x, R.sessionName), {rfMappingNewInfo.sessionName});
+    matchMode = [rfMappingNewInfo.mode] == rfMappingNewMode;
+    blockIndices = [rfMappingNewInfo(matchSession & matchMode).blockInd];
+    R.rfmResultsRootDir = sprintf('%s/%s/%s', dataDirRoot, sessionName, sessionName(2:end));
+    R.rfmResultsFileNames = {rfMappingNewInfo(matchSession & matchMode).resultsFileName};
 else
     error('Unknown task name: %s\n', taskName);
 end
