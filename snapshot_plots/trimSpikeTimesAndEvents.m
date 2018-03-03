@@ -53,14 +53,14 @@ end
 if isfield(D, 'allSpikeStructs')
     for i = 1:numel(D.allSpikeStructs)
         D.allSpikeStructs{i}.wf(~spikesToKeep{i},:) = [];
-        D.allSpikeStructs{i}.ts(~spikesToKeep{i},:) = [];
+        D.allSpikeStructs{i}.ts(~spikesToKeep{i}) = [];
         % TODO recompute mean and sd?
     end
 end
 if isfield(D, 'allMUAStructs')
     for i = 1:numel(D.allMUAStructs)
         D.allMUAStructs{i}.wf(~muaToKeep{i},:) = [];
-        D.allMUAStructs{i}.ts(~muaToKeep{i},:) = [];
+        D.allMUAStructs{i}.ts(~muaToKeep{i}) = [];
         % TODO recompute mean and sd?
     end
 end

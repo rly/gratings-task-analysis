@@ -1,6 +1,13 @@
 function muaVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
 % MUA VEP Mapping, one channel
 
+% sessionInd = 8;
+% muaChannelsToLoad = 53;
+% recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+% processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';%'Y:/rly/gratings-task-analysis/processed_data/';
+% dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data';%'Z:/ryanly/McCartney/originals/';
+% muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170311\';%'Y:/rly/simple-mua-detection/processed_data/';
+
 %% setup and load data
 v = 10;
 tic;
