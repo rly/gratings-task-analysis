@@ -4,7 +4,7 @@ function infoRateStruct = computeInfoRatePValueByShuffle(...
 % divide by mean firing rate to get in units of bits/spike
 % info rate = sum_over_loc(p(loc) * R(loc) * log2(R(loc) / Rmean))
 
-infoRateStruct.numRandomizations = 2;
+infoRateStruct.numRandomizations = 500;
 maxPValueAdaptive = 0.1;
 infoRateStruct.shuffledInfoRates = zeros(infoRateStruct.numRandomizations, 1);
 analysisWindowIndices = getTimeLogicalWithTolerance(timeLockedSpikesStruct.t, timeLockedSpikesStruct.window(1) + analysisWindowOffset);

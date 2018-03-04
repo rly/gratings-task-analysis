@@ -310,7 +310,7 @@ clear cueResponseWindowIndices maxCueResponseBaselineCorrByLoc maxSDCueResponseB
 % compare actual mean SPDF cue response to distribution of bootstrapped
 % pre-cue baselines
 % TODO using count should be faster than psth
-numRandomizations = 2;
+numRandomizations = 500;
 bootstrappedMeanPreCueBaselines = zeros(numRandomizations, 1);
 preCueBaselineWindowIndices = getTimeLogicalWithTolerance(cueOnset.t, cueOnset.window(1) + preCueBaselineWindowOffset);
 for m = 1:numRandomizations
@@ -426,7 +426,7 @@ targetDimResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(avera
 
 
 %% permutation test on cue-target delay period
-numRandomizations = 2;
+numRandomizations = 500;
 shuffleCueTargetDelayDiff = zeros(numRandomizations, 1);
 shuffleCueTargetDelayAI = zeros(numRandomizations, 1);
 cueTargetDelayWindowIndices = getTimeLogicalWithTolerance(arrayOnset.t, arrayOnset.window(1) + cueTargetDelayWindowOffset);
@@ -470,7 +470,7 @@ cueTargetDelayDiffPValueByRankSumTest = ranksum(...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{exRFLoc});
 
 %% permutation test on target-dim delay period
-numRandomizations = 2;
+numRandomizations = 500;
 shuffleTargetDimDelayDiff = zeros(numRandomizations, 1);
 shuffleTargetDimDelayAI = zeros(numRandomizations, 1);
 targetDimDelayWindowIndices = getTimeLogicalWithTolerance(targetDim.t, targetDim.window(1) + targetDimDelayWindowOffset);
