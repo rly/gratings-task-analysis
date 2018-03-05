@@ -28,6 +28,7 @@ fprintf('Recording info file name: %s\n', recordingInfoFileName);
 fprintf('Processed data root dir: %s\n', processedDataRootDir);
 fprintf('Data root dir: %s\n', dataDirRoot);
 fprintf('MUA data root dir: %s\n', muaDataDirRoot);
+fprintf('Is zero distractors: %s\n', isZeroDistractors);
 fprintf('Version: %d\n', v);
 fprintf('------------------------\n');
 
