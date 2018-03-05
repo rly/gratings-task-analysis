@@ -111,7 +111,7 @@ end
 firstEnterFixationTimesPreCue = enterFixationTimes(isEnterFixationTimesFirstPreCue);
 otherEnterFixationTimes = enterFixationTimes(~isEnterFixationTimesFirstPreCue);
 
-maxDiffExitFixationTimesToJuice = 1;
+maxDiffExitFixationTimesToJuice = 1.1;
 isExitFixationTimesFirstAroundJuice = false(size(exitFixationTimes));
 for i = 1:numel(firstJuiceEvent)
     % exit fixation may happen anytime within say 1 second around juice
