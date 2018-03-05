@@ -1,18 +1,19 @@
+function muaAnalysisSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName)
 
-clear;
+% clear;
 % processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
-processedDataRootDir = 'Y:/rly/gratings-task-analysis/processed_data/';
-dataDirRoot = 'Z:/ryanly/McCartney/originals';
-muaDataDirRoot = 'Y:/rly/simple-mua-detection/processed_data/';
-recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+% dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\';
+% muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170311';
+% processedDataRootDir = 'Y:/rly/gratings-task-analysis/processed_data/';
+% dataDirRoot = 'Z:/ryanly/McCartney/originals';
+% muaDataDirRoot = 'Y:/rly/simple-mua-detection/processed_data/';
+% recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 
 v = 10;
+tic;
 
 nUnitsApprox = 900; % make sure this is an underestimate
 unitNamesAll = cell(nUnitsApprox, 1);
-isCell = false(nUnitsApprox, 1);
-isBroadSpiking = false(nUnitsApprox, 1);
-isNarrowSpiking = false(nUnitsApprox, 1);
 isSignificantStats = false(nUnitsApprox, 10); % 5 periods > baseline, 5 periods info rate
 infoRates = nan(nUnitsApprox, 5); % 5 periods
 attnIndices = nan(nUnitsApprox, 2); % 2 delay periods
@@ -74,58 +75,32 @@ statAlpha = 0.05/2; % reduce from 0.05 to account for multiple comparisons... bu
 fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 
-sessionIndAll = 1:37;
-for k = 1:numel(sessionIndAll)
-    sessionInd = sessionIndAll(k);
+%% load recording information
+recordingInfo = readRecordingInfo(recordingInfoFileName);
 
-    %% load recording information
-    recordingInfo = readRecordingInfo(recordingInfoFileName);
-    struct2var(recordingInfo(sessionInd));
-    pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
-
-    %% load recording data
-    fprintf('\n-------------------------------------------------------\n');
-    fprintf('Gratings Task Analysis\n');
-    fprintf('Loading %s...\n', pl2FilePath);
-    fprintf('Session index: %d\n', sessionInd);
-
-    tic;
-    isLoadSpikes = 0;
-    isLoadMua = 1;
-    isLoadLfp = 0;
-    isLoadSpkc = 0;
-    isLoadDirect = 0;
-    D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-             spikeChannelPrefix, spikeChannelsToLoad, muaChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
-
-    processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
-    if exist(processedDataDir, 'dir') == 0
-        mkdir(processedDataDir);
-    end
-    fprintf('... done (%0.2f s).\n', toc);
-    
-    assert(numel(blockNames) == numel(D.blockStartTimes));
-    blockName = strjoin(blockNames(gratingsTask3DIndices), '-');
-    fprintf('Analyzing block names: %s.\n', blockName);    
-    
-    %% remove spike and event times not during task to save memory
-    D = trimSpikeTimesAndEvents(D, gratingsTask3DIndices);
+%% session loop
+for sessionInd = 1:numel(recordingInfo)
+    [R, D, processedDataDir, blockName] = loadRecordingData(...
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
+        sessionInd, [], 'Gratings', 'Gratings', 1, 0);
+    sessionName = R.sessionName;
+    areaName = R.areaName;
+    muaChannelInds = R.muaChannelsToLoad;
+    fprintf('Processing Session %s %s, Channels %d-%d', sessionName, areaName, muaChannelInds([1 end]));
     
     %% summarize across population of cells    
-    totalTimeOverall = sum(D.blockStopTimes(gratingsTask3DIndices) - D.blockStartTimes(gratingsTask3DIndices));
+    totalTimeOverall = sum(D.blockStopTimes(R.blockIndices) - D.blockStartTimes(R.blockIndices));
     minFiringRateOverall = 0.2;
 
-    nUnits = numel(D.allMUAStructs);
+    nUnits = numel(muaChannelInds);
     fprintf('-------------------------------------------------------------\n');
     fprintf('Processing %d units...\n', nUnits);
 
-    for i = 1:nUnits
-        spikeStruct = D.allMUAStructs{i};
+    for j = 1:nUnits
+        spikeStruct = D.allMUAStructs{j};
         unitName = spikeStruct.name;
         spikeTimes = spikeStruct.ts;
         firingRateOverall = numel(spikeTimes) / totalTimeOverall;
-%         fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
-%                 nUnits, round(i/nUnits*100));
 
         if firingRateOverall >= minFiringRateOverall
             saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
@@ -150,25 +125,16 @@ for k = 1:numel(sessionIndAll)
                 
                 unitNamesAll{unitCount} = unitName;
                 
-                if ismember(spikeStruct.channelID, pldChannels)
+                if ismember(spikeStruct.channelID, R.pldChannels)
                     localization{unitCount} = 'PLd';
-                elseif ismember(spikeStruct.channelID, plvChannels)
+                elseif ismember(spikeStruct.channelID, R.plvChannels)
                     localization{unitCount} = 'PLv';
-                elseif ismember(spikeStruct.channelID, pmChannels)
+                elseif ismember(spikeStruct.channelID, R.pmChannels)
                     localization{unitCount} = 'PM';
-                elseif ismember(spikeStruct.channelID, piChannels)
+                elseif ismember(spikeStruct.channelID, R.piChannels)
                     localization{unitCount} = 'PI';
                 else
                     localization{unitCount} = '';
-                end
-        
-                isCell(unitCount) = strcmp(spikeStruct.physClass, 'Broad-Spiking') || strcmp(spikeStruct.physClass, 'Narrow-Spiking');
-                if isCell(unitCount)
-                    isBroadSpiking(unitCount) = strcmp(spikeStruct.physClass, 'Broad-Spiking');
-                    isNarrowSpiking(unitCount) = strcmp(spikeStruct.physClass, 'Narrow-Spiking');
-                else
-                    isBroadSpiking(unitCount) = false;
-                    isNarrowSpiking(unitCount) = false;
                 end
 
                 isSignificantStats(unitCount,:) = [...
@@ -420,7 +386,6 @@ nUnitsAll = unitCount;
 nCells = nUnitsAll;%sum(isBroadSpiking | isNarrowSpiking);
 % assert(sum(isCell) == nCells);
 isCell = true(nCells, 1);
-isInPulvinar = true(nCells, 1); %TEMP
 
 isSignificantAnyTaskMod = isCell & any(isSignificantStats(:,1:5), 2);
 isSignificantCueActivity = isCell & isSignificantStats(:,1); % note that this uses the stricter statAlpha
@@ -433,11 +398,6 @@ isSigSelectOnlyDelay = isCell & ~any(isSignificantStats(:,[6 8 10]), 2) & any(is
 isInPulvinar = strcmp(localization, 'PLd') | strcmp(localization, 'PLv') | strcmp(localization, 'PM') | strcmp(localization, 'PI');
 
 fprintf('-------------------------------\n');
-fprintf('%d/%d = %d%% cells were classified as broad-spiking and %d/%d = %d%% as narrow-spiking.\n', ...
-        sum(isBroadSpiking & isCell), nCells, ...
-        round(sum(isBroadSpiking & isCell)/nCells * 100), ...
-        sum(isNarrowSpiking & isCell), nCells, ...
-        round(sum(isNarrowSpiking & isCell)/nCells * 100));
 fprintf('%d/%d = %d%% cells were localized to the pulvinar.\n', ...
         sum(isCell & isInPulvinar), nCells, ...
         round(sum(isCell & isInPulvinar)/nCells * 100));
@@ -482,26 +442,6 @@ fprintf('\t%d (%d%%) show significant spatial selectivity ONLY after a visual ch
 fprintf('\t%d (%d%%) show significant spatial selectivity ONLY during attention.\n\n', ...
         sum(isSigSelectOnlyDelay), ...
         round(sum(isSigSelectOnlyDelay)/sum(isSignificantAnySpatialSelectivity) * 100));
-fprintf('Of the %d cells that show significant task modulation compared to baseline, \n\t%d (%d%%) are broad-spiking and %d (%d%%) are narrow-spiking.\n', ...
-        sum(isSignificantAnyTaskMod), ...
-        sum(isBroadSpiking(isSignificantAnyTaskMod)), ...
-        round(sum(isBroadSpiking(isSignificantAnyTaskMod))/sum(isSignificantAnyTaskMod) * 100), ...
-        sum(isNarrowSpiking(isSignificantAnyTaskMod)), ...
-        round(sum(isNarrowSpiking(isSignificantAnyTaskMod))/sum(isSignificantAnyTaskMod) * 100));
-fprintf('Of the %d cells that show significant spatial selectivity after a visual change, \n\t%d (%d%%) are broad-spiking and %d (%d%%) are narrow-spiking.\n', ...
-        sum(isSignificantEvokedSelectivity), ...
-        sum(isBroadSpiking(isSignificantEvokedSelectivity)), ...
-        round(sum(isBroadSpiking(isSignificantEvokedSelectivity))/sum(isSignificantEvokedSelectivity) * 100), ...
-        sum(isNarrowSpiking(isSignificantEvokedSelectivity)), ...
-        round(sum(isNarrowSpiking(isSignificantEvokedSelectivity))/sum(isSignificantEvokedSelectivity) * 100));
-fprintf('Of the %d cells that show significant spatial selectivity during attention, \n\t%d (%d%%) are broad-spiking and %d (%d%%) are narrow-spiking.\n', ...
-        sum(isSignificantDelaySelectivity), ...
-        sum(isBroadSpiking(isSignificantDelaySelectivity)), ...
-        round(sum(isBroadSpiking(isSignificantDelaySelectivity))/sum(isSignificantDelaySelectivity) * 100), ...
-        sum(isNarrowSpiking(isSignificantDelaySelectivity)), ...
-        round(sum(isNarrowSpiking(isSignificantDelaySelectivity))/sum(isSignificantDelaySelectivity) * 100));
-fprintf('\n');
-
 fprintf('Of the %d cells in the pulvinar that show spatial selectivity during attention, \n\t%d (%d%%) are in PLd, %d (%d%%) are in PLv, %d (%d%%) are in PM, and %d (%d%%) are in PI\n', ...
         sum(isSignificantDelaySelectivity & isInPulvinar), ...
         sum(isSignificantDelaySelectivity & strcmp(localization, 'PLd')), ...
@@ -1055,9 +995,10 @@ arrayfun(@(x) ylim(x, yBounds), plotHs);
 
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');
-subdivisions = {'PM', 'PLd', 'PLv', 'PI', 'PUL', 'all'};
-for i = 1:numel(subdivisions)
-    subdivision = subdivisions{i};
+% subdivisions = {'PM', 'PLd', 'PLv', 'PI', 'PUL', 'all'};
+subdivisions = {'all'};
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
         isInSubdivision = true(nUnitsAll, 1);
     elseif strcmp(subdivision, 'PUL')
@@ -1080,11 +1021,11 @@ for i = 1:numel(subdivisions)
 
     fprintf('\t%s: %d cells\n', subdivision, sum(condition));
 
-    enterFixationT = ES.enterFixationT - ES.enterFixationWindow(1);
-    cueOnsetT = ES.cueOnsetT - ES.cueOnsetWindow(1);
-    arrayOnsetT = ES.arrayOnsetT - ES.arrayOnsetWindow(1);
-    targetDimT = ES.targetDimT - ES.targetDimWindow(1);
-    exitFixationT = ES.exitFixationT - ES.exitFixationWindow(1);
+    enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
+    cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
+    arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
+    targetDimT = ES.targetDim.t - ES.targetDim.window(1);
+    exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
 
     plotFileName = sprintf('%s/allSessions-%s-meanSpdfs3-v%d.png', processedDataRootDir, subdivision, v);
 
@@ -1100,15 +1041,15 @@ for i = 1:numel(subdivisions)
             targetDimSpdfExRFNormSub, exitFixationSpdfInRFNormSub, exitFixationSpdfExRFNormSub, ...
             enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, plotFileName);
     
-    print(sprintf('%s/allSessions-%s-meanSpdfs5-v%d.svg', processedDataRootDir, subdivision, v), '-dsvg');
+%     print(sprintf('%s/allSessions-%s-meanSpdfs5-v%d.svg', processedDataRootDir, subdivision, v), '-dsvg');
 end
 
 %% mega figure of tiny bc normalized plots per unit by subdivision
 fprintf('\n');
 % subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
 subdivisions = {'all'};
-for i = 1:numel(subdivisions)
-    subdivision = subdivisions{i};
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
         isInSubdivision = true(nUnitsAll, 1);
     elseif strcmp(subdivision, 'PUL')
@@ -1193,12 +1134,12 @@ cols = [cols(1,:); cols(3,:); cols(5,:); cols(2,:)];
 
 subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
 localizationSuper = localization(superdivision);
-for i = 1:numel(subdivisions)
-    subdivision = subdivisions{i};
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
     isInSubdivision = strcmp(localizationSuper, subdivision);
     fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
 
-    sh = scatter(pcaScore(isInSubdivision,1), pcaScore(isInSubdivision,2), 100, cols(i,:), 'MarkerFaceColor', cols(i,:));
+    sh = scatter(pcaScore(isInSubdivision,1), pcaScore(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
     sh.MarkerFaceAlpha = 0.9;
 end
 
@@ -1212,11 +1153,8 @@ set(gca, 'FontSize', 26);
 set(gca, 'FontName', 'Calibri');
 % set(gca, 'FontWeight', 'bold');
 
-
 plotFileName = sprintf('%s/allSessions-pcaByActivity-splitBySubdivision-v%d.png', processedDataRootDir, v);
 export_fig(plotFileName, '-nocrop');
-
-print(sprintf('%s/posterFigs/allSessions-pcaByActivity-splitBySubdivision-v%d.svg', processedDataRootDir, v), '-dsvg');
 
 %% PCA on activity space by cell
 superdivision = isCell & isInPulvinar;
@@ -1236,12 +1174,12 @@ cols = [cols(1,:); cols(3,:); cols(5,:); cols(2,:)];
 subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
 localizationSuper = localization(superdivision);
 isSignificantDelaySelectivitySuper = isSignificantDelaySelectivity(superdivision);
-for i = 1:numel(subdivisions)
-    subdivision = subdivisions{i};
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
     isInSubdivision = strcmp(localizationSuper, subdivision);
     fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
 
-    sh = scatter(pcaScore(isInSubdivision,1), pcaScore(isInSubdivision,2), 100, cols(i,:), 'MarkerFaceColor', cols(i,:));
+    sh = scatter(pcaScore(isInSubdivision,1), pcaScore(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
     sh.MarkerFaceAlpha = 0.9;
 end
 
@@ -1255,11 +1193,8 @@ set(gca, 'FontSize', 26);
 set(gca, 'FontName', 'Calibri');
 % set(gca, 'FontWeight', 'bold');
 
-
 plotFileName = sprintf('%s/allSessions-pcaByActivity-splitBySubdivision-delaySigHighlight-v%d.png', processedDataRootDir, v);
 export_fig(plotFileName, '-nocrop');
-
-print(sprintf('%s/posterFigs/allSessions-pcaByActivity-splitBySubdivision-delaySigHighlight-v%d.svg', processedDataRootDir, v), '-dsvg');
 
 %% use t-sne (random position each run)
 
@@ -1268,12 +1203,12 @@ tsneVals = tsne([meanNormSpdfInRFAllWindowsAll(superdivision,[1:2 4:end])]);
 figure_tr_inch(7.5, 7.5);
 subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
 hold on;
-for i = 1:numel(subdivisions)
-    subdivision = subdivisions{i};
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
     isInSubdivision = strcmp(localizationSuper, subdivision);
     fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
 
-    sh = scatter(tsneVals(isInSubdivision,1), tsneVals(isInSubdivision,2), 100, cols(i,:), 'MarkerFaceColor', cols(i,:));
+    sh = scatter(tsneVals(isInSubdivision,1), tsneVals(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
     sh.MarkerFaceAlpha = 0.9;
 end
 

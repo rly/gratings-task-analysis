@@ -6,8 +6,10 @@ function [R, D, processedDataDir, blockName] = loadRecordingData(...
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
-recordingInfo = rmfield(recordingInfo, 'lfpChannelsToLoad'); % remove b/c we're using passed value
-recordingInfo = rmfield(recordingInfo, 'muaChannelsToLoad'); % remove b/c we're using passed value
+if ~isempty(channelsToLoad)
+    recordingInfo = rmfield(recordingInfo, 'lfpChannelsToLoad'); % remove b/c we're using passed value
+    recordingInfo = rmfield(recordingInfo, 'muaChannelsToLoad'); % remove b/c we're using passed value
+end
 R = recordingInfo(sessionInd);
 sessionName = R.sessionName;
 pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
@@ -19,8 +21,10 @@ isLoadSpkc = 0;
 isLoadDirect = 1;
 
 R.spikeChannelsToLoad = NaN;
-R.muaChannelsToLoad = channelsToLoad;
-R.lfpChannelsToLoad = channelsToLoad;
+if ~isempty(channelsToLoad)
+    R.muaChannelsToLoad = channelsToLoad;
+    R.lfpChannelsToLoad = channelsToLoad;
+end
 R.spkcChannelsToLoad = NaN;
 
 D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, R.areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
@@ -39,30 +43,30 @@ fprintf('... done (%0.2f s).\n', toc);
 %% get block indices
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 if strcmp(taskName, 'Gratings')
-    blockIndices = R.gratingsTask3DIndices;
+    R.blockIndices = R.gratingsTask3DIndices;
 elseif strcmp(taskName, 'VEPM')
-    blockIndices = R.vepmIndices;
+    R.blockIndices = R.vepmIndices;
 elseif strcmp(taskName, 'RFM_OLD')
-    blockIndices = R.rfmOldIndices;
-    if isnan(blockIndices)
+    R.blockIndices = R.rfmOldIndices;
+    if isnan(R.blockIndices)
         error('No Block Indices defined for RF Mapping Old Task');
     end
 elseif strcmp(taskName, 'RFM_NEW')
     rfMappingNewInfo = readRFMappingNewInfo(rfMappingNewInfoFileName);
     matchSession = cellfun(@(x) strcmp(x, R.sessionName), {rfMappingNewInfo.sessionName});
     matchMode = [rfMappingNewInfo.mode] == rfMappingNewMode;
-    blockIndices = [rfMappingNewInfo(matchSession & matchMode).blockInd];
+    R.blockIndices = [rfMappingNewInfo(matchSession & matchMode).blockInd];
     R.rfmResultsRootDir = sprintf('%s/%s/%s', dataDirRoot, sessionName, sessionName(2:end));
     R.rfmResultsFileNames = {rfMappingNewInfo(matchSession & matchMode).resultsFileName};
 else
     error('Unknown task name: %s\n', taskName);
 end
 
-blockName = strjoin(R.blockNames(blockIndices), '-');
+blockName = strjoin(R.blockNames(R.blockIndices), '-');
 fprintf('Analyzing task name: %s, block names: %s.\n', taskName, blockName);
 
 %% remove spike and event times not during task to save memory
-D = trimSpikeTimesAndEvents(D, blockIndices);
+D = trimSpikeTimesAndEvents(D, R.blockIndices);
 if isLoadLfp
-    D = adjustSpikeTimesLfpsAndEvents(D, blockIndices);
+    D = adjustSpikeTimesLfpsAndEvents(D, R.blockIndices);
 end
