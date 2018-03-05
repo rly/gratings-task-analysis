@@ -1,4 +1,4 @@
-function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
+function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, isZeroDistractors)
 % MUA gratings task analysis, one channel
 
 % 325ms fixation before pre-cue marker
@@ -37,9 +37,16 @@ nLoc = 4;
 assert(numel(muaChannelsToLoad) == 1);
 
 %% load recording information
+
+if isZeroDistractors
+    taskName = 'Gratings0D';
+else
+    taskName = 'Gratings';
+end
+
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
         dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, ...
-        'Gratings', 'Gratings', 1, 0);
+        taskName, taskName, 1, 0);
 sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);
@@ -48,9 +55,9 @@ dataDir = sprintf('%s/%s/', dataDirRoot, sessionName);
 gratingsTaskLogDir = sprintf('%s/%s', dataDir, sessionName(2:end));
 
 % process events and sort them into different conditions
-UE = getUsefulEvents2(gratingsTaskLogDir, R.gratingsTask3DLogIndices, 4, D);
+UE = getUsefulEvents2(gratingsTaskLogDir, R.gratingsTaskLogIndices, 4, D);
 
-totalTimeOverall = sum(D.blockStopTimes(R.gratingsTask3DIndices) - D.blockStartTimes(R.gratingsTask3DIndices));
+totalTimeOverall = sum(D.blockStopTimes(R.blockIndices) - D.blockStartTimes(R.blockIndices));
 minFiringRateOverall = 0.2; % Hz
 minFiringRate = 1; % Hz
 
@@ -73,7 +80,7 @@ fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
 if firingRateOverall >= minFiringRateOverall
     saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
             processedDataDir, unitName, blockName, v);
-    fprintf('\tWriting file %s...\n', saveFileName);
+    fprintf('\tComputing evoked spiking and writing file %s...\n', saveFileName);
 
     computeEvokedSpiking(saveFileName, muaStruct, nLoc, UE);
 
@@ -83,14 +90,14 @@ if firingRateOverall >= minFiringRateOverall
         fprintf('\tSaving figure to file %s...\n', plotFileName);
 
         quickSpdfAllVisualEvents(ES, blockName, ...
-                D, i, muaStruct, nLoc, nTrials, plotFileName);
+                D, i, muaStruct, nLoc, nTrials, isZeroDistractors, plotFileName);
         close;
 
         plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
         fprintf('\tSaving figure to file %s...\n', plotFileName);
 
         quickSpdfAllMotorEvents(ES, blockName, ...
-                D, i, muaStruct, nLoc, nTrials, plotFileName);
+                D, i, muaStruct, nLoc, nTrials, isZeroDistractors, plotFileName);
         close;
     else
         fprintf('\tTask-related firing rate < minimum task-related firing rate = %0.2f Hz - skipping.\n', ...

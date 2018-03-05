@@ -44,6 +44,10 @@ fprintf('... done (%0.2f s).\n', toc);
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 if strcmp(taskName, 'Gratings')
     R.blockIndices = R.gratingsTask3DIndices;
+    R.gratingsTaskLogIndices = R.gratingsTask3DLogIndices;
+elseif strcmp(taskName, 'Gratings0D')
+    R.blockIndices = R.gratingsTask0DIndices;
+    R.gratingsTaskLogIndices = R.gratingsTask0DLogIndices;
 elseif strcmp(taskName, 'VEPM')
     R.blockIndices = R.vepmIndices;
 elseif strcmp(taskName, 'RFM_OLD')

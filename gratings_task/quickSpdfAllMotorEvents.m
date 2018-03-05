@@ -1,5 +1,5 @@
 function quickSpdfAllMotorEvents(ES, blockName, ...
-        D, spikeStructInd, spikeStruct, nLoc, nTrials, plotFileName)
+        D, spikeStructInd, spikeStruct, nLoc, nTrials, isZeroDistractors, plotFileName)
 
 unitName = spikeStruct.name;
 cols = lines(6);
@@ -14,6 +14,9 @@ axBig = axes('Position', [0.04 0.045 0.92 0.91], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on')
 
 modTitle = sprintf('Gratings Attention Task: %s (%d trials)', unitName, nTrials);
+if isZeroDistractors
+    modTitle = [modTitle ' (0 Distractors)'];
+end
 titleParams = {'Interpreter', 'None', 'FontWeight', 'bold'};
 title(modTitle, 'FontSize', 14, titleParams{:});
 
