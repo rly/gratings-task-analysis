@@ -17,7 +17,7 @@ function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordin
 % evt7 = target dim
 % evt8 = juice
 
-v = 10;
+v = 11;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');

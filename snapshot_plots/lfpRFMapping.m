@@ -4,7 +4,7 @@ function lfpRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordi
 % Referencing
 
 %% setup and load data
-v = 10;
+v = 11;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');

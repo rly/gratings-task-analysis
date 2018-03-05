@@ -2,7 +2,7 @@ function muaVEPMappingSessionSummary(processedDataRootDir, dataDirRoot, muaDataD
 % Session Summary of MUA VEP Mapping
 
 %% setup and load data
-v = 10;
+v = 11;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');

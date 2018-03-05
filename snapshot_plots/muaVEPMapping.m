@@ -9,7 +9,7 @@ function muaVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, record
 % muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170311\';%'Y:/rly/simple-mua-detection/processed_data/';
 
 %% setup and load data
-v = 10;
+v = 11;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');

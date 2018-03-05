@@ -2,7 +2,7 @@ function muaRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordi
 % MUA RF Mapping, one channel
 
 %% setup and load data
-v = 10;
+v = 11;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');

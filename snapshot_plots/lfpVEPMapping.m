@@ -7,7 +7,7 @@ function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, record
 % ref = 'RAW'; % CAR, BIP, or some other code, e.g. RAW. CAR recommended
 
 %% setup and load data
-v = 10;
+v = 11;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');
