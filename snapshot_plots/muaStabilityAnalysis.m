@@ -16,7 +16,7 @@ fprintf('------------------------\n');
 
 %% load recording information
 [R, D] = loadRecordingData(processedDataRootDir, dataDirRoot, muaDataDirRoot, ...
-        recordingInfoFileName, sessionInd, muaChannelsToLoad, 'Gratings', 1, 0);
+        recordingInfoFileName, sessionInd, muaChannelsToLoad, 'Gratings', 'Gratings', 1, 0);
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 
 nUnits = numel(D.allMUAStructs);
