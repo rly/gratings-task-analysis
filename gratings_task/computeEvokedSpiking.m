@@ -381,8 +381,6 @@ for i = 1:nLoc
     end
 end
 
-clear numRandomizations;
-
 %% rank-sum test on x vs baseline using individual trial spike counts
 % spike rates per trial are not normally distributed
 % they may also not have equal variance
@@ -424,7 +422,6 @@ targetDimResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(avera
 % and N2 trials ot group 2, and re-computing the mean activity across
 % trials P times. 
 
-
 %% permutation test on cue-target delay period
 shuffleCueTargetDelayDiff = zeros(numRandomizations, 1);
 shuffleCueTargetDelayAI = zeros(numRandomizations, 1);
@@ -461,7 +458,7 @@ if cueTargetDelayAI > mean(shuffleCueTargetDelayAI)
 else
     cueTargetDelayAIPValueByShuffleSpdf = sum(cueTargetDelayAI > shuffleCueTargetDelayAI) / numRandomizations * 2;
 end
-clear cueTargetDelayWindowIndices numRandomizations arrayOnsetSpikeTimesInRFExRF;
+clear cueTargetDelayWindowIndices arrayOnsetSpikeTimesInRFExRF;
 
 %% rank sum test on target-dim delay period using individual trial spike counts
 cueTargetDelayDiffPValueByRankSumTest = ranksum(...
@@ -504,7 +501,7 @@ if targetDimDelayAI > mean(shuffleTargetDimDelayAI)
 else
     targetDimDelayAIPValueByShuffleSpdf = sum(targetDimDelayAI > shuffleTargetDimDelayAI) / numRandomizations * 2;
 end
-clear targetDimDelayWindowIndices numRandomizations targetDimSpikeTimesInRFExRF;
+clear targetDimDelayWindowIndices targetDimSpikeTimesInRFExRF;
 
 %% rank-sum test on target-dim delay period using individual trial spike counts
 targetDimDelayDiffPValueByRankSumTest = ranksum(...
