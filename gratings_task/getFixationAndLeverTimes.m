@@ -92,7 +92,7 @@ leverReleaseTimes = leverReleaseInds(~badLeverRelease) / directFs; % assume star
 
 %% find enter/exit fixation times around trial start/juice
 isEnterFixationTimesFirstPreCue = false(size(enterFixationTimes));
-maxEnterFixationTimesToCueOnset = 4;
+maxEnterFixationTimesToCueOnset = 4.05;
 minEnterFixationTimesToCueOnset = 0.35;
 for i = 1:numel(cueOnset)
     % enter fixation must precede trial start by 325+ ms
