@@ -48,6 +48,9 @@ if strcmp(taskName, 'Gratings')
 elseif strcmp(taskName, 'Gratings0D')
     R.blockIndices = R.gratingsTask0DIndices;
     R.gratingsTaskLogIndices = R.gratingsTask0DLogIndices;
+    if isnan(R.blockIndices)
+        error('No Block Indices defined for Gratings Task 0D');
+    end
 elseif strcmp(taskName, 'VEPM')
     R.blockIndices = R.vepmIndices;
 elseif strcmp(taskName, 'RFM_OLD')
