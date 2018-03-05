@@ -27,6 +27,17 @@ firstGTaskBlockStartTime = D.blockStartTimes(R.gratingsTask3DIndices(1));
 lastGTaskBlockStopTime = D.blockStopTimes(R.gratingsTask3DIndices(end));
 windowSize = 300; % seconds
 movingWindowStep = floor(windowSize/2);
+binStartTimes = firstGTaskBlockStartTime:movingWindowStep:lastGTaskBlockStopTime-windowSize;
+numWindows = numel(binStartTimes);
+if numWindows < 10 % could do the math to check first...
+    windowSize = 200; % seconds
+    movingWindowStep = floor(windowSize/2);
+    binStartTimes = firstGTaskBlockStartTime:movingWindowStep:lastGTaskBlockStopTime-windowSize;
+    numWindows = numel(binStartTimes);
+end
+if numWindows < 10 % could do the math to check first...
+    error('Not enough time bins to run test');
+end
 
 isUnitStable = false(nUnits, 1);
 unitNames = cell(nUnits, 1);
@@ -52,8 +63,6 @@ for j = 1:nUnits
     spikeTimesAdj = spikeTimes - adjustFactor;    
     
     % bin spikes in moving, overlapping windows
-    binStartTimes = firstGTaskBlockStartTime:movingWindowStep:lastGTaskBlockStopTime-windowSize;
-    numWindows = numel(binStartTimes);
     spikesPerBin = nan(numWindows, 1);
     for k = 1:numWindows
         spikesPerBin(k) = sum(spikeTimesAdj >= binStartTimes(k) & spikeTimesAdj < binStartTimes(k) + windowSize);
