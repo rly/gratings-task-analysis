@@ -1,10 +1,10 @@
 function infoRateStruct = computeInfoRatePValueByShuffle(...
-        timeLockedSpikesStruct, averageFiringRatesBySpdfStruct, analysisWindowOffset)
+        timeLockedSpikesStruct, averageFiringRatesBySpdfStruct, analysisWindowOffset, numRandomizations)
 % skaggs et al 1993 - spatial information rate (bits/sec)
 % divide by mean firing rate to get in units of bits/spike
 % info rate = sum_over_loc(p(loc) * R(loc) * log2(R(loc) / Rmean))
 
-infoRateStruct.numRandomizations = 500;
+infoRateStruct.numRandomizations = numRandomizations;
 maxPValueAdaptive = 0.1;
 infoRateStruct.shuffledInfoRates = zeros(infoRateStruct.numRandomizations, 1);
 analysisWindowIndices = getTimeLogicalWithTolerance(timeLockedSpikesStruct.t, timeLockedSpikesStruct.window(1) + analysisWindowOffset);

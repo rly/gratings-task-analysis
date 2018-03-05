@@ -5,6 +5,7 @@ function saveFileName = computeEvokedSpiking(saveFileName, ...
 
 spikeTs = spikeStruct.ts;
 kernelSigma = 0.01;
+numRandomizations = 2;
 
 clear spikeStruct;
 
@@ -310,7 +311,6 @@ clear cueResponseWindowIndices maxCueResponseBaselineCorrByLoc maxSDCueResponseB
 % compare actual mean SPDF cue response to distribution of bootstrapped
 % pre-cue baselines
 % TODO using count should be faster than psth
-numRandomizations = 500;
 bootstrappedMeanPreCueBaselines = zeros(numRandomizations, 1);
 preCueBaselineWindowIndices = getTimeLogicalWithTolerance(cueOnset.t, cueOnset.window(1) + preCueBaselineWindowOffset);
 for m = 1:numRandomizations
@@ -426,7 +426,6 @@ targetDimResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(avera
 
 
 %% permutation test on cue-target delay period
-numRandomizations = 500;
 shuffleCueTargetDelayDiff = zeros(numRandomizations, 1);
 shuffleCueTargetDelayAI = zeros(numRandomizations, 1);
 cueTargetDelayWindowIndices = getTimeLogicalWithTolerance(arrayOnset.t, arrayOnset.window(1) + cueTargetDelayWindowOffset);
@@ -470,7 +469,6 @@ cueTargetDelayDiffPValueByRankSumTest = ranksum(...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{exRFLoc});
 
 %% permutation test on target-dim delay period
-numRandomizations = 500;
 shuffleTargetDimDelayDiff = zeros(numRandomizations, 1);
 shuffleTargetDimDelayAI = zeros(numRandomizations, 1);
 targetDimDelayWindowIndices = getTimeLogicalWithTolerance(targetDim.t, targetDim.window(1) + targetDimDelayWindowOffset);
@@ -515,27 +513,27 @@ targetDimDelayDiffPValueByRankSumTest = ranksum(...
 
 %% spatial selectivity during pre-cue baseline using info rate (control)
 preCueBaselineInfoRateStruct = computeInfoRatePValueByShuffle(...
-        cueOnset, averageFiringRatesBySpdf.preCueBaseline, preCueBaselineWindowOffset);
+        cueOnset, averageFiringRatesBySpdf.preCueBaseline, preCueBaselineWindowOffset, numRandomizations);
 
 %% spatial selectivity during cue response using info rate
 cueResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
-        cueOnset, averageFiringRatesBySpdf.cueResponse, cueResponseWindowOffset);
+        cueOnset, averageFiringRatesBySpdf.cueResponse, cueResponseWindowOffset, numRandomizations);
 
 %% spatial selectivity during cue target delay period using info rate
 cueTargetDelayInfoRateStruct = computeInfoRatePValueByShuffle(...
-        arrayOnset, averageFiringRatesBySpdf.cueTargetDelay, cueTargetDelayWindowOffset);
+        arrayOnset, averageFiringRatesBySpdf.cueTargetDelay, cueTargetDelayWindowOffset, numRandomizations);
 
 %% spatial selectivity during array response using info rate
 arrayHoldResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
-        arrayOnsetHold, averageFiringRatesBySpdf.arrayHoldResponse, arrayResponseWindowOffset);
+        arrayOnsetHold, averageFiringRatesBySpdf.arrayHoldResponse, arrayResponseWindowOffset, numRandomizations);
 
 %% spatial selectivity during target dim delay period using info rate
 targetDimDelayInfoRateStruct = computeInfoRatePValueByShuffle(...
-        targetDim, averageFiringRatesBySpdf.targetDimDelay, targetDimDelayWindowOffset);
+        targetDim, averageFiringRatesBySpdf.targetDimDelay, targetDimDelayWindowOffset, numRandomizations);
 
 %% spatial selectivity during target dimming using info rate
 targetDimResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
-        targetDim, averageFiringRatesBySpdf.targetDimResponse, targetDimResponseWindowOffset);
+        targetDim, averageFiringRatesBySpdf.targetDimResponse, targetDimResponseWindowOffset, numRandomizations);
 
 %% save
 clear i m;
