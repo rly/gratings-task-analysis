@@ -1,4 +1,4 @@
-function muaAnalysisSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName)
+% function muaAnalysisSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName)
 
 % clear;
 % processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
@@ -10,10 +10,11 @@ function muaAnalysisSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, r
 % muaDataDirRoot = 'Y:/rly/simple-mua-detection/processed_data/';
 % recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 
-v = 11;
+v = 10;
 tic;
 
-nUnitsApprox = 900; % make sure this is an underestimate
+nUnitsApprox = 20; % make sure this is an underestimate
+
 unitNamesAll = cell(nUnitsApprox, 1);
 isSignificantStats = false(nUnitsApprox, 10); % 5 periods > baseline, 5 periods info rate
 infoRates = nan(nUnitsApprox, 5); % 5 periods
@@ -81,10 +82,10 @@ fprintf('Across Session Analysis\n');
 recordingInfo = readRecordingInfo(recordingInfoFileName);
 
 %% session loop
-for sessionInd = 1:numel(recordingInfo)
+for si = sessionInd% = 1:numel(recordingInfo)
     [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, [], 'Gratings', 'Gratings', 1, 0);
+        si, [], 'Gratings', 'Gratings', 1, 0);
     sessionName = R.sessionName;
     areaName = R.areaName;
     muaChannelInds = R.muaChannelsToLoad;
@@ -140,8 +141,10 @@ for sessionInd = 1:numel(recordingInfo)
                 end
                 
                 if ismember(spikeStruct.channelID, R.vPulChannels)
-                    isInVPulvinar(unitCount) = 'vPul';
+                    isInVPulvinar(unitCount) = 1;
                     localization{unitCount} = 'vPul'; % TEMP
+                else
+                    isInVPulvinar(unitCount) = 0;
                 end
 
                 assert(all(numel([ES.cueResponseVsBaselineRankSumTestStatsByLoc.p]) == ...
@@ -390,6 +393,13 @@ for sessionInd = 1:numel(recordingInfo)
                         ES.averageFiringRatesBySpdf.targetDimDelay.byLoc(exRFLoc) ...
                         ES.averageFiringRatesBySpdf.targetDimResponse.byLoc(exRFLoc) ...
                         ES.averageFiringRatesBySpdf.preExitFixation.byLoc(exRFLoc)]  - exRFPreCueBaseline) / exRFNormFactor;
+                
+                % overwrite for each cell but they should all be the same
+                enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
+                cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
+                arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
+                targetDimT = ES.targetDim.t - ES.targetDim.window(1);
+                exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
             end
         end
     end
@@ -582,12 +592,6 @@ for j = 1:numel(subdivisions)
 
     fprintf('\t%s: %d cells\n', subdivision, sum(condition));
 
-    enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
-    cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
-    arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
-    targetDimT = ES.targetDim.t - ES.targetDim.window(1);
-    exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
-
     plotFileName = sprintf('%s/allSessions-%s-meanSpdfs3-v%d.png', processedDataRootDir, subdivision, v);
 
     quickSpdfAllEvents3InARowPopMean(cueOnsetSpdfInRFNormSub, cueOnsetSpdfExRFNormSub, ...
@@ -647,12 +651,6 @@ for j = 1:numel(subdivisions)
 
     fprintf('\t%s: %d cells\n', subdivision, sum(condition));
     
-    enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
-    cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
-    arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
-    targetDimT = ES.targetDim.t - ES.targetDim.window(1);
-    exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
-    
     titleBase = sprintf('%s Cells: Enter Fixation', subdivision);
     plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf1-enterFixation-v%d', processedDataRootDir, subdivision, v);
     makeTinyPlotsOfPopulation(enterFixationSpdfInRFNormSub, enterFixationSpdfInRFNormErrSub, ...
@@ -679,7 +677,7 @@ for j = 1:numel(subdivisions)
             exitFixationSpdfExRFNormSub, exitFixationSpdfExRFNormErrSub, exitFixationT, unitNamesSub, titleBase, plotFileBaseName);
 end
 
-
+stop
 %% Pie Chart localizing attentional modulation in the pulvinar
 % We found x pulvinar cells that show significant attentional modulation. 
 % In which subdivision of the pulvinar are they located?
