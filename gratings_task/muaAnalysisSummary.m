@@ -1,10 +1,10 @@
-% function muaAnalysisSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName)
+function muaAnalysisSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName)
 
-clear;
-processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
-dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\';
-muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170311';
-recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+% clear;
+% processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
+% dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\';
+% muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170311';
+% recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 % processedDataRootDir = 'Y:/rly/gratings-task-analysis/processed_data/';
 % dataDirRoot = 'Z:/ryanly/McCartney/originals';
 % muaDataDirRoot = 'Y:/rly/simple-mua-detection/processed_data/';
@@ -19,6 +19,7 @@ isSignificantStats = false(nUnitsApprox, 10); % 5 periods > baseline, 5 periods 
 infoRates = nan(nUnitsApprox, 5); % 5 periods
 attnIndices = nan(nUnitsApprox, 2); % 2 delay periods
 localization = cell(nUnitsApprox, 1);
+isInVPulvinar = false(nUnitsApprox, 1);
 meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTRelInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
@@ -80,7 +81,7 @@ fprintf('Across Session Analysis\n');
 recordingInfo = readRecordingInfo(recordingInfoFileName);
 
 %% session loop
-for sessionInd = 7%1:numel(recordingInfo)
+for sessionInd = 1:numel(recordingInfo)
     [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
         sessionInd, [], 'Gratings', 'Gratings', 1, 0);
@@ -136,6 +137,11 @@ for sessionInd = 7%1:numel(recordingInfo)
                     localization{unitCount} = 'PI';
                 else
                     localization{unitCount} = '';
+                end
+                
+                if ismember(spikeStruct.channelID, R.vPulChannels)
+                    isInVPulvinar(unitCount) = 'vPul';
+                    localization{unitCount} = 'vPul'; % TEMP
                 end
 
                 assert(all(numel([ES.cueResponseVsBaselineRankSumTestStatsByLoc.p]) == ...
@@ -543,6 +549,136 @@ fprintf('\t%d/%d = %d%% PI units\n',...
 fprintf('\n');
 
 % stop
+
+%% per-condition baseline-corrected normalized mean
+fprintf('\n');
+% subdivisions = {'PM', 'PLd', 'PLv', 'PI', 'PUL', 'all'};
+subdivisions = {'all', 'vPul', 'notVPul'};
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
+    if strcmp(subdivision, 'all')
+        isInSubdivision = true(nUnitsAll, 1);
+    elseif strcmp(subdivision, 'PUL')
+        isInSubdivision = isInPulvinar;
+    elseif strcmp(subdivision, 'vPul')
+        isInSubdivision = isInVPulvinar;
+    elseif strcmp(subdivision, 'notVPul')
+        isInSubdivision = ~isInVPulvinar;
+    else
+        isInSubdivision = strcmp(localization, subdivision);
+    end
+    condition = isCell & isInSubdivision;% & all(targetDimSpdfInRFNorm > -1,2);
+    
+    enterFixationSpdfInRFNormSub = trimNanRows(enterFixationSpdfInRFNorm(condition,:));
+    enterFixationSpdfExRFNormSub = trimNanRows(enterFixationSpdfExRFNorm(condition,:));
+    cueOnsetSpdfInRFNormSub = trimNanRows(cueOnsetSpdfInRFNorm(condition,:));
+    cueOnsetSpdfExRFNormSub = trimNanRows(cueOnsetSpdfExRFNorm(condition,:));
+    arrayOnsetHoldSpdfInRFNormSub = trimNanRows(arrayOnsetHoldSpdfInRFNorm(condition,:));
+    arrayOnsetHoldSpdfExRFNormSub = trimNanRows(arrayOnsetHoldSpdfExRFNorm(condition,:));
+    targetDimSpdfInRFNormSub = trimNanRows(targetDimSpdfInRFNorm(condition,:));
+    targetDimSpdfExRFNormSub = trimNanRows(targetDimSpdfExRFNorm(condition,:));
+    exitFixationSpdfInRFNormSub = trimNanRows(exitFixationSpdfInRFNorm(condition,:));
+    exitFixationSpdfExRFNormSub = trimNanRows(exitFixationSpdfExRFNorm(condition,:));
+
+    fprintf('\t%s: %d cells\n', subdivision, sum(condition));
+
+    enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
+    cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
+    arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
+    targetDimT = ES.targetDim.t - ES.targetDim.window(1);
+    exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
+
+    plotFileName = sprintf('%s/allSessions-%s-meanSpdfs3-v%d.png', processedDataRootDir, subdivision, v);
+
+    quickSpdfAllEvents3InARowPopMean(cueOnsetSpdfInRFNormSub, cueOnsetSpdfExRFNormSub, ...
+            arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfExRFNormSub, targetDimSpdfInRFNormSub, ...
+            targetDimSpdfExRFNormSub, cueOnsetT, arrayOnsetT, targetDimT, plotFileName);
+
+    plotFileName = sprintf('%s/allSessions-%s-meanSpdfs5-v%d.png', processedDataRootDir, subdivision, v);
+    
+    quickSpdfAllEvents5InARowPopMean(enterFixationSpdfInRFNormSub, enterFixationSpdfExRFNormSub, ...
+            cueOnsetSpdfInRFNormSub, cueOnsetSpdfExRFNormSub, ...
+            arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfExRFNormSub, targetDimSpdfInRFNormSub, ...
+            targetDimSpdfExRFNormSub, exitFixationSpdfInRFNormSub, exitFixationSpdfExRFNormSub, ...
+            enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, plotFileName);    
+end
+
+%% mega figure of tiny bc normalized plots per unit by subdivision
+fprintf('\n');
+% subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
+subdivisions = {'all', 'vPul', 'notVPul'};
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
+    if strcmp(subdivision, 'all')
+        isInSubdivision = true(nUnitsAll, 1);
+    elseif strcmp(subdivision, 'PUL')
+        isInSubdivision = isInPulvinar;
+    elseif strcmp(subdivision, 'vPul')
+        isInSubdivision = isInVPulvinar;
+    elseif strcmp(subdivision, 'notVPul')
+        isInSubdivision = ~isInVPulvinar;
+    else
+        isInSubdivision = strcmp(localization, subdivision);
+    end
+    condition = isCell & isInSubdivision;
+    unitNamesSub = unitNamesAll(condition);
+    
+    enterFixationSpdfInRFNormSub = (enterFixationSpdfInRFNorm(condition,:));
+    enterFixationSpdfExRFNormSub = (enterFixationSpdfExRFNorm(condition,:));
+    cueOnsetSpdfInRFNormSub = (cueOnsetSpdfInRFNorm(condition,:));
+    cueOnsetSpdfExRFNormSub = (cueOnsetSpdfExRFNorm(condition,:));
+    arrayOnsetHoldSpdfInRFNormSub = (arrayOnsetHoldSpdfInRFNorm(condition,:));
+    arrayOnsetHoldSpdfExRFNormSub = (arrayOnsetHoldSpdfExRFNorm(condition,:));
+    targetDimSpdfInRFNormSub = (targetDimSpdfInRFNorm(condition,:));
+    targetDimSpdfExRFNormSub = (targetDimSpdfExRFNorm(condition,:));
+    exitFixationSpdfInRFNormSub = (exitFixationSpdfInRFNorm(condition,:));
+    exitFixationSpdfExRFNormSub = (exitFixationSpdfExRFNorm(condition,:));
+    
+    enterFixationSpdfInRFNormErrSub = (enterFixationSpdfInRFNormErr(condition,:));
+    enterFixationSpdfExRFNormErrSub = (enterFixationSpdfExRFNormErr(condition,:));
+    cueOnsetSpdfInRFNormErrSub = (cueOnsetSpdfInRFNormErr(condition,:));
+    cueOnsetSpdfExRFNormErrSub = (cueOnsetSpdfExRFNormErr(condition,:));
+    arrayOnsetHoldSpdfInRFNormErrSub = (arrayOnsetHoldSpdfInRFNormErr(condition,:));
+    arrayOnsetHoldSpdfExRFNormErrSub = (arrayOnsetHoldSpdfExRFNormErr(condition,:));
+    targetDimSpdfInRFNormErrSub = (targetDimSpdfInRFNormErr(condition,:));
+    targetDimSpdfExRFNormErrSub = (targetDimSpdfExRFNormErr(condition,:));
+    exitFixationSpdfInRFNormErrSub = (exitFixationSpdfInRFNormErr(condition,:));
+    exitFixationSpdfExRFNormErrSub = (exitFixationSpdfExRFNormErr(condition,:));
+
+    fprintf('\t%s: %d cells\n', subdivision, sum(condition));
+    
+    enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
+    cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
+    arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
+    targetDimT = ES.targetDim.t - ES.targetDim.window(1);
+    exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
+    
+    titleBase = sprintf('%s Cells: Enter Fixation', subdivision);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf1-enterFixation-v%d', processedDataRootDir, subdivision, v);
+    makeTinyPlotsOfPopulation(enterFixationSpdfInRFNormSub, enterFixationSpdfInRFNormErrSub, ...
+            enterFixationSpdfExRFNormSub, enterFixationSpdfExRFNormErrSub, enterFixationT, unitNamesSub, titleBase, plotFileBaseName);
+    
+    titleBase = sprintf('%s Cells: Cue Onset', subdivision);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf2-cueOnset-v%d', processedDataRootDir, subdivision, v);
+    makeTinyPlotsOfPopulation(cueOnsetSpdfInRFNormSub, cueOnsetSpdfInRFNormErrSub, ...
+            cueOnsetSpdfExRFNormSub, cueOnsetSpdfExRFNormErrSub, cueOnsetT, unitNamesSub, titleBase, plotFileBaseName);
+    
+    titleBase = sprintf('%s Cells: Array Onset Hold', subdivision);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf3-arrayOnsetHold-v%d', processedDataRootDir, subdivision, v);
+    makeTinyPlotsOfPopulation(arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfInRFNormErrSub, ...
+            arrayOnsetHoldSpdfExRFNormSub, arrayOnsetHoldSpdfExRFNormErrSub, arrayOnsetT, unitNamesSub, titleBase, plotFileBaseName);
+    
+    titleBase = sprintf('%s Cells: Target Dim', subdivision);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf4-targetDim-v%d', processedDataRootDir, subdivision, v);
+    makeTinyPlotsOfPopulation(targetDimSpdfInRFNormSub, targetDimSpdfInRFNormErrSub, ...
+            targetDimSpdfExRFNormSub, targetDimSpdfExRFNormErrSub, targetDimT, unitNamesSub, titleBase, plotFileBaseName);
+        
+    titleBase = sprintf('%s Cells: Exit Fixation', subdivision);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf5-exitFixation-v%d', processedDataRootDir, subdivision, v);
+    makeTinyPlotsOfPopulation(exitFixationSpdfInRFNormSub, exitFixationSpdfInRFNormErrSub, ...
+            exitFixationSpdfExRFNormSub, exitFixationSpdfExRFNormErrSub, exitFixationT, unitNamesSub, titleBase, plotFileBaseName);
+end
+
 
 %% Pie Chart localizing attentional modulation in the pulvinar
 % We found x pulvinar cells that show significant attentional modulation. 
@@ -1005,127 +1141,6 @@ yBounds = [min(allYBounds) max(allYBounds)];
 arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
 arrayfun(@(x) ylim(x, yBounds), plotHs);
 
-%% per-condition baseline-corrected normalized mean
-fprintf('\n');
-% subdivisions = {'PM', 'PLd', 'PLv', 'PI', 'PUL', 'all'};
-subdivisions = {'all'};
-for j = 1:numel(subdivisions)
-    subdivision = subdivisions{j};
-    if strcmp(subdivision, 'all')
-        isInSubdivision = true(nUnitsAll, 1);
-    elseif strcmp(subdivision, 'PUL')
-        isInSubdivision = isInPulvinar;
-    else
-        isInSubdivision = strcmp(localization, subdivision);
-    end
-    condition = isCell & isInSubdivision;% & all(targetDimSpdfInRFNorm > -1,2);
-    
-    enterFixationSpdfInRFNormSub = trimNanRows(enterFixationSpdfInRFNorm(condition,:));
-    enterFixationSpdfExRFNormSub = trimNanRows(enterFixationSpdfExRFNorm(condition,:));
-    cueOnsetSpdfInRFNormSub = trimNanRows(cueOnsetSpdfInRFNorm(condition,:));
-    cueOnsetSpdfExRFNormSub = trimNanRows(cueOnsetSpdfExRFNorm(condition,:));
-    arrayOnsetHoldSpdfInRFNormSub = trimNanRows(arrayOnsetHoldSpdfInRFNorm(condition,:));
-    arrayOnsetHoldSpdfExRFNormSub = trimNanRows(arrayOnsetHoldSpdfExRFNorm(condition,:));
-    targetDimSpdfInRFNormSub = trimNanRows(targetDimSpdfInRFNorm(condition,:));
-    targetDimSpdfExRFNormSub = trimNanRows(targetDimSpdfExRFNorm(condition,:));
-    exitFixationSpdfInRFNormSub = trimNanRows(exitFixationSpdfInRFNorm(condition,:));
-    exitFixationSpdfExRFNormSub = trimNanRows(exitFixationSpdfExRFNorm(condition,:));
-
-    fprintf('\t%s: %d cells\n', subdivision, sum(condition));
-
-    enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
-    cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
-    arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
-    targetDimT = ES.targetDim.t - ES.targetDim.window(1);
-    exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
-
-    plotFileName = sprintf('%s/allSessions-%s-meanSpdfs3-v%d.png', processedDataRootDir, subdivision, v);
-
-    quickSpdfAllEvents3InARowPopMean(cueOnsetSpdfInRFNormSub, cueOnsetSpdfExRFNormSub, ...
-            arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfExRFNormSub, targetDimSpdfInRFNormSub, ...
-            targetDimSpdfExRFNormSub, cueOnsetT, arrayOnsetT, targetDimT, plotFileName);
-
-    plotFileName = sprintf('%s/allSessions-%s-meanSpdfs5-v%d.png', processedDataRootDir, subdivision, v);
-    
-    quickSpdfAllEvents5InARowPopMean(enterFixationSpdfInRFNormSub, enterFixationSpdfExRFNormSub, ...
-            cueOnsetSpdfInRFNormSub, cueOnsetSpdfExRFNormSub, ...
-            arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfExRFNormSub, targetDimSpdfInRFNormSub, ...
-            targetDimSpdfExRFNormSub, exitFixationSpdfInRFNormSub, exitFixationSpdfExRFNormSub, ...
-            enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, plotFileName);    
-end
-
-%% mega figure of tiny bc normalized plots per unit by subdivision
-fprintf('\n');
-% subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
-subdivisions = {'all'};
-for j = 1:numel(subdivisions)
-    subdivision = subdivisions{j};
-    if strcmp(subdivision, 'all')
-        isInSubdivision = true(nUnitsAll, 1);
-    elseif strcmp(subdivision, 'PUL')
-        isInSubdivision = isInPulvinar;
-    else
-        isInSubdivision = strcmp(localization, subdivision);
-    end
-    condition = isCell & isInSubdivision;
-    unitNamesSub = unitNamesAll(condition);
-    
-    enterFixationSpdfInRFNormSub = (enterFixationSpdfInRFNorm(condition,:));
-    enterFixationSpdfExRFNormSub = (enterFixationSpdfExRFNorm(condition,:));
-    cueOnsetSpdfInRFNormSub = (cueOnsetSpdfInRFNorm(condition,:));
-    cueOnsetSpdfExRFNormSub = (cueOnsetSpdfExRFNorm(condition,:));
-    arrayOnsetHoldSpdfInRFNormSub = (arrayOnsetHoldSpdfInRFNorm(condition,:));
-    arrayOnsetHoldSpdfExRFNormSub = (arrayOnsetHoldSpdfExRFNorm(condition,:));
-    targetDimSpdfInRFNormSub = (targetDimSpdfInRFNorm(condition,:));
-    targetDimSpdfExRFNormSub = (targetDimSpdfExRFNorm(condition,:));
-    exitFixationSpdfInRFNormSub = (exitFixationSpdfInRFNorm(condition,:));
-    exitFixationSpdfExRFNormSub = (exitFixationSpdfExRFNorm(condition,:));
-    
-    enterFixationSpdfInRFNormErrSub = (enterFixationSpdfInRFNormErr(condition,:));
-    enterFixationSpdfExRFNormErrSub = (enterFixationSpdfExRFNormErr(condition,:));
-    cueOnsetSpdfInRFNormErrSub = (cueOnsetSpdfInRFNormErr(condition,:));
-    cueOnsetSpdfExRFNormErrSub = (cueOnsetSpdfExRFNormErr(condition,:));
-    arrayOnsetHoldSpdfInRFNormErrSub = (arrayOnsetHoldSpdfInRFNormErr(condition,:));
-    arrayOnsetHoldSpdfExRFNormErrSub = (arrayOnsetHoldSpdfExRFNormErr(condition,:));
-    targetDimSpdfInRFNormErrSub = (targetDimSpdfInRFNormErr(condition,:));
-    targetDimSpdfExRFNormErrSub = (targetDimSpdfExRFNormErr(condition,:));
-    exitFixationSpdfInRFNormErrSub = (exitFixationSpdfInRFNormErr(condition,:));
-    exitFixationSpdfExRFNormErrSub = (exitFixationSpdfExRFNormErr(condition,:));
-
-    fprintf('\t%s: %d cells\n', subdivision, sum(condition));
-    
-    enterFixationT = ES.enterFixation.t - ES.enterFixation.window(1);
-    cueOnsetT = ES.cueOnset.t - ES.cueOnset.window(1);
-    arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
-    targetDimT = ES.targetDim.t - ES.targetDim.window(1);
-    exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
-    
-    titleBase = sprintf('%s Cells: Enter Fixation', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf1-enterFixation-v%d', processedDataRootDir, subdivision, v);
-    makeTinyPlotsOfPopulation(enterFixationSpdfInRFNormSub, enterFixationSpdfInRFNormErrSub, ...
-            enterFixationSpdfExRFNormSub, enterFixationSpdfExRFNormErrSub, enterFixationT, unitNamesSub, titleBase, plotFileBaseName);
-    
-    titleBase = sprintf('%s Cells: Cue Onset', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf2-cueOnset-v%d', processedDataRootDir, subdivision, v);
-    makeTinyPlotsOfPopulation(cueOnsetSpdfInRFNormSub, cueOnsetSpdfInRFNormErrSub, ...
-            cueOnsetSpdfExRFNormSub, cueOnsetSpdfExRFNormErrSub, cueOnsetT, unitNamesSub, titleBase, plotFileBaseName);
-    
-    titleBase = sprintf('%s Cells: Array Onset Hold', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf3-arrayOnsetHold-v%d', processedDataRootDir, subdivision, v);
-    makeTinyPlotsOfPopulation(arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfInRFNormErrSub, ...
-            arrayOnsetHoldSpdfExRFNormSub, arrayOnsetHoldSpdfExRFNormErrSub, arrayOnsetT, unitNamesSub, titleBase, plotFileBaseName);
-    
-    titleBase = sprintf('%s Cells: Target Dim', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf4-targetDim-v%d', processedDataRootDir, subdivision, v);
-    makeTinyPlotsOfPopulation(targetDimSpdfInRFNormSub, targetDimSpdfInRFNormErrSub, ...
-            targetDimSpdfExRFNormSub, targetDimSpdfExRFNormErrSub, targetDimT, unitNamesSub, titleBase, plotFileBaseName);
-        
-    titleBase = sprintf('%s Cells: Exit Fixation', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf5-exitFixation-v%d', processedDataRootDir, subdivision, v);
-    makeTinyPlotsOfPopulation(exitFixationSpdfInRFNormSub, exitFixationSpdfInRFNormErrSub, ...
-            exitFixationSpdfExRFNormSub, exitFixationSpdfExRFNormErrSub, exitFixationT, unitNamesSub, titleBase, plotFileBaseName);
-    
-end
 
 %% PCA on activity space by cell
 superdivision = isCell & isInPulvinar;
