@@ -13,7 +13,7 @@
 v = 10;
 tic;
 
-nUnitsApprox = 20; % make sure this is an underestimate
+nUnitsApprox = 900; % make sure this is an underestimate
 
 unitNamesAll = cell(nUnitsApprox, 1);
 isSignificantStats = false(nUnitsApprox, 10); % 5 periods > baseline, 5 periods info rate
@@ -82,7 +82,7 @@ fprintf('Across Session Analysis\n');
 recordingInfo = readRecordingInfo(recordingInfoFileName);
 
 %% session loop
-for si = sessionInd% = 1:numel(recordingInfo)
+for si = 1:numel(recordingInfo)
     [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
         si, [], 'Gratings', 'Gratings', 1, 0);
