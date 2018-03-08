@@ -1,4 +1,4 @@
-% function muaAnalysisSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName)
+function muaAnalysisSummary(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName)
 
 % clear;
 % processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
