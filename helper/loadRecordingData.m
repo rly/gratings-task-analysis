@@ -58,6 +58,11 @@ elseif strcmp(taskName, 'RFM_OLD')
     if isnan(R.blockIndices)
         error('No Block Indices defined for RF Mapping Old Task');
     end
+elseif strcmp(taskName, 'RFM_EIGHTHS')
+    R.blockIndices = R.rfmEighthsIndices;
+    if isnan(R.blockIndices)
+        error('No Block Indices defined for RF Mapping Eighths Task');
+    end
 elseif strcmp(taskName, 'RFM_NEW')
     rfMappingNewInfo = readRFMappingNewInfo(rfMappingNewInfoFileName);
     matchSession = cellfun(@(x) strcmp(x, R.sessionName), {rfMappingNewInfo.sessionName});

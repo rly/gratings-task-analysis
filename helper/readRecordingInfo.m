@@ -38,7 +38,7 @@ startRow = 2;
 %   column21: text (%q)
 %   column22: text (%q)
 % For more information, see the TEXTSCAN documentation.
-formatSpec = '%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%[^\n\r]';
+formatSpec = '%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%[^\n\r]';
 
 %% Open the text file.
 fileID = fopen(filename,'r');
@@ -70,29 +70,31 @@ gratingsTask0DLogIndices = cellfun(@(x) cellfun(@(y) str2double(y), strsplit(x, 
 vepmIndices = cellfun(@(x) cellfun(@(y) str2double(y), strsplit(x, ', ')), dataArray{:, 9}, 'UniformOutput', false);
 aepmIndices = cellfun(@(x) cellfun(@(y) str2double(y), strsplit(x, ', ')), dataArray{:, 10}, 'UniformOutput', false);
 rfmOldIndices = cellfun(@(x) cellfun(@(y) str2double(y), strsplit(x, ', ')), dataArray{:, 11}, 'UniformOutput', false);
-spikeChannelPrefix = dataArray{:, 12};
-spikeChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 13}, 'UniformOutput', false); % warning: matlab injection security risk
-muaChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 14}, 'UniformOutput', false); % warning: matlab injection security risk
-lfpChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 15}, 'UniformOutput', false); % warning: matlab injection security risk
-spkcChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 16}, 'UniformOutput', false); % warning: matlab injection security risk
-directChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 17}, 'UniformOutput', false); % warning: matlab injection security risk
-pldChannels = cellfun(@(x) eval(x), dataArray{:, 18}, 'UniformOutput', false); % warning: matlab injection security risk
-plvChannels = cellfun(@(x) eval(x), dataArray{:, 19}, 'UniformOutput', false); % warning: matlab injection security risk
-pmChannels = cellfun(@(x) eval(x), dataArray{:, 20}, 'UniformOutput', false); % warning: matlab injection security risk
-piChannels = cellfun(@(x) eval(x), dataArray{:, 21}, 'UniformOutput', false); % warning: matlab injection security risk
-notes = dataArray{:, 22};
+rfmEighthsIndices = cellfun(@(x) cellfun(@(y) str2double(y), strsplit(x, ', ')), dataArray{:, 12}, 'UniformOutput', false);
+spikeChannelPrefix = dataArray{:, 13};
+spikeChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 14}, 'UniformOutput', false); % warning: matlab injection security risk
+muaChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 15}, 'UniformOutput', false); % warning: matlab injection security risk
+lfpChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 16}, 'UniformOutput', false); % warning: matlab injection security risk
+spkcChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 17}, 'UniformOutput', false); % warning: matlab injection security risk
+directChannelsToLoad = cellfun(@(x) eval(x), dataArray{:, 18}, 'UniformOutput', false); % warning: matlab injection security risk
+pldChannels = cellfun(@(x) eval(x), dataArray{:, 19}, 'UniformOutput', false); % warning: matlab injection security risk
+plvChannels = cellfun(@(x) eval(x), dataArray{:, 20}, 'UniformOutput', false); % warning: matlab injection security risk
+pmChannels = cellfun(@(x) eval(x), dataArray{:, 21}, 'UniformOutput', false); % warning: matlab injection security risk
+piChannels = cellfun(@(x) eval(x), dataArray{:, 22}, 'UniformOutput', false); % warning: matlab injection security risk
+vPulChannels = cellfun(@(x) eval(x), dataArray{:, 23}, 'UniformOutput', false); % warning: matlab injection security risk
+notes = dataArray{:, 24};
 
 
 %% Place vars into struct
 info = [pl2FileName, sessionName, areaName, blockNames, gratingsTask3DIndices, ...
         gratingsTask3DLogIndices, gratingsTask0DIndices, gratingsTask0DLogIndices, ...
-        vepmIndices, aepmIndices, rfmOldIndices, spikeChannelPrefix, ...
+        vepmIndices, aepmIndices, rfmOldIndices, rfmEighthsIndices, spikeChannelPrefix, ...
         spikeChannelsToLoad, muaChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad, ...
-        pldChannels, plvChannels, pmChannels, piChannels];
+        pldChannels, plvChannels, pmChannels, piChannels, vPulChannels];
 headers = {'pl2FileName', 'sessionName', 'areaName', 'blockNames', 'gratingsTask3DIndices', ...
         'gratingsTask3DLogIndices', 'gratingsTask0DIndices', ...
-        'gratingsTask0DLogIndices', 'vepmIndices', 'aepmIndices', 'rfmOldIndices', 'spikeChannelPrefix', ...
+        'gratingsTask0DLogIndices', 'vepmIndices', 'aepmIndices', 'rfmOldIndices', 'rfmEighthsIndices', 'spikeChannelPrefix', ...
         'spikeChannelsToLoad', 'muaChannelsToLoad', 'lfpChannelsToLoad', 'spkcChannelsToLoad', 'directChannelsToLoad', ...
-        'pldChannels', 'plvChannels', 'pmChannels', 'piChannels'};
+        'pldChannels', 'plvChannels', 'pmChannels', 'piChannels', 'vPulChannels'};
 recordingInfo = cell2struct(info, headers, 2);
 
