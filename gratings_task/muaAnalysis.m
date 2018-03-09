@@ -78,6 +78,8 @@ firingRateOverall = numel(spikeTimes) / totalTimeOverall;
 fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
         nUnits, round(i/nUnits*100));
 
+saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
+    	processedDataDir, unitName, blockName, v);
 if firingRateOverall >= minFiringRateOverall
     saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
             processedDataDir, unitName, blockName, v);
@@ -107,6 +109,10 @@ if firingRateOverall >= minFiringRateOverall
 else
     fprintf('\tOverall firing rate = %0.2f Hz < minimum firing rate = %0.2f Hz in these blocks - skipping.\n', ...
             firingRateOverall, minFiringRateOverall);
+    if exists(saveFileName, 'file')
+        fprintf('\t%s exists... deleting.\n', saveFileName);
+        delete(saveFileName);
+    end 
 end
 
 fprintf('Time elapsed: %0.2f s.\n', toc);
