@@ -347,7 +347,7 @@ for j = 1:numel(subdivisions)
         isInSubdivision = strcmp(localization, subdivision);
     end
     condition = isCell & isInSubdivision;
-    unitNamesSub = unitNamesAll(condition);
+    unitNamesSub = unitNames(condition);
     
     enterFixationSpdfInRFNormSub = (spdfInfo.enterFixationSpdfInRFNorm(condition,:));
     enterFixationSpdfExRFNormSub = (spdfInfo.enterFixationSpdfExRFNorm(condition,:));
