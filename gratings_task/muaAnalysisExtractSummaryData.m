@@ -134,15 +134,19 @@ for j = 1:nUnits
                 localization{unitCount} = '';
 %             end
 
+            isInVPulvinar(unitCount) = 0;
+            isInDPulvinar(unitCount) = 0;
             if ismember(spikeStruct.channelID, R.vPulChannels)
                 isInVPulvinar(unitCount) = 1;
                 localization{unitCount} = 'vPul'; % TEMP
-            elseif ismember(spikeStruct.channelID, R.dPulChannels)
+            end
+            if ismember(spikeStruct.channelID, R.dPulChannels)
                 isInDPulvinar(unitCount) = 1;
                 localization{unitCount} = 'dPul'; % TEMP
-            else
-                isInVPulvinar(unitCount) = 0;
-                isInDPulvinar(unitCount) = 0;
+            end
+            if ismember(spikeStruct.channelID, R.vPulChannels) && ...
+                    ismember(spikeStruct.channelID, R.dPulChannels)
+                error('Channel %d cannot be in both vPul and dPul', spikeStruct.channelID);
             end
 
             assert(all(numel([ES.cueResponseVsBaselineRankSumTestStatsByLoc.p]) == ...
