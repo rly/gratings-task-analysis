@@ -1,9 +1,11 @@
-function muaAnalysisExtractSummaryData(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd)
+function muaAnalysisExtractSummaryData(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
 
 v = 10;
 tic;
 
-nUnitsApprox = 32; % make sure this is an underestimate or equal
+% for preallocation. make sure this is an underestimate or equal to actual
+% number of units saved
+nUnitsApprox = 1; 
 
 unitNamesAll = cell(nUnitsApprox, 1);
 isSignificantStats = false(nUnitsApprox, 10); % 5 periods > baseline, 5 periods info rate
@@ -76,18 +78,17 @@ end
 %%
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, [], 'Gratings', 'Gratings', 1, 0);
+        sessionInd, muaChannelsToLoad, 'Gratings', 'Gratings', 1, 0);
 sessionName = R.sessionName;
 areaName = R.areaName;
-muaChannelInds = R.muaChannelsToLoad; % make sure this is accurate
 
 %% summarize across population of cells    
 totalTimeOverall = sum(D.blockStopTimes(R.blockIndices) - D.blockStartTimes(R.blockIndices));
 minFiringRateOverall = 0.2;
 
-nUnits = numel(muaChannelInds);
+nUnits = numel(muaChannelsToLoad);
 fprintf('-------------------------------------------------------------\n');
-fprintf('Processing Session %s %s, Channels %d-%d\n', sessionName, areaName, muaChannelInds([1 end]));
+fprintf('Processing Session %s %s, Channels %d-%d\n', sessionName, areaName, muaChannelsToLoad([1 end]));
 fprintf('Processing %d units...\n', nUnits);
 
 for j = 1:nUnits
