@@ -137,7 +137,7 @@ for j = 1:nUnits
             if ismember(spikeStruct.channelID, R.vPulChannels)
                 isInVPulvinar(unitCount) = 1;
                 localization{unitCount} = 'vPul'; % TEMP
-            if ismember(spikeStruct.channelID, R.dPulChannels)
+            elseif ismember(spikeStruct.channelID, R.dPulChannels)
                 isInDPulvinar(unitCount) = 1;
                 localization{unitCount} = 'dPul'; % TEMP
             else
