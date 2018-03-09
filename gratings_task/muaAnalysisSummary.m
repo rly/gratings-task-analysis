@@ -47,8 +47,8 @@ fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 
 %% session loop
-for i = 1:numel(recordingInfo)
-    sessionName = recordingInfo(i).sessionName;
+for sessionInd = 1:numel(recordingInfo)
+    sessionName = recordingInfo(sessionInd).sessionName;
     saveFileName = sprintf('%s/%s-sessionInd%s-muaAnalysisSummaryData-v%d.mat', summaryDataDir, sessionName, sessionInd, v);
     fprintf('Loading file %s ...\n', saveFileName);
     S = load(saveFileName);
