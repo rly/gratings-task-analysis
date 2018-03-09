@@ -195,8 +195,9 @@ nChannels = D.nLfpCh;
 plotNumSpikesByChannel(channelsToLoad, D.allMUAStructs, processedDataDir, blockName, v);
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
+hiCutoffFreq = 50;
 [channelDataNorm,flashOnsetsClean,isEventOutlier,isNoisyChannel] = preprocessLfps(D.adjLfpsClean, ...
-        Fs, D.lfpNames, flashOnsets, processedDataDir, blockName, rfMappingNewMode, v);
+        Fs, D.lfpNames, flashOnsets, processedDataDir, blockName, hiCutoffFreq, 1, v);
 D.adjLfps = [];
 D.adjLfpsClean = [];
 for j = 1:nChannels
@@ -443,8 +444,8 @@ for k = 1:numel(distsToFixUnique)
     assert(all(matchingDiameters == matchingDiameters(1)))
     diskDiameter = matchingDiameters(1) * mapScale;
     
-    uniformFilter = fspecial('disk', diskDiameter/2);
-    uniformFilter = uniformFilter/max(uniformFilter(:));
+%     uniformFilter = fspecial('disk', diskDiameter/2);
+%     uniformFilter = uniformFilter/max(uniformFilter(:));
     
     gaussianFilterSigma = diskDiameter / 2;
     gaussianFilter = fspecial('gaussian', [gaussianFilterExtent gaussianFilterExtent], ...

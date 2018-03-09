@@ -440,7 +440,7 @@ spdfInfo = var2struct(...
         meanNormSpdfExRFAllWindowsAll);
 
 
-saveFileName = sprintf('%s/%s-muaAnalysisSummaryData-v%d.mat', outputDir, sessionName, v);
+saveFileName = sprintf('%s/%s-sessionInd%d_muaAnalysisSummaryData-v%d.mat', outputDir, sessionName, sessionInd, v);
 fprintf('\n');
 fprintf('Writing file %s ...\n', saveFileName);
 save(saveFileName, ...

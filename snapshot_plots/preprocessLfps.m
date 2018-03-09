@@ -1,13 +1,13 @@
 function [channelDataNorm,eventOnsetClean,isEventOutlier,isNoisyChannel] = preprocessLfps(adjLfps, Fs, channelNames, eventOnset, ...
-        processedDataDir, blockName, rfMappingNewMode, v)
+        processedDataDir, blockName, hiCutoffFreq, rfMappingMode, v)
 % remove events with outlier data and apply CAR and low-pass filtering to adjLfps
 
 doOutlierCheckPlot = 1;
 
 maxAbsNonOutlier = 0.5;
 warningSDByChannelLarge = 2.5;
-outlierMaxSDStep1 = 6; % first-pass threshold before LPF
-outlierMaxSDStep2 = 4.5; % second-pass threshold after LPF
+outlierMaxSDStep1 = 8; % first-pass threshold before LPF
+outlierMaxSDStep2 = 6; % second-pass threshold after LPF
 outlierCheckWindowOffset = [-0.25 0.3]; % seconds around event
 
 isNanOrig = isnan(adjLfps); % track nans in original data
@@ -38,7 +38,7 @@ xlim([1 nChannels] + [-0.5 0.5]);
 xlabel('Channel Number');
 ylabel('Standard Deviation of LFP (mV)');
 plotFileName = sprintf('%s/allFP-%s-%s-%s-rfm_mode%d-CARdata-SDByChannel_v%d.png', ...
-        processedDataDir, channelNames{[1 end]}, blockName, rfMappingNewMode, v);
+        processedDataDir, channelNames{[1 end]}, blockName, rfMappingMode, v);
 fprintf('Saving SD by channel plot to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 close;
@@ -57,7 +57,7 @@ for j = 1:nChannels
             xlim([1 size(adjLfpsCAR, 2)]);
             
             plotFileName = sprintf('%s/%s-%s-rfm_mode%d-CARdata_v%d.png', ...
-                    processedDataDir, channelNames{j}, blockName, rfMappingNewMode, v);
+                    processedDataDir, channelNames{j}, blockName, rfMappingMode, v);
             fprintf('\tSaving CAR data plot to %s...\n', plotFileName);
             export_fig(plotFileName, '-nocrop');
             savefig([plotFileName(1:end-3) 'fig']);
@@ -99,11 +99,11 @@ end
 %% low-pass filter data even further
 % ideally don't low-pass at 300 Hz and then again at another freq
 % use FIR1 filter
-fprintf('Low-pass filtering...\n');
-hiCutoffFreqCustom = 100; % low-pass filter at 100 Hz
-bFirLowPassCustom = fir1(3*fix(Fs/hiCutoffFreqCustom), hiCutoffFreqCustom/(Fs/2), 'low');
+% hiCutoffFreq = 100; % low-pass filter at 100 Hz
+fprintf('Low-pass filtering at %d Hz...\n', hiCutoffFreq);
+bFirLowPass = fir1(3*fix(Fs/hiCutoffFreq), hiCutoffFreq/(Fs/2), 'low');
 adjLfpsCAR(isnan(adjLfpsCAR)) = 0; % zero out nans
-adjLfpsLP = filtfilt(bFirLowPassCustom, 1, adjLfpsCAR')';
+adjLfpsLP = filtfilt(bFirLowPass, 1, adjLfpsCAR')';
 clear adjLfpsCAR;
 
 % set missing vals back to nan
@@ -174,7 +174,7 @@ for j = 1:nChannels
         ylim([-8 8]);
         
         plotFileName = sprintf('%s/%s-%s-rfm_mode%d-outlierCheck_v%d.png', ...
-                processedDataDir, channelNames{j}, blockName, rfMappingNewMode, v);
+                processedDataDir, channelNames{j}, blockName, rfMappingMode, v);
         fprintf('\t\tSaving outlier check plot to %s...\n', plotFileName);
         export_fig(plotFileName, '-nocrop');
         close;

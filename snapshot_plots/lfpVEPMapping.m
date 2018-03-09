@@ -25,6 +25,7 @@ fprintf('------------------------\n');
 %% input check
 % assert(numel(channelsToLoad) == 1);
 assert(numel(channelsToLoad) > 1);
+assert(numel(channelsToLoad) <= 32);
 
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
@@ -69,7 +70,12 @@ nChannels = D.nLfpCh;
 
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
-[channelDataNorm,flashEventsClean] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, origFlashEvents);
+% TODO use isEventOutlier
+hiCutoffFreq = 100;
+[channelDataNorm,flashEventsClean,isEventOutlier,isNoisyChannel] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, origFlashEvents, ...
+        processedDataDir, blockName, hiCutoffFreq, 1, v);
+% channelDataNorm = D.adjLfpsClean;
+% flashEventsClean = origFlashEvents;
 D.adjLfps = [];
 D.adjLfpsClean = [];
 nFlashes = numel(flashEventsClean);
@@ -156,8 +162,6 @@ assert(all(nTime == (endIndices - startIndices + 1)));
 if strcmp(ref, 'BIP') % not the best method -- may be better to run this script on each probe separately
     if nChannels == 32
         nChannels = 31;
-    elseif nChannels == 64
-        nChannels = 62;
     end
 end
 meanLfpAcrossChannels = nanmean(channelDataNorm, 1);
@@ -174,11 +178,7 @@ for j = 1:nChannels
     if strcmp(ref, 'CAR')
         channelData = channelDataNorm(j,:) - meanLfpAcrossChannels;
     elseif strcmp(ref, 'BIP')
-        if nChannels == 62 && j > 31 % separate the probes properly
-            channelData = channelDataNorm(j+2,:) - channelDataNorm(j+1,:);
-        else
-            channelData = channelDataNorm(j+1,:) - channelDataNorm(j,:);
-        end
+        channelData = channelDataNorm(j+1,:) - channelDataNorm(j,:);
     else % RAW
         channelData = channelDataNorm(j,:);
     end
@@ -207,6 +207,8 @@ for j = 1:nChannels
 end
 
 %% staggered channel line plot of average visually evoked LFP
+xBounds = [-0.1 0.3];
+
 responsePlotYOffset = 1;
 responsePlotYScale = 5/max(max(abs(averageResponse)));
 figure_tr_inch(8, 10);
@@ -231,10 +233,11 @@ ax = ancestor(gca, 'axes');
 ax.YAxis.FontSize = 8; % change y tick font size without changing x tick
 ylabel('Channel Number (1 = topmost)', 'FontSize', 12);
 xlabel('Time from Flash Onset (s)');
-title(sprintf('Average LFP Response to Full-Field Flash (%d Flashes) (Ref: %s)', nFlashes, ref));
+title(sprintf('%s %s - LFP Response to Full-Field Flash (N = %d) (Ref: %s)', sessionName, areaName, nFlashes, ref));
 
 origYLim = [minYLim maxYLim]; % ylim();
 plot([0 0], [-1000 1000], '-', 'Color', 0.3*ones(3, 1));
+xlim(xBounds);
 ylim(origYLim);
 
 % plot early latency line at 35 ms, 45 ms
@@ -252,11 +255,11 @@ hold on;
 imagesc(t, 1:nChannels, averageResponse);
 set(gca, 'YDir', 'reverse');
 plot([0 0], [0 nChannels + 1], '-', 'Color', 0.3*ones(3, 1));
-xlim(periFlashWindowOffset);
+xlim(xBounds);
 ylim([0.5 nChannels+0.5]);
 xlabel('Time from Flash Onset (s)');
 ylabel('Channel Number (1 = topmost)');
-title(sprintf('Average LFP Response to Full-Field Flash (%d Flashes) (Ref: %s)', nFlashes, ref));
+title(sprintf('%s %s - LFP Response to Full-Field Flash (N = %d) (Ref: %s)', sessionName, areaName, nFlashes, ref));
 maxCAxis = max(abs(caxis));%*3/4;
 caxis([-maxCAxis maxCAxis]);
 colormap(getCoolWarmMap());
@@ -277,24 +280,8 @@ export_fig(plotFileName, '-nocrop');
 
 %% plot boxes around areas abs() > thresh over last plot and re-save
 boxAbsThresh = 0.25;
-if nChannels == 32 || nChannels == 31
-    strongResponseGroups = bwlabel(abs(averageResponse) > boxAbsThresh, 4);
-    strongResponseGroupBoundaries = bwboundaries(strongResponseGroups);
-elseif nChannels == 64 % don't merge groups across probe boundaries
-    strongResponseGroups1 = bwlabel(abs(averageResponse(1:32,:)) > boxAbsThresh, 4);
-    strongResponseGroups2 = bwlabel(abs(averageResponse(33:64,:)) > boxAbsThresh, 4);
-    strongResponseGroups2(strongResponseGroups2 > 0) = strongResponseGroups2(strongResponseGroups2 > 0) + max(strongResponseGroups1(:));
-    strongResponseGroupBoundaries1 = bwboundaries([strongResponseGroups1; zeros(32, size(strongResponseGroups1, 2))]);
-    strongResponseGroupBoundaries2 = bwboundaries([zeros(32, size(strongResponseGroups2, 2)); strongResponseGroups2]);
-    strongResponseGroupBoundaries = [strongResponseGroupBoundaries1; strongResponseGroupBoundaries2];
-elseif nChannels == 62 % don't merge groups across probe boundaries
-    strongResponseGroups1 = bwlabel(abs(averageResponse(1:31,:)) > boxAbsThresh, 4);
-    strongResponseGroups2 = bwlabel(abs(averageResponse(32:62,:)) > boxAbsThresh, 4);
-    strongResponseGroups2(strongResponseGroups2 > 0) = strongResponseGroups2(strongResponseGroups2 > 0) + max(strongResponseGroups1(:));
-    strongResponseGroupBoundaries1 = bwboundaries([strongResponseGroups1; zeros(31, size(strongResponseGroups1, 2))]);
-    strongResponseGroupBoundaries2 = bwboundaries([zeros(31, size(strongResponseGroups2, 2)); strongResponseGroups2]);
-    strongResponseGroupBoundaries = [strongResponseGroupBoundaries1; strongResponseGroupBoundaries2];
-end
+strongResponseGroups = bwlabel(abs(averageResponse) > boxAbsThresh, 4);
+strongResponseGroupBoundaries = bwboundaries(strongResponseGroups);
 for k = 1:length(strongResponseGroupBoundaries)
    boundary = strongResponseGroupBoundaries{k};
    plot(t(boundary(:,2)), boundary(:,1), 'Color', 0.3*ones(3, 1), 'LineWidth', 2)
