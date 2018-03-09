@@ -277,7 +277,7 @@ fprintf('\n');
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');
 % subdivisions = {'PM', 'PLd', 'PLv', 'PI', 'PUL', 'all'};
-subdivisions = {'all', 'vPul', 'notVPul'};
+subdivisions = {'all', 'vPul', 'notVPul', 'dPul', 'notDPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
@@ -288,6 +288,10 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInVPulvinar;
     elseif strcmp(subdivision, 'notVPul')
         isInSubdivision = ~isInVPulvinar;
+    elseif strcmp(subdivision, 'dPul')
+        isInSubdivision = isInDPulvinar;
+    elseif strcmp(subdivision, 'notDPul')
+        isInSubdivision = ~isInDPulvinar;
     else
         isInSubdivision = strcmp(localization, subdivision);
     end
@@ -324,7 +328,7 @@ end
 %% mega figure of tiny bc normalized plots per unit by subdivision
 fprintf('\n');
 % subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
-subdivisions = {'all', 'vPul', 'notVPul'};
+subdivisions = {'all', 'vPul', 'notVPul', 'dPul', 'notDPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
@@ -335,6 +339,10 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInVPulvinar;
     elseif strcmp(subdivision, 'notVPul')
         isInSubdivision = ~isInVPulvinar;
+    elseif strcmp(subdivision, 'dPul')
+        isInSubdivision = isInDPulvinar;
+    elseif strcmp(subdivision, 'notDPul')
+        isInSubdivision = ~isInDPulvinar;
     else
         isInSubdivision = strcmp(localization, subdivision);
     end
@@ -366,27 +374,27 @@ for j = 1:numel(subdivisions)
     fprintf('\t%s: %d cells\n', subdivision, sum(condition));
     
     titleBase = sprintf('%s Cells: Enter Fixation', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf1-enterFixation-v%d', processedDataRootDir, subdivision, v);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf1-enterFixation-v%d', summaryDataDir, subdivision, v);
     makeTinyPlotsOfPopulation(enterFixationSpdfInRFNormSub, enterFixationSpdfInRFNormErrSub, ...
             enterFixationSpdfExRFNormSub, enterFixationSpdfExRFNormErrSub, enterFixationT, unitNamesSub, titleBase, plotFileBaseName);
     
     titleBase = sprintf('%s Cells: Cue Onset', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf2-cueOnset-v%d', processedDataRootDir, subdivision, v);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf2-cueOnset-v%d', summaryDataDir, subdivision, v);
     makeTinyPlotsOfPopulation(cueOnsetSpdfInRFNormSub, cueOnsetSpdfInRFNormErrSub, ...
             cueOnsetSpdfExRFNormSub, cueOnsetSpdfExRFNormErrSub, cueOnsetT, unitNamesSub, titleBase, plotFileBaseName);
     
     titleBase = sprintf('%s Cells: Array Onset Hold', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf3-arrayOnsetHold-v%d', processedDataRootDir, subdivision, v);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf3-arrayOnsetHold-v%d', summaryDataDir, subdivision, v);
     makeTinyPlotsOfPopulation(arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfInRFNormErrSub, ...
             arrayOnsetHoldSpdfExRFNormSub, arrayOnsetHoldSpdfExRFNormErrSub, arrayOnsetT, unitNamesSub, titleBase, plotFileBaseName);
     
     titleBase = sprintf('%s Cells: Target Dim', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf4-targetDim-v%d', processedDataRootDir, subdivision, v);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf4-targetDim-v%d', summaryDataDir, subdivision, v);
     makeTinyPlotsOfPopulation(targetDimSpdfInRFNormSub, targetDimSpdfInRFNormErrSub, ...
             targetDimSpdfExRFNormSub, targetDimSpdfExRFNormErrSub, targetDimT, unitNamesSub, titleBase, plotFileBaseName);
         
     titleBase = sprintf('%s Cells: Exit Fixation', subdivision);
-    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf5-exitFixation-v%d', processedDataRootDir, subdivision, v);
+    plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf5-exitFixation-v%d', summaryDataDir, subdivision, v);
     makeTinyPlotsOfPopulation(exitFixationSpdfInRFNormSub, exitFixationSpdfInRFNormErrSub, ...
             exitFixationSpdfExRFNormSub, exitFixationSpdfExRFNormErrSub, exitFixationT, unitNamesSub, titleBase, plotFileBaseName);
 end
