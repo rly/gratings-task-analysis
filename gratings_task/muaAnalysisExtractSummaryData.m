@@ -13,6 +13,7 @@ infoRates = nan(nUnitsApprox, 5); % 5 periods
 attnIndices = nan(nUnitsApprox, 2); % 2 delay periods
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
+isInDPulvinar = false(nUnitsApprox, 1);
 meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTRelInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
@@ -121,23 +122,27 @@ for j = 1:nUnits
 
             unitNames{unitCount} = unitName;
 
-            if ismember(spikeStruct.channelID, R.pldChannels)
-                localization{unitCount} = 'PLd';
-            elseif ismember(spikeStruct.channelID, R.plvChannels)
-                localization{unitCount} = 'PLv';
-            elseif ismember(spikeStruct.channelID, R.pmChannels)
-                localization{unitCount} = 'PM';
-            elseif ismember(spikeStruct.channelID, R.piChannels)
-                localization{unitCount} = 'PI';
-            else
+%             if ismember(spikeStruct.channelID, R.pldChannels)
+%                 localization{unitCount} = 'PLd';
+%             elseif ismember(spikeStruct.channelID, R.plvChannels)
+%                 localization{unitCount} = 'PLv';
+%             elseif ismember(spikeStruct.channelID, R.pmChannels)
+%                 localization{unitCount} = 'PM';
+%             elseif ismember(spikeStruct.channelID, R.piChannels)
+%                 localization{unitCount} = 'PI';
+%             else
                 localization{unitCount} = '';
-            end
+%             end
 
             if ismember(spikeStruct.channelID, R.vPulChannels)
                 isInVPulvinar(unitCount) = 1;
                 localization{unitCount} = 'vPul'; % TEMP
+            if ismember(spikeStruct.channelID, R.dPulChannels)
+                isInDPulvinar(unitCount) = 1;
+                localization{unitCount} = 'dPul'; % TEMP
             else
                 isInVPulvinar(unitCount) = 0;
+                isInDPulvinar(unitCount) = 0;
             end
 
             assert(all(numel([ES.cueResponseVsBaselineRankSumTestStatsByLoc.p]) == ...
@@ -441,6 +446,7 @@ save(saveFileName, ...
         'attnIndices', ...
         'localization', ...
         'isInVPulvinar', ...
+        'isInDPulvinar', ...
         'spdfInfo', ...
         'enterFixationT', ...
         'cueOnsetT', ...

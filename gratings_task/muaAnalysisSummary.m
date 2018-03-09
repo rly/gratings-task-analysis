@@ -18,6 +18,7 @@ infoRates = nan(nUnitsApprox, 5); % 5 periods
 attnIndices = nan(nUnitsApprox, 2); % 2 delay periods
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
+isInDPulvinar = false(nUnitsApprox, 1);
 spdfInfo = struct();
 
 meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
@@ -49,8 +50,10 @@ fprintf('Across Session Analysis\n');
 for i = 1:numel(recordingInfo)
     sessionName = recordingInfo(i).sessionName;
     saveFileName = sprintf('%s/%s-muaAnalysisSummaryData-v%d.mat', summaryDataDir, sessionName, v);
+    fprintf('Loading file %s ...\n', saveFileName);
     S = load(saveFileName);
     
+    fprintf('Found %d units...\n', numel(S.unitNames));
     currentUnitInds = (unitCount + 1):(unitCount + numel(S.unitNames));
     unitCount = unitCount + numel(S.unitNames);
     unitNames(currentUnitInds) = S.unitNames;
@@ -59,6 +62,7 @@ for i = 1:numel(recordingInfo)
     attnIndices(currentUnitInds,:) = S.attnIndices;
     localization(currentUnitInds) = S.localization;
     isInVPulvinar(currentUnitInds) = S.isInVPulvinar;
+    isInDPulvinar(currentUnitInds) = S.isInDPulvinar;
     
     fn = fieldnames(S.spdfInfo);
     for j = 1:numel(fn)

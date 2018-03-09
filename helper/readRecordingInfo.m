@@ -38,7 +38,7 @@ startRow = 2;
 %   column21: text (%q)
 %   column22: text (%q)
 % For more information, see the TEXTSCAN documentation.
-formatSpec = '%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%[^\n\r]';
+formatSpec = '%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%q%[^\n\r]';
 
 %% Open the text file.
 fileID = fopen(filename,'r');
@@ -82,7 +82,8 @@ plvChannels = cellfun(@(x) eval(x), dataArray{:, 20}, 'UniformOutput', false); %
 pmChannels = cellfun(@(x) eval(x), dataArray{:, 21}, 'UniformOutput', false); % warning: matlab injection security risk
 piChannels = cellfun(@(x) eval(x), dataArray{:, 22}, 'UniformOutput', false); % warning: matlab injection security risk
 vPulChannels = cellfun(@(x) eval(x), dataArray{:, 23}, 'UniformOutput', false); % warning: matlab injection security risk
-notes = dataArray{:, 24};
+dPulChannels = cellfun(@(x) eval(x), dataArray{:, 24}, 'UniformOutput', false); % warning: matlab injection security risk
+notes = dataArray{:, 25};
 
 
 %% Place vars into struct
@@ -90,11 +91,11 @@ info = [pl2FileName, sessionName, areaName, blockNames, gratingsTask3DIndices, .
         gratingsTask3DLogIndices, gratingsTask0DIndices, gratingsTask0DLogIndices, ...
         vepmIndices, aepmIndices, rfmOldIndices, rfmEighthsIndices, spikeChannelPrefix, ...
         spikeChannelsToLoad, muaChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad, ...
-        pldChannels, plvChannels, pmChannels, piChannels, vPulChannels];
+        pldChannels, plvChannels, pmChannels, piChannels, vPulChannels, dPulChannels];
 headers = {'pl2FileName', 'sessionName', 'areaName', 'blockNames', 'gratingsTask3DIndices', ...
         'gratingsTask3DLogIndices', 'gratingsTask0DIndices', ...
         'gratingsTask0DLogIndices', 'vepmIndices', 'aepmIndices', 'rfmOldIndices', 'rfmEighthsIndices', 'spikeChannelPrefix', ...
         'spikeChannelsToLoad', 'muaChannelsToLoad', 'lfpChannelsToLoad', 'spkcChannelsToLoad', 'directChannelsToLoad', ...
-        'pldChannels', 'plvChannels', 'pmChannels', 'piChannels', 'vPulChannels'};
+        'pldChannels', 'plvChannels', 'pmChannels', 'piChannels', 'vPulChannels', 'dPulChannels'};
 recordingInfo = cell2struct(info, headers, 2);
 
