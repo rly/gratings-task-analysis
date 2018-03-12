@@ -40,14 +40,16 @@ assert(numel(muaChannelsToLoad) == 1);
 %% load recording information
 
 if isZeroDistractors
-    taskName = 'Gratings0D';
+    scriptName = 'MUA_GRATINGS_0D';
+    taskName = 'GRATINGS_0D';
 else
-    taskName = 'Gratings';
+    scriptName = 'MUA_GRATINGS';
+    taskName = 'GRATINGS';
 end
 
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
         dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, ...
-        taskName, taskName, 1, 0);
+        taskName, scriptName, 1, 0);
 sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);

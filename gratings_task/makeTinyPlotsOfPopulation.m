@@ -70,5 +70,6 @@ end
 %% save
 plotFileName = sprintf('%s_pg%d.png', plotFileBaseName, ceil(numSessionsUsed / 60));
 if ~isempty(plotFileName)
+    fprintf('Saving to %s...\n', plotFileName);
     export_fig(plotFileName, '-nocrop');
 end

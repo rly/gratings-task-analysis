@@ -1,5 +1,4 @@
-function saveFileName = computeEvokedSpiking(saveFileName, ...
-        spikeStruct, nLoc, UE)
+function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE)
 % spikeStruct = struct of spiking data
 % UE = useful events struct
 
@@ -10,6 +9,8 @@ numRandomizations = 2;
 clear spikeStruct;
 
 nTrials = numel(UE.cueOnset);
+fprintf('Computing evoked spiking with SPDF sigma %0.3f seconds and %d randomizations over %d trials.\n', ...
+        kernelSigma, numRandomizations, nTrials);
 
 %% align spikes to cue onset, compute spdf
 cueOnset.window = [0.8 0.8]; % seconds before, after
@@ -96,7 +97,6 @@ arrayOnsetRelToLeverReleaseTime = UE.fixationAndLeverTimes.firstLeverReleaseTime
 targetDimToLeverReleaseTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(UE.isHoldTrial) - UE.targetDim;
 
 %% analysis time windows
-
 preLeverReleaseWindowOffset = [-0.175 0];
 preCueBaselineWindowOffset = [-0.175 0];
 cueResponseWindowOffset = [0.025 0.2];
@@ -110,8 +110,8 @@ postTargetDimMotorResponseWindowOffset = [0.425 0.6];
 preEnterFixationWindowOffset = [-0.175 0];
 postEnterFixationWindowOffset = [0.025 0.2];
 postEnterFixationLateWindowOffset = [0.15 0.325];
-preExitFixationWindowOffset = [-0.175 0];
-postExitFixationWindowOffset = [0.025 0.2];
+preExitFixationWindowOffset = [-0.05 0]; % note smaller window - TODO does this matter much?
+postExitFixationWindowOffset = [0.0 0.1]; % note smaller window - TODO does this matter much?
 postLeverReleaseWindowOffset = [0.025 0.2];
 
 %% average number of spikes in each window
@@ -381,6 +381,33 @@ for i = 1:nLoc
     end
 end
 
+averageFiringRatesByCount.preExitFixation = computeAverageFiringRateByCount(...
+        preExitFixationWindowOffset, exitFixation);
+averageFiringRatesByCount.postExitFixation = computeAverageFiringRateByCount(...
+        postExitFixationWindowOffset, exitFixation);
+
+%% compute pre exit fixation response at any location ~= baseline
+% TODO consider change from delay also as a response
+preExitFixationPValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
+for i = 1:nLoc
+    if averageFiringRatesBySpdf.preExitFixation.byLoc(i) > meanBootstrappedMeanPreCueBaselines
+        preExitFixationPValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.preExitFixation.byLoc(i) < bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+    else
+        preExitFixationPValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.preExitFixation.byLoc(i) > bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+    end
+end
+
+%% compute post exit fixation response at any location ~= baseline
+% TODO consider change from delay also as a response
+postExitFixationPValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
+for i = 1:nLoc
+    if averageFiringRatesBySpdf.postExitFixation.byLoc(i) > meanBootstrappedMeanPreCueBaselines
+        postExitFixationPValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.postExitFixation.byLoc(i) < bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+    else
+        postExitFixationPValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.postExitFixation.byLoc(i) > bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+    end
+end
+
 %% rank-sum test on x vs baseline using individual trial spike counts
 % spike rates per trial are not normally distributed
 % they may also not have equal variance
@@ -409,6 +436,10 @@ targetDimDelayVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageF
         averageFiringRatesByCount.targetDimDelay.trialRateByLoc);
 targetDimResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
         averageFiringRatesByCount.targetDimResponse.trialRateByLoc);
+preExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
+        averageFiringRatesByCount.preExitFixation.trialRateByLoc);
+postExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
+        averageFiringRatesByCount.postExitFixation.trialRateByLoc);
 
 %% shuffle test on cue onset time as another test for cue-evoked change in activity
 % concatenate the two time periods in a trial and circularly permute the

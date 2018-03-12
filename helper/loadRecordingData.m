@@ -42,10 +42,10 @@ fprintf('... done (%0.2f s).\n', toc);
 
 %% get block indices
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
-if strcmp(taskName, 'Gratings')
+if strcmp(taskName, 'GRATINGS')
     R.blockIndices = R.gratingsTask3DIndices;
     R.gratingsTaskLogIndices = R.gratingsTask3DLogIndices;
-elseif strcmp(taskName, 'Gratings0D')
+elseif strcmp(taskName, 'GRATINGS_0D')
     R.blockIndices = R.gratingsTask0DIndices;
     R.gratingsTaskLogIndices = R.gratingsTask0DLogIndices;
     if isnan(R.blockIndices)
