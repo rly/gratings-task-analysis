@@ -10,7 +10,7 @@ if ~exist(summaryDataDir, 'dir')
     error('No directory %s\n', summaryDataDir);
 end
 
-nUnitsApprox = 16;%numel(recordingInfo) * 16; % should be equal or an underestimate
+nUnitsApprox = numel(recordingInfo) * 16; % should be equal or an underestimate
 
 unitNames = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline, 5 periods info rate
@@ -48,7 +48,7 @@ fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 
 %% session loop
-for sessionInd = 7%1:numel(recordingInfo)
+for sessionInd = 1:numel(recordingInfo)
     sessionName = recordingInfo(sessionInd).sessionName;
     saveFileName = sprintf('%s/%s-sessionInd%d-muaAnalysisSummaryData-v%d.mat', summaryDataDir, sessionName, sessionInd, v);
     fprintf('Loading file %s ...\n', saveFileName);
