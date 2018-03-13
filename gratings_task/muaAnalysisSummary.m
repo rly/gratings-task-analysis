@@ -91,8 +91,8 @@ for i = 1:numel(sessionInds)
         end
     end
     
-    % test regardless of location
-    isSessionHasDelaySelectivity(i) = any(S.isSignificantSelectivity(:,[2 4]), 2);
+    % test regardless of which delay period
+    isSessionHasDelaySelectivity(i) = any(any(S.isSignificantSelectivity(:,[2 4]), 2));
     if isSessionHasDelaySelectivity(i)
         fprintf('Session %s (index %d) has delay selectivity', sessionName, sessionInd);
     else
