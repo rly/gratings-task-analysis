@@ -30,6 +30,8 @@ isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
 spdfInfo = struct();
 
+isSessionHasDelaySelectivity = false(numel(sessionInds), 1);
+
 meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTRelInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
@@ -56,7 +58,8 @@ fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 
 %% session loop
-for sessionInd = sessionInds
+for i = 1:numel(sessionInds)
+    sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
     saveFileName = sprintf('%s/%s-sessionInd%d-muaAnalysisSummaryData-v%d.mat', summaryDataDir, sessionName, sessionInd, v);
     fprintf('Loading file %s ...\n', saveFileName);
@@ -65,6 +68,7 @@ for sessionInd = sessionInds
     fprintf('Found %d units...\n', numel(S.unitNames));
     currentUnitInds = (unitCount + 1):(unitCount + numel(S.unitNames));
     unitCount = unitCount + numel(S.unitNames);
+    
     unitNames(currentUnitInds) = S.unitNames;
     isSignificantResponseVsBaseline(currentUnitInds,:) = S.isSignificantResponseVsBaseline;
     isSignificantResponseVsBootstrapBaseline(currentUnitInds,:) = S.isSignificantResponseVsBootstrapBaseline;
@@ -85,6 +89,14 @@ for sessionInd = sessionInds
         else
             spdfInfo.(fn{j}) = S.spdfInfo.(fn{j}); % no pre-allocation
         end
+    end
+    
+    % test regardless of location
+    isSessionHasDelaySelectivity(i) = any(S.isSignificantSelectivity(:,[2 4]), 2);
+    if isSessionHasDelaySelectivity(i)
+        fprintf('Session %s (index %d) has delay selectivity', sessionName, sessionInd);
+    else
+        fprintf('Session %s (index %d) does NOT have delay selectivity', sessionName, sessionInd);
     end
     
     % overwrite each session but that's ok. they should all be the same
