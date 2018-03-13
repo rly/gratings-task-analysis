@@ -381,11 +381,6 @@ for i = 1:nLoc
     end
 end
 
-averageFiringRatesByCount.preExitFixation = computeAverageFiringRateByCount(...
-        preExitFixationWindowOffset, exitFixation);
-averageFiringRatesByCount.postExitFixation = computeAverageFiringRateByCount(...
-        postExitFixationWindowOffset, exitFixation);
-
 %% compute pre exit fixation response at any location ~= baseline
 % TODO consider change from delay also as a response
 preExitFixationPValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);

@@ -20,7 +20,10 @@ unitNames = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6);  % 6 periods > baseline
 isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
+cueResponseVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
+preExitFixationVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
 infoRates = nan(nUnitsApprox, 5); % 5 periods
+delayDiffs = nan(nUnitsApprox, 2); % 2 delay periods
 attnIndices = nan(nUnitsApprox, 2); % 2 delay periods
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
@@ -66,7 +69,10 @@ for sessionInd = sessionInds
     isSignificantResponseVsBaseline(currentUnitInds,:) = S.isSignificantResponseVsBaseline;
     isSignificantResponseVsBootstrapBaseline(currentUnitInds,:) = S.isSignificantResponseVsBootstrapBaseline;
     isSignificantSelectivity(currentUnitInds,:) = S.isSignificantSelectivity;
+    cueResponseVsBootstrapBaselineDirection(currentUnitInds,:) = S.cueResponseVsBootstrapBaselineDirection;
+    preExitFixationVsBootstrapBaselineDirection(currentUnitInds,:) = S.preExitFixationVsBootstrapBaselineDirection;
     infoRates(currentUnitInds,:) = S.infoRates;
+    delayDiffs(currentUnitInds,:) = S.delayDiffs;
     attnIndices(currentUnitInds,:) = S.attnIndices;
     localization(currentUnitInds) = S.localization;
     isInVPulvinar(currentUnitInds) = S.isInVPulvinar;
@@ -99,11 +105,22 @@ isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBootstrapBaseline,
 isSignificantCueResponse = isCell & isSignificantResponseVsBootstrapBaseline(:,1);
 isSignificantPreExitFixation = isCell & isSignificantResponseVsBootstrapBaseline(:,6);
 
+isSignificantCueResponseInc = isCell & isSignificantResponseVsBootstrapBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == 1;
+isSignificantCueResponseDec = isCell & isSignificantResponseVsBootstrapBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == -1;
+isSignificantPreExitFixationInc = isCell & isSignificantResponseVsBootstrapBaseline(:,6) & preExitFixationVsBootstrapBaselineDirection == 1;
+isSignificantPreExitFixationDec = isCell & isSignificantResponseVsBootstrapBaseline(:,6) & preExitFixationVsBootstrapBaselineDirection == -1;
+
 isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
 isSignificantDelaySelectivity = isCell & any(isSignificantSelectivity(:,[2 4]), 2);
 isSignificantSelectivityCueTargetDelay = isCell & isSignificantSelectivity(:,2);
 isSignificantSelectivityTargetDimDelay = isCell & isSignificantSelectivity(:,4);
+
+isSignificantSelectivityCueTargetDelayInc = isCell & isSignificantSelectivity(:,2) & delayDiffs(:,1) > 0;
+isSignificantSelectivityCueTargetDelayDec = isCell & isSignificantSelectivity(:,2) & delayDiffs(:,1) < 0;
+isSignificantSelectivityTargetDimDelayInc = isCell & isSignificantSelectivity(:,4) & delayDiffs(:,2) > 0;
+isSignificantSelectivityTargetDimDelayDec = isCell & isSignificantSelectivity(:,4) & delayDiffs(:,2) < 0;
+
 % isSigSelectEvokedNotDelay = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2) & any(isSignificantSelectivity(:,[2 4]), 2);
 % isSigSelectOnlyEvoked = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2) & ~any(isSignificantSelectivity(:,[2 4]), 2);
 % isSigSelectOnlyDelay = isCell & ~any(isSignificantSelectivity(:,[1 3 5]), 2) & any(isSignificantSelectivity(:,[2 4]), 2);
@@ -149,6 +166,20 @@ fprintf('%d/%d = %d%% pulvinar units show significant pre-saccadic activity comp
         round(sum(isSignificantPreExitFixation & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
 fprintf('\n');
 
+fprintf('Of the %d units in the pulvinar that show significant cue response vs baseline, \n\t%d (%d%%) are increases, %d (%d%%) are decreases\n', ...
+        sum(isSignificantCueResponse & isInPulvinar), ...
+        sum(isSignificantCueResponseInc), ...
+        round(sum(isSignificantCueResponseInc)/sum(isSignificantCueResponse & isInPulvinar) * 100), ...
+        sum(isSignificantCueResponseDec), ...
+        round(sum(isSignificantCueResponseDec)/sum(isSignificantCueResponse & isInPulvinar) * 100));
+fprintf('Of the %d units in the pulvinar that show significant pre-saccadic activity vs baseline, \n\t%d (%d%%) are increases, %d (%d%%) are decreases\n', ...
+        sum(isSignificantPreExitFixation & isInPulvinar), ...
+        sum(isSignificantPreExitFixationInc), ...
+        round(sum(isSignificantPreExitFixationInc)/sum(isSignificantPreExitFixation & isInPulvinar) * 100), ...
+        sum(isSignificantPreExitFixationDec), ...
+        round(sum(isSignificantPreExitFixationDec)/sum(isSignificantPreExitFixation & isInPulvinar) * 100));
+fprintf('\n');
+
 fprintf('%d/%d = %d%% pulvinar units show significant spatial selectivity during some task period.\n', ...
         sum(isSignificantAnySpatialSelectivity & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantAnySpatialSelectivity & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
@@ -160,14 +191,19 @@ fprintf('%d/%d = %d%% pulvinar units show spatial selectivity in a task period i
         round(sum(isSignificantDelaySelectivity & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
 fprintf('\n');
 
-fprintf('Of the %d units in the pulvinar that show significant cue response vs baseline, \n\t%d (%d%%) are in vPul, %d (%d%%) are in dPul\n', ...
-        sum(isSignificantCueResponse & isInPulvinar), ...
-        sum(isSignificantCueResponse & strcmp(localization, 'vPul')), ...
-        round(sum(isSignificantCueResponse & strcmp(localization, 'vPul'))/sum(isSignificantCueResponse & isInPulvinar) * 100), ...
-        sum(isSignificantCueResponse & strcmp(localization, 'dPul')), ...
-        round(sum(isSignificantCueResponse & strcmp(localization, 'dPul'))/sum(isSignificantCueResponse & isInPulvinar) * 100));
+fprintf('Of the %d units in the pulvinar that show spatial selectivity during the cue-target delay, \n\t%d (%d%%) are InRF > ExRF, %d (%d%%) are InRF < ExRF\n', ...
+        sum(isSignificantSelectivityCueTargetDelay & isInPulvinar), ...
+        sum(isSignificantSelectivityCueTargetDelayInc), ...
+        round(sum(isSignificantSelectivityCueTargetDelayInc)/sum(isSignificantSelectivityCueTargetDelay & isInPulvinar) * 100), ...
+        sum(isSignificantSelectivityCueTargetDelayDec), ...
+        round(sum(isSignificantSelectivityCueTargetDelayDec)/sum(isSignificantSelectivityCueTargetDelay & isInPulvinar) * 100));
+fprintf('Of the %d units in the pulvinar that show spatial selectivity during the target-dim delay, \n\t%d (%d%%) are InRF > ExRF, %d (%d%%) are InRF < ExRF\n', ...
+        sum(isSignificantSelectivityTargetDimDelay & isInPulvinar), ...
+        sum(isSignificantSelectivityTargetDimDelayInc), ...
+        round(sum(isSignificantSelectivityTargetDimDelayInc)/sum(isSignificantSelectivityTargetDimDelay & isInPulvinar) * 100), ...
+        sum(isSignificantSelectivityTargetDimDelayDec), ...
+        round(sum(isSignificantSelectivityTargetDimDelayDec)/sum(isSignificantSelectivityTargetDimDelay & isInPulvinar) * 100));
 fprintf('\n');
-
 
 fprintf('Of the %d units in the pulvinar that show significant cue response vs baseline, \n\t%d (%d%%) are in vPul, %d (%d%%) are in dPul\n', ...
         sum(isSignificantCueResponse & isInPulvinar), ...
@@ -200,7 +236,7 @@ fprintf('Of the %d units in the pulvinar that show spatial selectivity during at
         sum(isSignificantDelaySelectivity & strcmp(localization, 'dPul')), ...
         round(sum(isSignificantDelaySelectivity & strcmp(localization, 'dPul'))/sum(isSignificantDelaySelectivity & isInPulvinar) * 100));
 fprintf('\n');
-
+fprintf('\n');
 
 fprintf('Of the %d units in the pulvinar that show significant cue response compared to baseline, \n', sum(isSignificantCueResponse & isInPulvinar));
 fprintf('\t%d (%d%%) show significant pre-saccadic activity compared to baseline\n', sum(isSignificantCueResponse & isInPulvinar & isSignificantPreExitFixation), ...
@@ -210,9 +246,7 @@ fprintf('\t%d (%d%%) show significant selectivity during the cue-target delay\n'
 fprintf('\t%d (%d%%) show significant selectivity during the target-dim delay\n', sum(isSignificantCueResponse & isInPulvinar & isSignificantSelectivityTargetDimDelay), ...
         round(sum(isSignificantCueResponse & isInPulvinar & isSignificantSelectivityTargetDimDelay)/sum(isSignificantCueResponse & isInPulvinar) * 100));
 fprintf('\n');
-
-
-
+fprintf('\n');
 
 fprintf('Significant cue response compared to baseline:\n');
 fprintf('\t%d/%d = %d%% vPul units\n',...
