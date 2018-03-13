@@ -9,6 +9,8 @@ numRandomizations = 500;
 clear spikeStruct;
 
 nTrials = numel(UE.cueOnset);
+nTrialsByLoc = cellfun(@numel, ES.UE.cueOnsetByLoc);
+isLocUsed = nTrialsByLoc > 0;
 fprintf('Computing evoked spiking with SPDF sigma %0.3f seconds and %d randomizations over %d trials.\n', ...
         kernelSigma, numRandomizations, nTrials);
 
