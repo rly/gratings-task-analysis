@@ -108,36 +108,41 @@ end
 clear S;
 
 %% print session-wise presence of delay selectivity
+fprintf('--------------\n');
+fprintf('\n');
 for i = 1:numel(sessionInds)
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
     if nUnitsBySessionWithDelaySelectivity(i) > 0
         fprintf('Session %s (index %d) has %d units with delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithDelaySelectivity(i));
     else
-        fprintf('Session %s (index %d) does NOT have units with delay selectivity\n', sessionName, sessionInd);
+        fprintf('Session %s (index %d) does **NOT** have units with delay selectivity\n', sessionName, sessionInd);
     end
 end
-fprintf('--------------');
+fprintf('--------------\n');
+fprintf('\n');
 for i = 1:numel(sessionInds)
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
     if nUnitsBySessionWithCueTargetDelaySelectivity(i) > 0
         fprintf('Session %s (index %d) has %d units with cue-target delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithCueTargetDelaySelectivity(i));
     else
-        fprintf('Session %s (index %d) does NOT have units with cue-target delay selectivity\n', sessionName, sessionInd);
+        fprintf('Session %s (index %d) does **NOT** have units with cue-target delay selectivity\n', sessionName, sessionInd);
     end
 end
-fprintf('--------------');
+fprintf('--------------\n');
+fprintf('\n');
 for i = 1:numel(sessionInds)
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
     if nUnitsBySessionWithTargetDimDelaySelectivity(i) > 0
         fprintf('Session %s (index %d) has %d units with target-dim delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithTargetDimDelaySelectivity(i));
     else
-        fprintf('Session %s (index %d) does NOT have units with target-dim delay selectivity\n', sessionName, sessionInd);
+        fprintf('Session %s (index %d) does **NOT** have units with target-dim delay selectivity\n', sessionName, sessionInd);
     end
 end
-
+fprintf('--------------\n');
+fprintf('\n');
 %% summarize
 nUnitsAll = unitCount;
 isCell = true(unitCount, 1); % for MUA, cannot distinguish between cell and not cell
