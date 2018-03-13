@@ -30,7 +30,7 @@ isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
 spdfInfo = struct();
 
-isSessionHasDelaySelectivity = false(numel(sessionInds), 1);
+nUnitsBySessionWithDelaySelectivity = zeros(numel(sessionInds), 1);
 
 meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
@@ -92,12 +92,7 @@ for i = 1:numel(sessionInds)
     end
     
     % test regardless of which delay period
-    isSessionHasDelaySelectivity(i) = any(any(S.isSignificantSelectivity(:,[2 4]), 2));
-    if isSessionHasDelaySelectivity(i)
-        fprintf('Session %s (index %d) has delay selectivity', sessionName, sessionInd);
-    else
-        fprintf('Session %s (index %d) does NOT have delay selectivity', sessionName, sessionInd);
-    end
+    nUnitsBySessionWithDelaySelectivity(i) = sum(any(S.isSignificantSelectivity(:,[2 4]), 2));
     
     % overwrite each session but that's ok. they should all be the same
     enterFixationT = S.enterFixationT;
@@ -107,6 +102,17 @@ for i = 1:numel(sessionInds)
     exitFixationT = S.exitFixationT;
 end
 clear S;
+
+%% print session-wise presence of delay selectivity
+for i = 1:numel(sessionInds)
+    sessionInd = sessionInds(i);
+    sessionName = recordingInfo(sessionInd).sessionName;
+    if nUnitsBySessionWithDelaySelectivity(i) > 0
+        fprintf('Session %s (index %d) has %d units with delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithDelaySelectivity(i));
+    else
+        fprintf('Session %s (index %d) does NOT have units with delay selectivity\n', sessionName, sessionInd);
+    end
+end
 
 %% summarize
 nUnitsAll = unitCount;
