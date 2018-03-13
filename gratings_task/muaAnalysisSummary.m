@@ -31,6 +31,8 @@ isInDPulvinar = false(nUnitsApprox, 1);
 spdfInfo = struct();
 
 nUnitsBySessionWithDelaySelectivity = zeros(numel(sessionInds), 1);
+nUnitsBySessionWithCueTargetDelaySelectivity = zeros(numel(sessionInds), 1);
+nUnitsBySessionWithTargetDimDelaySelectivity = zeros(numel(sessionInds), 1);
 
 meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
@@ -93,6 +95,8 @@ for i = 1:numel(sessionInds)
     
     % test regardless of which delay period
     nUnitsBySessionWithDelaySelectivity(i) = sum(any(S.isSignificantSelectivity(:,[2 4]), 2));
+    nUnitsBySessionWithCueTargetDelaySelectivity(i) = sum(S.isSignificantSelectivity(:,2));
+    nUnitsBySessionWithTargetDimDelaySelectivity(i) = sum(S.isSignificantSelectivity(:,4));
     
     % overwrite each session but that's ok. they should all be the same
     enterFixationT = S.enterFixationT;
@@ -111,6 +115,26 @@ for i = 1:numel(sessionInds)
         fprintf('Session %s (index %d) has %d units with delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithDelaySelectivity(i));
     else
         fprintf('Session %s (index %d) does NOT have units with delay selectivity\n', sessionName, sessionInd);
+    end
+end
+fprintf('--------------');
+for i = 1:numel(sessionInds)
+    sessionInd = sessionInds(i);
+    sessionName = recordingInfo(sessionInd).sessionName;
+    if nUnitsBySessionWithCueTargetDelaySelectivity(i) > 0
+        fprintf('Session %s (index %d) has %d units with cue-target delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithCueTargetDelaySelectivity(i));
+    else
+        fprintf('Session %s (index %d) does NOT have units with cue-target delay selectivity\n', sessionName, sessionInd);
+    end
+end
+fprintf('--------------');
+for i = 1:numel(sessionInds)
+    sessionInd = sessionInds(i);
+    sessionName = recordingInfo(sessionInd).sessionName;
+    if nUnitsBySessionWithTargetDimDelaySelectivity(i) > 0
+        fprintf('Session %s (index %d) has %d units with target-dim delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithTargetDimDelaySelectivity(i));
+    else
+        fprintf('Session %s (index %d) does NOT have units with target-dim delay selectivity\n', sessionName, sessionInd);
     end
 end
 
