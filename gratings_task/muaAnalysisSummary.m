@@ -17,8 +17,9 @@ end
 nUnitsApprox = numel(sessionInds) * 16; % should be equal or an underestimate
 
 unitNames = cell(nUnitsApprox, 1);
-isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline, 5 periods info rate
-isSignificantSelectivity = false(nUnitsApprox, 5); % 6 periods > baseline, 5 periods info rate
+isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
+isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6);  % 6 periods > baseline
+isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
 infoRates = nan(nUnitsApprox, 5); % 5 periods
 attnIndices = nan(nUnitsApprox, 2); % 2 delay periods
 localization = cell(nUnitsApprox, 1);
@@ -63,6 +64,7 @@ for sessionInd = sessionInds
     unitCount = unitCount + numel(S.unitNames);
     unitNames(currentUnitInds) = S.unitNames;
     isSignificantResponseVsBaseline(currentUnitInds,:) = S.isSignificantResponseVsBaseline;
+    isSignificantResponseVsBootstrapBaseline(currentUnitInds,:) = S.isSignificantResponseVsBootstrapBaseline;
     isSignificantSelectivity(currentUnitInds,:) = S.isSignificantSelectivity;
     infoRates(currentUnitInds,:) = S.infoRates;
     attnIndices(currentUnitInds,:) = S.attnIndices;
@@ -93,9 +95,9 @@ nUnitsAll = unitCount;
 isCell = true(unitCount, 1); % for MUA, cannot distinguish between cell and not cell
 
 % TODO compute these per unit above so that the right alpha is used
-isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBaseline, 2);
-isSignificantCueResponse = isCell & isSignificantResponseVsBaseline(:,1);
-isSignificantPreExitFixation = isCell & isSignificantResponseVsBaseline(:,6);
+isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBootstrapBaseline, 2);
+isSignificantCueResponse = isCell & isSignificantResponseVsBootstrapBaseline(:,1);
+isSignificantPreExitFixation = isCell & isSignificantResponseVsBootstrapBaseline(:,6);
 
 isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
@@ -166,12 +168,29 @@ fprintf('Of the %d units in the pulvinar that show significant cue response vs b
         round(sum(isSignificantCueResponse & strcmp(localization, 'dPul'))/sum(isSignificantCueResponse & isInPulvinar) * 100));
 fprintf('\n');
 
+
+fprintf('Of the %d units in the pulvinar that show significant cue response vs baseline, \n\t%d (%d%%) are in vPul, %d (%d%%) are in dPul\n', ...
+        sum(isSignificantCueResponse & isInPulvinar), ...
+        sum(isSignificantCueResponse & strcmp(localization, 'vPul')), ...
+        round(sum(isSignificantCueResponse & strcmp(localization, 'vPul'))/sum(isSignificantCueResponse & isInPulvinar) * 100), ...
+        sum(isSignificantCueResponse & strcmp(localization, 'dPul')), ...
+        round(sum(isSignificantCueResponse & strcmp(localization, 'dPul'))/sum(isSignificantCueResponse & isInPulvinar) * 100));
+fprintf('\n');
+
 fprintf('Of the %d units in the pulvinar that show significant pre-saccadic activity vs baseline, \n\t%d (%d%%) are in vPul, %d (%d%%) are in dPul\n', ...
         sum(isSignificantPreExitFixation & isInPulvinar), ...
         sum(isSignificantPreExitFixation & strcmp(localization, 'vPul')), ...
         round(sum(isSignificantPreExitFixation & strcmp(localization, 'vPul'))/sum(isSignificantPreExitFixation & isInPulvinar) * 100), ...
         sum(isSignificantPreExitFixation & strcmp(localization, 'dPul')), ...
         round(sum(isSignificantPreExitFixation & strcmp(localization, 'dPul'))/sum(isSignificantPreExitFixation & isInPulvinar) * 100));
+fprintf('\n');
+
+fprintf('Of the %d units in the pulvinar that show spatial selectivity during a visual change, \n\t%d (%d%%) are in vPul, %d (%d%%) are in dPul\n', ...
+        sum(isSignificantEvokedSelectivity & isInPulvinar), ...
+        sum(isSignificantEvokedSelectivity & strcmp(localization, 'vPul')), ...
+        round(sum(isSignificantEvokedSelectivity & strcmp(localization, 'vPul'))/sum(isSignificantEvokedSelectivity & isInPulvinar) * 100), ...
+        sum(isSignificantEvokedSelectivity & strcmp(localization, 'dPul')), ...
+        round(sum(isSignificantEvokedSelectivity & strcmp(localization, 'dPul'))/sum(isSignificantEvokedSelectivity & isInPulvinar) * 100));
 fprintf('\n');
 
 fprintf('Of the %d units in the pulvinar that show spatial selectivity during attention, \n\t%d (%d%%) are in vPul, %d (%d%%) are in dPul\n', ...
