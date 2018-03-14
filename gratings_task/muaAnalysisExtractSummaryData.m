@@ -498,12 +498,15 @@ ylabel('Late pre-saccade slope');
 subaxis(1, 3, 2);
 bar(muaChannelsToLoad, earlyPreExitFixationSlope);
 xlabel('Early pre-saccade slope');
+ylim([-300 300]);
 
 subaxis(1, 3, 3);
 bar(muaChannelsToLoad, latePreExitFixationSlope);
 xlabel('Late pre-saccade slope');
+ylim([-300 300]);
 
 plotFileName = sprintf('%s/%s-sessionInd%d-preSaccadicSlopes-v%d.png', outputDir, sessionName, sessionInd, v);
+fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% save

@@ -1,4 +1,4 @@
-function muaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
+% function muaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
 v = 11;
 
@@ -147,6 +147,7 @@ for i = 1:numel(sessionInds)
 end
 fprintf('--------------\n');
 fprintf('\n');
+
 %% summarize
 nUnitsAll = unitCount;
 isCell = true(unitCount, 1); % for MUA, cannot distinguish between cell and not cell
@@ -357,10 +358,62 @@ fprintf('\t%d (%d%%) show significant selectivity during the target-dim delay\n'
 fprintf('\n');
 
 
+%%
+figure_tr_inch(8, 8);
+plot(earlyPreExitFixationSlope, latePreExitFixationSlope, '.', 'MarkerSize', 20);
+plotFileName = sprintf('%s/allSessions-preSaccadicSlopes-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
+%% 
+preSaccadeWindowOffset = [-0.2 0];
+preSaccadeWindowIndices = getTimeLogicalWithTolerance(exitFixationT, preSaccadeWindowOffset);
 
+%%
+tsneVals = tsne(spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices));
 
-stop
+figure_tr_inch(7.5, 7.5);
+subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
+hold on;
+sh = scatter(tsneVals(:,1), tsneVals(:,2), 100);
+sh.MarkerFaceAlpha = 0.9;
+
+set(gca, 'box', 'off');
+set(gca, 'LineWidth', 2);
+set(gca, 'FontSize', 26);
+set(gca, 'FontName', 'Calibri');
+
+plotFileName = sprintf('%s/allSessions-tSNE-exitFixationSpdfInRFNorm-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%%
+[pcaCoeff,pcaScore,~,~,pcaPctExplained] = pca(spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices));
+fprintf('\n');
+fprintf('PCA: %d variables, %d observations\n', size(pcaScore, 2), size(pcaScore, 1));
+fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
+fprintf('\tPC2 explains %0.1f%% of the variance.\n', pcaPctExplained(2));
+fprintf('\tPC3 explains %0.1f%% of the variance.\n', pcaPctExplained(3));
+fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:2)));
+fprintf('\tPC1 + PC2 + PC3 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:3)));
+
+figure_tr_inch(7.5, 7.5);
+subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
+hold on;
+sh = scatter(pcaScore(:,1), pcaScore(:,2), 100);
+sh.MarkerFaceAlpha = 0.9;
+
+figure_tr_inch(7.5, 7.5);
+subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
+hold on;
+plot(exitFixationT(preSaccadeWindowIndices), pcaCoeff(:,1), 'LineWidth', 9);
+plot(exitFixationT(preSaccadeWindowIndices), pcaCoeff(:,2), 'LineWidth', 5);
+plot(exitFixationT(preSaccadeWindowIndices), pcaCoeff(:,3), 'LineWidth', 1);
+% note the direction of the coefficient does not hold meaning
+
+plotFileName = sprintf('%s/allSessions-PCA-exitFixationSpdfInRFNorm-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');
