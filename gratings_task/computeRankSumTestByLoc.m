@@ -12,6 +12,7 @@ for i = 1:nLoc
         for j = 1:numel(fn)
             rankSumStatsByLoc(i).(fn{j}) = stats.(fn{j});
         end
+    else
+        rankSumStatsByLoc(i).p = NaN;
     end
-    % else the fields are left empty
 end

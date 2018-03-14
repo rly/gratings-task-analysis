@@ -346,9 +346,9 @@ fprintf('\t%d/%d = %d%% dPul units\n',...
 fprintf('\n');
 fprintf('\n');
 
-fprintf('------ Looking only at pulvinar units with significant increase in cue response compared to baseline ------\n');
+fprintf('-----------------------------\n');
 precondition = isInPulvinar & isSignificantCueResponseInc;
-fprintf('Of those %d units, \n', sum(precondition));
+fprintf('Of the %d units in the pulvinar that show significant cue response compared to baseline:\n', sum(precondition));
 fprintf('\t%d (%d%%) show significant pre-saccadic activity compared to baseline\n', sum(precondition & isSignificantPreExitFixation), ...
         round(sum(precondition & isSignificantPreExitFixation)/sum(precondition) * 100));
 fprintf('\t%d (%d%%) show significant selectivity during the cue-target delay\n', sum(precondition & isSignificantSelectivityCueTargetDelay), ...
