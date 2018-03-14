@@ -19,6 +19,10 @@ attnIndices = nan(nUnitsApprox, 2); % 2 delay periods
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
+earlyPreExitFixationSlope = nan(nUnitsApprox, 1);
+latePreExitFixationSlope = nan(nUnitsApprox, 1);
+earlyPreExitFixationWindowOffset = [-0.2 -0.05];
+latePreExitFixationWindowOffset = [-0.05 0];
 
 meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
 meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
@@ -157,6 +161,7 @@ for j = 1:nUnits
                 error('Channel %d cannot be in both vPul and dPul', spikeStruct.channelID);
             end
 
+            isLocUsed = ES.isLocUsed;
             nLocUsed = sum(isLocUsed);
 
             % significance test using rank sum test. correct for multiple
@@ -173,12 +178,12 @@ for j = 1:nUnits
             % baseline. correct for multiple comparisons by comparing p <
             % statAlpha / nLocUsed
             isSignificantResponseVsBootstrapBaseline(unitCount,:) = [...
-                    min([ES.cueResponsePValueByBootstrapBaselineSpdfByLoc(isLocUsed)]) < statAlpha / nLocUsed ...
-                    min([ES.cueTargetDelayPValueByBootstrapBaselineSpdfByLoc(isLocUsed)]) < statAlpha / nLocUsed ...
-                    min([ES.arrayHoldResponsePValueByBootstrapBaselineSpdfByLoc(isLocUsed)]) < statAlpha / nLocUsed ...
-                    min([ES.targetDimDelayPValueByBootstrapBaselineSpdfByLoc(isLocUsed)]) < statAlpha / nLocUsed ...
-                    min([ES.targetDimResponsePValueByBootstrapBaselineSpdfByLoc(isLocUsed)]) < statAlpha / nLocUsed ...
-                    min([ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc(isLocUsed)]) < statAlpha / nLocUsed];
+                    min(ES.cueResponsePValueByBootstrapBaselineSpdfByLoc(isLocUsed)) < statAlpha / nLocUsed ...
+                    min(ES.cueTargetDelayPValueByBootstrapBaselineSpdfByLoc(isLocUsed)) < statAlpha / nLocUsed ...
+                    min(ES.arrayHoldResponsePValueByBootstrapBaselineSpdfByLoc(isLocUsed)) < statAlpha / nLocUsed ...
+                    min(ES.targetDimDelayPValueByBootstrapBaselineSpdfByLoc(isLocUsed)) < statAlpha / nLocUsed ...
+                    min(ES.targetDimResponsePValueByBootstrapBaselineSpdfByLoc(isLocUsed)) < statAlpha / nLocUsed ...
+                    min(ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc(isLocUsed)) < statAlpha / nLocUsed];
             
             [~,loc] = min([ES.cueResponsePValueByBootstrapBaselineSpdfByLoc(isLocUsed)]);
             if ES.averageFiringRatesBySpdf.cueResponse.byLoc(loc) > ES.meanBootstrappedMeanPreCueBaselines
@@ -193,6 +198,13 @@ for j = 1:nUnits
                 preExitFixationVsBootstrapBaselineDirection(unitCount) = -1;
             end
             clear loc;
+            
+            % determine slope of firing rate prior to exit fixation saccade
+            earlyPreExitFixationSlopeStruct = computeSlopeFiringRateBySpdf(earlyPreExitFixationWindowOffset, ES.exitFixation);
+            latePreExitFixationSlopeStruct = computeSlopeFiringRateBySpdf(latePreExitFixationWindowOffset, ES.exitFixation);
+            earlyPreExitFixationSlope(unitCount) = earlyPreExitFixationSlopeStruct.all;
+            latePreExitFixationSlope(unitCount) = latePreExitFixationSlopeStruct.all;
+            
             
             isSignificantSelectivity(unitCount,:) = [...
                     ES.cueResponseInfoRateStruct.infoRatePValueByShuffleSpdf < statAlpha ...
@@ -476,7 +488,25 @@ spdfInfo = var2struct(...
         meanNormSpdfInRFAllWindowsAll, ...
         meanNormSpdfExRFAllWindowsAll);
 
+%% plot pre-saccade slopes
+figure_tr_inch(15, 5);
+subaxis(1, 3, 1);
+plot(earlyPreExitFixationSlope, latePreExitFixationSlope, '.', 'MarkerSize', 20);
+xlabel('Early pre-saccade slope');
+ylabel('Late pre-saccade slope');
 
+subaxis(1, 3, 2);
+bar(muaChannelsToLoad, earlyPreExitFixationSlope);
+xlabel('Early pre-saccade slope');
+
+subaxis(1, 3, 3);
+bar(muaChannelsToLoad, latePreExitFixationSlope);
+xlabel('Late pre-saccade slope');
+
+plotFileName = sprintf('%s/%s-sessionInd%d-preSaccadicSlopes-v%d.png', outputDir, sessionName, sessionInd, v);
+export_fig(plotFileName, '-nocrop');
+
+%% save
 saveFileName = sprintf('%s/%s-sessionInd%d-muaAnalysisSummaryData-v%d.mat', outputDir, sessionName, sessionInd, v);
 fprintf('\n');
 fprintf('Writing file %s ...\n', saveFileName);
@@ -493,6 +523,8 @@ save(saveFileName, ...
         'localization', ...
         'isInVPulvinar', ...
         'isInDPulvinar', ...
+        'earlyPreExitFixationSlope', ...
+        'latePreExitFixationSlope', ...
         'spdfInfo', ...
         'enterFixationT', ...
         'cueOnsetT', ...
