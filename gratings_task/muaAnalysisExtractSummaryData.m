@@ -24,18 +24,19 @@ latePreExitFixationSlope = nan(nUnitsApprox, 1);
 earlyPreExitFixationWindowOffset = [-0.2 -0.05];
 latePreExitFixationWindowOffset = [-0.05 0];
 
-meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTRelInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTRelInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldInRFTopThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldInRFBottomThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldExRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldExRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTRelExRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTRelExRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldExRFTopThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldExRFBottomThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
+rtFiringRateStruct = struct();
+% meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
+% meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
+% meanRTRelInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
+% meanRTRelInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
+% meanRTHoldInRFTopThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
+% meanRTHoldInRFBottomThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
+% meanRTHoldExRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
+% meanRTHoldExRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
+% meanRTRelExRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
+% meanRTRelExRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
+% meanRTHoldExRFTopThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
+% meanRTHoldExRFBottomThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
 corrCoefHoldInRFCTDelayRTAll = nan(nUnitsApprox, 3);
 corrCoefRelInRFCTDelayRTAll = nan(nUnitsApprox, 3);
 corrCoefHoldInRFTDDelayRTAll = nan(nUnitsApprox, 3);
@@ -376,19 +377,19 @@ for j = 1:nUnits
             % ideally shuffle test?
             % how to deal with correlated increases in firing in a trial?
 
-            meanRTHoldInRFTopThirdFiringRateCTDelayAll(unitCount) = mean(rtHoldInRFSortedByCTDelay(topThirdIndicesHoldInRF));
-            meanRTHoldInRFBottomThirdFiringRateCTDelayAll(unitCount) = mean(rtHoldInRFSortedByCTDelay(bottomThirdIndicesHoldInRF));
-            meanRTRelInRFTopThirdFiringRateCTDelayAll(unitCount) = mean(rtRelInRFSortedByCTDelay(topThirdIndicesRelInRF));
-            meanRTRelInRFBottomThirdFiringRateCTDelayAll(unitCount) = mean(rtRelInRFSortedByCTDelay(bottomThirdIndicesRelInRF));
-            meanRTHoldInRFTopThirdFiringRateTDDelayAll(unitCount) = mean(rtHoldInRFSortedByTDDelay(topThirdIndicesHoldInRF));
-            meanRTHoldInRFBottomThirdFiringRateTDDelayAll(unitCount) = mean(rtHoldInRFSortedByTDDelay(bottomThirdIndicesHoldInRF));
-            meanRTHoldExRFTopThirdFiringRateCTDelayAll(unitCount) = mean(rtHoldExRFSortedByCTDelay(topThirdIndicesHoldExRF));
-            meanRTHoldExRFBottomThirdFiringRateCTDelayAll(unitCount) = mean(rtHoldExRFSortedByCTDelay(bottomThirdIndicesHoldExRF));
-            meanRTRelExRFTopThirdFiringRateCTDelayAll(unitCount) = mean(rtRelExRFSortedByCTDelay(topThirdIndicesRelExRF));
-            meanRTRelExRFBottomThirdFiringRateCTDelayAll(unitCount) = mean(rtRelExRFSortedByCTDelay(bottomThirdIndicesRelExRF));
-            meanRTHoldExRFTopThirdFiringRateTDDelayAll(unitCount) = mean(rtHoldExRFSortedByTDDelay(topThirdIndicesHoldExRF));
-            meanRTHoldExRFBottomThirdFiringRateTDDelayAll(unitCount) = mean(rtHoldExRFSortedByTDDelay(bottomThirdIndicesHoldExRF));
-
+            rtFiringRateStruct(unitCount).meanRTHoldInRFTopThirdFiringRateCTDelayAll = mean(rtHoldInRFSortedByCTDelay(topThirdIndicesHoldInRF));
+            rtFiringRateStruct(unitCount).meanRTHoldInRFBottomThirdFiringRateCTDelayAll = mean(rtHoldInRFSortedByCTDelay(bottomThirdIndicesHoldInRF));
+            rtFiringRateStruct(unitCount).meanRTRelInRFTopThirdFiringRateCTDelayAll = mean(rtRelInRFSortedByCTDelay(topThirdIndicesRelInRF));
+            rtFiringRateStruct(unitCount).meanRTRelInRFBottomThirdFiringRateCTDelayAll = mean(rtRelInRFSortedByCTDelay(bottomThirdIndicesRelInRF));
+            rtFiringRateStruct(unitCount).meanRTHoldInRFTopThirdFiringRateTDDelayAll = mean(rtHoldInRFSortedByTDDelay(topThirdIndicesHoldInRF));
+            rtFiringRateStruct(unitCount).meanRTHoldInRFBottomThirdFiringRateTDDelayAll = mean(rtHoldInRFSortedByTDDelay(bottomThirdIndicesHoldInRF));
+            rtFiringRateStruct(unitCount).meanRTHoldExRFTopThirdFiringRateCTDelayAll = mean(rtHoldExRFSortedByCTDelay(topThirdIndicesHoldExRF));
+            rtFiringRateStruct(unitCount).meanRTHoldExRFBottomThirdFiringRateCTDelayAll = mean(rtHoldExRFSortedByCTDelay(bottomThirdIndicesHoldExRF));
+            rtFiringRateStruct(unitCount).meanRTRelExRFTopThirdFiringRateCTDelayAll = mean(rtRelExRFSortedByCTDelay(topThirdIndicesRelExRF));
+            rtFiringRateStruct(unitCount).meanRTRelExRFBottomThirdFiringRateCTDelayAll = mean(rtRelExRFSortedByCTDelay(bottomThirdIndicesRelExRF));
+            rtFiringRateStruct(unitCount).meanRTHoldExRFTopThirdFiringRateTDDelayAll = mean(rtHoldExRFSortedByTDDelay(topThirdIndicesHoldExRF));
+            rtFiringRateStruct(unitCount).meanRTHoldExRFBottomThirdFiringRateTDDelayAll = mean(rtHoldExRFSortedByTDDelay(bottomThirdIndicesHoldExRF));
+            
             [corrCoefHoldInRFCTDelayRTAll(unitCount,1),corrCoefHoldInRFCTDelayRTAll(unitCount,2)] = corr(cueTargetDelayLongHoldInRFRate, rtHoldInRF);
             [corrCoefRelInRFCTDelayRTAll(unitCount,1),corrCoefRelInRFCTDelayRTAll(unitCount,2)] = corr(cueTargetDelayLongRelInRFRate, rtRelInRF);
             [corrCoefHoldInRFTDDelayRTAll(unitCount,1),corrCoefHoldInRFTDDelayRTAll(unitCount,2)] = corr(targetDimDelayLongHoldInRFRate, rtHoldInRF);
@@ -551,4 +552,11 @@ save(saveFileName, ...
         'cueOnsetT', ...
         'arrayOnsetT', ...
         'targetDimT', ...
-        'exitFixationT');
+        'exitFixationT', ...
+        'rtFiringRateStruct', ...
+        'corrCoefHoldInRFCTDelayRTAll', ...
+        'corrCoefRelInRFCTDelayRTAll', ...
+        'corrCoefHoldInRFTDDelayRTAll', ...
+        'corrCoefHoldExRFCTDelayRTAll', ...
+        'corrCoefRelExRFCTDelayRTAll', ...
+        'corrCoefHoldExRFTDDelayRTAll');

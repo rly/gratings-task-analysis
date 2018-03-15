@@ -153,14 +153,14 @@ nUnitsAll = unitCount;
 isCell = true(unitCount, 1); % for MUA, cannot distinguish between cell and not cell
 
 % TODO compute these per unit above so that the right alpha is used
-isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBootstrapBaseline, 2);
-isSignificantCueResponse = isCell & isSignificantResponseVsBootstrapBaseline(:,1);
-isSignificantPreExitFixation = isCell & isSignificantResponseVsBootstrapBaseline(:,6);
+isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBaseline, 2);
+isSignificantCueResponse = isCell & isSignificantResponseVsBaseline(:,1);
+isSignificantPreExitFixation = isCell & isSignificantResponseVsBaseline(:,6);
 
-isSignificantCueResponseInc = isCell & isSignificantResponseVsBootstrapBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == 1;
-isSignificantCueResponseDec = isCell & isSignificantResponseVsBootstrapBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == -1;
-isSignificantPreExitFixationInc = isCell & isSignificantResponseVsBootstrapBaseline(:,6) & preExitFixationVsBootstrapBaselineDirection == 1;
-isSignificantPreExitFixationDec = isCell & isSignificantResponseVsBootstrapBaseline(:,6) & preExitFixationVsBootstrapBaselineDirection == -1;
+isSignificantCueResponseInc = isCell & isSignificantResponseVsBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == 1;
+isSignificantCueResponseDec = isCell & isSignificantResponseVsBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == -1;
+isSignificantPreExitFixationInc = isCell & isSignificantResponseVsBaseline(:,6) & preExitFixationVsBootstrapBaselineDirection == 1;
+isSignificantPreExitFixationDec = isCell & isSignificantResponseVsBaseline(:,6) & preExitFixationVsBootstrapBaselineDirection == -1;
 
 isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
@@ -368,6 +368,15 @@ export_fig(plotFileName, '-nocrop');
 %% 
 preSaccadeWindowOffset = [-0.2 0];
 preSaccadeWindowIndices = getTimeLogicalWithTolerance(exitFixationT, preSaccadeWindowOffset);
+
+%%
+% saccadeTimeIndex = find(preSaccadeWindowIndices, 1, 'last');
+% figure_tr_inch(12, 10);
+% subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
+% hold on;
+% % re-align y-axis to have 0 be the time of saccade
+% plot(exitFixationT(preSaccadeWindowIndices), ...
+%         spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices) - spdfInfo.exitFixationSpdfInRFNorm(:,saccadeTimeIndex));
 
 %%
 tsneVals = tsne(spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices));
