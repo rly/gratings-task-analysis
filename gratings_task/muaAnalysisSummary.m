@@ -36,24 +36,7 @@ nUnitsBySessionWithDelaySelectivity = zeros(numel(sessionInds), 1);
 nUnitsBySessionWithCueTargetDelaySelectivity = zeros(numel(sessionInds), 1);
 nUnitsBySessionWithTargetDimDelaySelectivity = zeros(numel(sessionInds), 1);
 
-meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTRelInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTRelInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldInRFTopThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldInRFBottomThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldExRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldExRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTRelExRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTRelExRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldExRFTopThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-meanRTHoldExRFBottomThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-corrCoefHoldInRFCTDelayRTAll = nan(nUnitsApprox, 3);
-corrCoefRelInRFCTDelayRTAll = nan(nUnitsApprox, 3);
-corrCoefHoldInRFTDDelayRTAll = nan(nUnitsApprox, 3);
-corrCoefHoldExRFCTDelayRTAll = nan(nUnitsApprox, 3);
-corrCoefRelExRFCTDelayRTAll = nan(nUnitsApprox, 3);
-corrCoefHoldExRFTDDelayRTAll = nan(nUnitsApprox, 3);
+rtFiringRateStruct = struct();
 
 unitCount = 0;
 % should also be running a lot of shuffle tests given the number of trials
@@ -108,6 +91,15 @@ for i = 1:numel(sessionInds)
     arrayOnsetT = S.arrayOnsetT;
     targetDimT = S.targetDimT;
     exitFixationT = S.exitFixationT;
+    
+    fn = fieldnames(S.rtFiringRateStruct);
+    for j = 1:numel(fn)
+        if isfield(rtFiringRateStruct, fn{j})
+            rtFiringRateStruct.(fn{j})(currentUnitInds,:) = S.rtFiringRateStruct.(fn{j});
+        else
+            rtFiringRateStruct.(fn{j}) = S.rtFiringRateStruct.(fn{j}); % no pre-allocation
+        end
+    end
 end
 clear S;
 
@@ -423,6 +415,144 @@ plot(exitFixationT(preSaccadeWindowIndices), pcaCoeff(:,3), 'LineWidth', 1);
 plotFileName = sprintf('%s/allSessions-PCA-exitFixationSpdfInRFNorm-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%% test diff RT for top third vs bottom third firing rates in delay periods
+meanRTRelInRFDiffThirdFiringRateCTDelay = rtFiringRateStruct.meanRTRelInRFTopThirdFiringRateCTDelay - rtFiringRateStruct.meanRTRelInRFBottomThirdFiringRateCTDelay;
+meanRTRelExRFDiffThirdFiringRateCTDelay = rtFiringRateStruct.meanRTRelExRFTopThirdFiringRateCTDelay - rtFiringRateStruct.meanRTRelExRFBottomThirdFiringRateCTDelay;
+meanRTHoldInRFDiffThirdFiringRateCTDelay = rtFiringRateStruct.meanRTHoldInRFTopThirdFiringRateCTDelay - rtFiringRateStruct.meanRTHoldInRFBottomThirdFiringRateCTDelay;
+meanRTHoldExRFDiffThirdFiringRateCTDelay = rtFiringRateStruct.meanRTHoldExRFTopThirdFiringRateCTDelay - rtFiringRateStruct.meanRTHoldExRFBottomThirdFiringRateCTDelay;
+meanRTHoldInRFDiffThirdFiringRateTDDelay = rtFiringRateStruct.meanRTHoldInRFTopThirdFiringRateTDDelay - rtFiringRateStruct.meanRTHoldInRFBottomThirdFiringRateTDDelay;
+meanRTHoldExRFDiffThirdFiringRateTDDelay = rtFiringRateStruct.meanRTHoldExRFTopThirdFiringRateTDDelay - rtFiringRateStruct.meanRTHoldExRFBottomThirdFiringRateTDDelay;
+
+condition = isInPulvinar & isSignificantCueResponseInc;
+meanRTRelInRFDiffThirdFiringRateCTDelaySub = meanRTRelInRFDiffThirdFiringRateCTDelay(condition);
+meanRTRelExRFDiffThirdFiringRateCTDelaySub = meanRTRelExRFDiffThirdFiringRateCTDelay(condition);
+meanRTHoldInRFDiffThirdFiringRateCTDelaySub = meanRTHoldInRFDiffThirdFiringRateCTDelay(condition);
+meanRTHoldExRFDiffThirdFiringRateCTDelaySub = meanRTHoldExRFDiffThirdFiringRateCTDelay(condition);
+meanRTHoldInRFDiffThirdFiringRateTDDelaySub = meanRTHoldInRFDiffThirdFiringRateTDDelay(condition);
+meanRTHoldExRFDiffThirdFiringRateTDDelaySub = meanRTHoldExRFDiffThirdFiringRateTDDelay(condition);
+
+[~,p] = ttest(meanRTRelInRFDiffThirdFiringRateCTDelaySub)
+[~,p] = ttest(meanRTRelExRFDiffThirdFiringRateCTDelaySub)
+[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateCTDelaySub)
+[~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateCTDelaySub)
+[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateTDDelaySub)
+[~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateTDDelaySub)
+
+
+cols = lines(2);
+inRFCol = cols(1,:);
+exRFCol = cols(2,:);
+binEdges = -0.1:0.01:0.1;
+
+figure_tr_inch(9, 6);
+set(gcf, 'Color', 'w');
+plotHs = nan(6, 1);
+plotHs(1) = subaxis(2, 3, 1);
+hold on;
+hist1 = histogram(meanRTRelInRFDiffThirdFiringRateCTDelaySub, binEdges);
+hist1.FaceColor = inRFCol;
+plotHs(2) = subaxis(2, 3, 2);
+hold on;
+hist2 = histogram(meanRTHoldInRFDiffThirdFiringRateCTDelaySub, binEdges);
+hist2.FaceColor = inRFCol;
+plotHs(3) = subaxis(2, 3, 3);
+hold on;
+hist3 = histogram(meanRTHoldInRFDiffThirdFiringRateTDDelaySub, binEdges);
+hist3.FaceColor = inRFCol;
+plotHs(4) = subaxis(2, 3, 4);
+hold on;
+hist4 = histogram(meanRTRelExRFDiffThirdFiringRateCTDelaySub, binEdges);
+hist4.FaceColor = exRFCol;
+plotHs(5) = subaxis(2, 3, 5);
+hold on;
+hist5 = histogram(meanRTHoldExRFDiffThirdFiringRateCTDelaySub, binEdges);
+hist5.FaceColor = exRFCol;
+plotHs(6) = subaxis(2, 3, 6);
+hold on;
+hist6 = histogram(meanRTHoldExRFDiffThirdFiringRateTDDelaySub, binEdges);
+hist6.FaceColor = exRFCol;
+
+% set all y bounds the same
+allYBounds = arrayfun(@(x) ylim(x), plotHs, 'UniformOutput', false);
+allYBounds = [allYBounds{:}];
+yBounds = [min(allYBounds) max(allYBounds)];
+arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
+arrayfun(@(x) ylim(x, yBounds), plotHs);
+
+% note: interestingly, sessions 1-4 showed more significant
+% difference shifted right than sessions 5-6,8-9 which showed more
+% significant difference shifted left on hold trials
+% both groups showed more sig diff shifted right on release trials
+
+% TODO create model, compare how much variability in RT is explained by CT
+% delay and TD delay, using partial determination analysis, which removes
+% the correlation between the two. 
+
+%% 
+% median/third split may be more appropriate than a regression since 
+% firing rates and the correlation of firing rate and RT may be more
+% stepwise? there may also be a natural split, e.g. zero vs nonzero firing
+% average correlation coefficient is not the way to do this. better to have
+% different sessions in the model:
+% https://stats.stackexchange.com/questions/8019/averaging-correlation-values
+% or transform the r values using Fisher transform
+
+condition = isInPulvinar & isSignificantCueResponseInc;
+corrCoefHoldInRFCTDelayRTSub = corrCoefHoldInRFCTDelayRT(condition,3);
+corrCoefRelInRFCTDelayRTSub = corrCoefRelInRFCTDelayRT(condition,3);
+corrCoefHoldInRFTDDelayRTSub = corrCoefHoldInRFTDDelayRT(condition,3);
+corrCoefHoldExRFCTDelayRTSub = corrCoefHoldExRFCTDelayRT(condition,3);
+corrCoefRelExRFCTDelayRTSub = corrCoefRelExRFCTDelayRT(condition,3);
+corrCoefHoldExRFTDDelayRTSub = corrCoefHoldExRFTDDelayRT(condition,3);
+
+[~,p] = ttest(corrCoefRelInRFCTDelayRTSub)
+[~,p] = ttest(corrCoefRelExRFCTDelayRTSub)
+[~,p] = ttest(corrCoefHoldInRFCTDelayRTSub)
+[~,p] = ttest(corrCoefHoldExRFCTDelayRTSub)
+[~,p] = ttest(corrCoefHoldInRFTDDelayRTSub)
+[~,p] = ttest(corrCoefHoldExRFTDDelayRTSub)
+
+
+cols = lines(2);
+inRFCol = cols(1,:);
+exRFCol = cols(2,:);
+binEdges = -0.3:0.05:0.3;
+
+figure_tr_inch(9, 6);
+set(gcf, 'Color', 'w');
+plotHs = nan(6, 1);
+plotHs(1) = subaxis(2, 3, 1);
+hold on;
+hist1 = histogram(corrCoefRelInRFCTDelayRTSub, binEdges);
+hist1.FaceColor = inRFCol;
+plotHs(2) = subaxis(2, 3, 2);
+hold on;
+hist2 = histogram(corrCoefHoldInRFCTDelayRTSub, binEdges);
+hist2.FaceColor = inRFCol;
+plotHs(3) = subaxis(2, 3, 3);
+hold on;
+hist3 = histogram(corrCoefHoldInRFTDDelayRTSub, binEdges);
+hist3.FaceColor = inRFCol;
+plotHs(4) = subaxis(2, 3, 4);
+hold on;
+hist4 = histogram(corrCoefRelExRFCTDelayRTSub, binEdges);
+hist4.FaceColor = exRFCol;
+plotHs(5) = subaxis(2, 3, 5);
+hold on;
+hist5 = histogram(corrCoefHoldExRFCTDelayRTSub, binEdges);
+hist5.FaceColor = exRFCol;
+plotHs(6) = subaxis(2, 3, 6);
+hold on;
+hist6 = histogram(corrCoefHoldExRFTDDelayRTSub, binEdges);
+hist6.FaceColor = exRFCol;
+
+% set all y bounds the same
+allYBounds = arrayfun(@(x) ylim(x), plotHs, 'UniformOutput', false);
+allYBounds = [allYBounds{:}];
+yBounds = [min(allYBounds) max(allYBounds)];
+arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
+arrayfun(@(x) ylim(x, yBounds), plotHs);
 
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');
@@ -879,141 +1009,7 @@ export_fig(plotFileName, '-nocrop');
 
 
 
-%% test diff RT for top third vs bottom third firing rates in delay periods
-meanRTRelInRFDiffThirdFiringRateCTDelayAll = meanRTRelInRFTopThirdFiringRateCTDelayAll - meanRTRelInRFBottomThirdFiringRateCTDelayAll;
-meanRTRelExRFDiffThirdFiringRateCTDelayAll = meanRTRelExRFTopThirdFiringRateCTDelayAll - meanRTRelExRFBottomThirdFiringRateCTDelayAll;
-meanRTHoldInRFDiffThirdFiringRateCTDelayAll = meanRTHoldInRFTopThirdFiringRateCTDelayAll - meanRTHoldInRFBottomThirdFiringRateCTDelayAll;
-meanRTHoldExRFDiffThirdFiringRateCTDelayAll = meanRTHoldExRFTopThirdFiringRateCTDelayAll - meanRTHoldExRFBottomThirdFiringRateCTDelayAll;
-meanRTHoldInRFDiffThirdFiringRateTDDelayAll = meanRTHoldInRFTopThirdFiringRateTDDelayAll - meanRTHoldInRFBottomThirdFiringRateTDDelayAll;
-meanRTHoldExRFDiffThirdFiringRateTDDelayAll = meanRTHoldExRFTopThirdFiringRateTDDelayAll - meanRTHoldExRFBottomThirdFiringRateTDDelayAll;
 
-meanRTRelInRFDiffThirdFiringRateCTDelayPul = meanRTRelInRFDiffThirdFiringRateCTDelayAll(isCell & isInPulvinar);
-meanRTRelExRFDiffThirdFiringRateCTDelayPul = meanRTRelExRFDiffThirdFiringRateCTDelayAll(isCell & isInPulvinar);
-meanRTHoldInRFDiffThirdFiringRateCTDelayPul = meanRTHoldInRFDiffThirdFiringRateCTDelayAll(isCell & isInPulvinar);
-meanRTHoldExRFDiffThirdFiringRateCTDelayPul = meanRTHoldExRFDiffThirdFiringRateCTDelayAll(isCell & isInPulvinar);
-meanRTHoldInRFDiffThirdFiringRateTDDelayPul = meanRTHoldInRFDiffThirdFiringRateTDDelayAll(isCell & isInPulvinar);
-meanRTHoldExRFDiffThirdFiringRateTDDelayPul = meanRTHoldExRFDiffThirdFiringRateTDDelayAll(isCell & isInPulvinar);
-
-[~,p] = ttest(meanRTRelInRFDiffThirdFiringRateCTDelayPul)
-[~,p] = ttest(meanRTRelExRFDiffThirdFiringRateCTDelayPul)
-[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateCTDelayPul)
-[~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateCTDelayPul)
-[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateTDDelayPul)
-[~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateTDDelayPul)
-
-
-cols = lines(2);
-inRFCol = cols(1,:);
-exRFCol = cols(2,:);
-binEdges = -0.1:0.01:0.1;
-
-figure_tr_inch(9, 6);
-set(gcf, 'Color', 'w');
-plotHs = nan(6, 1);
-plotHs(1) = subaxis(2, 3, 1);
-hold on;
-hist1 = histogram(meanRTRelInRFDiffThirdFiringRateCTDelayPul, binEdges);
-hist1.FaceColor = inRFCol;
-plotHs(2) = subaxis(2, 3, 2);
-hold on;
-hist2 = histogram(meanRTHoldInRFDiffThirdFiringRateCTDelayPul, binEdges);
-hist2.FaceColor = inRFCol;
-plotHs(3) = subaxis(2, 3, 3);
-hold on;
-hist3 = histogram(meanRTHoldInRFDiffThirdFiringRateTDDelayPul, binEdges);
-hist3.FaceColor = inRFCol;
-plotHs(4) = subaxis(2, 3, 4);
-hold on;
-hist4 = histogram(meanRTRelExRFDiffThirdFiringRateCTDelayPul, binEdges);
-hist4.FaceColor = exRFCol;
-plotHs(5) = subaxis(2, 3, 5);
-hold on;
-hist5 = histogram(meanRTHoldExRFDiffThirdFiringRateCTDelayPul, binEdges);
-hist5.FaceColor = exRFCol;
-plotHs(6) = subaxis(2, 3, 6);
-hold on;
-hist6 = histogram(meanRTHoldExRFDiffThirdFiringRateTDDelayPul, binEdges);
-hist6.FaceColor = exRFCol;
-
-% set all y bounds the same
-allYBounds = arrayfun(@(x) ylim(x), plotHs, 'UniformOutput', false);
-allYBounds = [allYBounds{:}];
-yBounds = [min(allYBounds) max(allYBounds)];
-arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
-arrayfun(@(x) ylim(x, yBounds), plotHs);
-
-% note: interestingly, sessions 1-4 showed more significant
-% difference shifted right than sessions 5-6,8-9 which showed more
-% significant difference shifted left on hold trials
-% both groups showed more sig diff shifted right on release trials
-
-% TODO create model, compare how much variability in RT is explained by CT
-% delay and TD delay, using partial determination analysis, which removes
-% the correlation between the two. 
-
-%% 
-% median/third split may be more appropriate than a regression since 
-% firing rates and the correlation of firing rate and RT may be more
-% stepwise? there may also be a natural split, e.g. zero vs nonzero firing
-% average correlation coefficient is not the way to do this. better to have
-% different sessions in the model:
-% https://stats.stackexchange.com/questions/8019/averaging-correlation-values
-% or transform the r values using Fisher transform
-
-corrCoefHoldInRFCTDelayRTPul = corrCoefHoldInRFCTDelayRTAll(isCell & isInPulvinar,3);
-corrCoefRelInRFCTDelayRTPul = corrCoefRelInRFCTDelayRTAll(isCell & isInPulvinar,3);
-corrCoefHoldInRFTDDelayRTPul = corrCoefHoldInRFTDDelayRTAll(isCell & isInPulvinar,3);
-corrCoefHoldExRFCTDelayRTPul = corrCoefHoldExRFCTDelayRTAll(isCell & isInPulvinar,3);
-corrCoefRelExRFCTDelayRTPul = corrCoefRelExRFCTDelayRTAll(isCell & isInPulvinar,3);
-corrCoefHoldExRFTDDelayRTPul = corrCoefHoldExRFTDDelayRTAll(isCell & isInPulvinar,3);
-
-[~,p] = ttest(corrCoefRelInRFCTDelayRTPul)
-[~,p] = ttest(corrCoefRelExRFCTDelayRTPul)
-[~,p] = ttest(corrCoefHoldInRFCTDelayRTPul)
-[~,p] = ttest(corrCoefHoldExRFCTDelayRTPul)
-[~,p] = ttest(corrCoefHoldInRFTDDelayRTPul)
-[~,p] = ttest(corrCoefHoldExRFTDDelayRTPul)
-
-
-cols = lines(2);
-inRFCol = cols(1,:);
-exRFCol = cols(2,:);
-binEdges = -0.3:0.05:0.3;
-
-figure_tr_inch(9, 6);
-set(gcf, 'Color', 'w');
-plotHs = nan(6, 1);
-plotHs(1) = subaxis(2, 3, 1);
-hold on;
-hist1 = histogram(corrCoefRelInRFCTDelayRTPul, binEdges);
-hist1.FaceColor = inRFCol;
-plotHs(2) = subaxis(2, 3, 2);
-hold on;
-hist2 = histogram(corrCoefHoldInRFCTDelayRTPul, binEdges);
-hist2.FaceColor = inRFCol;
-plotHs(3) = subaxis(2, 3, 3);
-hold on;
-hist3 = histogram(corrCoefHoldInRFTDDelayRTPul, binEdges);
-hist3.FaceColor = inRFCol;
-plotHs(4) = subaxis(2, 3, 4);
-hold on;
-hist4 = histogram(corrCoefRelExRFCTDelayRTPul, binEdges);
-hist4.FaceColor = exRFCol;
-plotHs(5) = subaxis(2, 3, 5);
-hold on;
-hist5 = histogram(corrCoefHoldExRFCTDelayRTPul, binEdges);
-hist5.FaceColor = exRFCol;
-plotHs(6) = subaxis(2, 3, 6);
-hold on;
-hist6 = histogram(corrCoefHoldExRFTDDelayRTPul, binEdges);
-hist6.FaceColor = exRFCol;
-
-% set all y bounds the same
-allYBounds = arrayfun(@(x) ylim(x), plotHs, 'UniformOutput', false);
-allYBounds = [allYBounds{:}];
-yBounds = [min(allYBounds) max(allYBounds)];
-arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
-arrayfun(@(x) ylim(x, yBounds), plotHs);
 
 
 %% PCA on activity space by cell
