@@ -95,7 +95,7 @@ for i = 1:numel(sessionInds)
     fn = fieldnames(S.rtFiringRateStruct);
     for j = 1:numel(fn)
         if isfield(rtFiringRateStruct, fn{j})
-            rtFiringRateStruct.(fn{j})(currentUnitInds,:) = S.rtFiringRateStruct.(fn{j});
+            rtFiringRateStruct.(fn{j})(currentUnitInds,:,:) = S.rtFiringRateStruct.(fn{j});
         else
             rtFiringRateStruct.(fn{j}) = S.rtFiringRateStruct.(fn{j}); % no pre-allocation
         end

@@ -390,24 +390,21 @@ for j = 1:nUnits
             rtFiringRateStruct(unitCount).meanRTHoldExRFTopThirdFiringRateTDDelay = mean(rtHoldExRFSortedByTDDelay(topThirdIndicesHoldExRF));
             rtFiringRateStruct(unitCount).meanRTHoldExRFBottomThirdFiringRateTDDelay = mean(rtHoldExRFSortedByTDDelay(bottomThirdIndicesHoldExRF));
             
-            [rtFiringRateStruct(unitCount).corrCoefHoldInRFCTDelayRT(1),rtFiringRateStruct(unitCount).corrCoefHoldInRFCTDelayRT(2)] = corr(cueTargetDelayLongHoldInRFRate, rtHoldInRF);
-            [rtFiringRateStruct(unitCount).corrCoefRelInRFCTDelayRT(1),rtFiringRateStruct(unitCount).corrCoefRelInRFCTDelayRT(2)] = corr(cueTargetDelayLongRelInRFRate, rtRelInRF);
-            [rtFiringRateStruct(unitCount).corrCoefHoldInRFTDDelayRT(1),rtFiringRateStruct(unitCount).corrCoefHoldInRFTDDelayRT(2)] = corr(targetDimDelayLongHoldInRFRate, rtHoldInRF);
-            [rtFiringRateStruct(unitCount).corrCoefHoldExRFCTDelayRT(1),rtFiringRateStruct(unitCount).corrCoefHoldExRFCTDelayRT(2)] = corr(cueTargetDelayLongHoldExRFRate, rtHoldExRF);
-            [rtFiringRateStruct(unitCount).corrCoefRelExRFCTDelayRT(1),rtFiringRateStruct(unitCount).corrCoefRelExRFCTDelayRT(2)] = corr(cueTargetDelayLongRelExRFRate, rtRelExRF);
-            [rtFiringRateStruct(unitCount).corrCoefHoldExRFTDDelayRT(1),rtFiringRateStruct(unitCount).corrCoefHoldExRFTDDelayRT(2)] = corr(targetDimDelayLongHoldExRFRate, rtHoldExRF);
+            [rtFiringRateStruct(unitCount).corrCoefHoldInRFCTDelayRT,rtFiringRateStruct(unitCount).corrCoefPValHoldInRFCTDelayRT] = corr(cueTargetDelayLongHoldInRFRate, rtHoldInRF);
+            [rtFiringRateStruct(unitCount).corrCoefRelInRFCTDelayRT,rtFiringRateStruct(unitCount).corrCoefPValRelInRFCTDelayRT] = corr(cueTargetDelayLongRelInRFRate, rtRelInRF);
+            [rtFiringRateStruct(unitCount).corrCoefHoldInRFTDDelayRT,rtFiringRateStruct(unitCount).corrCoefPValHoldInRFTDDelayRT] = corr(targetDimDelayLongHoldInRFRate, rtHoldInRF);
+            [rtFiringRateStruct(unitCount).corrCoefHoldExRFCTDelayRT,rtFiringRateStruct(unitCount).corrCoefPValHoldExRFCTDelayRT] = corr(cueTargetDelayLongHoldExRFRate, rtHoldExRF);
+            [rtFiringRateStruct(unitCount).corrCoefRelExRFCTDelayRT,rtFiringRateStruct(unitCount).corrCoefPValRelExRFCTDelayRT] = corr(cueTargetDelayLongRelExRFRate, rtRelExRF);
+            [rtFiringRateStruct(unitCount).corrCoefHoldExRFTDDelayRT,rtFiringRateStruct(unitCount).corrCoefPValHoldExRFTDDelayRT] = corr(targetDimDelayLongHoldExRFRate, rtHoldExRF);
 
             % need to use fisher xform (atanh) to test population
             % correlation coefficient
-            rtFiringRateStruct(unitCount).corrCoefHoldInRFCTDelayRT(3) = atanh(rtFiringRateStruct(unitCount).corrCoefHoldInRFCTDelayRT(1));
-            rtFiringRateStruct(unitCount).corrCoefRelInRFCTDelayRT(3) = atanh(rtFiringRateStruct(unitCount).corrCoefRelInRFCTDelayRT(1));
-            rtFiringRateStruct(unitCount).corrCoefHoldInRFTDDelayRT(3) = atanh(rtFiringRateStruct(unitCount).corrCoefHoldInRFTDDelayRT(1));
-            rtFiringRateStruct(unitCount).corrCoefHoldExRFCTDelayRT(3) = atanh(rtFiringRateStruct(unitCount).corrCoefHoldExRFCTDelayRT(1));
-            rtFiringRateStruct(unitCount).corrCoefRelExRFCTDelayRT(3) = atanh(rtFiringRateStruct(unitCount).corrCoefRelExRFCTDelayRT(1));
-            rtFiringRateStruct(unitCount).corrCoefHoldExRFTDDelayRT(3) = atanh(rtFiringRateStruct(unitCount).corrCoefHoldExRFTDDelayRT(1));
-
-            
-            
+            rtFiringRateStruct(unitCount).corrCoefAdjHoldInRFCTDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefHoldInRFCTDelayRT);
+            rtFiringRateStruct(unitCount).corrCoefAdjRelInRFCTDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefRelInRFCTDelayRT);
+            rtFiringRateStruct(unitCount).corrCoefAdjHoldInRFTDDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefHoldInRFTDDelayRT);
+            rtFiringRateStruct(unitCount).corrCoefAdjHoldExRFCTDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefHoldExRFCTDelayRT);
+            rtFiringRateStruct(unitCount).corrCoefAdjRelExRFCTDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefRelExRFCTDelayRT);
+            rtFiringRateStruct(unitCount).corrCoefAdjHoldExRFTDDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefHoldExRFTDDelayRT);
             
             
             inRFPreCueBaseline = ES.averageFiringRatesBySpdf.preCueBaseline.byLoc(inRFLoc);
