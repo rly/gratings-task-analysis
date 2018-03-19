@@ -1,5 +1,5 @@
 function plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
-                    sessionName, isZeroDistractors, plotFileName)
+        checkRTStatAlpha, sessionName, isZeroDistractors, plotFileName)
 %%
 f = figure_tr_inch(13, 7.5); clf;
 set(gcf, 'Color', 'white');
@@ -34,6 +34,18 @@ plotHs = nan(4, 1);
 cols = lines(2);
 inRFCol = cols(1,:);
 exRFCol = cols(2,:);
+
+% there should not be any difference between RTs on InRF and
+% ExRF trials. otherwise there is significant spatial bias
+% in this session.
+p = ranksum(rtRelInRF, rtRelExRF);
+if p < checkRTStatAlpha
+    set(gcf, 'Color', 'red');
+end
+p = ranksum(rtHoldInRF, rtHoldExRF);
+if p < checkRTStatAlpha
+    set(gcf, 'Color', 'red');
+end
 
 %%
 plotHs(1) = axes('Position', [col1Left row1Btm scatterW scatterH]); 

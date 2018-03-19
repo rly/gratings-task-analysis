@@ -314,19 +314,22 @@ for j = 1:nUnits
             % make session-wise RT plots while processing the first unit
             if unitCount == 1
                 assert(all(ES.UE.rt >= 0.3 & ES.UE.rt <= 0.8)); 
-
-                % there should not be any difference between RTs on InRF and
-                % ExRF trials. otherwise there is significant spatial bias
-                % in this session.
-                checkRTStatAlpha = 0.05;
-                p = ranksum(rtRelInRF, rtRelExRF);
-                assert(p > checkRTStatAlpha);
-                p = ranksum(rtHoldInRF, rtHoldExRF);
-                assert(p > checkRTStatAlpha);
-                
+                checkRTStatAlpha = 0.025;
                 plotFileName = sprintf('%s/%s-sessionInd%d-rtDist-v%d.png', outputDir, sessionName, sessionInd, v);
                 plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
                         sessionName, isZeroDistractors, plotFileName);
+                    
+                % there should not be any difference between RTs on InRF and
+                % ExRF trials. otherwise there is significant spatial bias
+                % in this session.
+                p = ranksum(rtRelInRF, rtRelExRF);
+                if p < checkRTStatAlpha
+                    error('Release Trial RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
+                end
+                p = ranksum(rtHoldInRF, rtHoldExRF);
+                if p < checkRTStatAlpha
+                    error('Hold Trial RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
+                end
             end
 %             
 % 
