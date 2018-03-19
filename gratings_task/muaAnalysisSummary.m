@@ -503,12 +503,12 @@ export_fig(plotFileName, '-nocrop');
 % or transform the r values using Fisher transform
 
 condition = isInPulvinar;% & isSignificantCueResponseInc;
-corrCoefHoldInRFCTDelayRTSub = rtFiringRateStruct.corrCoefHoldInRFCTDelayRT(condition);
-corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.corrCoefRelInRFCTDelayRT(condition);
-corrCoefHoldInRFTDDelayRTSub = rtFiringRateStruct.corrCoefHoldInRFTDDelayRT(condition);
-corrCoefHoldExRFCTDelayRTSub = rtFiringRateStruct.corrCoefHoldExRFCTDelayRT(condition);
-corrCoefRelExRFCTDelayRTSub = rtFiringRateStruct.corrCoefRelExRFCTDelayRT(condition);
-corrCoefHoldExRFTDDelayRTSub = rtFiringRateStruct.corrCoefHoldExRFTDDelayRT(condition);
+corrCoefHoldInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFCTDelayRT(condition);
+corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelInRFCTDelayRT(condition);
+corrCoefHoldInRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFTDDelayRT(condition);
+corrCoefHoldExRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldExRFCTDelayRT(condition);
+corrCoefRelExRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelExRFCTDelayRT(condition);
+corrCoefHoldExRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldExRFTDDelayRT(condition);
 
 [~,p] = ttest(atanh(corrCoefRelInRFCTDelayRTSub)) % **
 [~,p] = ttest(atanh(corrCoefRelExRFCTDelayRTSub)) % **
