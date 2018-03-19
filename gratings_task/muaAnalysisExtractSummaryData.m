@@ -317,7 +317,7 @@ for j = 1:nUnits
                 checkRTStatAlpha = 0.025;
                 plotFileName = sprintf('%s/%s-sessionInd%d-rtDist-v%d.png', outputDir, sessionName, sessionInd, v);
                 plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
-                        sessionName, isZeroDistractors, plotFileName);
+                        checkRTStatAlpha, sessionName, isZeroDistractors, plotFileName);
                     
                 % there should not be any difference between RTs on InRF and
                 % ExRF trials. otherwise there is significant spatial bias
