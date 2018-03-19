@@ -40,11 +40,11 @@ exRFCol = cols(2,:);
 % in this session.
 p = ranksum(rtRelInRF, rtRelExRF);
 if p < checkRTStatAlpha
-    set(f, 'Color', 'red');
+    set(f, 'Color', 'r');
 end
 p = ranksum(rtHoldInRF, rtHoldExRF);
 if p < checkRTStatAlpha
-    set(f, 'Color', 'red');
+    set(f, 'Color', 'm');
 end
 
 %%

@@ -14,7 +14,8 @@ if isempty(sessionInds)
     sessionInds = 1:numel(recordingInfo);
 end
 
-nUnitsApprox = numel(sessionInds) * 16; % should be equal or an underestimate
+nSessions = numel(sessionInds);
+nUnitsApprox = nSessions * 16; % should be equal or an underestimate
 
 unitNames = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
@@ -32,11 +33,15 @@ earlyPreExitFixationSlope = nan(nUnitsApprox, 1);
 latePreExitFixationSlope = nan(nUnitsApprox, 1);
 spdfInfo = struct();
 
-nUnitsBySessionWithDelaySelectivity = zeros(numel(sessionInds), 1);
-nUnitsBySessionWithCueTargetDelaySelectivity = zeros(numel(sessionInds), 1);
-nUnitsBySessionWithTargetDimDelaySelectivity = zeros(numel(sessionInds), 1);
+nUnitsBySessionWithDelaySelectivity = zeros(nSessions, 1);
+nUnitsBySessionWithCueTargetDelaySelectivity = zeros(nSessions, 1);
+nUnitsBySessionWithTargetDimDelaySelectivity = zeros(nSessions, 1);
 
 rtFiringRateStruct = struct();
+meanRTRelInRF = nan(nSessions, 1); % currently unused
+meanRTRelExRF = nan(nSessions, 1);
+meanRTHoldInRF = nan(nSessions, 1);
+meanRTHoldExRF = nan(nSessions, 1);
 
 unitCount = 0;
 % should also be running a lot of shuffle tests given the number of trials
@@ -45,7 +50,7 @@ fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 
 %% session loop
-for i = 1:numel(sessionInds)
+for i = 1:nSessions
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
     saveFileName = sprintf('%s/%s-sessionInd%d-muaAnalysisSummaryData-v%d.mat', summaryDataDir, sessionName, sessionInd, v);
@@ -107,7 +112,7 @@ clear S;
 %% print session-wise presence of delay selectivity
 fprintf('--------------\n');
 fprintf('\n');
-for i = 1:numel(sessionInds)
+for i = 1:nSessions
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
     if nUnitsBySessionWithDelaySelectivity(i) > 0
@@ -118,7 +123,7 @@ for i = 1:numel(sessionInds)
 end
 fprintf('--------------\n');
 fprintf('\n');
-for i = 1:numel(sessionInds)
+for i = 1:nSessions
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
     if nUnitsBySessionWithCueTargetDelaySelectivity(i) > 0
@@ -129,7 +134,7 @@ for i = 1:numel(sessionInds)
 end
 fprintf('--------------\n');
 fprintf('\n');
-for i = 1:numel(sessionInds)
+for i = 1:nSessions
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
     if nUnitsBySessionWithTargetDimDelaySelectivity(i) > 0
