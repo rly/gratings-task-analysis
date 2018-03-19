@@ -1,4 +1,4 @@
-function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, isZeroDistractors)
+function muaAnalysisPlots(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, isZeroDistractors)
 % MUA gratings task analysis, one channel
 
 % 325ms fixation before pre-cue marker
@@ -54,14 +54,7 @@ sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);
 
-dataDir = sprintf('%s/%s/', dataDirRoot, sessionName);
-gratingsTaskLogDir = sprintf('%s/%s', dataDir, sessionName(2:end));
-
-% process events and sort them into different conditions
-UE = getUsefulEvents2(gratingsTaskLogDir, R.gratingsTaskLogIndices, 4, D);
-
-totalTimeOverall = sum(D.blockStopTimes(R.blockIndices) - D.blockStartTimes(R.blockIndices));
-minFiringRateOverall = 0.2; % Hz
+minFiringRate = 1; % Hz
 
 nUnits = numel(D.allMUAStructs);
 assert(nUnits == 1);
@@ -73,26 +66,36 @@ fprintf('Processing %d MUAs...\n', nUnits);
 
 muaStruct = D.allMUAStructs{i};
 unitName = muaStruct.name;
-spikeTimes = muaStruct.ts;
-firingRateOverall = numel(spikeTimes) / totalTimeOverall;
 fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
         nUnits, round(i/nUnits*100));
 
 saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
     	processedDataDir, unitName, blockName, v);
-if firingRateOverall >= minFiringRateOverall
-    fprintf('\tOverall firing rate = %0.2f Hz > minimum firing rate = %0.2f Hz in these blocks.\n', ...
-            firingRateOverall, minFiringRateOverall);
-    fprintf('\tComputing evoked spiking and writing file %s...\n', saveFileName);
+if exists(saveFileName, 'file')
+    fprintf('\tLoading evoked spiking file %s...\n', saveFileName);
+    ES = load(saveFileName);
+    
+    if isFiringRateGreaterThanMin(ES, minFiringRate)
+        plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
+        fprintf('\tSaving figure to file %s...\n', plotFileName);
 
-    computeEvokedSpiking(saveFileName, muaStruct, nLoc, UE);
+        quickSpdfAllVisualEvents(ES, blockName, ...
+                D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
+        close;
+
+        plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
+        fprintf('\tSaving figure to file %s...\n', plotFileName);
+
+        quickSpdfAllMotorEvents(ES, blockName, ...
+                D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
+        close;
+    else
+        fprintf('\tTask-related firing rate < minimum task-related firing rate = %0.2f Hz - skipping.\n', ...
+                minFiringRate);
+    end
 else
-    fprintf('\tOverall firing rate = %0.2f Hz < minimum firing rate = %0.2f Hz in these blocks - skipping.\n', ...
-            firingRateOverall, minFiringRateOverall);
-    if exists(saveFileName, 'file')
-        fprintf('\t%s exists... deleting.\n', saveFileName);
-        delete(saveFileName);
-    end 
+    fprintf(['\tNo evoked spiking file %s. Assuming this unit was skipped ' ...
+            'because overall firing rate < minimum firing rate in these blocks.\n'], saveFileName);
 end
 
 fprintf('Time elapsed: %0.2f s.\n', toc);

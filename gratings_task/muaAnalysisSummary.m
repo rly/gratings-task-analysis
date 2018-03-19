@@ -424,7 +424,7 @@ meanRTHoldExRFDiffThirdFiringRateCTDelay = rtFiringRateStruct.meanRTHoldExRFTopT
 meanRTHoldInRFDiffThirdFiringRateTDDelay = rtFiringRateStruct.meanRTHoldInRFTopThirdFiringRateTDDelay - rtFiringRateStruct.meanRTHoldInRFBottomThirdFiringRateTDDelay;
 meanRTHoldExRFDiffThirdFiringRateTDDelay = rtFiringRateStruct.meanRTHoldExRFTopThirdFiringRateTDDelay - rtFiringRateStruct.meanRTHoldExRFBottomThirdFiringRateTDDelay;
 
-condition = isInPulvinar & isSignificantCueResponseInc;
+condition = isInPulvinar;% & isSignificantCueResponseInc;
 meanRTRelInRFDiffThirdFiringRateCTDelaySub = meanRTRelInRFDiffThirdFiringRateCTDelay(condition);
 meanRTRelExRFDiffThirdFiringRateCTDelaySub = meanRTRelExRFDiffThirdFiringRateCTDelay(condition);
 meanRTHoldInRFDiffThirdFiringRateCTDelaySub = meanRTHoldInRFDiffThirdFiringRateCTDelay(condition);
@@ -432,11 +432,11 @@ meanRTHoldExRFDiffThirdFiringRateCTDelaySub = meanRTHoldExRFDiffThirdFiringRateC
 meanRTHoldInRFDiffThirdFiringRateTDDelaySub = meanRTHoldInRFDiffThirdFiringRateTDDelay(condition);
 meanRTHoldExRFDiffThirdFiringRateTDDelaySub = meanRTHoldExRFDiffThirdFiringRateTDDelay(condition);
 
-[~,p] = ttest(meanRTRelInRFDiffThirdFiringRateCTDelaySub)
-[~,p] = ttest(meanRTRelExRFDiffThirdFiringRateCTDelaySub)
-[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateCTDelaySub)
-[~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateCTDelaySub)
-[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateTDDelaySub)
+[~,p] = ttest(meanRTRelInRFDiffThirdFiringRateCTDelaySub) % **
+[~,p] = ttest(meanRTRelExRFDiffThirdFiringRateCTDelaySub) % **
+[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateCTDelaySub) % *
+[~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateCTDelaySub) 
+[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateTDDelaySub) % *
 [~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateTDDelaySub)
 
 
@@ -480,6 +480,10 @@ yBounds = [min(allYBounds) max(allYBounds)];
 arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
 arrayfun(@(x) ylim(x, yBounds), plotHs);
 
+plotFileName = sprintf('%s/allSessions-rtVsFiringRateThirds-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 % note: interestingly, sessions 1-4 showed more significant
 % difference shifted right than sessions 5-6,8-9 which showed more
 % significant difference shifted left on hold trials
@@ -498,20 +502,20 @@ arrayfun(@(x) ylim(x, yBounds), plotHs);
 % https://stats.stackexchange.com/questions/8019/averaging-correlation-values
 % or transform the r values using Fisher transform
 
-condition = isInPulvinar & isSignificantCueResponseInc;
-corrCoefHoldInRFCTDelayRTSub = corrCoefHoldInRFCTDelayRT(condition,3);
-corrCoefRelInRFCTDelayRTSub = corrCoefRelInRFCTDelayRT(condition,3);
-corrCoefHoldInRFTDDelayRTSub = corrCoefHoldInRFTDDelayRT(condition,3);
-corrCoefHoldExRFCTDelayRTSub = corrCoefHoldExRFCTDelayRT(condition,3);
-corrCoefRelExRFCTDelayRTSub = corrCoefRelExRFCTDelayRT(condition,3);
-corrCoefHoldExRFTDDelayRTSub = corrCoefHoldExRFTDDelayRT(condition,3);
+condition = isInPulvinar;% & isSignificantCueResponseInc;
+corrCoefHoldInRFCTDelayRTSub = rtFiringRateStruct.corrCoefHoldInRFCTDelayRT(condition);
+corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.corrCoefRelInRFCTDelayRT(condition);
+corrCoefHoldInRFTDDelayRTSub = rtFiringRateStruct.corrCoefHoldInRFTDDelayRT(condition);
+corrCoefHoldExRFCTDelayRTSub = rtFiringRateStruct.corrCoefHoldExRFCTDelayRT(condition);
+corrCoefRelExRFCTDelayRTSub = rtFiringRateStruct.corrCoefRelExRFCTDelayRT(condition);
+corrCoefHoldExRFTDDelayRTSub = rtFiringRateStruct.corrCoefHoldExRFTDDelayRT(condition);
 
-[~,p] = ttest(corrCoefRelInRFCTDelayRTSub)
-[~,p] = ttest(corrCoefRelExRFCTDelayRTSub)
-[~,p] = ttest(corrCoefHoldInRFCTDelayRTSub)
-[~,p] = ttest(corrCoefHoldExRFCTDelayRTSub)
-[~,p] = ttest(corrCoefHoldInRFTDDelayRTSub)
-[~,p] = ttest(corrCoefHoldExRFTDDelayRTSub)
+[~,p] = ttest(atanh(corrCoefRelInRFCTDelayRTSub)) % **
+[~,p] = ttest(atanh(corrCoefRelExRFCTDelayRTSub)) % **
+[~,p] = ttest(atanh(corrCoefHoldInRFCTDelayRTSub)) % *
+[~,p] = ttest(atanh(corrCoefHoldExRFCTDelayRTSub))
+[~,p] = ttest(atanh(corrCoefHoldInRFTDDelayRTSub)) % *
+[~,p] = ttest(atanh(corrCoefHoldExRFTDDelayRTSub))
 
 
 cols = lines(2);
@@ -553,6 +557,10 @@ allYBounds = [allYBounds{:}];
 yBounds = [min(allYBounds) max(allYBounds)];
 arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
 arrayfun(@(x) ylim(x, yBounds), plotHs);
+
+plotFileName = sprintf('%s/allSessions-rtVsFiringRateCorr-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');

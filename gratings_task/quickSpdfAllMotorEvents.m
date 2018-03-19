@@ -1,7 +1,8 @@
 function quickSpdfAllMotorEvents(ES, blockName, ...
-        D, spikeStructInd, spikeStruct, nLoc, nTrials, isZeroDistractors, plotFileName)
+        D, spikeStructInd, spikeStruct, nLoc, isZeroDistractors, plotFileName)
 
 unitName = spikeStruct.name;
+nTrials = numel(ES.UE.cueOnset);
 cols = lines(6);
 
 %%

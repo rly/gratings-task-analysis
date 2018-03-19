@@ -25,24 +25,6 @@ earlyPreExitFixationWindowOffset = [-0.2 -0.05];
 latePreExitFixationWindowOffset = [-0.05 0];
 
 rtFiringRateStruct = struct();
-% meanRTHoldInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-% meanRTHoldInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-% meanRTRelInRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-% meanRTRelInRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-% meanRTHoldInRFTopThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-% meanRTHoldInRFBottomThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-% meanRTHoldExRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-% meanRTHoldExRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-% meanRTRelExRFTopThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-% meanRTRelExRFBottomThirdFiringRateCTDelayAll = nan(nUnitsApprox, 1);
-% meanRTHoldExRFTopThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-% meanRTHoldExRFBottomThirdFiringRateTDDelayAll = nan(nUnitsApprox, 1);
-% corrCoefHoldInRFCTDelayRTAll = nan(nUnitsApprox, 3);
-% corrCoefRelInRFCTDelayRTAll = nan(nUnitsApprox, 3);
-% corrCoefHoldInRFTDDelayRTAll = nan(nUnitsApprox, 3);
-% corrCoefHoldExRFCTDelayRTAll = nan(nUnitsApprox, 3);
-% corrCoefRelExRFCTDelayRTAll = nan(nUnitsApprox, 3);
-% corrCoefHoldExRFTDDelayRTAll = nan(nUnitsApprox, 3);
 
 nTimeEnterFixation = 1401; % hard coded temp
 enterFixationSpdfInRFNorm = nan(nUnitsApprox, nTimeEnterFixation);
@@ -90,6 +72,7 @@ end
 %%
 taskName = 'GRATINGS';
 scriptName = 'MUA_GRATINGS';
+isZeroDistractors = 0;
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
         sessionInd, muaChannelsToLoad, taskName, scriptName, 1, 0);
@@ -259,154 +242,229 @@ for j = 1:nUnits
             inRFLoc = ES.inRFLoc;
             exRFLoc = ES.exRFLoc;
             
+            %%
+            % extract firing rates (count-based) at InRF and ExRF locations
+            % note: cueTargetDelayLongWindowOffset = [-0.4 0];
+            % note: targetDimDelayLongWindowOffset = [-0.4 0];
             
-            
-
-            cueTargetDelayLongHoldInRFRate = ES.averageFiringRatesByCount.cueTargetDelayLongHold.trialRateByLoc{inRFLoc};
-            targetDimDelayLongHoldInRFRate = ES.averageFiringRatesByCount.targetDimDelayLong.trialRateByLoc{inRFLoc};
+            rtRelInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ~ES.UE.isHoldTrial);
+            rtRelExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ~ES.UE.isHoldTrial);
             rtHoldInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldTrial);
-
-            cueTargetDelayLongHoldExRFRate = ES.averageFiringRatesByCount.cueTargetDelayLongHold.trialRateByLoc{exRFLoc};
-            targetDimDelayLongHoldExRFRate = ES.averageFiringRatesByCount.targetDimDelayLong.trialRateByLoc{exRFLoc};
             rtHoldExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldTrial);
 
             cueTargetDelayLongRelInRFRate = ES.averageFiringRatesByCount.cueTargetDelayLongRel.trialRateByLoc{inRFLoc};
-            rtRelInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ~ES.UE.isHoldTrial);
-
             cueTargetDelayLongRelExRFRate = ES.averageFiringRatesByCount.cueTargetDelayLongRel.trialRateByLoc{exRFLoc};
-            rtRelExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ~ES.UE.isHoldTrial);
+            
+            cueTargetDelayLongHoldInRFRate = ES.averageFiringRatesByCount.cueTargetDelayLongHold.trialRateByLoc{inRFLoc};
+            targetDimDelayLongHoldInRFRate = ES.averageFiringRatesByCount.targetDimDelayLong.trialRateByLoc{inRFLoc};
 
-%                 figure_tr_inch(5, 10);
-%                 subaxis(2, 1, 1);
-%                 hold on;
-%                 plot(cueTargetDelayLongHoldInRFRate, rtHoldInRF, ...
-%                         '.', 'MarkerSize', 10);
-%                 plot(cueTargetDelayLongHoldExRFRate, rtHoldExRF, ...
-%                         '.', 'MarkerSize', 10);
-%                     
-%                 subaxis(2, 1, 2);
-%                 hold on;
-%                 plot(targetDimDelayLongHoldInRFRate, rtHoldInRF, ...
-%                         '.', 'MarkerSize', 10);
-%                 plot(targetDimDelayLongHoldExRFRate, rtHoldExRF, ...
-%                         '.', 'MarkerSize', 10);
-%                 pause;
-%                 close;
+            cueTargetDelayLongHoldExRFRate = ES.averageFiringRatesByCount.cueTargetDelayLongHold.trialRateByLoc{exRFLoc};
+            targetDimDelayLongHoldExRFRate = ES.averageFiringRatesByCount.targetDimDelayLong.trialRateByLoc{exRFLoc};
 
-            % note: most of these values are 0 because of the short
-            % time window and the sparse firing. even with using
-            % sortBreakOrder, this can lead to problems
-            [~,sortCTDelayHoldInRFInd] = sortBreakOrder(cueTargetDelayLongHoldInRFRate);
-            [~,sortCTDelayRelInRFInd] = sortBreakOrder(cueTargetDelayLongRelInRFRate);
-            [~,sortTDDelayHoldInRFInd] = sortBreakOrder(targetDimDelayLongHoldInRFRate);
-            rtHoldInRFSortedByCTDelay = rtHoldInRF(sortCTDelayHoldInRFInd);
-            rtRelInRFSortedByCTDelay = rtRelInRF(sortCTDelayRelInRFInd);
-            rtHoldInRFSortedByTDDelay = rtHoldInRF(sortTDDelayHoldInRFInd);
-
-            [~,sortCTDelayHoldExRFInd] = sortBreakOrder(cueTargetDelayLongHoldExRFRate);
-            [~,sortCTDelayRelExRFInd] = sortBreakOrder(cueTargetDelayLongRelExRFRate);
-            [~,sortTDDelayHoldExRFInd] = sortBreakOrder(targetDimDelayLongHoldExRFRate);
-            rtHoldExRFSortedByCTDelay = rtHoldExRF(sortCTDelayHoldExRFInd);
-            rtRelExRFSortedByCTDelay = rtRelExRF(sortCTDelayRelExRFInd);
-            rtHoldExRFSortedByTDDelay = rtHoldExRF(sortTDDelayHoldExRFInd);
-
-            nTrialsHoldInRF = numel(cueTargetDelayLongHoldInRFRate);
+            nTrialsRelInRF = numel(rtRelInRF);
+            topThirdIndicesRelInRF = round(nTrialsRelInRF * 2/3)+1:nTrialsRelInRF;
+            bottomThirdIndicesRelInRF = 1:round(nTrialsRelInRF * 1/3);
+            
+            nTrialsRelExRF = numel(rtRelExRF);
+            topThirdIndicesRelExRF = round(nTrialsRelExRF * 2/3)+1:nTrialsRelExRF;
+            bottomThirdIndicesRelExRF = 1:round(nTrialsRelExRF * 1/3);
+            
+            nTrialsHoldInRF = numel(rtHoldInRF);
             topThirdIndicesHoldInRF = round(nTrialsHoldInRF * 2/3)+1:nTrialsHoldInRF;
             bottomThirdIndicesHoldInRF = 1:round(nTrialsHoldInRF * 1/3);
 
-            nTrialsRelInRF = numel(cueTargetDelayLongRelInRFRate);
-            topThirdIndicesRelInRF = round(nTrialsRelInRF * 2/3)+1:nTrialsRelInRF;
-            bottomThirdIndicesRelInRF = 1:round(nTrialsRelInRF * 1/3);
-
-            nTrialsHoldExRF = numel(cueTargetDelayLongHoldExRFRate);
+            nTrialsHoldExRF = numel(rtHoldExRF);
             topThirdIndicesHoldExRF = round(nTrialsHoldExRF * 2/3)+1:nTrialsHoldExRF;
             bottomThirdIndicesHoldExRF = 1:round(nTrialsHoldExRF * 1/3);
+            
+            assert(nTrialsRelInRF == numel(cueTargetDelayLongRelInRFRate));
+            assert(nTrialsRelExRF == numel(cueTargetDelayLongRelExRFRate));
+            assert(all(nTrialsHoldInRF == [numel(cueTargetDelayLongHoldInRFRate) numel(targetDimDelayLongHoldInRFRate)]));
+            assert(all(nTrialsHoldExRF == [numel(cueTargetDelayLongHoldExRFRate) numel(targetDimDelayLongHoldExRFRate)]));
+            
+            % algorithm:
+            % sort trials according to firing rate during each delay period
+            % sort the RTs based on the above sorting
+            % (alternatively sort based on RT and apply to FR)
 
-            nTrialsRelExRF = numel(cueTargetDelayLongRelExRFRate);
-            topThirdIndicesRelExRF = round(nTrialsRelExRF * 2/3)+1:nTrialsRelExRF;
-            bottomThirdIndicesRelExRF = 1:round(nTrialsRelExRF * 1/3);
-
-            % ct delay
-%                 [h,p] = ttest2(rtInRFSortedByCTDelay(topThirdIndicesInRF), ...
-%                         rtInRFSortedByCTDelay(bottomThirdIndicesInRF))
-%                 [h,p] = ttest2(rtExRFSortedByCTDelay(topThirdIndicesExRF), ...
-%                         rtExRFSortedByCTDelay(bottomThirdIndicesExRF))
+            % WARNING: many of these firing rates are 0 because of the short
+            % time window and the sparse firing. even with using
+            % sortBreakOrder, this could lead to problems
+            % this plot is commented out because of the above WARNING
+            % repeated runs of this code will yield vastly different p
+            % values. TODO need to account for this.
+            [~,sortCTDelayRelInRFInd] = sortBreakOrder(cueTargetDelayLongRelInRFRate);
+            rtRelInRFSortedByCTDelay = rtRelInRF(sortCTDelayRelInRFInd);
+            
+            [~,sortCTDelayRelExRFInd] = sortBreakOrder(cueTargetDelayLongRelExRFRate);
+            rtRelExRFSortedByCTDelay = rtRelExRF(sortCTDelayRelExRFInd);
+            
+            [~,sortCTDelayHoldInRFInd] = sortBreakOrder(cueTargetDelayLongHoldInRFRate);
+            rtHoldInRFSortedByCTDelay = rtHoldInRF(sortCTDelayHoldInRFInd);
+            
+            [~,sortCTDelayHoldExRFInd] = sortBreakOrder(cueTargetDelayLongHoldExRFRate);
+            rtHoldExRFSortedByCTDelay = rtHoldExRF(sortCTDelayHoldExRFInd);
+            
+            [~,sortTDDelayHoldInRFInd] = sortBreakOrder(targetDimDelayLongHoldInRFRate);
+            rtHoldInRFSortedByTDDelay = rtHoldInRF(sortTDDelayHoldInRFInd);
+            
+            [~,sortTDDelayHoldExRFInd] = sortBreakOrder(targetDimDelayLongHoldExRFRate);
+            rtHoldExRFSortedByTDDelay = rtHoldExRF(sortTDDelayHoldExRFInd);
+            
+            assert(all(ES.UE.rt >= 0.3 & ES.UE.rt <= 0.8)); 
+%             binEdges = 0.3:0.05:0.8;
 % 
-%                 % td delay
-%                 [h,p] = ttest2(rtInRFSortedByTDDelay(topThirdIndicesInRF), ...
-%                         rtInRFSortedByTDDelay(bottomThirdIndicesInRF))
-%                 [h,p] = ttest2(rtExRFSortedByTDDelay(topThirdIndicesExRF), ...
-%                         rtExRFSortedByTDDelay(bottomThirdIndicesExRF))
+%             % rel trials, RT on trials with lowest 1/3 of firing rates in
+%             % CT delay vs RT on trials with highest 1/3 of firing rates
+%             % InRF and ExRF trials separately
+%             
+%             % rel trials CT delay
+%             [~,rtRelInRFSortedByCTDelayThirdsPVal] = ttest2(rtRelInRFSortedByCTDelay(topThirdIndicesRelInRF), ...
+%                     rtRelInRFSortedByCTDelay(bottomThirdIndicesRelInRF));
+%             [~,rtRelExRFSortedByCTDelayThirdsPVal] = ttest2(rtRelExRFSortedByCTDelay(topThirdIndicesRelExRF), ...
+%                     rtRelExRFSortedByCTDelay(bottomThirdIndicesRelExRF));
+%             
+%             % hold trials CT delay
+%             [~,rtHoldInRFSortedByCTDelayThirdsPVal] = ttest2(rtHoldInRFSortedByCTDelay(topThirdIndicesHoldInRF), ...
+%                     rtHoldInRFSortedByCTDelay(bottomThirdIndicesHoldInRF));
+%             [~,rtHoldExRFSortedByCTDelayThirdsPVal] = ttest2(rtHoldExRFSortedByCTDelay(topThirdIndicesHoldExRF), ...
+%                     rtHoldExRFSortedByCTDelay(bottomThirdIndicesHoldExRF));
 % 
-%                 binEdges = 0.3:0.05:0.8;
+%             % hold trials TD delay
+%             [~,rtHoldInRFSortedByTDDelayThirdsPVal] = ttest2(rtHoldInRFSortedByTDDelay(topThirdIndicesHoldInRF), ...
+%                     rtHoldInRFSortedByTDDelay(bottomThirdIndicesHoldInRF));
+%             [~,rtHoldExRFSortedByTDDelayThirdsPVal] = ttest2(rtHoldExRFSortedByTDDelay(topThirdIndicesHoldExRF), ...
+%                     rtHoldExRFSortedByTDDelay(bottomThirdIndicesHoldExRF));
 % 
-%                 % sorted by ct delay
-%                 figure_tr_inch(10, 10);
-%                 subaxis(2, 2, 1);
-%                 hold on;
-%                 histogram(rtInRFSortedByCTDelay(topThirdIndicesInRF), binEdges);
-%                 histogram(rtInRFSortedByCTDelay(bottomThirdIndicesInRF), binEdges);
-%                 title({'RT distribution of Top and Bottom Third', 'Extreme Cue-Target Delay Firing Rates InRF'});
-%                 subaxis(2, 2, 3);
-%                 hold on;
-%                 histogram(rtExRFSortedByCTDelay(topThirdIndicesExRF), binEdges);
-%                 histogram(rtExRFSortedByCTDelay(bottomThirdIndicesExRF), binEdges);
-%                 title({'RT distribution of Top and Bottom Third', 'Extreme Cue-Target Delay Firing Rates ExRF'});
-% 
-%                 [mean(rtInRFSortedByCTDelay(topThirdIndicesInRF)) ...
-%                         mean(rtInRFSortedByCTDelay(bottomThirdIndicesInRF)) ...
-%                         mean(rtExRFSortedByCTDelay(topThirdIndicesExRF)) ...
-%                         mean(rtExRFSortedByCTDelay(bottomThirdIndicesExRF))]
-% 
-%                 % sorted by td delay
-%                 subaxis(2, 2, 2);
-%                 hold on;
-%                 histogram(rtInRFSortedByTDDelay(topThirdIndicesInRF), binEdges);
-%                 histogram(rtInRFSortedByTDDelay(bottomThirdIndicesInRF), binEdges);
-%                 title({'RT distribution of Top and Bottom Third', 'Extreme Target-Dim Delay Firing Rates InRF'});
-%                 subaxis(2, 2, 4);
-%                 hold on;
-%                 histogram(rtExRFSortedByTDDelay(topThirdIndicesExRF), binEdges);
-%                 histogram(rtExRFSortedByTDDelay(bottomThirdIndicesExRF), binEdges);
-%                 title({'RT distribution of Top and Bottom Third', 'Extreme Target-Dim Delay Firing Rates ExRF'});
-% 
-%                 [mean(rtInRFSortedByTDDelay(topThirdIndicesInRF)) ...
-%                         mean(rtInRFSortedByTDDelay(bottomThirdIndicesInRF)) ...
-%                         mean(rtExRFSortedByTDDelay(topThirdIndicesExRF)) ...
-%                         mean(rtExRFSortedByTDDelay(bottomThirdIndicesExRF))]
+%             figure_tr_inch(15, 10);
+%             textParamsNormal = {'FontSize', 8, 'Units', 'normalized'};
+%             textParamsBold = {'FontSize', 8, 'Units', 'normalized', 'FontWeight', 'bold'};
+%             corrStatAlpha = 0.05;
+%             
+%             subaxis(2, 3, 1, 'SV', 0.1);
+%             hold on;
+%             histogram(rtRelInRFSortedByCTDelay(topThirdIndicesRelInRF), binEdges);
+%             histogram(rtRelInRFSortedByCTDelay(bottomThirdIndicesRelInRF), binEdges);
+%             title({'RT distribution of Top and Bottom Third', 'Extreme Cue-Target Delay Firing Rates Rel InRF'});
+%             if rtRelInRFSortedByCTDelayThirdsPVal < corrStatAlpha
+%                 textParams = textParamsBold;
+%             else
+%                 textParams = textParamsNormal;
+%             end
+%             text(0.85, 0.95, sprintf('p = %0.3f', rtRelInRFSortedByCTDelayThirdsPVal), textParams{:});
+%             
+%             subaxis(2, 3, 4);
+%             hold on;
+%             histogram(rtRelExRFSortedByCTDelay(topThirdIndicesRelExRF), binEdges);
+%             histogram(rtRelExRFSortedByCTDelay(bottomThirdIndicesRelExRF), binEdges);
+%             title({'RT distribution of Top and Bottom Third', 'Extreme Cue-Target Delay Firing Rates Rel ExRF'});
+%             if rtRelExRFSortedByCTDelayThirdsPVal < corrStatAlpha
+%                 textParams = textParamsBold;
+%             else
+%                 textParams = textParamsNormal;
+%             end
+%             text(0.85, 0.95, sprintf('p = %0.3f', rtRelExRFSortedByCTDelayThirdsPVal), textParams{:});
+%             
+%             subaxis(2, 3, 2);
+%             hold on;
+%             histogram(rtHoldInRFSortedByCTDelay(topThirdIndicesHoldInRF), binEdges);
+%             histogram(rtHoldInRFSortedByCTDelay(bottomThirdIndicesHoldInRF), binEdges);
+%             title({'RT distribution of Top and Bottom Third', 'Extreme Cue-Target Delay Firing Rates Hold InRF'});
+%             if rtHoldInRFSortedByCTDelayThirdsPVal < corrStatAlpha
+%                 textParams = textParamsBold;
+%             else
+%                 textParams = textParamsNormal;
+%             end
+%             text(0.85, 0.95, sprintf('p = %0.3f', rtHoldInRFSortedByCTDelayThirdsPVal), textParams{:});
+%             
+%             subaxis(2, 3, 5);
+%             hold on;
+%             histogram(rtHoldExRFSortedByCTDelay(topThirdIndicesHoldExRF), binEdges);
+%             histogram(rtHoldExRFSortedByCTDelay(bottomThirdIndicesHoldExRF), binEdges);
+%             title({'RT distribution of Top and Bottom Third', 'Extreme Cue-Target Delay Firing Rates Hold ExRF'});
+%             if rtHoldExRFSortedByCTDelayThirdsPVal < corrStatAlpha
+%                 textParams = textParamsBold;
+%             else
+%                 textParams = textParamsNormal;
+%             end
+%             text(0.85, 0.95, sprintf('p = %0.3f', rtHoldExRFSortedByCTDelayThirdsPVal), textParams{:});
+%             
+%             subaxis(2, 3, 3);
+%             hold on;
+%             histogram(rtHoldInRFSortedByTDDelay(topThirdIndicesHoldInRF), binEdges);
+%             histogram(rtHoldInRFSortedByTDDelay(bottomThirdIndicesHoldInRF), binEdges);
+%             title({'RT distribution of Top and Bottom Third', 'Extreme Target-Dim Delay Firing Rates Hold InRF'});
+%             if rtHoldInRFSortedByTDDelayThirdsPVal < corrStatAlpha
+%                 textParams = textParamsBold;
+%             else
+%                 textParams = textParamsNormal;
+%             end
+%             text(0.85, 0.95, sprintf('p = %0.3f', rtHoldInRFSortedByTDDelayThirdsPVal), textParams{:});
+%             
+%             subaxis(2, 3, 6);
+%             hold on;
+%             histogram(rtHoldExRFSortedByTDDelay(topThirdIndicesHoldExRF), binEdges);
+%             histogram(rtHoldExRFSortedByTDDelay(bottomThirdIndicesHoldExRF), binEdges);
+%             title({'RT distribution of Top and Bottom Third', 'Extreme Target-Dim Delay Firing Rates Hold ExRF'});
+%             if rtHoldExRFSortedByTDDelayThirdsPVal < corrStatAlpha
+%                 textParams = textParamsBold;
+%             else
+%                 textParams = textParamsNormal;
+%             end
+%             text(0.85, 0.95, sprintf('p = %0.3f', rtHoldExRFSortedByTDDelayThirdsPVal), textParams{:});
+%             
+%             plotFileName = sprintf('%s/%s-%s-rtVsFiringHist-v%d.png', processedDataDir, unitName, blockName, v);
+%             fprintf('\tSaving figure to file %s...\n', plotFileName);
+%             export_fig(plotFileName, '-nocrop');
+            
             % ideally shuffle test?
             % how to deal with correlated increases in firing in a trial?
 
-            rtFiringRateStruct(unitCount).meanRTHoldInRFTopThirdFiringRateCTDelay = mean(rtHoldInRFSortedByCTDelay(topThirdIndicesHoldInRF));
-            rtFiringRateStruct(unitCount).meanRTHoldInRFBottomThirdFiringRateCTDelay = mean(rtHoldInRFSortedByCTDelay(bottomThirdIndicesHoldInRF));
             rtFiringRateStruct(unitCount).meanRTRelInRFTopThirdFiringRateCTDelay = mean(rtRelInRFSortedByCTDelay(topThirdIndicesRelInRF));
             rtFiringRateStruct(unitCount).meanRTRelInRFBottomThirdFiringRateCTDelay = mean(rtRelInRFSortedByCTDelay(bottomThirdIndicesRelInRF));
-            rtFiringRateStruct(unitCount).meanRTHoldInRFTopThirdFiringRateTDDelay = mean(rtHoldInRFSortedByTDDelay(topThirdIndicesHoldInRF));
-            rtFiringRateStruct(unitCount).meanRTHoldInRFBottomThirdFiringRateTDDelay = mean(rtHoldInRFSortedByTDDelay(bottomThirdIndicesHoldInRF));
-            rtFiringRateStruct(unitCount).meanRTHoldExRFTopThirdFiringRateCTDelay = mean(rtHoldExRFSortedByCTDelay(topThirdIndicesHoldExRF));
-            rtFiringRateStruct(unitCount).meanRTHoldExRFBottomThirdFiringRateCTDelay = mean(rtHoldExRFSortedByCTDelay(bottomThirdIndicesHoldExRF));
+            
             rtFiringRateStruct(unitCount).meanRTRelExRFTopThirdFiringRateCTDelay = mean(rtRelExRFSortedByCTDelay(topThirdIndicesRelExRF));
             rtFiringRateStruct(unitCount).meanRTRelExRFBottomThirdFiringRateCTDelay = mean(rtRelExRFSortedByCTDelay(bottomThirdIndicesRelExRF));
+            
+            rtFiringRateStruct(unitCount).meanRTHoldInRFTopThirdFiringRateCTDelay = mean(rtHoldInRFSortedByCTDelay(topThirdIndicesHoldInRF));
+            rtFiringRateStruct(unitCount).meanRTHoldInRFBottomThirdFiringRateCTDelay = mean(rtHoldInRFSortedByCTDelay(bottomThirdIndicesHoldInRF));
+
+            rtFiringRateStruct(unitCount).meanRTHoldExRFTopThirdFiringRateCTDelay = mean(rtHoldExRFSortedByCTDelay(topThirdIndicesHoldExRF));
+            rtFiringRateStruct(unitCount).meanRTHoldExRFBottomThirdFiringRateCTDelay = mean(rtHoldExRFSortedByCTDelay(bottomThirdIndicesHoldExRF));
+            
+            rtFiringRateStruct(unitCount).meanRTHoldInRFTopThirdFiringRateTDDelay = mean(rtHoldInRFSortedByTDDelay(topThirdIndicesHoldInRF));
+            rtFiringRateStruct(unitCount).meanRTHoldInRFBottomThirdFiringRateTDDelay = mean(rtHoldInRFSortedByTDDelay(bottomThirdIndicesHoldInRF));
+
             rtFiringRateStruct(unitCount).meanRTHoldExRFTopThirdFiringRateTDDelay = mean(rtHoldExRFSortedByTDDelay(topThirdIndicesHoldExRF));
             rtFiringRateStruct(unitCount).meanRTHoldExRFBottomThirdFiringRateTDDelay = mean(rtHoldExRFSortedByTDDelay(bottomThirdIndicesHoldExRF));
             
-            [rtFiringRateStruct(unitCount).corrCoefHoldInRFCTDelayRT,rtFiringRateStruct(unitCount).corrCoefPValHoldInRFCTDelayRT] = corr(cueTargetDelayLongHoldInRFRate, rtHoldInRF);
-            [rtFiringRateStruct(unitCount).corrCoefRelInRFCTDelayRT,rtFiringRateStruct(unitCount).corrCoefPValRelInRFCTDelayRT] = corr(cueTargetDelayLongRelInRFRate, rtRelInRF);
-            [rtFiringRateStruct(unitCount).corrCoefHoldInRFTDDelayRT,rtFiringRateStruct(unitCount).corrCoefPValHoldInRFTDDelayRT] = corr(targetDimDelayLongHoldInRFRate, rtHoldInRF);
-            [rtFiringRateStruct(unitCount).corrCoefHoldExRFCTDelayRT,rtFiringRateStruct(unitCount).corrCoefPValHoldExRFCTDelayRT] = corr(cueTargetDelayLongHoldExRFRate, rtHoldExRF);
-            [rtFiringRateStruct(unitCount).corrCoefRelExRFCTDelayRT,rtFiringRateStruct(unitCount).corrCoefPValRelExRFCTDelayRT] = corr(cueTargetDelayLongRelExRFRate, rtRelExRF);
-            [rtFiringRateStruct(unitCount).corrCoefHoldExRFTDDelayRT,rtFiringRateStruct(unitCount).corrCoefPValHoldExRFTDDelayRT] = corr(targetDimDelayLongHoldExRFRate, rtHoldExRF);
-
-            % need to use fisher xform (atanh) to test population
-            % correlation coefficient
-            rtFiringRateStruct(unitCount).corrCoefAdjHoldInRFCTDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefHoldInRFCTDelayRT);
-            rtFiringRateStruct(unitCount).corrCoefAdjRelInRFCTDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefRelInRFCTDelayRT);
-            rtFiringRateStruct(unitCount).corrCoefAdjHoldInRFTDDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefHoldInRFTDDelayRT);
-            rtFiringRateStruct(unitCount).corrCoefAdjHoldExRFCTDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefHoldExRFCTDelayRT);
-            rtFiringRateStruct(unitCount).corrCoefAdjRelExRFCTDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefRelExRFCTDelayRT);
-            rtFiringRateStruct(unitCount).corrCoefAdjHoldExRFTDDelayRT = atanh(rtFiringRateStruct(unitCount).corrCoefHoldExRFTDDelayRT);
+            [rtFiringRateStruct(unitCount).pearsonCorrCoefRelInRFCTDelayRT,rtFiringRateStruct(unitCount).pearsonCorrCoefPValRelInRFCTDelayRT] = corr(cueTargetDelayLongRelInRFRate, rtRelInRF, 'type', 'Pearson');
+            [rtFiringRateStruct(unitCount).pearsonCorrCoefRelExRFCTDelayRT,rtFiringRateStruct(unitCount).pearsonCorrCoefPValRelExRFCTDelayRT] = corr(cueTargetDelayLongRelExRFRate, rtRelExRF, 'type', 'Pearson');
+            [rtFiringRateStruct(unitCount).pearsonCorrCoefHoldInRFCTDelayRT,rtFiringRateStruct(unitCount).pearsonCorrCoefPValHoldInRFCTDelayRT] = corr(cueTargetDelayLongHoldInRFRate, rtHoldInRF, 'type', 'Pearson');
+            [rtFiringRateStruct(unitCount).pearsonCorrCoefHoldExRFCTDelayRT,rtFiringRateStruct(unitCount).pearsonCorrCoefPValHoldExRFCTDelayRT] = corr(cueTargetDelayLongHoldExRFRate, rtHoldExRF, 'type', 'Pearson');
+            [rtFiringRateStruct(unitCount).pearsonCorrCoefHoldInRFTDDelayRT,rtFiringRateStruct(unitCount).pearsonCorrCoefPValHoldInRFTDDelayRT] = corr(targetDimDelayLongHoldInRFRate, rtHoldInRF, 'type', 'Pearson');
+            [rtFiringRateStruct(unitCount).pearsonCorrCoefHoldExRFTDDelayRT,rtFiringRateStruct(unitCount).pearsonCorrCoefPValHoldExRFTDDelayRT] = corr(targetDimDelayLongHoldExRFRate, rtHoldExRF, 'type', 'Pearson');
             
+            [rtFiringRateStruct(unitCount).spearmanCorrCoefRelInRFCTDelayRT,rtFiringRateStruct(unitCount).spearmanCorrCoefPValRelInRFCTDelayRT] = corr(cueTargetDelayLongRelInRFRate, rtRelInRF, 'type', 'Spearman');
+            [rtFiringRateStruct(unitCount).spearmanCorrCoefRelExRFCTDelayRT,rtFiringRateStruct(unitCount).spearmanCorrCoefPValRelExRFCTDelayRT] = corr(cueTargetDelayLongRelExRFRate, rtRelExRF, 'type', 'Spearman');
+            [rtFiringRateStruct(unitCount).spearmanCorrCoefHoldInRFCTDelayRT,rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldInRFCTDelayRT] = corr(cueTargetDelayLongHoldInRFRate, rtHoldInRF, 'type', 'Spearman');
+            [rtFiringRateStruct(unitCount).spearmanCorrCoefHoldExRFCTDelayRT,rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldExRFCTDelayRT] = corr(cueTargetDelayLongHoldExRFRate, rtHoldExRF, 'type', 'Spearman');
+            [rtFiringRateStruct(unitCount).spearmanCorrCoefHoldInRFTDDelayRT,rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldInRFTDDelayRT] = corr(targetDimDelayLongHoldInRFRate, rtHoldInRF, 'type', 'Spearman');
+            [rtFiringRateStruct(unitCount).spearmanCorrCoefHoldExRFTDDelayRT,rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldExRFTDDelayRT] = corr(targetDimDelayLongHoldExRFRate, rtHoldExRF, 'type', 'Spearman');
             
+            %%
+            plotFileName = sprintf('%s/%s-%s-rtVsFiringScatter-v%d.png', processedDataDir, unitName, blockName, v);
+            plotRTFiringRateCorrelation(cueTargetDelayLongRelInRFRate, ...
+                    cueTargetDelayLongRelExRFRate, ...
+                    cueTargetDelayLongHoldInRFRate, ...
+                    targetDimDelayLongHoldInRFRate, ...
+                    cueTargetDelayLongHoldExRFRate, ...
+                    targetDimDelayLongHoldExRFRate, ...
+                    rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
+                    rtFiringRateStruct(unitCount), unitName, isZeroDistractors, plotFileName);
+            close;
+            
+%%            
             inRFPreCueBaseline = ES.averageFiringRatesBySpdf.preCueBaseline.byLoc(inRFLoc);
             exRFPreCueBaseline = ES.averageFiringRatesBySpdf.preCueBaseline.byLoc(exRFLoc);
 

@@ -1,6 +1,6 @@
 function [sx,sortInd] = sortBreakOrder(x)
-% inefficient sorting algorithm that does not preserve order among equal
-% elements
+% inefficient sorting algorithm that randomly shuffles the order of equal
+% elements (usually order is preserved)
 
 assert(isrow(x) | iscolumn(x));
 
