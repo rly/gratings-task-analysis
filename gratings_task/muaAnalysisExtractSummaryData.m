@@ -311,8 +311,24 @@ for j = 1:nUnits
             [~,sortTDDelayHoldExRFInd] = sortBreakOrder(targetDimDelayLongHoldExRFRate);
             rtHoldExRFSortedByTDDelay = rtHoldExRF(sortTDDelayHoldExRFInd);
             
-            assert(all(ES.UE.rt >= 0.3 & ES.UE.rt <= 0.8)); 
-%             binEdges = 0.3:0.05:0.8;
+            % make session-wise RT plots while processing the first unit
+            if unitCount == 1
+                assert(all(ES.UE.rt >= 0.3 & ES.UE.rt <= 0.8)); 
+
+                % there should not be any difference between RTs on InRF and
+                % ExRF trials. otherwise there is significant spatial bias
+                % in this session.
+                checkRTStatAlpha = 0.05;
+                p = ranksum(rtRelInRF, rtRelExRF);
+                assert(p > checkRTStatAlpha);
+                p = ranksum(rtHoldInRF, rtHoldExRF);
+                assert(p > checkRTStatAlpha);
+                
+                plotFileName = sprintf('%s/%s-sessionInd%d-rtDist-v%d.png', outputDir, sessionName, sessionInd, v);
+                plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
+                        sessionName, isZeroDistractors, plotFileName);
+            end
+%             
 % 
 %             % rel trials, RT on trials with lowest 1/3 of firing rates in
 %             % CT delay vs RT on trials with highest 1/3 of firing rates
@@ -474,7 +490,7 @@ for j = 1:nUnits
             inRFNormFactor = max([ES.maxFiringRateBySpdfInclMotor - inRFPreCueBaseline; inRFPreCueBaseline - ES.minFiringRateBySpdfInclMotor]);
             exRFNormFactor = max([ES.maxFiringRateBySpdfInclMotor - exRFPreCueBaseline; exRFPreCueBaseline - ES.minFiringRateBySpdfInclMotor]);
 
-            enterFixationSpdfInRFNorm(unitCount,:) = (ES.enterFixation.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+            spdfInfo.enterFixationSpdfInRFNorm(unitCount,:) = (ES.enterFixation.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
             enterFixationSpdfExRFNorm(unitCount,:) = (ES.enterFixation.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
 
             enterFixationSpdfInRFNormErr(unitCount,:) = ES.enterFixation.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;

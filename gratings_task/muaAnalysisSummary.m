@@ -92,12 +92,13 @@ for i = 1:numel(sessionInds)
     targetDimT = S.targetDimT;
     exitFixationT = S.exitFixationT;
     
+    % note: rtFiringRateStruct is structured differently than spdfInfo
     fn = fieldnames(S.rtFiringRateStruct);
     for j = 1:numel(fn)
         if isfield(rtFiringRateStruct, fn{j})
-            rtFiringRateStruct.(fn{j})(currentUnitInds,:,:) = S.rtFiringRateStruct.(fn{j});
+            rtFiringRateStruct.(fn{j})(currentUnitInds,:) = [S.rtFiringRateStruct.(fn{j})]';
         else
-            rtFiringRateStruct.(fn{j}) = S.rtFiringRateStruct.(fn{j}); % no pre-allocation
+            rtFiringRateStruct.(fn{j}) = [S.rtFiringRateStruct.(fn{j})]'; % no pre-allocation
         end
     end
 end
@@ -432,18 +433,26 @@ meanRTHoldExRFDiffThirdFiringRateCTDelaySub = meanRTHoldExRFDiffThirdFiringRateC
 meanRTHoldInRFDiffThirdFiringRateTDDelaySub = meanRTHoldInRFDiffThirdFiringRateTDDelay(condition);
 meanRTHoldExRFDiffThirdFiringRateTDDelaySub = meanRTHoldExRFDiffThirdFiringRateTDDelay(condition);
 
-[~,p] = ttest(meanRTRelInRFDiffThirdFiringRateCTDelaySub) % **
-[~,p] = ttest(meanRTRelExRFDiffThirdFiringRateCTDelaySub) % **
-[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateCTDelaySub) % *
-[~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateCTDelaySub) 
-[~,p] = ttest(meanRTHoldInRFDiffThirdFiringRateTDDelaySub) % *
-[~,p] = ttest(meanRTHoldExRFDiffThirdFiringRateTDDelaySub)
-
+p = signrank(meanRTRelInRFDiffThirdFiringRateCTDelaySub)
+p = signrank(meanRTRelExRFDiffThirdFiringRateCTDelaySub)
+p = signrank(meanRTHoldInRFDiffThirdFiringRateCTDelaySub)
+p = signrank(meanRTHoldExRFDiffThirdFiringRateCTDelaySub) 
+p = signrank(meanRTHoldInRFDiffThirdFiringRateTDDelaySub) % **
+p = signrank(meanRTHoldExRFDiffThirdFiringRateTDDelaySub)
 
 cols = lines(2);
 inRFCol = cols(1,:);
 exRFCol = cols(2,:);
-binEdges = -0.1:0.01:0.1;
+
+maxAbs = max(max(abs([meanRTRelInRFDiffThirdFiringRateCTDelaySub, ...
+        meanRTRelExRFDiffThirdFiringRateCTDelaySub, ...
+        meanRTHoldInRFDiffThirdFiringRateCTDelaySub, ...
+        meanRTHoldExRFDiffThirdFiringRateCTDelaySub, ...
+        meanRTHoldInRFDiffThirdFiringRateTDDelaySub, ...
+        meanRTHoldExRFDiffThirdFiringRateTDDelaySub])));
+
+xBounds = [-ceil(maxAbs * 100) ceil(maxAbs * 100)] / 100;
+binEdges = xBounds(1):0.01:xBounds(2);
 
 figure_tr_inch(9, 6);
 set(gcf, 'Color', 'w');
@@ -502,26 +511,35 @@ export_fig(plotFileName, '-nocrop');
 % https://stats.stackexchange.com/questions/8019/averaging-correlation-values
 % or transform the r values using Fisher transform
 
-condition = isInPulvinar;% & isSignificantCueResponseInc;
-corrCoefHoldInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFCTDelayRT(condition);
+condition = isInPulvinar;
+% isInDPulvinar;% & isSignificantCueResponseInc;
 corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelInRFCTDelayRT(condition);
-corrCoefHoldInRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFTDDelayRT(condition);
-corrCoefHoldExRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldExRFCTDelayRT(condition);
 corrCoefRelExRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelExRFCTDelayRT(condition);
+corrCoefHoldInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFCTDelayRT(condition);
+corrCoefHoldExRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldExRFCTDelayRT(condition);
+corrCoefHoldInRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFTDDelayRT(condition);
 corrCoefHoldExRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldExRFTDDelayRT(condition);
 
-[~,p] = ttest(atanh(corrCoefRelInRFCTDelayRTSub)) % **
-[~,p] = ttest(atanh(corrCoefRelExRFCTDelayRTSub)) % **
-[~,p] = ttest(atanh(corrCoefHoldInRFCTDelayRTSub)) % *
-[~,p] = ttest(atanh(corrCoefHoldExRFCTDelayRTSub))
-[~,p] = ttest(atanh(corrCoefHoldInRFTDDelayRTSub)) % *
-[~,p] = ttest(atanh(corrCoefHoldExRFTDDelayRTSub))
-
+p = signrank(atanh(corrCoefRelInRFCTDelayRTSub))
+p = signrank(atanh(corrCoefRelExRFCTDelayRTSub))
+p = signrank(atanh(corrCoefHoldInRFCTDelayRTSub))
+p = signrank(atanh(corrCoefHoldExRFCTDelayRTSub)) 
+p = signrank(atanh(corrCoefHoldInRFTDDelayRTSub)) % **
+p = signrank(atanh(corrCoefHoldExRFTDDelayRTSub)) % *
 
 cols = lines(2);
 inRFCol = cols(1,:);
 exRFCol = cols(2,:);
-binEdges = -0.3:0.05:0.3;
+
+maxAbs = max(max(abs([corrCoefHoldInRFCTDelayRTSub, ...
+        corrCoefRelInRFCTDelayRTSub, ...
+        corrCoefHoldInRFTDDelayRTSub, ...
+        corrCoefHoldExRFCTDelayRTSub, ...
+        corrCoefRelExRFCTDelayRTSub, ...
+        corrCoefHoldExRFTDDelayRTSub])));
+
+xBounds = [-ceil(maxAbs * 100) ceil(maxAbs * 100)] / 100;
+binEdges = xBounds(1):0.02:xBounds(2);
 
 figure_tr_inch(9, 6);
 set(gcf, 'Color', 'w');
@@ -530,26 +548,33 @@ plotHs(1) = subaxis(2, 3, 1);
 hold on;
 hist1 = histogram(corrCoefRelInRFCTDelayRTSub, binEdges);
 hist1.FaceColor = inRFCol;
+xlim(xBounds);
 plotHs(2) = subaxis(2, 3, 2);
 hold on;
 hist2 = histogram(corrCoefHoldInRFCTDelayRTSub, binEdges);
 hist2.FaceColor = inRFCol;
+xlim(xBounds);
 plotHs(3) = subaxis(2, 3, 3);
 hold on;
 hist3 = histogram(corrCoefHoldInRFTDDelayRTSub, binEdges);
 hist3.FaceColor = inRFCol;
+xlim(xBounds);
 plotHs(4) = subaxis(2, 3, 4);
 hold on;
 hist4 = histogram(corrCoefRelExRFCTDelayRTSub, binEdges);
 hist4.FaceColor = exRFCol;
+xlim(xBounds);
 plotHs(5) = subaxis(2, 3, 5);
 hold on;
 hist5 = histogram(corrCoefHoldExRFCTDelayRTSub, binEdges);
 hist5.FaceColor = exRFCol;
+xlim(xBounds);
 plotHs(6) = subaxis(2, 3, 6);
 hold on;
 hist6 = histogram(corrCoefHoldExRFTDDelayRTSub, binEdges);
 hist6.FaceColor = exRFCol;
+xlim(xBounds);
+
 
 % set all y bounds the same
 allYBounds = arrayfun(@(x) ylim(x), plotHs, 'UniformOutput', false);
