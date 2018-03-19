@@ -314,7 +314,7 @@ for j = 1:nUnits
             % make session-wise RT plots while processing the first unit
             if unitCount == 1
                 assert(all(ES.UE.rt >= 0.3 & ES.UE.rt <= 0.8)); 
-                checkRTStatAlpha = 0.025;
+                checkRTStatAlpha = 0.05;
                 plotFileName = sprintf('%s/%s-sessionInd%d-rtDist-v%d.png', outputDir, sessionName, sessionInd, v);
                 plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
                         checkRTStatAlpha, sessionName, isZeroDistractors, plotFileName);
@@ -324,11 +324,11 @@ for j = 1:nUnits
                 % in this session.
                 p = ranksum(rtRelInRF, rtRelExRF);
                 if p < checkRTStatAlpha
-                    error('Release Trial RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
+                    error('Release Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
                 end
                 p = ranksum(rtHoldInRF, rtHoldExRF);
                 if p < checkRTStatAlpha
-                    error('Hold Trial RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
+                    error('Hold Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
                 end
             end
 %             
