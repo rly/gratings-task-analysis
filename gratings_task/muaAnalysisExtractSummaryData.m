@@ -298,6 +298,8 @@ for j = 1:nUnits
                     warning('Hold Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
                 end
                 
+                assert(all(ES.UE.cueTargetDelayDur >= 450 && ES.UE.cueTargetDelayDur <= 850));
+                assert(all(ES.UE.cueTargetDelayDur >= 250 && ES.UE.cueTargetDelayDur <= 1150));
                 figure_tr_inch(12, 5);
                 subaxis(1, 2, 1);
                 histogram(ES.UE.cueTargetDelayDur, 450:25:850);
