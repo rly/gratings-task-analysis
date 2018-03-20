@@ -297,6 +297,23 @@ for j = 1:nUnits
                 if p < checkRTStatAlpha
                     warning('Hold Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
                 end
+                
+                figure_tr_inch(12, 5);
+                subaxis(1, 2, 1);
+                histogram(ES.UE.cueTargetDelayDur, 450:25:850);
+                xlabel('Cue-Target Delay Duration (ms)');
+                ylabel('Number of Trials');
+                
+                subaxis(1, 2, 2);
+                histogram(ES.UE.targetDimDelayDur, 250:25:1150);
+                xlabel('Target-Dim Delay Duration (ms)');
+                ylabel('Number of Trials');
+                
+                suptitle(sprintf('Delay Period Distributions: %s', sessionName));
+                
+                plotFileName = sprintf('%s/%s-sessionInd%d-delayDur-v%d.png', outputDir, sessionName, sessionInd, v);
+                fprintf('\tSaving figure to file %s...\n', plotFileName);
+                export_fig(plotFileName, '-nocrop');
             end
 %             
 % 
@@ -518,6 +535,9 @@ for j = 1:nUnits
             arrayOnsetT = ES.arrayOnset.t - ES.arrayOnset.window(1);
             targetDimT = ES.targetDim.t - ES.targetDim.window(1);
             exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
+            
+            %%
+            
         end
     else
         fprintf('Skipping %s due to min firing rate requirement...\n', unitName);
