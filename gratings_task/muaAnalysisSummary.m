@@ -79,9 +79,9 @@ for i = 1:nSessions
     fn = fieldnames(S.spdfInfo);
     for j = 1:numel(fn)
         if isfield(spdfInfo, fn{j})
-            spdfInfo.(fn{j})(currentUnitInds,:) = S.spdfInfo.(fn{j});
+            spdfInfo.(fn{j})(currentUnitInds,:) = [S.spdfInfo.(fn{j})];
         else
-            spdfInfo.(fn{j}) = S.spdfInfo.(fn{j}); % no pre-allocation
+            spdfInfo.(fn{j}) = [S.spdfInfo.(fn{j})]; % no pre-allocation
         end
     end
     

@@ -38,12 +38,14 @@ exRFCol = cols(2,:);
 % there should not be any difference between RTs on InRF and
 % ExRF trials. otherwise there is significant spatial bias
 % in this session.
-p = ranksum(rtRelInRF, rtRelExRF);
-if p < checkRTStatAlpha
+pRel = ranksum(rtRelInRF, rtRelExRF);
+
+pHold = ranksum(rtHoldInRF, rtHoldExRF);
+if pRel < checkRTStatAlpha && pHold < checkRTStatAlpha
+    set(f, 'Color', 'y');
+elseif pRel < checkRTStatAlpha
     set(f, 'Color', 'r');
-end
-p = ranksum(rtHoldInRF, rtHoldExRF);
-if p < checkRTStatAlpha
+elseif pHold < checkRTStatAlpha
     set(f, 'Color', 'm');
 end
 

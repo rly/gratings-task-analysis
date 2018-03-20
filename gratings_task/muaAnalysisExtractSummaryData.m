@@ -26,36 +26,6 @@ latePreExitFixationWindowOffset = [-0.05 0];
 
 rtFiringRateStruct = struct();
 
-nTimeEnterFixation = 1401; % hard coded temp
-enterFixationSpdfInRFNorm = nan(nUnitsApprox, nTimeEnterFixation);
-enterFixationSpdfExRFNorm = nan(nUnitsApprox, nTimeEnterFixation);
-enterFixationSpdfInRFNormErr = nan(nUnitsApprox, nTimeEnterFixation);
-enterFixationSpdfExRFNormErr = nan(nUnitsApprox, nTimeEnterFixation);
-nTimeCueOnset = 1401; % hard coded temp
-cueOnsetSpdfInRFNorm = nan(nUnitsApprox, nTimeCueOnset);
-cueOnsetSpdfExRFNorm = nan(nUnitsApprox, nTimeCueOnset);
-cueOnsetSpdfInRFNormErr = nan(nUnitsApprox, nTimeCueOnset);
-cueOnsetSpdfExRFNormErr = nan(nUnitsApprox, nTimeCueOnset);
-nTimeArrayOnset = 1401; % hard coded temp
-arrayOnsetHoldSpdfInRFNorm = nan(nUnitsApprox, nTimeArrayOnset);
-arrayOnsetHoldSpdfExRFNorm = nan(nUnitsApprox, nTimeArrayOnset);
-arrayOnsetHoldSpdfInRFNormErr = nan(nUnitsApprox, nTimeArrayOnset);
-arrayOnsetHoldSpdfExRFNormErr = nan(nUnitsApprox, nTimeArrayOnset);
-nTimeTargetDim = 1401; % hard coded temp
-targetDimSpdfInRFNorm = nan(nUnitsApprox, nTimeTargetDim);
-targetDimSpdfExRFNorm = nan(nUnitsApprox, nTimeTargetDim);
-targetDimSpdfInRFNormErr = nan(nUnitsApprox, nTimeTargetDim);
-targetDimSpdfExRFNormErr = nan(nUnitsApprox, nTimeTargetDim);
-nTimeExitFixation = 1401; % hard coded temp
-exitFixationSpdfInRFNorm = nan(nUnitsApprox, nTimeExitFixation);
-exitFixationSpdfExRFNorm = nan(nUnitsApprox, nTimeExitFixation);
-exitFixationSpdfInRFNormErr = nan(nUnitsApprox, nTimeExitFixation);
-exitFixationSpdfExRFNormErr = nan(nUnitsApprox, nTimeExitFixation);
-
-% N time-locking periods
-meanNormSpdfInRFAllWindowsAll = nan(nUnitsApprox, 9);
-meanNormSpdfExRFAllWindowsAll = nan(nUnitsApprox, 9);
-
 unitCount = 0;
 minFiringRate = 2; % use only cells with a time-locked response > 1 Hz in any window
 statAlpha = 0.05; % account for multiple comparisons later
@@ -494,36 +464,36 @@ for j = 1:nUnits
             exRFNormFactor = max([ES.maxFiringRateBySpdfInclMotor - exRFPreCueBaseline; exRFPreCueBaseline - ES.minFiringRateBySpdfInclMotor]);
 
             spdfInfo.enterFixationSpdfInRFNorm(unitCount,:) = (ES.enterFixation.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-            enterFixationSpdfExRFNorm(unitCount,:) = (ES.enterFixation.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+            spdfInfo.enterFixationSpdfExRFNorm(unitCount,:) = (ES.enterFixation.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
 
-            enterFixationSpdfInRFNormErr(unitCount,:) = ES.enterFixation.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-            enterFixationSpdfExRFNormErr(unitCount,:) = ES.enterFixation.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+            spdfInfo.enterFixationSpdfInRFNormErr(unitCount,:) = ES.enterFixation.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+            spdfInfo.enterFixationSpdfExRFNormErr(unitCount,:) = ES.enterFixation.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
 
-            cueOnsetSpdfInRFNorm(unitCount,:) = (ES.cueOnset.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-            cueOnsetSpdfExRFNorm(unitCount,:) = (ES.cueOnset.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+            spdfInfo.cueOnsetSpdfInRFNorm(unitCount,:) = (ES.cueOnset.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+            spdfInfo.cueOnsetSpdfExRFNorm(unitCount,:) = (ES.cueOnset.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
 
-            cueOnsetSpdfInRFNormErr(unitCount,:) = ES.cueOnset.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-            cueOnsetSpdfExRFNormErr(unitCount,:) = ES.cueOnset.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+            spdfInfo.cueOnsetSpdfInRFNormErr(unitCount,:) = ES.cueOnset.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+            spdfInfo.cueOnsetSpdfExRFNormErr(unitCount,:) = ES.cueOnset.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
 
-            arrayOnsetHoldSpdfInRFNorm(unitCount,:) = (ES.arrayOnsetHold.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-            arrayOnsetHoldSpdfExRFNorm(unitCount,:) = (ES.arrayOnsetHold.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+            spdfInfo.arrayOnsetHoldSpdfInRFNorm(unitCount,:) = (ES.arrayOnsetHold.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+            spdfInfo.arrayOnsetHoldSpdfExRFNorm(unitCount,:) = (ES.arrayOnsetHold.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
 
-            arrayOnsetHoldSpdfInRFNormErr(unitCount,:) = ES.arrayOnsetHold.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-            arrayOnsetHoldSpdfExRFNormErr(unitCount,:) = ES.arrayOnsetHold.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+            spdfInfo.arrayOnsetHoldSpdfInRFNormErr(unitCount,:) = ES.arrayOnsetHold.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+            spdfInfo.arrayOnsetHoldSpdfExRFNormErr(unitCount,:) = ES.arrayOnsetHold.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
 
-            targetDimSpdfInRFNorm(unitCount,:) = (ES.targetDim.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-            targetDimSpdfExRFNorm(unitCount,:) = (ES.targetDim.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+            spdfInfo.targetDimSpdfInRFNorm(unitCount,:) = (ES.targetDim.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+            spdfInfo.targetDimSpdfExRFNorm(unitCount,:) = (ES.targetDim.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
 
-            targetDimSpdfInRFNormErr(unitCount,:) = ES.targetDim.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-            targetDimSpdfExRFNormErr(unitCount,:) = ES.targetDim.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+            spdfInfo.targetDimSpdfInRFNormErr(unitCount,:) = ES.targetDim.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+            spdfInfo.targetDimSpdfExRFNormErr(unitCount,:) = ES.targetDim.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
 
-            exitFixationSpdfInRFNorm(unitCount,:) = (ES.exitFixation.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
-            exitFixationSpdfExRFNorm(unitCount,:) = (ES.exitFixation.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
+            spdfInfo.exitFixationSpdfInRFNorm(unitCount,:) = (ES.exitFixation.spdfByLoc(inRFLoc,:) - inRFPreCueBaseline) / inRFNormFactor;
+            spdfInfo.exitFixationSpdfExRFNorm(unitCount,:) = (ES.exitFixation.spdfByLoc(exRFLoc,:) - exRFPreCueBaseline) / exRFNormFactor;
 
-            exitFixationSpdfInRFNormErr(unitCount,:) = ES.exitFixation.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
-            exitFixationSpdfExRFNormErr(unitCount,:) = ES.exitFixation.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
+            spdfInfo.exitFixationSpdfInRFNormErr(unitCount,:) = ES.exitFixation.spdfErrByLoc(inRFLoc,:) / inRFNormFactor;
+            spdfInfo.exitFixationSpdfExRFNormErr(unitCount,:) = ES.exitFixation.spdfErrByLoc(exRFLoc,:) / exRFNormFactor;
 
-            meanNormSpdfInRFAllWindowsAll(unitCount,:) = ([...
+            spdfInfo.meanNormSpdfInRFAllWindowsAll(unitCount,:) = ([...
                     ES.averageFiringRatesBySpdf.preEnterFixation.byLoc(inRFLoc) ...
                     ES.averageFiringRatesBySpdf.postEnterFixation.byLoc(inRFLoc) ...
                     ES.averageFiringRatesBySpdf.preCueBaseline.byLoc(inRFLoc) ...
@@ -534,7 +504,7 @@ for j = 1:nUnits
                     ES.averageFiringRatesBySpdf.targetDimResponse.byLoc(inRFLoc) ...
                     ES.averageFiringRatesBySpdf.preExitFixation.byLoc(inRFLoc)] - inRFPreCueBaseline) / inRFNormFactor;
 
-            meanNormSpdfExRFAllWindowsAll(unitCount,:) = ([...
+            spdfInfo.meanNormSpdfExRFAllWindowsAll(unitCount,:) = ([...
                     ES.averageFiringRatesBySpdf.preEnterFixation.byLoc(exRFLoc) ...
                     ES.averageFiringRatesBySpdf.postEnterFixation.byLoc(exRFLoc) ...
                     ES.averageFiringRatesBySpdf.preCueBaseline.byLoc(exRFLoc) ...
@@ -556,30 +526,6 @@ for j = 1:nUnits
         fprintf('Skipping %s due to min firing rate requirement...\n', unitName);
     end
 end
-
-spdfInfo = var2struct(...
-        enterFixationSpdfInRFNorm, ...
-        enterFixationSpdfExRFNorm, ...
-        enterFixationSpdfInRFNormErr, ...
-        enterFixationSpdfExRFNormErr, ...
-        cueOnsetSpdfInRFNorm, ...
-        cueOnsetSpdfExRFNorm, ...
-        cueOnsetSpdfInRFNormErr, ...
-        cueOnsetSpdfExRFNormErr, ...
-        arrayOnsetHoldSpdfInRFNorm, ...
-        arrayOnsetHoldSpdfExRFNorm, ...
-        arrayOnsetHoldSpdfInRFNormErr, ...
-        arrayOnsetHoldSpdfExRFNormErr, ...
-        targetDimSpdfInRFNorm, ...
-        targetDimSpdfExRFNorm, ...
-        targetDimSpdfInRFNormErr, ...
-        targetDimSpdfExRFNormErr, ...
-        exitFixationSpdfInRFNorm, ...
-        exitFixationSpdfExRFNorm, ...
-        exitFixationSpdfInRFNormErr, ...
-        exitFixationSpdfExRFNormErr, ...
-        meanNormSpdfInRFAllWindowsAll, ...
-        meanNormSpdfExRFAllWindowsAll);
 
 %% plot pre-saccade slopes
 figure_tr_inch(15, 5);
