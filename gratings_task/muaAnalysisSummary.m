@@ -19,7 +19,9 @@ nUnitsApprox = nSessions * 16; % should be equal or an underestimate
 
 unitNames = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
-isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6);  % 6 periods > baseline
+isSignificantResponseVsPreviousPeriod = false(nUnitsApprox, 4);
+isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
+isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);
 isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
 cueResponseVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
 preExitFixationVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
@@ -58,12 +60,15 @@ for i = 1:nSessions
     S = load(saveFileName);
     
     fprintf('Found %d units...\n', numel(S.unitNames));
+    % no pre-allocation here
     currentUnitInds = (unitCount + 1):(unitCount + numel(S.unitNames));
     unitCount = unitCount + numel(S.unitNames);
     
     unitNames(currentUnitInds) = S.unitNames;
     isSignificantResponseVsBaseline(currentUnitInds,:) = S.isSignificantResponseVsBaseline;
+    isSignificantResponseVsPreviousPeriod(currentUnitInds,:) = S.isSignificantResponseVsPreviousPeriod;
     isSignificantResponseVsBootstrapBaseline(currentUnitInds,:) = S.isSignificantResponseVsBootstrapBaseline;
+    isSignificantResponseVsBootstrapPreviousPeriod(currentUnitInds,:) = S.isSignificantResponseVsBootstrapPreviousPeriod;
     isSignificantSelectivity(currentUnitInds,:) = S.isSignificantSelectivity;
     cueResponseVsBootstrapBaselineDirection(currentUnitInds,:) = S.cueResponseVsBootstrapBaselineDirection;
     preExitFixationVsBootstrapBaselineDirection(currentUnitInds,:) = S.preExitFixationVsBootstrapBaselineDirection;
@@ -153,7 +158,10 @@ isCell = true(unitCount, 1); % for MUA, cannot distinguish between cell and not 
 % TODO compute these per unit above so that the right alpha is used
 isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBaseline, 2);
 isSignificantCueResponse = isCell & isSignificantResponseVsBaseline(:,1);
-isSignificantPreExitFixation = isCell & isSignificantResponseVsBaseline(:,6);
+isSignificantArrayResponse = isCell & isSignificantResponseVsPreviousPeriod(:,2);
+isSignificantTargetDimResponse = isCell & isSignificantResponseVsPreviousPeriod(:,3);
+isSignificantPreExitFixation = isCell & isSignificantResponseVsPreviousPeriod(:,4);
+isSignificantPreExitFixationVsBaseline = isCell & isSignificantResponseVsBaseline(:,6);
 
 isSignificantCueResponseInc = isCell & isSignificantResponseVsBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == 1;
 isSignificantCueResponseDec = isCell & isSignificantResponseVsBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == -1;
@@ -171,9 +179,6 @@ isSignificantSelectivityCueTargetDelayDec = isCell & isSignificantSelectivity(:,
 isSignificantSelectivityTargetDimDelayInc = isCell & isSignificantSelectivity(:,4) & delayDiffs(:,2) > 0;
 isSignificantSelectivityTargetDimDelayDec = isCell & isSignificantSelectivity(:,4) & delayDiffs(:,2) < 0;
 
-% isSigSelectEvokedNotDelay = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2) & any(isSignificantSelectivity(:,[2 4]), 2);
-% isSigSelectOnlyEvoked = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2) & ~any(isSignificantSelectivity(:,[2 4]), 2);
-% isSigSelectOnlyDelay = isCell & ~any(isSignificantSelectivity(:,[1 3 5]), 2) & any(isSignificantSelectivity(:,[2 4]), 2);
 isInPulvinar = strcmp(localization, 'vPul') | strcmp(localization, 'dPul');
 % strcmp(localization, 'PLd') | strcmp(localization, 'PLv') | strcmp(localization, 'PM') | strcmp(localization, 'PI');
 
@@ -189,9 +194,18 @@ fprintf('%d/%d = %d%% units show significant task modulation (6 periods) compare
 fprintf('%d/%d = %d%% units show significant cue response compared to baseline.\n', ...
         sum(isSignificantCueResponse), nUnitsAll, ...
         round(sum(isSignificantCueResponse)/nUnitsAll * 100));
-fprintf('%d/%d = %d%% units show significant pre-saccadic activity compared to baseline.\n', ...
+fprintf('%d/%d = %d%% units show significant array response compared to cue-target delay.\n', ...
+        sum(isSignificantArrayResponse), nUnitsAll, ...
+        round(sum(isSignificantArrayResponse)/nUnitsAll * 100));
+fprintf('%d/%d = %d%% units show significant target dim activity compared to target-dim delay.\n', ...
+        sum(isSignificantTargetDimResponse), nUnitsAll, ...
+        round(sum(isSignificantTargetDimResponse)/nUnitsAll * 100));
+fprintf('%d/%d = %d%% units show significant pre-saccadic activity compared to previous period.\n', ...
         sum(isSignificantPreExitFixation), nUnitsAll, ...
         round(sum(isSignificantPreExitFixation)/nUnitsAll * 100));
+fprintf('%d/%d = %d%% units show significant pre-saccadic activity compared to baseline.\n', ...
+        sum(isSignificantPreExitFixationVsBaseline), nUnitsAll, ...
+        round(sum(isSignificantPreExitFixationVsBaseline)/nUnitsAll * 100));
 fprintf('\n');
 
 fprintf('%d/%d = %d%% units show significant spatial selectivity during some task period.\n', ...
@@ -211,6 +225,9 @@ fprintf('%d/%d = %d%% pulvinar units show significant task modulation compared t
 fprintf('%d/%d = %d%% pulvinar units show significant cue response compared to baseline.\n', ...
         sum(isSignificantCueResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantCueResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
+fprintf('%d/%d = %d%% pulvinar units show significant array response compared to baseline.\n', ...
+        sum(isSignificantArrayResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
+        round(sum(isSignificantArrayResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
 fprintf('%d/%d = %d%% pulvinar units show significant pre-saccadic activity compared to baseline.\n', ...
         sum(isSignificantPreExitFixation & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantPreExitFixation & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
@@ -430,7 +447,8 @@ meanRTHoldExRFDiffThirdFiringRateCTDelay = rtFiringRateStruct.meanRTHoldExRFTopT
 meanRTHoldInRFDiffThirdFiringRateTDDelay = rtFiringRateStruct.meanRTHoldInRFTopThirdFiringRateTDDelay - rtFiringRateStruct.meanRTHoldInRFBottomThirdFiringRateTDDelay;
 meanRTHoldExRFDiffThirdFiringRateTDDelay = rtFiringRateStruct.meanRTHoldExRFTopThirdFiringRateTDDelay - rtFiringRateStruct.meanRTHoldExRFBottomThirdFiringRateTDDelay;
 
-condition = isInPulvinar;% & isSignificantCueResponseInc;
+condition = isSignificantCueResponseInc & isInPulvinar;
+fprintf('N = %d\n', sum(condition));
 meanRTRelInRFDiffThirdFiringRateCTDelaySub = meanRTRelInRFDiffThirdFiringRateCTDelay(condition);
 meanRTRelExRFDiffThirdFiringRateCTDelaySub = meanRTRelExRFDiffThirdFiringRateCTDelay(condition);
 meanRTHoldInRFDiffThirdFiringRateCTDelaySub = meanRTHoldInRFDiffThirdFiringRateCTDelay(condition);
@@ -438,12 +456,12 @@ meanRTHoldExRFDiffThirdFiringRateCTDelaySub = meanRTHoldExRFDiffThirdFiringRateC
 meanRTHoldInRFDiffThirdFiringRateTDDelaySub = meanRTHoldInRFDiffThirdFiringRateTDDelay(condition);
 meanRTHoldExRFDiffThirdFiringRateTDDelaySub = meanRTHoldExRFDiffThirdFiringRateTDDelay(condition);
 
-p = signrank(meanRTRelInRFDiffThirdFiringRateCTDelaySub)
-p = signrank(meanRTRelExRFDiffThirdFiringRateCTDelaySub)
-p = signrank(meanRTHoldInRFDiffThirdFiringRateCTDelaySub)
-p = signrank(meanRTHoldExRFDiffThirdFiringRateCTDelaySub) 
-p = signrank(meanRTHoldInRFDiffThirdFiringRateTDDelaySub) % **
-p = signrank(meanRTHoldExRFDiffThirdFiringRateTDDelaySub)
+[signrank(meanRTRelInRFDiffThirdFiringRateCTDelaySub) ...
+        signrank(meanRTRelExRFDiffThirdFiringRateCTDelaySub) ...
+        signrank(meanRTHoldInRFDiffThirdFiringRateCTDelaySub) ...
+        signrank(meanRTHoldExRFDiffThirdFiringRateCTDelaySub) ...
+        signrank(meanRTHoldInRFDiffThirdFiringRateTDDelaySub) ...% **
+        signrank(meanRTHoldExRFDiffThirdFiringRateTDDelaySub)]
 
 cols = lines(2);
 inRFCol = cols(1,:);
@@ -456,8 +474,9 @@ maxAbs = max(max(abs([meanRTRelInRFDiffThirdFiringRateCTDelaySub, ...
         meanRTHoldInRFDiffThirdFiringRateTDDelaySub, ...
         meanRTHoldExRFDiffThirdFiringRateTDDelaySub])));
 
-xBounds = [-ceil(maxAbs * 100) ceil(maxAbs * 100)] / 100;
-binEdges = xBounds(1):0.01:xBounds(2);
+binStep = 0.01;
+xBounds = [-ceil(maxAbs / binStep) ceil(maxAbs / binStep)] * binStep;
+binEdges = xBounds(1):binStep:xBounds(2);
 
 figure_tr_inch(9, 6);
 set(gcf, 'Color', 'w');
@@ -516,8 +535,9 @@ export_fig(plotFileName, '-nocrop');
 % https://stats.stackexchange.com/questions/8019/averaging-correlation-values
 % or transform the r values using Fisher transform
 
-condition = isInPulvinar;
-% isInDPulvinar;% & isSignificantCueResponseInc;
+condition = isSignificantCueResponseInc & isInPulvinar;
+% isInDPulvinar;
+fprintf('N = %d\n', sum(condition));
 corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelInRFCTDelayRT(condition);
 corrCoefRelExRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelExRFCTDelayRT(condition);
 corrCoefHoldInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFCTDelayRT(condition);
@@ -525,12 +545,12 @@ corrCoefHoldExRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldExRFCTDela
 corrCoefHoldInRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFTDDelayRT(condition);
 corrCoefHoldExRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldExRFTDDelayRT(condition);
 
-p = signrank(atanh(corrCoefRelInRFCTDelayRTSub))
-p = signrank(atanh(corrCoefRelExRFCTDelayRTSub))
-p = signrank(atanh(corrCoefHoldInRFCTDelayRTSub))
-p = signrank(atanh(corrCoefHoldExRFCTDelayRTSub)) 
-p = signrank(atanh(corrCoefHoldInRFTDDelayRTSub)) % **
-p = signrank(atanh(corrCoefHoldExRFTDDelayRTSub)) % *
+[signrank(atanh(corrCoefRelInRFCTDelayRTSub)) ...
+        signrank(atanh(corrCoefRelExRFCTDelayRTSub)) ...
+        signrank(atanh(corrCoefHoldInRFCTDelayRTSub)) ...
+        signrank(atanh(corrCoefHoldExRFCTDelayRTSub)) ...
+        signrank(atanh(corrCoefHoldInRFTDDelayRTSub)) ... % **
+        signrank(atanh(corrCoefHoldExRFTDDelayRTSub))]
 
 cols = lines(2);
 inRFCol = cols(1,:);
@@ -543,8 +563,9 @@ maxAbs = max(max(abs([corrCoefHoldInRFCTDelayRTSub, ...
         corrCoefRelExRFCTDelayRTSub, ...
         corrCoefHoldExRFTDDelayRTSub])));
 
-xBounds = [-ceil(maxAbs * 100) ceil(maxAbs * 100)] / 100;
-binEdges = xBounds(1):0.02:xBounds(2);
+binStep = 0.05;
+xBounds = [-ceil(maxAbs / binStep) ceil(maxAbs / binStep)] * binStep;
+binEdges = xBounds(1):binStep:xBounds(2);
 
 figure_tr_inch(9, 6);
 set(gcf, 'Color', 'w');

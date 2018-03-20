@@ -9,7 +9,9 @@ nUnitsApprox = 1;
 
 unitNames = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
+isSignificantResponseVsPreviousPeriod = false(nUnitsApprox, 4);
 isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
+isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);
 isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
 cueResponseVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
 preExitFixationVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
@@ -115,26 +117,7 @@ for j = 1:nUnits
                 error('Channel %d cannot be in both vPul and dPul', spikeStruct.channelID);
             end
 
-            isLocUsed = ES.isLocUsed;
-            nLocUsed = sum(isLocUsed);
-            
-            % temp until the change is made in computeEvokedSpiking
-            ES.cueResponsePValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-            ES.cueTargetDelayPValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-            ES.arrayHoldResponsePValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-            ES.targetDimDelayPValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-            ES.targetDimResponsePValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-            ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-            for k = find(~isLocUsed)
-                if k <= numel(ES.cueResponseVsBaselineRankSumTestStatsByLoc)
-                    ES.cueResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-                    ES.cueTargetDelayVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-                    ES.arrayHoldResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-                    ES.targetDimDelayVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-                    ES.targetDimResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-                    ES.preExitFixationVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-                end
-            end
+            nLocUsed = sum(ES.isLocUsed);
 
             % significance test using rank sum test. correct for multiple
             % comparisons by comparing p < statAlpha / nLocUsed
@@ -145,6 +128,14 @@ for j = 1:nUnits
                     min([ES.targetDimDelayVsBaselineRankSumTestStatsByLoc.p]) < statAlpha / nLocUsed ...
                     min([ES.targetDimResponseVsBaselineRankSumTestStatsByLoc.p]) < statAlpha / nLocUsed ...
                     min([ES.preExitFixationVsBaselineRankSumTestStatsByLoc.p]) < statAlpha / nLocUsed];
+                
+            % significance test using rank sum test. correct for multiple
+            % comparisons by comparing p < statAlpha / nLocUsed
+            isSignificantResponseVsPreviousPeriod(unitCount,:) = [...
+                    min([ES.cueResponseVsBaselineRankSumTestStatsByLoc.p]) < statAlpha / nLocUsed ...
+                    min([ES.arrayHoldResponseVsCueTargetDelayRankSumTestStatsByLoc.p]) < statAlpha / nLocUsed ...
+                    min([ES.targetDimResponseVsTargetDimDelayRankSumTestStatsByLoc.p]) < statAlpha / nLocUsed ...
+                    min([ES.preExitFixationVsPreExitFixationEarlyRankSumTestStatsByLoc.p]) < statAlpha / nLocUsed];
             
             % significance test using non-parametric test vs bootstrapped
             % baseline. correct for multiple comparisons by comparing p <
@@ -156,6 +147,12 @@ for j = 1:nUnits
                     min(ES.targetDimDelayPValueByBootstrapBaselineSpdfByLoc) < statAlpha / nLocUsed ...
                     min(ES.targetDimResponsePValueByBootstrapBaselineSpdfByLoc) < statAlpha / nLocUsed ...
                     min(ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc) < statAlpha / nLocUsed];
+                
+            isSignificantResponseVsBootstrapPreviousPeriod(unitCount,:) = [...
+                    min(ES.cueResponsePValueByBootstrapBaselineSpdfByLoc) < statAlpha / nLocUsed ...
+                    min(ES.arrayHoldResponsePValueByBootstrapCueTargetDelaySpdfByLoc) < statAlpha / nLocUsed ...
+                    min(ES.targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc) < statAlpha / nLocUsed ...
+                    min(ES.preExitFixationPValueByBootstrapPreExitFixationEarlySpdfByLoc) < statAlpha / nLocUsed];
             
             [~,loc] = min(ES.cueResponsePValueByBootstrapBaselineSpdfByLoc);
             if ES.averageFiringRatesBySpdf.cueResponse.byLoc(loc) > ES.meanBootstrappedMeanPreCueBaselines
@@ -555,7 +552,9 @@ fprintf('Writing file %s ...\n', saveFileName);
 save(saveFileName, ...
         'unitNames', ...
         'isSignificantResponseVsBaseline', ...
+        'isSignificantResponseVsPreviousPeriod', ...
         'isSignificantResponseVsBootstrapBaseline', ...
+        'isSignificantResponseVsBootstrapPreviousPeriod', ...
         'isSignificantSelectivity', ...
         'cueResponseVsBootstrapBaselineDirection', ...
         'preExitFixationVsBootstrapBaselineDirection', ...
