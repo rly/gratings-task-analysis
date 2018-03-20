@@ -294,11 +294,11 @@ for j = 1:nUnits
                 % in this session.
                 p = ranksum(rtRelInRF, rtRelExRF);
                 if p < checkRTStatAlpha
-                    error('Release Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
+                    warning('Release Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
                 end
                 p = ranksum(rtHoldInRF, rtHoldExRF);
                 if p < checkRTStatAlpha
-                    error('Hold Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
+                    warning('Hold Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
                 end
             end
 %             
