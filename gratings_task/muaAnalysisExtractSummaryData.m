@@ -298,8 +298,8 @@ for j = 1:nUnits
                     warning('Hold Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
                 end
                 
-                assert(all(ES.UE.cueTargetDelayDur >= 450 && ES.UE.cueTargetDelayDur <= 850));
-                assert(all(ES.UE.cueTargetDelayDur >= 250 && ES.UE.cueTargetDelayDur <= 1150));
+                assert(all(ES.UE.cueTargetDelayDur >= 450 & ES.UE.cueTargetDelayDur <= 850));
+                assert(all(ES.UE.cueTargetDelayDur >= 250 & ES.UE.cueTargetDelayDur <= 1150));
                 figure_tr_inch(12, 5);
                 subaxis(1, 2, 1);
                 histogram(ES.UE.cueTargetDelayDur, 450:25:850);
@@ -313,7 +313,7 @@ for j = 1:nUnits
                 
                 suptitle(sprintf('Delay Period Distributions: %s', sessionName));
                 
-                plotFileName = sprintf('%s/%s-sessionInd%d-delayDur-v%d.png', outputDir, sessionName, sessionInd, v);
+                plotFileName = sprintf('%s/%s-sessionInd%d-delayDurDist-v%d.png', outputDir, sessionName, sessionInd, v);
                 fprintf('\tSaving figure to file %s...\n', plotFileName);
                 export_fig(plotFileName, '-nocrop');
             end
@@ -538,7 +538,42 @@ for j = 1:nUnits
             targetDimT = ES.targetDim.t - ES.targetDim.window(1);
             exitFixationT = ES.exitFixation.t - ES.exitFixation.window(1);
             
-            %%
+            % compute time traces with fixed trial time and interpolation
+            % between event-locked windows - there's actually no
+            % interpolation -- the spdfs are stitched together. should be
+            % smooth enough. another option is to concatenate the spike
+            % times and then do the smoothing, but that requires the same
+            % number of trials for each event lock, which is not the case
+            concatCueOnsetWindowOffset = [-0.3 0.3];
+            concatArrayOnsetWindowOffset = [-0.3 0.3];
+            concatTargetDimWindowOffset = [-0.3 0.15];
+            concatExitFixationWindowOffset = [-0.15 0];
+            
+            concatCueOnsetWindowIndices = getTimeLogicalWithTolerance(cueOnsetT, concatCueOnsetWindowOffset);
+            concatArrayOnsetWindowIndices = getTimeLogicalWithTolerance(arrayOnsetT, concatArrayOnsetWindowOffset);
+            concatTargetDimWindowIndices = getTimeLogicalWithTolerance(targetDimT, concatTargetDimWindowOffset);
+            concatExitFixationWindowIndices = getTimeLogicalWithTolerance(exitFixationT, concatExitFixationWindowOffset);
+            nConcatValues = sum(concatCueOnsetWindowIndices) + ...
+                    sum(concatArrayOnsetWindowIndices) + ...
+                    sum(concatTargetDimWindowIndices) + ...
+                    sum(concatExitFixationWindowIndices);
+            tStep = mean(diff(cueOnsetT));
+            assert(all((tStep - diff(cueOnsetT)) < 1e-8));
+            tStart = cueOnsetT(find(concatCueOnsetWindowIndices, 1, 'first'));
+            tEnd = tStart + (nConcatValues - 1) * tStep;
+            spdfInfo.concatCueOnsetT = tStart:tStep:tEnd;
+            
+            spdfInfo.meanSpdfInRFConcatAll(unitCount,:) = [...
+                    ES.cueOnset.spdfByLoc(inRFLoc,concatCueOnsetWindowIndices) ...
+                    ES.arrayOnset.spdfByLoc(inRFLoc,concatArrayOnsetWindowIndices) ...
+                    ES.targetDim.spdfByLoc(inRFLoc,concatTargetDimWindowIndices) ...
+                    ES.exitFixation.spdfByLoc(inRFLoc,concatExitFixationWindowIndices)];
+                
+            spdfInfo.meanSpdfExRFConcatAll(unitCount,:) = [...
+                    ES.cueOnset.spdfByLoc(exRFLoc,concatCueOnsetWindowIndices) ...
+                    ES.arrayOnset.spdfByLoc(exRFLoc,concatArrayOnsetWindowIndices) ...
+                    ES.targetDim.spdfByLoc(exRFLoc,concatTargetDimWindowIndices) ...
+                    ES.exitFixation.spdfByLoc(exRFLoc,concatExitFixationWindowIndices)];
             
         end
     else
@@ -566,6 +601,10 @@ ylim([-300 300]);
 plotFileName = sprintf('%s/%s-sessionInd%d-preSaccadicSlopes-v%d.png', outputDir, sessionName, sessionInd, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%%
+
+
 
 %% save
 saveFileName = sprintf('%s/%s-sessionInd%d-muaAnalysisSummaryData-v%d.mat', outputDir, sessionName, sessionInd, v);

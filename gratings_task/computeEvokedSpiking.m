@@ -4,7 +4,7 @@ function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE
 
 spikeTs = spikeStruct.ts;
 kernelSigma = 0.01;
-numRandomizations = 500;
+numRandomizations = 2;
 
 clear spikeStruct;
 
