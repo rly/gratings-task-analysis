@@ -9,7 +9,8 @@ baselineIndices = getTimeLogicalWithTolerance(eventPsthT, baselineWindow);
 latencyWindowOffset = [0.025 0.125];
 latencyWindow = eventStruct.window(1) + latencyWindowOffset;
 latencyIndices = getTimeLogicalWithTolerance(eventPsthT, latencyWindow);
-minPeakForLatency = 3;
+minPeakForLatency = 3; % SDs from mean
+maxTroughForLatency = -minPeakForLatency;
 nLoc = numel(isLocUsed);
 
 xBounds = [0 0.13];
@@ -31,7 +32,12 @@ for k = 1:nLoc
             % check peak
             peakLatencyInfo = computeLatencyPeakMethod(normPsthResponse, eventPsthT, ...
                     eventStruct.window, latencyIndices, 0, minPeakForLatency, 0); 
-            latencyInfo = peakLatencyInfo;
+            % check trough
+            troughLatencyInfo = computeLatencyPeakMethod(normPsthResponse, eventPsthT, ...
+                    eventStruct.window, latencyIndices, 0, maxTroughForLatency, 1);
+
+            % get the earlier one
+            latencyInfo = getEarlierPeakTroughLatencyInfo(peakLatencyInfo, troughLatencyInfo);
             latencies(i) = latencyInfo.latency;
             
 %             figure;

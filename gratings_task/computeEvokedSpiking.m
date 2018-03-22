@@ -4,7 +4,7 @@ function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE
 
 spikeTs = spikeStruct.ts;
 kernelSigma = 0.01;
-numRandomizations = 200;
+numRandomizations = 2;
 
 clear spikeStruct;
 
@@ -710,6 +710,13 @@ fprintf('.');
 targetDimResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
         targetDim, averageFiringRatesBySpdf.targetDimResponse, targetDimResponseWindowOffset, numRandomizations);
 fprintf('.');
+
+%% latency of cue response by location
+cueOnset = computeResponseLatencyByLoc(cueOnset, isLocUsed);
+arrayOnset = computeResponseLatencyByLoc(arrayOnset, isLocUsed);
+arrayOnsetRel = computeResponseLatencyByLoc(arrayOnsetRel, isLocUsed);
+arrayOnsetHold = computeResponseLatencyByLoc(arrayOnsetHold, isLocUsed);
+targetDim = computeResponseLatencyByLoc(targetDim, isLocUsed);
 
 %% clean up unused locations
 % temp until the change is made in computeEvokedSpiking

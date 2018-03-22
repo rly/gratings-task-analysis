@@ -17,6 +17,9 @@ function latencyInfo = computeLatencyPeakMethod(spdf, eventT, ...
 % the latency and the time of its associated peak cannot drop below 25% of
 % that peak.
 
+assert(all(~isnan(spdf)));
+assert(numel(eventT) == numel(eventTAnalysisLogical));
+
 if isFindTrough
     % reverse the sign
     spdf = -1*spdf;
@@ -108,5 +111,6 @@ if isFindTrough
     peakRate = -1*peakRate;
 end
 
-latencyInfo = var2struct(latency, latencyTInd, latencyRate, timeEventToPeak, peakTInd, peakRate);
+latencyInfo = var2struct(latency, latencyTInd, latencyRate, timeEventToPeak, ...
+        peakTInd, peakRate, isFindTrough);
 

@@ -35,6 +35,11 @@ targetDimSpikeTimesByLoc = cell(nLoc, 1);
 inRFLocs = nan(nUnitsApprox, 1);
 exRFLocs = nan(nUnitsApprox, 1);
 
+arrayOnsetHoldLatencyInRF = nan(nUnitsApprox, 1);
+arrayOnsetHoldLatencyExRF = nan(nUnitsApprox, 1);
+targetDimLatencyInRF = nan(nUnitsApprox, 1);
+targetDimLatencyExRF = nan(nUnitsApprox, 1);
+
 unitCount = 0;
 minFiringRate = 2; % use only cells with a time-locked response > 1 Hz in any window
 statAlpha = 0.05; % account for multiple comparisons later
@@ -601,6 +606,18 @@ for j = 1:nUnits
             inRFLocs(unitCount) = inRFLoc;
             exRFLocs(unitCount) = exRFLoc;
             
+%             latenciesByLoc(unitCount).cueOnset = ES.cueOnset.latencyByLoc;
+%             latenciesByLoc(unitCount).arrayOnset = ES.arrayOnset.latencyByLoc;
+%             latenciesByLoc(unitCount).arrayOnsetRel = ES.arrayOnsetRel.latencyByLoc;
+%             latenciesByLoc(unitCount).arrayOnsetHold = ES.arrayOnsetHold.latencyByLoc;
+%             latenciesByLoc(unitCount).targetDim = ES.targetDim.latencyByLoc;
+            
+            arrayOnsetHoldLatencyInRF(unitCount) = ES.arrayOnsetHold.latencyByLoc(inRFLoc);
+            arrayOnsetHoldLatencyExRF(unitCount) = ES.arrayOnsetHold.latencyByLoc(exRFLoc);
+            
+            targetDimLatencyInRF(unitCount) = ES.targetDim.latencyByLoc(inRFLoc);
+            targetDimLatencyExRF(unitCount) = ES.targetDim.latencyByLoc(exRFLoc);
+            
         end
     else
         fprintf('Skipping %s due to min firing rate requirement...\n', unitName);
@@ -673,4 +690,8 @@ save(saveFileName, ...
         'rtRelInRF', ...
         'rtRelExRF', ...
         'rtHoldInRF', ...
-        'rtHoldExRF');
+        'rtHoldExRF', ...
+        'arrayOnsetHoldLatencyInRF', ...
+        'arrayOnsetHoldLatencyExRF', ...
+        'targetDimLatencyInRF', ...
+        'targetDimLatencyExRF');
