@@ -606,17 +606,12 @@ for j = 1:nUnits
             inRFLocs(unitCount) = inRFLoc;
             exRFLocs(unitCount) = exRFLoc;
             
-%             latenciesByLoc(unitCount).cueOnset = ES.cueOnset.latencyByLoc;
-%             latenciesByLoc(unitCount).arrayOnset = ES.arrayOnset.latencyByLoc;
-%             latenciesByLoc(unitCount).arrayOnsetRel = ES.arrayOnsetRel.latencyByLoc;
-%             latenciesByLoc(unitCount).arrayOnsetHold = ES.arrayOnsetHold.latencyByLoc;
-%             latenciesByLoc(unitCount).targetDim = ES.targetDim.latencyByLoc;
+            % could use peak method or resampled baseline method
+            arrayOnsetHoldLatencyInRF(unitCount) = ES.arrayOnsetHold.latencyBootByLoc(inRFLoc);
+            arrayOnsetHoldLatencyExRF(unitCount) = ES.arrayOnsetHold.latencyBootByLoc(exRFLoc);
             
-            arrayOnsetHoldLatencyInRF(unitCount) = ES.arrayOnsetHold.latencyByLoc(inRFLoc);
-            arrayOnsetHoldLatencyExRF(unitCount) = ES.arrayOnsetHold.latencyByLoc(exRFLoc);
-            
-            targetDimLatencyInRF(unitCount) = ES.targetDim.latencyByLoc(inRFLoc);
-            targetDimLatencyExRF(unitCount) = ES.targetDim.latencyByLoc(exRFLoc);
+            targetDimLatencyInRF(unitCount) = ES.targetDim.latencyBootByLoc(inRFLoc);
+            targetDimLatencyExRF(unitCount) = ES.targetDim.latencyBootByLoc(exRFLoc);
             
         end
     else

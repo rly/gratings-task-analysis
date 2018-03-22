@@ -45,6 +45,12 @@ meanRTRelExRF = nan(nSessions, 1);
 meanRTHoldInRF = nan(nSessions, 1);
 meanRTHoldExRF = nan(nSessions, 1);
 
+arrayOnsetHoldLatencyInRF = nan(nUnitsApprox, 1);
+arrayOnsetHoldLatencyExRF = nan(nUnitsApprox, 1);
+
+targetDimLatencyInRF = nan(nUnitsApprox, 1);
+targetDimLatencyExRF = nan(nUnitsApprox, 1);
+
 unitCount = 0;
 % should also be running a lot of shuffle tests given the number of trials
 
@@ -111,6 +117,11 @@ for i = 1:nSessions
             rtFiringRateStruct.(fn{j}) = [S.rtFiringRateStruct.(fn{j})]'; % no pre-allocation
         end
     end
+    
+    arrayOnsetHoldLatencyInRF(currentUnitInds) = S.arrayOnsetHoldLatencyInRF;
+    arrayOnsetHoldLatencyExRF(currentUnitInds) = S.arrayOnsetHoldLatencyExRF;
+    targetDimLatencyInRF(currentUnitInds) = S.targetDimLatencyInRF;
+    targetDimLatencyExRF(currentUnitInds) = S.targetDimLatencyExRF;
 end
 clear S;
 

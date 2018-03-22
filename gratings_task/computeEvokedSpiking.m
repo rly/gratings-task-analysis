@@ -711,7 +711,7 @@ targetDimResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
         targetDim, averageFiringRatesBySpdf.targetDimResponse, targetDimResponseWindowOffset, numRandomizations);
 fprintf('.');
 
-%% latency of cue response by location
+%% latency of response by location
 cueOnset = computeResponseLatencyByLoc(cueOnset, isLocUsed);
 arrayOnset = computeResponseLatencyByLoc(arrayOnset, isLocUsed);
 arrayOnsetRel = computeResponseLatencyByLoc(arrayOnsetRel, isLocUsed);
