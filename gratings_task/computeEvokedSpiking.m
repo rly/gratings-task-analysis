@@ -290,7 +290,7 @@ clear cueOnsetNormalizationLogical arrayOnsetHoldNormalizationLogical ...
         arrayOnsetRelInclMotorNormalizationLogical targetDimInclMotorNormalizationLogical ...
         exitFixationInclMotorNormalizationLogical;
 
-%% compute RF by mean cue response
+%% compute RF as largest mean cue response over baseline
 meanCueResponseBaselineCorrByLoc = nan(nLoc, 1);
 for i = 1:nLoc
     meanCueResponseBaselineCorrByLoc(i) = averageFiringRatesBySpdf.cueResponse.byLoc(i) - averageFiringRatesBySpdf.preCueBaseline.byLoc(i);

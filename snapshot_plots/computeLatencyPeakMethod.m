@@ -1,7 +1,7 @@
 function latencyInfo = computeLatencyPeakMethod(spdf, eventT, ...
         eventWindow, eventTAnalysisLogical, meanBaseline, peakMin, ...
         isFindTrough)
-% compute latency using the peak-baed method min 1.5 SDs above baseline
+% compute latency using the peak-based method min 1.5 SDs above baseline
 % (computing SD based on variability of mean firing per time point)  (note
 % that 2 SDs is standard. 1 SD has been used but with additional
 % bootstrapping to check for robustness) where baseline for cue period is
@@ -94,10 +94,12 @@ if peakRate <= peakMin
     timeEventToPeak = NaN;
     peakRate = NaN;
     latencyTInd = NaN;
+    peakTInd = NaN;
 else
     latency = eventT(firstIndexFracPeakUpward) - eventWindow(1);
     latencyRate = spdf(firstIndexFracPeakUpward);
     latencyTInd = firstIndexFracPeakUpward;
+    peakTInd = firstPeakIndex;
 end
 
 if isFindTrough
@@ -106,5 +108,5 @@ if isFindTrough
     peakRate = -1*peakRate;
 end
 
-latencyInfo = var2struct(latency, latencyTInd, latencyRate, timeEventToPeak, peakRate);
+latencyInfo = var2struct(latency, latencyTInd, latencyRate, timeEventToPeak, peakTInd, peakRate);
 

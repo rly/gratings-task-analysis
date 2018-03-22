@@ -28,6 +28,13 @@ latePreExitFixationWindowOffset = [-0.05 0];
 
 rtFiringRateStruct = struct();
 
+nLoc = 4;
+arrayOnsetRelSpikeTimesByLoc = cell(nLoc, 1);
+arrayOnsetHoldSpikeTimesByLoc = cell(nLoc, 1);
+targetDimSpikeTimesByLoc = cell(nLoc, 1);
+inRFLocs = nan(nUnitsApprox, 1);
+exRFLocs = nan(nUnitsApprox, 1);
+
 unitCount = 0;
 minFiringRate = 2; % use only cells with a time-locked response > 1 Hz in any window
 statAlpha = 0.05; % account for multiple comparisons later
@@ -154,6 +161,9 @@ for j = 1:nUnits
                     min(ES.targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc) < statAlpha / nLocUsed ...
                     min(ES.preExitFixationPValueByBootstrapPreExitFixationEarlySpdfByLoc) < statAlpha / nLocUsed];
             
+            
+            % look at most significant response which is not necessarily
+            % InRF location
             [~,loc] = min(ES.cueResponsePValueByBootstrapBaselineSpdfByLoc);
             if ES.averageFiringRatesBySpdf.cueResponse.byLoc(loc) > ES.meanBootstrappedMeanPreCueBaselines
                 cueResponseVsBootstrapBaselineDirection(unitCount) = 1;
@@ -575,6 +585,22 @@ for j = 1:nUnits
                     ES.targetDim.spdfByLoc(exRFLoc,concatTargetDimWindowIndices) ...
                     ES.exitFixation.spdfByLoc(exRFLoc,concatExitFixationWindowIndices)];
             
+            for k = 1:numel(ES.isLocUsed)
+                if ES.isLocUsed(k)
+                    if unitCount > 1
+                        arrayOnsetRelSpikeTimesByLoc{k}(unitCount,:) = ES.arrayOnsetRel.spikeTimesByLoc{k};
+                        arrayOnsetHoldSpikeTimesByLoc{k}(unitCount,:) = ES.arrayOnsetHold.spikeTimesByLoc{k};
+                        targetDimSpikeTimesByLoc{k}(unitCount,:) = ES.targetDim.spikeTimesByLoc{k};
+                    else
+                        arrayOnsetRelSpikeTimesByLoc{k} = ES.arrayOnsetRel.spikeTimesByLoc{k};
+                        arrayOnsetHoldSpikeTimesByLoc{k} = ES.arrayOnsetHold.spikeTimesByLoc{k};
+                        targetDimSpikeTimesByLoc{k} = ES.targetDim.spikeTimesByLoc{k};
+                    end
+                end
+            end
+            inRFLocs(unitCount) = inRFLoc;
+            exRFLocs(unitCount) = exRFLoc;
+            
         end
     else
         fprintf('Skipping %s due to min firing rate requirement...\n', unitName);
@@ -602,9 +628,19 @@ plotFileName = sprintf('%s/%s-sessionInd%d-preSaccadicSlopes-v%d.png', outputDir
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%%
+%% single trial population latency relationship with RT
 
-
+%% compute single trial population latency by combining spikes across recordings on a probe
+rtRelByLoc = cell(nLoc, 1);
+rtHoldByLoc = cell(nLoc, 1);
+for k = 1:nLoc
+    rtRelByLoc{k} = ES.UE.rt(ES.UE.cueLoc == k & ~ES.UE.isHoldTrial);
+    rtHoldByLoc{k} = ES.UE.rt(ES.UE.cueLoc == k & ES.UE.isHoldTrial);
+end
+plotFileName = sprintf('%s/%s-sessionInd%d-rtVsArrayOnsetRelLatency-v%d.png', outputDir, sessionName, sessionInd, v);
+plotRTLatencyCorrelation(ES.arrayOnset, ES.isLocUsed, rtRelByLoc, arrayOnsetRelSpikeTimesByLoc, inRFLocs, plotFileName);
+plotFileName = sprintf('%s/%s-sessionInd%d-rtVsTargetDimLatency-v%d.png', outputDir, sessionName, sessionInd, v);
+plotRTLatencyCorrelation(ES.targetDim, ES.isLocUsed, rtHoldByLoc, targetDimSpikeTimesByLoc, inRFLocs, plotFileName);
 
 %% save
 saveFileName = sprintf('%s/%s-sessionInd%d-muaAnalysisSummaryData-v%d.mat', outputDir, sessionName, sessionInd, v);

@@ -83,7 +83,7 @@ for i = 1:nSessions
     
     fn = fieldnames(S.spdfInfo);
     for j = 1:numel(fn)
-        if isfield(spdfInfo, fn{j})
+        if isfield(spdfInfo, fn{j}) && size(S.spdfInfo.(fn{j}), 1) == numel(currentUnitInds)
             spdfInfo.(fn{j})(currentUnitInds,:) = [S.spdfInfo.(fn{j})];
         else
             spdfInfo.(fn{j}) = [S.spdfInfo.(fn{j})]; % no pre-allocation
@@ -245,6 +245,7 @@ fprintf('Of the %d units in the pulvinar that show significant pre-saccadic acti
         round(sum(isSignificantPreExitFixationInc & isInPulvinar)/sum(isSignificantPreExitFixation & isInPulvinar) * 100), ...
         sum(isSignificantPreExitFixationDec & isInPulvinar), ...
         round(sum(isSignificantPreExitFixationDec & isInPulvinar)/sum(isSignificantPreExitFixation & isInPulvinar) * 100));
+fprintf('Note: the increase / decrease labeling is based on the location with the largest significant response. There may be both significant increases and decreases.\n');
 fprintf('\n');
 
 fprintf('%d/%d = %d%% pulvinar units show significant spatial selectivity during some task period.\n', ...
@@ -612,6 +613,8 @@ arrayfun(@(x) ylim(x, yBounds), plotHs);
 plotFileName = sprintf('%s/allSessions-rtVsFiringRateCorr-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+stop
 
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');
