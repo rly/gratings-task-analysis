@@ -7,10 +7,12 @@ analysisWindowIndices = getTimeLogicalWithTolerance(timeLockedSpikesStruct.t, an
 
 returnStruct.all = mean(timeLockedSpikesStruct.spdf(analysisWindowIndices));
 returnStruct.allSDOverTime = std(timeLockedSpikesStruct.spdf(analysisWindowIndices));
+returnStruct.allMax = max(timeLockedSpikesStruct.spdf(analysisWindowIndices));
 
 % TODO add bootstrap error
 
 for i = 1:size(timeLockedSpikesStruct.spdfByLoc, 1)
     returnStruct.byLoc(i) = mean(timeLockedSpikesStruct.spdfByLoc(i, analysisWindowIndices));
     returnStruct.byLocSDOverTime(i) = std(timeLockedSpikesStruct.spdfByLoc(i, analysisWindowIndices));
+    returnStruct.byLocMax(i) = max(timeLockedSpikesStruct.spdfByLoc(i, analysisWindowIndices));
 end

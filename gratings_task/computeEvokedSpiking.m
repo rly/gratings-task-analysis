@@ -4,7 +4,7 @@ function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE
 
 spikeTs = spikeStruct.ts;
 kernelSigma = 0.01;
-numRandomizations = 100;
+numRandomizations = 2;
 
 clear spikeStruct;
 
@@ -637,6 +637,50 @@ cueTargetDelayDiffPValueByRankSumTest = ranksum(...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{inRFLoc}, ...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{exRFLoc});
 
+%% permutation test on array onset response period - hold trials only
+shuffleArrayHoldResponseDiff = zeros(numRandomizations, 1);
+shuffleArrayHoldResponseAI = zeros(numRandomizations, 1);
+arrayHoldResponesWindowIndices = getTimeLogicalWithTolerance(arrayOnsetHold.t, arrayOnsetHold.window(1) + arrayResponseWindowOffset);
+nTrialsInRF = numel(arrayOnsetHold.spikeTimesByLoc{inRFLoc});
+nTrialsExRF = numel(arrayOnsetHold.spikeTimesByLoc{exRFLoc});
+nTrialsInRFExRF = nTrialsInRF + nTrialsExRF;
+arrayOnsetSpikeTimesInRFExRF = [arrayOnsetHold.spikeTimesByLoc{inRFLoc} arrayOnsetHold.spikeTimesByLoc{exRFLoc}];
+for m = 1:numRandomizations
+    shuffleIndices = randperm(nTrialsInRFExRF);
+    randSpikeTimesInRF = arrayOnsetSpikeTimesInRFExRF(shuffleIndices(1:nTrialsInRF));
+    randSpikeTimesExRF = arrayOnsetSpikeTimesInRFExRF(shuffleIndices(nTrialsInRF+1:end));
+    
+    shufflePsthInRF = fixedPsth(randSpikeTimesInRF, kernelSigma, 0, arrayOnsetHold.t);
+    shufflePsthExRF = fixedPsth(randSpikeTimesExRF, kernelSigma, 0, arrayOnsetHold.t);
+    meanResponseShufflePsthInRF = mean(shufflePsthInRF(arrayHoldResponesWindowIndices));
+    meanResponseShufflePsthExRF = mean(shufflePsthExRF(arrayHoldResponesWindowIndices));
+    shuffleArrayHoldResponseDiff(m) = meanResponseShufflePsthInRF - meanResponseShufflePsthExRF;
+    shuffleArrayHoldResponseAI(m) = (meanResponseShufflePsthInRF - meanResponseShufflePsthExRF) / ...
+            (meanResponseShufflePsthInRF + meanResponseShufflePsthExRF);
+end
+fprintf('.');
+arrayHoldResponseDiff = averageFiringRatesBySpdf.arrayHoldResponse.byLoc(inRFLoc) - averageFiringRatesBySpdf.arrayHoldResponse.byLoc(exRFLoc);
+arrayHoldResponseAI = (averageFiringRatesBySpdf.arrayHoldResponse.byLoc(inRFLoc) - averageFiringRatesBySpdf.arrayHoldResponse.byLoc(exRFLoc)) / ...
+        (averageFiringRatesBySpdf.arrayHoldResponse.byLoc(inRFLoc) + averageFiringRatesBySpdf.arrayHoldResponse.byLoc(exRFLoc));
+% inRFLoc is defined as location with largest mean > baseline
+if arrayHoldResponseDiff > mean(shuffleArrayHoldResponseDiff)
+    arrayHoldResponseDiffPValueByShuffleSpdf = sum(arrayHoldResponseDiff < shuffleArrayHoldResponseDiff) / numRandomizations * 2;
+else
+    arrayHoldResponseDiffPValueByShuffleSpdf = sum(arrayHoldResponseDiff > shuffleArrayHoldResponseDiff) / numRandomizations * 2;
+end
+
+if arrayHoldResponseAI > mean(shuffleArrayHoldResponseAI)
+    arrayHoldResponseAIPValueByShuffleSpdf = sum(arrayHoldResponseAI < shuffleArrayHoldResponseAI) / numRandomizations * 2;
+else
+    arrayHoldResponseAIPValueByShuffleSpdf = sum(arrayHoldResponseAI > shuffleArrayHoldResponseAI) / numRandomizations * 2;
+end
+clear arrayOnsetHoldWindowIndices arrayOnsetSpikeTimesInRFExRF;
+
+%% rank sum test on target-dim delay period using individual trial spike counts
+arrayHoldResponseDiffPValueByRankSumTest = ranksum(...
+        averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc{inRFLoc}, ...
+        averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc{exRFLoc});
+    
 %% permutation test on target-dim delay period
 shuffleTargetDimDelayDiff = zeros(numRandomizations, 1);
 shuffleTargetDimDelayAI = zeros(numRandomizations, 1);

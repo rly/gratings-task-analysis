@@ -206,7 +206,7 @@ set(gca, 'LineWidth', 2);
 
 %% adjust all ylim
 allYBounds = [ylim(axEnterFixationSpdf) ylim(axCueOnsetSpdf) ylim(axArrayOnsetSpdf) ylim(axTargetDimSpdf) ylim(axExitFixationSpdf)];
-yBounds = [-0.25 0.75];
+yBounds = [-0.25 0.5];
 ylim(axEnterFixationSpdf, yBounds);
 ylim(axCueOnsetSpdf, yBounds);
 ylim(axArrayOnsetSpdf, yBounds);

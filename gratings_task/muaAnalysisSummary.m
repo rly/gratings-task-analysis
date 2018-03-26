@@ -26,8 +26,8 @@ isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
 cueResponseVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
 preExitFixationVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
 infoRates = nan(nUnitsApprox, 5); % 5 periods
-delayDiffs = nan(nUnitsApprox, 2); % 2 delay periods
-attnIndices = nan(nUnitsApprox, 2); % 2 delay periods
+diffRates = nan(nUnitsApprox, 3); % 2 delay periods + array response
+attnIndices = nan(nUnitsApprox, 3); % 2 delay periods + array response
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
@@ -47,9 +47,10 @@ meanRTHoldExRF = nan(nSessions, 1);
 
 arrayOnsetHoldLatencyInRF = nan(nUnitsApprox, 1);
 arrayOnsetHoldLatencyExRF = nan(nUnitsApprox, 1);
-
 targetDimLatencyInRF = nan(nUnitsApprox, 1);
 targetDimLatencyExRF = nan(nUnitsApprox, 1);
+
+averageFiringRatesBySpdf = struct();
 
 unitCount = 0;
 % should also be running a lot of shuffle tests given the number of trials
@@ -79,7 +80,7 @@ for i = 1:nSessions
     cueResponseVsBootstrapBaselineDirection(currentUnitInds,:) = S.cueResponseVsBootstrapBaselineDirection;
     preExitFixationVsBootstrapBaselineDirection(currentUnitInds,:) = S.preExitFixationVsBootstrapBaselineDirection;
     infoRates(currentUnitInds,:) = S.infoRates;
-    delayDiffs(currentUnitInds,:) = S.delayDiffs;
+    diffRates(currentUnitInds,:) = S.diffRates;
     attnIndices(currentUnitInds,:) = S.attnIndices;
     localization(currentUnitInds) = S.localization;
     isInVPulvinar(currentUnitInds) = S.isInVPulvinar;
@@ -122,6 +123,15 @@ for i = 1:nSessions
     arrayOnsetHoldLatencyExRF(currentUnitInds) = S.arrayOnsetHoldLatencyExRF;
     targetDimLatencyInRF(currentUnitInds) = S.targetDimLatencyInRF;
     targetDimLatencyExRF(currentUnitInds) = S.targetDimLatencyExRF;
+    
+    fn = fieldnames(S.averageFiringRatesBySpdf);
+    for j = 1:numel(fn)
+        if isfield(averageFiringRatesBySpdf, fn{j})
+            averageFiringRatesBySpdf.(fn{j})(currentUnitInds,:) = [S.averageFiringRatesBySpdf.(fn{j})]';
+        else
+            averageFiringRatesBySpdf.(fn{j}) = [S.averageFiringRatesBySpdf.(fn{j})]'; % no pre-allocation
+        end
+    end
 end
 clear S;
 
@@ -183,12 +193,15 @@ isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
 isSignificantDelaySelectivity = isCell & any(isSignificantSelectivity(:,[2 4]), 2);
 isSignificantSelectivityCueTargetDelay = isCell & isSignificantSelectivity(:,2);
+isSignificantSelectivityArrayHoldResponse = isCell & isSignificantSelectivity(:,3);
 isSignificantSelectivityTargetDimDelay = isCell & isSignificantSelectivity(:,4);
 
-isSignificantSelectivityCueTargetDelayInc = isCell & isSignificantSelectivity(:,2) & delayDiffs(:,1) > 0;
-isSignificantSelectivityCueTargetDelayDec = isCell & isSignificantSelectivity(:,2) & delayDiffs(:,1) < 0;
-isSignificantSelectivityTargetDimDelayInc = isCell & isSignificantSelectivity(:,4) & delayDiffs(:,2) > 0;
-isSignificantSelectivityTargetDimDelayDec = isCell & isSignificantSelectivity(:,4) & delayDiffs(:,2) < 0;
+isSignificantSelectivityCueTargetDelayInc = isCell & isSignificantSelectivity(:,2) & diffRates(:,1) > 0;
+isSignificantSelectivityCueTargetDelayDec = isCell & isSignificantSelectivity(:,2) & diffRates(:,1) < 0;
+isSignificantSelectivityArrayHoldResponseInc = isCell & isSignificantSelectivity(:,3) & diffRates(:,2) > 0;
+isSignificantSelectivityArrayHoldResponseDec = isCell & isSignificantSelectivity(:,3) & diffRates(:,2) < 0;
+isSignificantSelectivityTargetDimDelayInc = isCell & isSignificantSelectivity(:,4) & diffRates(:,3) > 0;
+isSignificantSelectivityTargetDimDelayDec = isCell & isSignificantSelectivity(:,4) & diffRates(:,3) < 0;
 
 isInPulvinar = strcmp(localization, 'vPul') | strcmp(localization, 'dPul');
 % strcmp(localization, 'PLd') | strcmp(localization, 'PLv') | strcmp(localization, 'PM') | strcmp(localization, 'PI');
@@ -276,6 +289,12 @@ fprintf('Of the %d units in the pulvinar that show spatial selectivity during th
         round(sum(isSignificantSelectivityCueTargetDelayInc & isInPulvinar)/sum(isSignificantSelectivityCueTargetDelay & isInPulvinar) * 100), ...
         sum(isSignificantSelectivityCueTargetDelayDec & isInPulvinar), ...
         round(sum(isSignificantSelectivityCueTargetDelayDec & isInPulvinar)/sum(isSignificantSelectivityCueTargetDelay & isInPulvinar) * 100));
+fprintf('Of the %d units in the pulvinar that show spatial selectivity during the array hold response, \n\t%d (%d%%) are InRF > ExRF, %d (%d%%) are InRF < ExRF\n', ...
+        sum(isSignificantSelectivityArrayHoldResponse & isInPulvinar), ...
+        sum(isSignificantSelectivityArrayHoldResponseInc & isInPulvinar), ...
+        round(sum(isSignificantSelectivityArrayHoldResponseInc & isInPulvinar)/sum(isSignificantSelectivityArrayHoldResponse & isInPulvinar) * 100), ...
+        sum(isSignificantSelectivityArrayHoldResponseDec & isInPulvinar), ...
+        round(sum(isSignificantSelectivityArrayHoldResponseDec & isInPulvinar)/sum(isSignificantSelectivityArrayHoldResponse & isInPulvinar) * 100));
 fprintf('Of the %d units in the pulvinar that show spatial selectivity during the target-dim delay, \n\t%d (%d%%) are InRF > ExRF, %d (%d%%) are InRF < ExRF\n', ...
         sum(isSignificantSelectivityTargetDimDelay & isInPulvinar), ...
         sum(isSignificantSelectivityTargetDimDelayInc & isInPulvinar), ...
@@ -350,6 +369,17 @@ fprintf('\t%d/%d = %d%% dPul units\n',...
         round(sum(isCell & isSignificantSelectivityCueTargetDelay & strcmp(localization, 'dPul'))/sum(isCell & strcmp(localization, 'dPul')) * 100));
 fprintf('\n');
 
+fprintf('Significant selectivity in array hold response:\n');
+fprintf('\t%d/%d = %d%% vPul units\n',...
+        sum(isCell & isSignificantSelectivityArrayHoldResponse & strcmp(localization, 'vPul')), ...
+        sum(isCell & strcmp(localization, 'vPul')), ...
+        round(sum(isCell & isSignificantSelectivityArrayHoldResponse & strcmp(localization, 'vPul'))/sum(isCell & strcmp(localization, 'vPul')) * 100));
+fprintf('\t%d/%d = %d%% dPul units\n',...
+        sum(isCell & isSignificantSelectivityArrayHoldResponse & strcmp(localization, 'dPul')), ...
+        sum(isCell & strcmp(localization, 'dPul')), ...
+        round(sum(isCell & isSignificantSelectivityArrayHoldResponse & strcmp(localization, 'dPul'))/sum(isCell & strcmp(localization, 'dPul')) * 100));
+fprintf('\n');
+
 fprintf('Significant selectivity in target-dim delay:\n');
 fprintf('\t%d/%d = %d%% vPul units\n',...
         sum(isCell & isSignificantSelectivityTargetDimDelay & strcmp(localization, 'vPul')), ...
@@ -375,11 +405,13 @@ fprintf('\n');
 
 fprintf('-----------------------------\n');
 precondition = isInPulvinar & isSignificantCueResponseInc;
-fprintf('Of the %d units in the pulvinar that show significant cue response compared to baseline:\n', sum(precondition));
+fprintf('Of the %d units in the pulvinar that show significantly increased cue response compared to baseline:\n', sum(precondition));
 fprintf('\t%d (%d%%) show significant pre-saccadic activity compared to baseline\n', sum(precondition & isSignificantPreExitFixation), ...
         round(sum(precondition & isSignificantPreExitFixation)/sum(precondition) * 100));
 fprintf('\t%d (%d%%) show significant selectivity during the cue-target delay\n', sum(precondition & isSignificantSelectivityCueTargetDelay), ...
         round(sum(precondition & isSignificantSelectivityCueTargetDelay)/sum(precondition) * 100));
+fprintf('\t%d (%d%%) show significant selectivity during the array hold response\n', sum(precondition & isSignificantSelectivityArrayHoldResponse), ...
+        round(sum(precondition & isSignificantSelectivityArrayHoldResponse)/sum(precondition) * 100));
 fprintf('\t%d (%d%%) show significant selectivity during the target-dim delay\n', sum(precondition & isSignificantSelectivityTargetDimDelay), ...
         round(sum(precondition & isSignificantSelectivityTargetDimDelay)/sum(precondition) * 100));
 fprintf('\n');
@@ -625,13 +657,67 @@ plotFileName = sprintf('%s/allSessions-rtVsFiringRateCorr-v%d.png', summaryDataD
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-stop
+%%
+maxLatency = 0.075;
+goodUnits = ~isnan(arrayOnsetHoldLatencyInRF) & ~isnan(arrayOnsetHoldLatencyExRF) & ...
+        arrayOnsetHoldLatencyInRF <= maxLatency & arrayOnsetHoldLatencyExRF <= maxLatency & ...
+        isInPulvinar & isSignificantCueResponse;
+arrayOnsetHoldLatencyDiff = arrayOnsetHoldLatencyInRF(goodUnits) - arrayOnsetHoldLatencyExRF(goodUnits);
+fprintf('Mean array onset latency InRF: %0.3f s\n', mean(arrayOnsetHoldLatencyInRF(goodUnits)));
+fprintf('Mean array onset latency ExRF: %0.3f s\n', mean(arrayOnsetHoldLatencyExRF(goodUnits)));
+xBounds = [0 0.13];
+maxAbsDiff = max(abs(arrayOnsetHoldLatencyDiff));
+histBins = -maxAbsDiff:0.005:maxAbsDiff;
+
+figure_tr_inch(16, 5);
+subaxis(1, 3, 1);
+hold on;
+plot(arrayOnsetHoldLatencyInRF(goodUnits), arrayOnsetHoldLatencyExRF(goodUnits), '.', 'MarkerSize', 20);
+plot([0 1], [0 1], 'Color', 0.3*ones(3, 1)); 
+axis equal;
+xlim(xBounds); 
+ylim(xBounds);
+xlabel('Array Onset Latency InRF (s)');
+ylabel('Array Onset Latency ExRF (s)');
+box off;
+
+subaxis(1, 3, 2); 
+hold on;
+histogram(arrayOnsetHoldLatencyDiff, histBins);
+origYLim = ylim();
+plot([0 0], origYLim, 'k', 'LineWidth', 2); 
+ylim(origYLim);
+xlabel('Array Onset Latency InRF - ExRF (s)');
+ylabel('Number of Units');
+box off;
+
+subaxis(1, 3, 3);
+hold on;
+c1 = cdfplot(arrayOnsetHoldLatencyInRF(goodUnits));
+c2 = cdfplot(arrayOnsetHoldLatencyExRF(goodUnits));
+set(c1, 'LineWidth', 2);
+set(c2, 'LineWidth', 2);
+xlim(xBounds); 
+xlabel('Array Onset Latency (s)');
+ylabel('Proportion of Units');
+legend({'InRF', 'ExRF'}, 'Location', 'SouthEast');
+
+
+meanArrayOnsetHoldLatencyDiff = mean(arrayOnsetHoldLatencyDiff);
+medianArrayOnsetHoldLatencyDiff = median(arrayOnsetHoldLatencyDiff);
+p = signrank(arrayOnsetHoldLatencyDiff);
+fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
+        meanArrayOnsetHoldLatencyDiff, medianArrayOnsetHoldLatencyDiff, p, sum(goodUnits));
+
+plotFileName = sprintf('%s/allSessions-arrayOnsetHoldLatencyDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
 % subdivisions = {'PM', 'PLd', 'PLv', 'PI', 'PUL', 'all'};
-subdivisions = {'all', 'vPul', 'notVPul', 'dPul', 'notDPul'};
+subdivisions = {'all', 'PUL', 'dPul', 'vPul'};%, 'notVPul', 'notDPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
@@ -664,12 +750,12 @@ for j = 1:numel(subdivisions)
 
     fprintf('\t%s: %d cells\n', subdivision, sum(condition));
 
-    plotFileName = sprintf('%s/allSessions-%s-meanSpdfs3-v%d.png', summaryDataDir, subdivision, v);
-    fprintf('Saving to %s...\n', plotFileName);
-    
-    quickSpdfAllEvents3InARowPopMean(cueOnsetSpdfInRFNormSub, cueOnsetSpdfExRFNormSub, ...
-            arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfExRFNormSub, targetDimSpdfInRFNormSub, ...
-            targetDimSpdfExRFNormSub, cueOnsetT, arrayOnsetT, targetDimT, plotFileName);
+%     plotFileName = sprintf('%s/allSessions-%s-meanSpdfs3-v%d.png', summaryDataDir, subdivision, v);
+%     fprintf('Saving to %s...\n', plotFileName);
+%     
+%     quickSpdfAllEvents3InARowPopMean(cueOnsetSpdfInRFNormSub, cueOnsetSpdfExRFNormSub, ...
+%             arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfExRFNormSub, targetDimSpdfInRFNormSub, ...
+%             targetDimSpdfExRFNormSub, cueOnsetT, arrayOnsetT, targetDimT, plotFileName);
 
     plotFileName = sprintf('%s/allSessions-%s-meanSpdfs5-v%d.png', summaryDataDir, subdivision, v);
     fprintf('Saving to %s...\n', plotFileName);
@@ -685,7 +771,7 @@ end
 fprintf('\n');
 fprintf('Plotting mega figure of tiny baseline-corrected, normalized mean SPDFs...\n');
 % subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
-subdivisions = {'all', 'vPul', 'dPul'};%, 'notVPul', 'notDPul'};
+subdivisions = {'PUL'};%'all', 'vPul', 'dPul'};%, 'notVPul', 'notDPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
