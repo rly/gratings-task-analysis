@@ -2,6 +2,31 @@ function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE
 % spikeStruct = struct of spiking data
 % UE = useful events struct
 
+% compute SPDF around each event
+% compute average firing rate, Fano Factor, peak rate in an analysis window
+% using both SPDF values and raw spike counts
+% determine InRF and ExRF locations
+% compute max firing rate for normalization
+% compute latency of responses to certain events
+% compute task modulation stats
+% - activity by location > baseline
+% --- rank sum test
+% --- resampled baseline test
+% - visual activity > previous delay period
+% --- sign rank test
+% --- resampled baseline
+% compute attention effect in CT delay, array hold response, TD delay
+% - InRF > ExRF
+% --- rank sum test
+% --- permutation test
+% --- attention index
+% compute spatial selectivity (use all locs)
+% - info rate > 0 
+% --- permutation test
+
+
+%%
+
 spikeTs = spikeStruct.ts;
 kernelSigma = 0.01;
 
@@ -573,11 +598,13 @@ preExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(average
 postExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
         averageFiringRatesByCount.postExitFixation.trialRateByLoc);
 
-arrayHoldResponseVsCueTargetDelayRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.cueTargetDelay.trialRate, ...
+cueResponseVsBaselineSignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRateByLoc, ...
+        averageFiringRatesByCount.cueResponse.trialRateByLoc);
+arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.cueTargetDelayHold.trialRateByLoc, ...
         averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc);
-targetDimResponseVsTargetDimDelayRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.targetDimDelay.trialRate, ...
+targetDimResponseVsTargetDimDelaySignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.targetDimDelay.trialRateByLoc, ...
         averageFiringRatesByCount.targetDimResponse.trialRateByLoc);
-preExitFixationVsPreExitFixationEarlyRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preExitFixationEarly.trialRate, ...
+preExitFixationVsPreExitFixationEarlySignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.preExitFixationEarly.trialRateByLoc, ...
         averageFiringRatesByCount.preExitFixation.trialRateByLoc);
 
 %% shuffle test on cue onset time as another test for cue-evoked change in activity
@@ -783,9 +810,10 @@ for i = 1:numel(unusedLocs)
         targetDimDelayVsBaselineRankSumTestStatsByLoc(k).p = NaN;
         targetDimResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
         preExitFixationVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-        arrayHoldResponseVsCueTargetDelayRankSumTestStatsByLoc(k).p = NaN;
-        targetDimResponseVsTargetDimDelayRankSumTestStatsByLoc(k).p = NaN;
-        preExitFixationVsPreExitFixationEarlyRankSumTestStatsByLoc(k).p = NaN;
+        cueResponseVsBaselineSignRankTestStatsByLoc(k).p = NaN;
+        arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc(k).p = NaN;
+        targetDimResponseVsTargetDimDelaySignRankTestStatsByLoc(k).p = NaN;
+        preExitFixationVsPreExitFixationEarlySignRankTestStatsByLoc(k).p = NaN;
     end
 end
 
