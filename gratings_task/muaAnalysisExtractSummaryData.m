@@ -41,6 +41,7 @@ targetDimLatencyInRF = nan(nUnitsApprox, 1);
 targetDimLatencyExRF = nan(nUnitsApprox, 1);
 
 averageFiringRatesBySpdf = struct();
+averageFiringRatesByCount = struct();
 
 unitCount = 0;
 minFiringRate = 2; % use only cells with a time-locked response > 1 Hz in any window
@@ -626,6 +627,15 @@ for j = 1:nUnits
                 end
             end
             
+            fn = fieldnames(ES.averageFiringRatesByCount);
+            for k = 1:numel(fn)
+                if isfield(averageFiringRatesByCount, fn{k})
+                    averageFiringRatesByCount.(fn{k})(unitCount,:) = [ES.averageFiringRatesByCount.(fn{k})]';
+                else
+                    averageFiringRatesByCount.(fn{k}) = [ES.averageFiringRatesByCount.(fn{k})]'; % no pre-allocation
+                end
+            end
+            
         end
     else
         fprintf('Skipping %s due to min firing rate requirement...\n', unitName);
@@ -704,5 +714,6 @@ save(saveFileName, ...
         'targetDimLatencyInRF', ...
         'targetDimLatencyExRF', ...
         'averageFiringRatesBySpdf', ...
+        'averageFiringRatesByCount', ...
         'inRFLocs', ...
         'exRFLocs');
