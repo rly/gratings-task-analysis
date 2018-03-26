@@ -1,10 +1,9 @@
-function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE)
+function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE, numRandomizations)
 % spikeStruct = struct of spiking data
 % UE = useful events struct
 
 spikeTs = spikeStruct.ts;
 kernelSigma = 0.01;
-numRandomizations = 100;
 
 clear spikeStruct;
 

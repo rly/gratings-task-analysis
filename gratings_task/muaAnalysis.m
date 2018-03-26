@@ -1,4 +1,4 @@
-function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, isZeroDistractors)
+function muaAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, isZeroDistractors, numRandomizations)
 % MUA gratings task analysis, one channel
 
 % 325ms fixation before pre-cue marker
@@ -85,7 +85,7 @@ if firingRateOverall >= minFiringRateOverall
             firingRateOverall, minFiringRateOverall);
     fprintf('\tComputing evoked spiking and writing file %s...\n', saveFileName);
 
-    computeEvokedSpiking(saveFileName, muaStruct, nLoc, UE);
+    computeEvokedSpiking(saveFileName, muaStruct, nLoc, UE, numRandomizations);
 else
     fprintf('\tOverall firing rate = %0.2f Hz < minimum firing rate = %0.2f Hz in these blocks - skipping.\n', ...
             firingRateOverall, minFiringRateOverall);

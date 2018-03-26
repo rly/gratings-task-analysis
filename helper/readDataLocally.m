@@ -8,3 +8,4 @@ recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/r
 channelsToLoad = 1:32;
 muaChannelsToLoad = 1:32;
 isZeroDistractors = 0;
+numRandomizations = 2;
