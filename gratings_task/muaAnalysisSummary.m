@@ -45,12 +45,17 @@ meanRTRelExRF = nan(nSessions, 1);
 meanRTHoldInRF = nan(nSessions, 1);
 meanRTHoldExRF = nan(nSessions, 1);
 
-arrayOnsetHoldLatencyInRF = nan(nUnitsApprox, 1);
-arrayOnsetHoldLatencyExRF = nan(nUnitsApprox, 1);
-targetDimLatencyInRF = nan(nUnitsApprox, 1);
-targetDimLatencyExRF = nan(nUnitsApprox, 1);
+arrayHoldResponseLatencyInRF = nan(nUnitsApprox, 1);
+arrayHoldResponseLatencyExRF = nan(nUnitsApprox, 1);
+arrayResponseLatencyInRF = nan(nUnitsApprox, 1);
+arrayResponseLatencyExRF = nan(nUnitsApprox, 1);
+targetDimResponseLatencyInRF = nan(nUnitsApprox, 1);
+targetDimResponseLatencyExRF = nan(nUnitsApprox, 1);
 
 averageFiringRatesBySpdf = struct();
+averageFiringRatesByCount = struct();
+inRFLocs = nan(nUnitsApprox, 1);
+exRFLocs = nan(nUnitsApprox, 1);
 
 unitCount = 0;
 % should also be running a lot of shuffle tests given the number of trials
@@ -119,19 +124,34 @@ for i = 1:nSessions
         end
     end
     
-    arrayOnsetHoldLatencyInRF(currentUnitInds) = S.arrayOnsetHoldLatencyInRF;
-    arrayOnsetHoldLatencyExRF(currentUnitInds) = S.arrayOnsetHoldLatencyExRF;
-    targetDimLatencyInRF(currentUnitInds) = S.targetDimLatencyInRF;
-    targetDimLatencyExRF(currentUnitInds) = S.targetDimLatencyExRF;
+    arrayHoldResponseLatencyInRF(currentUnitInds) = S.arrayHoldResponseLatencyInRF;
+    arrayHoldResponseLatencyExRF(currentUnitInds) = S.arrayHoldResponseLatencyExRF;
+    arrayResponseLatencyInRF(currentUnitInds) = S.arrayResponseLatencyInRF;
+    arrayResponseLatencyExRF(currentUnitInds) = S.arrayResponseLatencyExRF;
+    targetDimResponseLatencyInRF(currentUnitInds) = S.targetDimLatencyInRF;
+    targetDimResponseLatencyExRF(currentUnitInds) = S.targetDimLatencyExRF;
     
     fn = fieldnames(S.averageFiringRatesBySpdf);
     for j = 1:numel(fn)
         if isfield(averageFiringRatesBySpdf, fn{j})
-            averageFiringRatesBySpdf.(fn{j})(currentUnitInds,:) = [S.averageFiringRatesBySpdf.(fn{j})]';
+            averageFiringRatesBySpdf.(fn{j})(currentUnitInds,:) = [S.averageFiringRatesBySpdf.(fn{j})];
         else
-            averageFiringRatesBySpdf.(fn{j}) = [S.averageFiringRatesBySpdf.(fn{j})]'; % no pre-allocation
+            averageFiringRatesBySpdf.(fn{j}) = [S.averageFiringRatesBySpdf.(fn{j})]; % no pre-allocation
         end
     end
+    
+    fn = fieldnames(S.averageFiringRatesByCount);
+    for j = 1:numel(fn)
+        if isfield(averageFiringRatesByCount, fn{j})
+            averageFiringRatesByCount.(fn{j})(currentUnitInds,:) = [S.averageFiringRatesByCount.(fn{j})];
+        else
+            averageFiringRatesByCount.(fn{j}) = [S.averageFiringRatesByCount.(fn{j})]; % no pre-allocation
+        end
+    end
+    inRFLocs(currentUnitInds) = S.inRFLocs;
+    exRFLocs(currentUnitInds) = S.exRFLocs;
+    
+    
 end
 clear S;
 
@@ -520,34 +540,34 @@ maxAbs = max(max(abs([meanRTRelInRFDiffThirdFiringRateCTDelaySub, ...
 
 binStep = 0.01;
 xBounds = [-ceil(maxAbs / binStep) ceil(maxAbs / binStep)] * binStep;
-binEdges = xBounds(1):binStep:xBounds(2);
+histBinEdges = xBounds(1):binStep:xBounds(2);
 
 figure_tr_inch(9, 6);
 set(gcf, 'Color', 'w');
 plotHs = nan(6, 1);
 plotHs(1) = subaxis(2, 3, 1);
 hold on;
-hist1 = histogram(meanRTRelInRFDiffThirdFiringRateCTDelaySub, binEdges);
+hist1 = histogram(meanRTRelInRFDiffThirdFiringRateCTDelaySub, histBinEdges);
 hist1.FaceColor = inRFCol;
 plotHs(2) = subaxis(2, 3, 2);
 hold on;
-hist2 = histogram(meanRTHoldInRFDiffThirdFiringRateCTDelaySub, binEdges);
+hist2 = histogram(meanRTHoldInRFDiffThirdFiringRateCTDelaySub, histBinEdges);
 hist2.FaceColor = inRFCol;
 plotHs(3) = subaxis(2, 3, 3);
 hold on;
-hist3 = histogram(meanRTHoldInRFDiffThirdFiringRateTDDelaySub, binEdges);
+hist3 = histogram(meanRTHoldInRFDiffThirdFiringRateTDDelaySub, histBinEdges);
 hist3.FaceColor = inRFCol;
 plotHs(4) = subaxis(2, 3, 4);
 hold on;
-hist4 = histogram(meanRTRelExRFDiffThirdFiringRateCTDelaySub, binEdges);
+hist4 = histogram(meanRTRelExRFDiffThirdFiringRateCTDelaySub, histBinEdges);
 hist4.FaceColor = exRFCol;
 plotHs(5) = subaxis(2, 3, 5);
 hold on;
-hist5 = histogram(meanRTHoldExRFDiffThirdFiringRateCTDelaySub, binEdges);
+hist5 = histogram(meanRTHoldExRFDiffThirdFiringRateCTDelaySub, histBinEdges);
 hist5.FaceColor = exRFCol;
 plotHs(6) = subaxis(2, 3, 6);
 hold on;
-hist6 = histogram(meanRTHoldExRFDiffThirdFiringRateTDDelaySub, binEdges);
+hist6 = histogram(meanRTHoldExRFDiffThirdFiringRateTDDelaySub, histBinEdges);
 hist6.FaceColor = exRFCol;
 
 % set all y bounds the same
@@ -609,39 +629,39 @@ maxAbs = max(max(abs([corrCoefHoldInRFCTDelayRTSub, ...
 
 binStep = 0.05;
 xBounds = [-ceil(maxAbs / binStep) ceil(maxAbs / binStep)] * binStep;
-binEdges = xBounds(1):binStep:xBounds(2);
+histBinEdges = xBounds(1):binStep:xBounds(2);
 
 figure_tr_inch(9, 6);
 set(gcf, 'Color', 'w');
 plotHs = nan(6, 1);
 plotHs(1) = subaxis(2, 3, 1);
 hold on;
-hist1 = histogram(corrCoefRelInRFCTDelayRTSub, binEdges);
+hist1 = histogram(corrCoefRelInRFCTDelayRTSub, histBinEdges);
 hist1.FaceColor = inRFCol;
 xlim(xBounds);
 plotHs(2) = subaxis(2, 3, 2);
 hold on;
-hist2 = histogram(corrCoefHoldInRFCTDelayRTSub, binEdges);
+hist2 = histogram(corrCoefHoldInRFCTDelayRTSub, histBinEdges);
 hist2.FaceColor = inRFCol;
 xlim(xBounds);
 plotHs(3) = subaxis(2, 3, 3);
 hold on;
-hist3 = histogram(corrCoefHoldInRFTDDelayRTSub, binEdges);
+hist3 = histogram(corrCoefHoldInRFTDDelayRTSub, histBinEdges);
 hist3.FaceColor = inRFCol;
 xlim(xBounds);
 plotHs(4) = subaxis(2, 3, 4);
 hold on;
-hist4 = histogram(corrCoefRelExRFCTDelayRTSub, binEdges);
+hist4 = histogram(corrCoefRelExRFCTDelayRTSub, histBinEdges);
 hist4.FaceColor = exRFCol;
 xlim(xBounds);
 plotHs(5) = subaxis(2, 3, 5);
 hold on;
-hist5 = histogram(corrCoefHoldExRFCTDelayRTSub, binEdges);
+hist5 = histogram(corrCoefHoldExRFCTDelayRTSub, histBinEdges);
 hist5.FaceColor = exRFCol;
 xlim(xBounds);
 plotHs(6) = subaxis(2, 3, 6);
 hold on;
-hist6 = histogram(corrCoefHoldExRFTDDelayRTSub, binEdges);
+hist6 = histogram(corrCoefHoldExRFTDDelayRTSub, histBinEdges);
 hist6.FaceColor = exRFCol;
 xlim(xBounds);
 
@@ -657,35 +677,168 @@ plotFileName = sprintf('%s/allSessions-rtVsFiringRateCorr-v%d.png', summaryDataD
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%%
-maxLatency = 0.075;
-goodUnits = ~isnan(arrayOnsetHoldLatencyInRF) & ~isnan(arrayOnsetHoldLatencyExRF) & ...
-        arrayOnsetHoldLatencyInRF <= maxLatency & arrayOnsetHoldLatencyExRF <= maxLatency & ...
-        isInPulvinar & isSignificantCueResponse;
-arrayOnsetHoldLatencyDiff = arrayOnsetHoldLatencyInRF(goodUnits) - arrayOnsetHoldLatencyExRF(goodUnits);
-fprintf('Mean array onset latency InRF: %0.3f s\n', mean(arrayOnsetHoldLatencyInRF(goodUnits)));
-fprintf('Mean array onset latency ExRF: %0.3f s\n', mean(arrayOnsetHoldLatencyExRF(goodUnits)));
-xBounds = [0 0.13];
-maxAbsDiff = max(abs(arrayOnsetHoldLatencyDiff));
-histBins = -maxAbsDiff:0.005:maxAbsDiff;
+%% mean cue target delay InRF > ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+cueTargetDelay = averageFiringRatesBySpdf.cueTargetDelay(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+cueTargetDelayFiringInRF = nan(nGoodUnits, 1);
+cueTargetDelayFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    cueTargetDelayFiringInRF(i) = cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
+    cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
+end
+cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
+
+fprintf('Mean cue-target delay activity InRF: %0.3f Hz\n', mean(cueTargetDelayFiringInRF));
+fprintf('Mean cue-target delay activity ExRF: %0.3f Hz\n', mean(cueTargetDelayFiringExRF));
+frBounds = [0 max([max(cueTargetDelayFiringInRF) max(cueTargetDelayFiringExRF)])];
+maxAbsDiffFR = max(abs(cueTargetDelayFiringDiff));
+
+binStep = 1;
+histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
+histBinEdges = histXBounds(1):binStep:histXBounds(2);
+
+% further refining
+% minFiringRate = 20;
+% goodUnits2 = cueTargetDelayFiringInRF >= minFiringRate;
+% cueTargetDelayFiringInRF = cueTargetDelayFiringInRF(goodUnits2);
+% cueTargetDelayFiringExRF = cueTargetDelayFiringExRF(goodUnits2);
+% cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
+% nGoodUnits = sum(goodUnits2);
+
+figure_tr_inch(10, 5);
+subaxis(1, 2, 1);
+hold on;
+plot(cueTargetDelayFiringInRF, cueTargetDelayFiringExRF, '.', 'MarkerSize', 20);
+plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
+axis equal;
+xlim(frBounds); 
+ylim(frBounds);
+xlabel('Mean Cue-Target Delay Firing InRF (Hz)');
+ylabel('Mean Cue-Target Delay Firing ExRF (Hz)');
+box off;
+
+subaxis(1, 2, 2); 
+hold on;
+histogram(cueTargetDelayFiringDiff, histBinEdges);
+origYLim = ylim();
+plot([0 0], origYLim, 'k', 'LineWidth', 2); 
+xlim(histXBounds);
+ylim(origYLim);
+xlabel('Cue-Target Delay Firing InRF - ExRF (Hz)');
+ylabel('Number of Units');
+box off;
+
+meanCueTargetDelayFiringDiff = mean(cueTargetDelayFiringDiff);
+medianCueTargetDelayFiringDiff = median(cueTargetDelayFiringDiff);
+p = signrank(cueTargetDelayFiringDiff);
+fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
+        meanCueTargetDelayFiringDiff, medianCueTargetDelayFiringDiff, p, nGoodUnits);
+
+plotFileName = sprintf('%s/allSessions-cueTargetDelayDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% Fano Factor cue target delay InRF ? ExRF
+% note that this uses spike counts not spdf rates
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+cueTargetDelay = averageFiringRatesByCount.cueTargetDelay(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+cueTargetDelayFanoFactorInRF = nan(nGoodUnits, 1);
+cueTargetDelayFanoFactorExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    cueTargetDelayFanoFactorInRF(i) = cueTargetDelay(i).byLocSD(inRFLocsGoodUnits(i));
+    cueTargetDelayFanoFactorExRF(i) = cueTargetDelay(i).byLocSD(exRFLocsGoodUnits(i));
+end
+cueTargetDelayFanoFactorDiff = cueTargetDelayFanoFactorInRF - cueTargetDelayFanoFactorExRF;
+
+fprintf('Mean cue-target delay Fano Factor InRF: %0.3f Hz\n', mean(cueTargetDelayFanoFactorInRF));
+fprintf('Mean cue-target delay Fano Factor ExRF: %0.3f Hz\n', mean(cueTargetDelayFanoFactorExRF));
+
+frBounds = [0 max([max(cueTargetDelayFanoFactorInRF) max(cueTargetDelayFanoFactorExRF)])];
+maxAbsDiffFR = max(abs(cueTargetDelayFanoFactorDiff));
+
+binStep = 1;
+histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
+histBinEdges = histXBounds(1):binStep:histXBounds(2);
+
+figure_tr_inch(10, 5);
+subaxis(1, 2, 1);
+hold on;
+plot(cueTargetDelayFanoFactorInRF, cueTargetDelayFanoFactorExRF, '.', 'MarkerSize', 20);
+plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
+axis equal;
+xlim(frBounds); 
+ylim(frBounds);
+xlabel('Cue-Target Delay Fano Factor InRF (Hz)');
+ylabel('Cue-Target Delay Fano Factor ExRF (Hz)');
+box off;
+
+subaxis(1, 2, 2); 
+hold on;
+histogram(cueTargetDelayFanoFactorDiff, histBinEdges);
+origYLim = ylim();
+plot([0 0], origYLim, 'k', 'LineWidth', 2); 
+xlim(histXBounds);
+ylim(origYLim);
+xlabel('Cue-Target Delay Fano Factor InRF - ExRF (Hz)');
+ylabel('Number of Units');
+box off;
+
+meanCueTargetDelayFanoFactorDiff = mean(cueTargetDelayFanoFactorDiff);
+medianCueTargetDelayFanoFactorDiff = median(cueTargetDelayFanoFactorDiff);
+p = signrank(cueTargetDelayFanoFactorDiff);
+fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
+        meanCueTargetDelayFanoFactorDiff, medianCueTargetDelayFanoFactorDiff, p, nGoodUnits);
+
+plotFileName = sprintf('%s/allSessions-cueTargetDelayFanoFactorDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% compare InRF vs ExRF array response latency
+maxLatency = 0.125;
+goodUnits = ~isnan(arrayHoldResponseLatencyInRF) & ~isnan(arrayHoldResponseLatencyExRF) & ...
+        arrayHoldResponseLatencyInRF <= maxLatency & arrayHoldResponseLatencyExRF <= maxLatency & ...
+        isInPulvinar & isSignificantCueResponseInc;
+arrayOnsetHoldLatencyDiff = arrayHoldResponseLatencyInRF(goodUnits) - arrayHoldResponseLatencyExRF(goodUnits);
+fprintf('Mean array onset latency InRF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldResponseLatencyInRF(goodUnits)), median(arrayHoldResponseLatencyInRF(goodUnits)));
+fprintf('Mean array onset latency ExRF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldResponseLatencyExRF(goodUnits)), median(arrayHoldResponseLatencyExRF(goodUnits)));
+fprintf('Number of units with latency reduction >= 10 ms: %d (%d%%)\n', ...
+        sum(arrayOnsetHoldLatencyDiff <= -0.01), round(sum(arrayOnsetHoldLatencyDiff <= -0.01)/numel(arrayOnsetHoldLatencyDiff) * 100));
+fprintf('Number of units with latency increase >= 10 ms: %d (%d%%)\n', ...
+        sum(arrayOnsetHoldLatencyDiff >= 0.01), round(sum(arrayOnsetHoldLatencyDiff >= 0.01)/numel(arrayOnsetHoldLatencyDiff) * 100));
+
+latBounds = [0 0.13];
+maxAbsDiffFR = max(abs(arrayOnsetHoldLatencyDiff));
+
+binStep = 0.005;
+histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
+histBinEdges = histXBounds(1):binStep:histXBounds(2);
 
 figure_tr_inch(16, 5);
 subaxis(1, 3, 1);
 hold on;
-plot(arrayOnsetHoldLatencyInRF(goodUnits), arrayOnsetHoldLatencyExRF(goodUnits), '.', 'MarkerSize', 20);
+plot(arrayHoldResponseLatencyInRF(goodUnits), arrayHoldResponseLatencyExRF(goodUnits), '.', 'MarkerSize', 20);
 plot([0 1], [0 1], 'Color', 0.3*ones(3, 1)); 
 axis equal;
-xlim(xBounds); 
-ylim(xBounds);
+xlim(latBounds); 
+ylim(latBounds);
 xlabel('Array Onset Latency InRF (s)');
 ylabel('Array Onset Latency ExRF (s)');
 box off;
 
 subaxis(1, 3, 2); 
 hold on;
-histogram(arrayOnsetHoldLatencyDiff, histBins);
+histogram(arrayOnsetHoldLatencyDiff, histBinEdges);
 origYLim = ylim();
 plot([0 0], origYLim, 'k', 'LineWidth', 2); 
+xlim(histXBounds);
 ylim(origYLim);
 xlabel('Array Onset Latency InRF - ExRF (s)');
 ylabel('Number of Units');
@@ -693,11 +846,11 @@ box off;
 
 subaxis(1, 3, 3);
 hold on;
-c1 = cdfplot(arrayOnsetHoldLatencyInRF(goodUnits));
-c2 = cdfplot(arrayOnsetHoldLatencyExRF(goodUnits));
+c1 = cdfplot(arrayHoldResponseLatencyInRF(goodUnits));
+c2 = cdfplot(arrayHoldResponseLatencyExRF(goodUnits));
 set(c1, 'LineWidth', 2);
 set(c2, 'LineWidth', 2);
-xlim(xBounds); 
+xlim(latBounds); 
 xlabel('Array Onset Latency (s)');
 ylabel('Proportion of Units');
 legend({'InRF', 'ExRF'}, 'Location', 'SouthEast');
@@ -709,7 +862,359 @@ p = signrank(arrayOnsetHoldLatencyDiff);
 fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
         meanArrayOnsetHoldLatencyDiff, medianArrayOnsetHoldLatencyDiff, p, sum(goodUnits));
 
-plotFileName = sprintf('%s/allSessions-arrayOnsetHoldLatencyDiff-v%d.png', summaryDataDir, v);
+plotFileName = sprintf('%s/allSessions-arrayHoldResponseLatencyDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% mean array hold response InRF > ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+arrayHoldResponse = averageFiringRatesBySpdf.arrayHoldResponse(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+arrayHoldResponseMeanFiringInRF = nan(nGoodUnits, 1);
+arrayHoldResponseMeanFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    arrayHoldResponseMeanFiringInRF(i) = arrayHoldResponse(i).byLoc(inRFLocsGoodUnits(i));
+    arrayHoldResponseMeanFiringExRF(i) = arrayHoldResponse(i).byLoc(exRFLocsGoodUnits(i));
+end
+arrayHoldResponseMeanFiringDiff = arrayHoldResponseMeanFiringInRF - arrayHoldResponseMeanFiringExRF;
+
+fprintf('Mean array response InRF: %0.3f Hz\n', mean(arrayHoldResponseMeanFiringInRF));
+fprintf('Mean array response ExRF: %0.3f Hz\n', mean(arrayHoldResponseMeanFiringExRF));
+
+frBounds = [0 max([max(arrayHoldResponseMeanFiringInRF) max(arrayHoldResponseMeanFiringExRF)])];
+maxAbsDiffFR = max(abs(arrayHoldResponseMeanFiringDiff));
+
+binStep = 1;
+histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
+histBinEdges = histXBounds(1):binStep:histXBounds(2);
+
+figure_tr_inch(10, 5);
+subaxis(1, 2, 1);
+hold on;
+plot(arrayHoldResponseMeanFiringInRF, arrayHoldResponseMeanFiringExRF, '.', 'MarkerSize', 20);
+plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
+axis equal;
+xlim(frBounds); 
+ylim(frBounds);
+xlabel('Mean Array Hold Response InRF (Hz)');
+ylabel('Mean Array Hold Response ExRF (Hz)');
+box off;
+
+subaxis(1, 2, 2); 
+hold on;
+histogram(arrayHoldResponseMeanFiringDiff, histBinEdges);
+origYLim = ylim();
+plot([0 0], origYLim, 'k', 'LineWidth', 2); 
+xlim(histXBounds);
+ylim(origYLim);
+xlabel('Array Hold Response InRF - ExRF (Hz)');
+ylabel('Number of Units');
+box off;
+
+meanArrayHoldResponseMeanFiringDiff = mean(arrayHoldResponseMeanFiringDiff);
+medianArrayHoldResponseMeanFiringDiff = median(arrayHoldResponseMeanFiringDiff);
+p = signrank(arrayHoldResponseMeanFiringDiff);
+fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
+        meanArrayHoldResponseMeanFiringDiff, medianArrayHoldResponseMeanDiff, p, nGoodUnits);
+
+plotFileName = sprintf('%s/allSessions-arrayHoldResponseDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% peak array response InRF > ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+arrayHoldResponse = averageFiringRatesBySpdf.arrayHoldResponse(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+arrayHoldResponsePeakFiringInRF = nan(nGoodUnits, 1);
+arrayHoldResponsePeakFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    arrayHoldResponsePeakFiringInRF(i) = arrayHoldResponse(i).byLocMax(inRFLocsGoodUnits(i));
+    arrayHoldResponsePeakFiringExRF(i) = arrayHoldResponse(i).byLocMax(exRFLocsGoodUnits(i));
+end
+arrayHoldResponsePeakFiringDiff = arrayHoldResponsePeakFiringInRF - arrayHoldResponsePeakFiringExRF;
+
+fprintf('Peak array response InRF: %0.3f Hz\n', mean(arrayHoldResponsePeakFiringInRF));
+fprintf('Peak array response ExRF: %0.3f Hz\n', mean(arrayHoldResponsePeakFiringExRF));
+
+frBounds = [0 max([max(arrayHoldResponsePeakFiringInRF) max(arrayHoldResponsePeakFiringExRF)])];
+maxAbsDiffFR = max(abs(arrayHoldResponsePeakFiringDiff));
+
+binStep = 2;
+histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
+histBinEdges = histXBounds(1):binStep:histXBounds(2);
+
+figure_tr_inch(10, 5);
+subaxis(1, 2, 1);
+hold on;
+plot(arrayHoldResponsePeakFiringInRF, arrayHoldResponsePeakFiringExRF, '.', 'MarkerSize', 20);
+plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
+axis equal;
+xlim(frBounds); 
+ylim(frBounds);
+xlabel('Mean Array Hold Response InRF (Hz)');
+ylabel('Mean Array Hold Response ExRF (Hz)');
+box off;
+
+subaxis(1, 2, 2); 
+hold on;
+histogram(arrayHoldResponsePeakFiringDiff, histBinEdges);
+origYLim = ylim();
+plot([0 0], origYLim, 'k', 'LineWidth', 2); 
+xlim(histXBounds);
+ylim(origYLim);
+xlabel('Array Hold Response InRF - ExRF (Hz)');
+ylabel('Number of Units');
+box off;
+
+meanArrayHoldResponsePeakFiringDiff = mean(arrayHoldResponsePeakFiringDiff);
+medianArrayHoldResponsePeakFiringDiff = median(arrayHoldResponsePeakFiringDiff);
+p = signrank(arrayHoldResponsePeakFiringDiff);
+fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
+        meanArrayHoldResponsePeakFiringDiff, medianArrayHoldResponsePeakFiringDiff, p, nGoodUnits);
+
+plotFileName = sprintf('%s/allSessions-arrayHoldResponsePeakDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% fano factor array response InRF < ExRF
+% note that this uses spike counts not spdf rates
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+arrayHoldResponse = averageFiringRatesByCount.arrayHoldResponse(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+arrayHoldResponseFanoFactorInRF = nan(nGoodUnits, 1);
+arrayHoldResponseFanoFactorExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    arrayHoldResponseFanoFactorInRF(i) = arrayHoldResponse(i).byLocSD(inRFLocsGoodUnits(i));
+    arrayHoldResponseFanoFactorExRF(i) = arrayHoldResponse(i).byLocSD(exRFLocsGoodUnits(i));
+end
+arrayHoldResponseFanoFactorDiff = arrayHoldResponseFanoFactorInRF - arrayHoldResponseFanoFactorExRF;
+
+fprintf('Fano Factor array response InRF: %0.3f Hz\n', mean(arrayHoldResponseFanoFactorInRF));
+fprintf('Fano Factor array response ExRF: %0.3f Hz\n', mean(arrayHoldResponseFanoFactorExRF));
+
+frBounds = [0 max([max(arrayHoldResponseFanoFactorInRF) max(arrayHoldResponseFanoFactorExRF)])];
+maxAbsDiffFR = max(abs(arrayHoldResponseFanoFactorDiff));
+
+binStep = 1;
+histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
+histBinEdges = histXBounds(1):binStep:histXBounds(2);
+
+figure_tr_inch(10, 5);
+subaxis(1, 2, 1);
+hold on;
+plot(arrayHoldResponseFanoFactorInRF, arrayHoldResponseFanoFactorExRF, '.', 'MarkerSize', 20);
+plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
+axis equal;
+xlim(frBounds); 
+ylim(frBounds);
+xlabel('Array Hold Fano Factor InRF (Hz)');
+ylabel('Array Hold Fano Factor ExRF (Hz)');
+box off;
+
+subaxis(1, 2, 2); 
+hold on;
+histogram(arrayHoldResponseFanoFactorDiff, histBinEdges);
+origYLim = ylim();
+plot([0 0], origYLim, 'k', 'LineWidth', 2); 
+xlim(histXBounds);
+ylim(origYLim);
+xlabel('Array Hold Fano Factor InRF - ExRF (Hz)');
+ylabel('Number of Units');
+box off;
+
+meanArrayHoldResponseFanoFactorDiff = mean(arrayHoldResponseFanoFactorDiff);
+medianArrayHoldResponseFanoFactorDiff = median(arrayHoldResponseFanoFactorDiff);
+p = signrank(arrayHoldResponseFanoFactorDiff);
+fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
+        meanArrayHoldResponseFanoFactorDiff, medianArrayHoldResponseFanoFactorDiff, p, nGoodUnits);
+
+plotFileName = sprintf('%s/allSessions-arrayHoldResponseFanoFactorDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% does attention-related difference in delay firing correlate with reduction of latency to array onset
+goodUnits = ~isnan(arrayHoldResponseLatencyInRF) & ~isnan(arrayHoldResponseLatencyExRF) & ...
+        arrayHoldResponseLatencyInRF <= maxLatency & arrayHoldResponseLatencyExRF <= maxLatency & ...
+        isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+cueTargetDelay = averageFiringRatesBySpdf.cueTargetDelay(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+cueTargetDelayFiringInRF = nan(nGoodUnits, 1);
+cueTargetDelayFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    cueTargetDelayFiringInRF(i) = cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
+    cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
+end
+cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
+arrayOnsetHoldLatencyDiff = arrayHoldResponseLatencyInRF(goodUnits) - arrayHoldResponseLatencyExRF(goodUnits);
+
+maxAbsDiffFR = max(abs(cueTargetDelayFiringDiff));
+frDiffBounds = maxAbsDiffFR * [-1 1];
+maxAbsDiffLat = max(abs(arrayOnsetHoldLatencyDiff));
+latDiffBounds = maxAbsDiffLat * [-1 1];
+
+figure_tr_inch(6, 6);
+hold on;
+plot(frDiffBounds, frDiffBounds, 'Color', 0.3*ones(3, 1)); 
+plot(frDiffBounds, [0 0], 'Color', zeros(3, 1)); 
+plot([0 0], frDiffBounds, 'Color', zeros(3, 1)); 
+plot(cueTargetDelayFiringDiff, arrayOnsetHoldLatencyDiff, '.', 'MarkerSize', 20, 'Color', lines(1));
+xlim(frDiffBounds);
+ylim(latDiffBounds);
+xlabel('Cue-Target Delay Firing InRF-ExRF (Hz)');
+ylabel('Array Hold Response Latency InRF-ExRF (s)');
+
+[r, p] = corr(cueTargetDelayFiringDiff, arrayOnsetHoldLatencyDiff, 'type', 'Spearman');
+fprintf('Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
+        r, p, nGoodUnits);
+    
+plotFileName = sprintf('%s/allSessions-cueTargetDelayFiringDiffVsArrayHoldResponseLatencyDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+    
+%% does attention-related difference in delay firing correlate with attention-related difference in array response
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+cueTargetDelay = averageFiringRatesBySpdf.cueTargetDelay(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+cueTargetDelayFiringInRF = nan(nGoodUnits, 1);
+cueTargetDelayFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    cueTargetDelayFiringInRF(i) = cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
+    cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
+end
+cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
+
+arrayHoldResponse = averageFiringRatesBySpdf.arrayHoldResponse(goodUnits);
+arrayHoldResponseMeanFiringInRF = nan(nGoodUnits, 1);
+arrayHoldResponseMeanFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    arrayHoldResponseMeanFiringInRF(i) = arrayHoldResponse(i).byLoc(inRFLocsGoodUnits(i));
+    arrayHoldResponseMeanFiringExRF(i) = arrayHoldResponse(i).byLoc(exRFLocsGoodUnits(i));
+end
+arrayHoldResponseMeanFiringDiff = arrayHoldResponseMeanFiringInRF - arrayHoldResponseMeanFiringExRF;
+
+maxAbsDiffFR = max([max(abs(cueTargetDelayFiringDiff)) max(abs(arrayHoldResponseMeanFiringDiff))]);
+frDiffBounds = maxAbsDiffFR * [-1 1];
+
+figure_tr_inch(6, 6);
+hold on;
+plot(frDiffBounds, frDiffBounds, 'Color', 0.3*ones(3, 1)); 
+plot(frDiffBounds, [0 0], 'Color', zeros(3, 1)); 
+plot([0 0], frDiffBounds, 'Color', zeros(3, 1)); 
+plot(cueTargetDelayFiringDiff, arrayHoldResponseMeanFiringDiff, '.', 'MarkerSize', 20, 'Color', lines(1));
+xlim(frDiffBounds);
+ylim(frDiffBounds);
+xlabel('Cue-Target Delay Firing InRF-ExRF (Hz)');
+ylabel('Array Hold Response Firing InRF-ExRF (Hz)');
+
+[r, p] = corr(cueTargetDelayFiringDiff, arrayHoldResponseMeanFiringDiff, 'type', 'Spearman');
+fprintf('Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
+        r, p, nGoodUnits);
+    
+plotFileName = sprintf('%s/allSessions-cueTargetDelayFiringDiffVsArrayHoldResponseFiringDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+    
+%% does attention-related reduction in latency of array response correlate with attention-related difference in array response
+maxLatency = 0.075;
+goodUnits = ~isnan(arrayHoldResponseLatencyInRF) & ~isnan(arrayHoldResponseLatencyExRF) & ...
+        arrayHoldResponseLatencyInRF <= maxLatency & arrayHoldResponseLatencyExRF <= maxLatency & ...
+        isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+arrayHoldResponse = averageFiringRatesBySpdf.arrayHoldResponse(goodUnits);
+arrayHoldResponseMeanFiringInRF = nan(nGoodUnits, 1);
+arrayHoldResponseMeanFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    arrayHoldResponseMeanFiringInRF(i) = arrayHoldResponse(i).byLoc(inRFLocsGoodUnits(i));
+    arrayHoldResponseMeanFiringExRF(i) = arrayHoldResponse(i).byLoc(exRFLocsGoodUnits(i));
+end
+arrayHoldResponseMeanFiringDiff = arrayHoldResponseMeanFiringInRF - arrayHoldResponseMeanFiringExRF;
+arrayOnsetHoldLatencyDiff = arrayHoldResponseLatencyInRF(goodUnits) - arrayHoldResponseLatencyExRF(goodUnits);
+
+maxAbsDiffFR = max(abs(arrayHoldResponseMeanFiringDiff));
+frDiffBounds = maxAbsDiffFR * [-1 1];
+maxAbsDiffLat = max(abs(arrayOnsetHoldLatencyDiff));
+latDiffBounds = maxAbsDiffLat * [-1 1];
+
+figure_tr_inch(6, 6);
+hold on;
+plot(frDiffBounds, frDiffBounds, 'Color', 0.3*ones(3, 1)); 
+plot(frDiffBounds, [0 0], 'Color', zeros(3, 1)); 
+plot([0 0], frDiffBounds, 'Color', zeros(3, 1)); 
+plot(arrayHoldResponseMeanFiringDiff, arrayOnsetHoldLatencyDiff, '.', 'MarkerSize', 20, 'Color', lines(1));
+xlim(frDiffBounds);
+ylim(latDiffBounds);
+xlabel('Array Hold Response Firing InRF-ExRF (Hz)');
+ylabel('Array Hold Response Latency InRF-ExRF (s)');
+
+[r, p] = corr(arrayHoldResponseMeanFiringDiff, arrayOnsetHoldLatencyDiff, 'type', 'Spearman');
+fprintf('Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
+        r, p, nGoodUnits);
+    
+plotFileName = sprintf('%s/allSessions-arrayHoldResponseFiringDiffVsArrayHoldResponseLatencyDiff-maxLat%0.3f-v%d.png', summaryDataDir, maxLatency, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% does latency of array response correlate with strength of array response
+goodUnits = ~isnan(arrayHoldResponseLatencyInRF) & ~isnan(arrayHoldResponseLatencyExRF) & ...
+        arrayHoldResponseLatencyInRF <= maxLatency & arrayHoldResponseLatencyExRF <= maxLatency & ...
+        isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+arrayHoldResponse = averageFiringRatesBySpdf.arrayHoldResponse(goodUnits);
+arrayHoldResponseMeanFiringInRF = nan(nGoodUnits, 1);
+arrayHoldResponseMeanFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    arrayHoldResponseMeanFiringInRF(i) = arrayHoldResponse(i).byLoc(inRFLocsGoodUnits(i));
+    arrayHoldResponseMeanFiringExRF(i) = arrayHoldResponse(i).byLoc(exRFLocsGoodUnits(i));
+end
+arrayHoldResponseLatencyInRFSub = arrayHoldResponseLatencyInRF(goodUnits);
+arrayHoldResponseLatencyExRFSub = arrayHoldResponseLatencyExRF(goodUnits);
+
+frBounds = [0 max([max(arrayHoldResponseMeanFiringInRF) max(arrayHoldResponseMeanFiringExRF)])];
+latBounds = [0 0.125];
+cols = lines(2);
+
+figure_tr_inch(6, 6);
+hold on;
+plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
+plot(frBounds, [0 0], 'Color', zeros(3, 1)); 
+plot([0 0], latBounds, 'Color', zeros(3, 1)); 
+h1 = plot(arrayHoldResponseMeanFiringInRF, arrayHoldResponseLatencyInRFSub, '.', 'MarkerSize', 20, 'Color', cols(1,:));
+h2 = plot(arrayHoldResponseMeanFiringExRF, arrayHoldResponseLatencyExRFSub, '.', 'MarkerSize', 20, 'Color', cols(2,:));
+xlim(frBounds);
+ylim(latBounds);
+xlabel('Array Hold Response Firing (Hz)');
+ylabel('Array Hold Response Latency (s)');
+legend([h1 h2], {'InRF', 'ExRF'}, 'Location', 'NorthEast');
+
+[r, p] = corr(arrayHoldResponseMeanFiringInRF, arrayHoldResponseLatencyInRFSub, 'type', 'Spearman');
+fprintf('InRF: Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
+        r, p, nGoodUnits);
+[r, p] = corr(arrayHoldResponseMeanFiringExRF, arrayHoldResponseLatencyExRFSub, 'type', 'Spearman');
+fprintf('ExRF: Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
+        r, p, nGoodUnits);
+    
+plotFileName = sprintf('%s/allSessions-arrayHoldResponseFiringVsArrayHoldResponseLatency-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
