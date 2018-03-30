@@ -21,6 +21,10 @@ end
 if isfield(D, 'adjLfps')
     lfpIndicesToKeep = false(1, size(D.adjLfps, 2));
 end
+if isfield(D, 'adjDirects')
+    directIndicesToKeep = false(1, size(D.adjDirects, 2));
+end
+
 for j = 1:numel(blockInds)
     blockStartTime = D.blockStartTimes(blockInds(j));
     blockStopTime = D.blockStopTimes(blockInds(j));
@@ -42,6 +46,10 @@ for j = 1:numel(blockInds)
     if isfield(D, 'adjLfps')
         blockLfpIndices = max(1, floor(blockStartTime * D.lfpFs)):ceil(blockStopTime * D.lfpFs);
         lfpIndicesToKeep(blockLfpIndices) = true;
+    end
+    if isfield(D, 'adjDirects')
+        blockDirectIndices = max(1, floor(blockStartTime * D.directFs)):ceil(blockStopTime * D.directFs);
+        directIndicesToKeep(blockDirectIndices) = true;
     end
 end
 
@@ -67,5 +75,10 @@ end
 if isfield(D, 'adjLfps')
     D.adjLfps(:,~lfpIndicesToKeep) = NaN;
     % TODO special case for adjLfps -- make the matrix smaller and adjust
+    % the event times accordingly
+end
+if isfield(D, 'adjDirects')
+    D.adjDirects(:,~directIndicesToKeep) = NaN;
+    % TODO special case for adjDirects -- make the matrix smaller and adjust
     % the event times accordingly
 end

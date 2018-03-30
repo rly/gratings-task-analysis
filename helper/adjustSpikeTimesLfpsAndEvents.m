@@ -24,3 +24,8 @@ if isfield(D, 'adjLfps')
     D.adjLfps(:,ceil(lastBlockStopTime * D.lfpFs):end) = [];
     D.adjLfps(:,1:floor(firstBlockStartTime * D.lfpFs)) = [];
 end
+
+if isfield(D, 'adjDirects')
+    D.adjDirects(:,ceil(lastBlockStopTime * D.directFs):end) = [];
+    D.adjDirects(:,1:floor(firstBlockStartTime * D.directFs)) = [];
+end
