@@ -1,5 +1,5 @@
 function [channelDataNorm,eventOnsetClean,isEventOutlier,isNoisyChannel] = preprocessLfps(adjLfps, Fs, channelNames, eventOnset, ...
-        processedDataDir, blockName, hiCutoffFreq, rfMappingMode, v)
+        processedDataDir, blockName, hiCutoffFreq, rfMappingMode, v, outlierCheckWindowOffset)
 % remove events with outlier data and apply CAR and low-pass filtering to adjLfps
 
 doOutlierCheckPlot = 1;
@@ -8,7 +8,6 @@ maxAbsNonOutlier = 0.5;
 warningSDByChannelLarge = 2.5;
 outlierMaxSDStep1 = 8; % first-pass threshold before LPF
 outlierMaxSDStep2 = 6; % second-pass threshold after LPF
-outlierCheckWindowOffset = [-0.25 0.3]; % seconds around event
 
 isNanOrig = isnan(adjLfps); % track nans in original data
 nEvents = numel(eventOnset);

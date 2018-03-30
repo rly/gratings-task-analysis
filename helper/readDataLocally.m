@@ -7,5 +7,6 @@ muaDataDirRoot = ['C:\Users\Ryan\Documents\MATLAB\gratings-task-data\' sessionNa
 recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 channelsToLoad = 1:32;
 muaChannelsToLoad = 1:32;
+lfpChannelsToLoad = 1:32;
 isZeroDistractors = 0;
 numRandomizations = 2;

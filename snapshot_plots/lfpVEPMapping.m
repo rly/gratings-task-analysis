@@ -72,8 +72,9 @@ D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.a
 
 % TODO use isEventOutlier
 hiCutoffFreq = 100;
+outlierCheckWindowOffset = [-0.25 0.3];
 [channelDataNorm,flashEventsClean,isEventOutlier,isNoisyChannel] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, origFlashEvents, ...
-        processedDataDir, blockName, hiCutoffFreq, 1, v);
+        processedDataDir, blockName, hiCutoffFreq, 1, v, outlierCheckWindowOffset);
 % channelDataNorm = D.adjLfpsClean;
 % flashEventsClean = origFlashEvents;
 D.adjLfps = [];

@@ -196,8 +196,9 @@ plotNumSpikesByChannel(channelsToLoad, D.allMUAStructs, processedDataDir, blockN
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
 hiCutoffFreq = 50;
+outlierCheckWindowOffset = [-0.25 0.3];
 [channelDataNorm,flashOnsetsClean,isEventOutlier,isNoisyChannel] = preprocessLfps(D.adjLfpsClean, ...
-        Fs, D.lfpNames, flashOnsets, processedDataDir, blockName, hiCutoffFreq, 1, v);
+        Fs, D.lfpNames, flashOnsets, processedDataDir, blockName, hiCutoffFreq, 1, v, outlierCheckWindowOffset);
 D.adjLfps = [];
 D.adjLfpsClean = [];
 for j = 1:nChannels
