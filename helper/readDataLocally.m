@@ -1,6 +1,6 @@
 clear;
-sessionName = 'M20170311';
-sessionInd = 7;
+sessionName = 'M20170127';
+sessionInd = 1;
 processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
 dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\';
 muaDataDirRoot = ['C:\Users\Ryan\Documents\MATLAB\gratings-task-data\' sessionName];

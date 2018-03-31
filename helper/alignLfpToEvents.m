@@ -1,15 +1,16 @@
-function [aligned,t] = alignLfpToEvents(data, events, Fs, windowOffset)
+function timeLockStruct = alignLfpToEvents(data, events, Fs, timeLockStruct)
 % data: nChannel x nSample
 
-nwinl = round(windowOffset(1) * Fs);
-nwinr = round(windowOffset(2) * Fs) - 1;
+nwinl = round(timeLockStruct.windowOffset(1) * Fs);
+nwinr = round(timeLockStruct.windowOffset(2) * Fs) - 1;
 eventIndex = round(events * Fs);
 relIndex = nwinl:nwinr;
-t = relIndex / Fs;
+timeLockStruct.t = relIndex / Fs;
+timeLockStruct.Fs = Fs;
 
 % nChannel x nEvent x nSample
-aligned = nan(size(data, 1), numel(events), numel(t));
+timeLockStruct.aligned = nan(size(data, 1), numel(events), numel(timeLockStruct.t));
 for n = 1:numel(events)
     indx = eventIndex(n) + relIndex;
-    aligned(:,n,:) = data(:,indx);
+    timeLockStruct.lfp(:,n,:) = data(:,indx);
 end

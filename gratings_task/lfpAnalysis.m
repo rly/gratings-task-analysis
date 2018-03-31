@@ -1,4 +1,4 @@
-
+% function lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, isZeroDistractors)
 % 325ms fixation before pre-cue marker
 % 25-125ms fixation between pre-cue marker and cue onset
 % 100ms cue onset to cue offset
@@ -15,157 +15,92 @@
 % evt7 = target dim
 % evt8 = juice
 
-clear;
-processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
-dataDirRoot = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-data/';
-logRoot = 'gratings_task_eye_tracking_';
+v = 11;
+tic;
 
-v = 5;
-sessionIndAll = 2;
-for k = 1:numel(sessionIndAll)
-    clearvars -except processedDataRootDir dataDirRoot logRoot sessionIndAll k v % cheap hack
-    sessionInd = sessionIndAll(k);
+fprintf('\n-------------------------------------------------------\n');
+fprintf('Gratings Task LFP Analysis\n');
+fprintf('Session index: %d\n', sessionInd);
+fprintf('LFP Channel to Load: %d\n', lfpChannelsToLoad);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Data root dir: %s\n', dataDirRoot);
+fprintf('MUA data root dir: %s\n', muaDataDirRoot);
+fprintf('Is zero distractors: %s\n', isZeroDistractors);
+fprintf('Version: %d\n', v);
+fprintf('------------------------\n');
 
 nLoc = 4;
 
+%% input check
+% assert(numel(lfpChannelsToLoad) == 1);
+assert(numel(lfpChannelsToLoad) > 1);
+assert(numel(lfpChannelsToLoad) <= 32);
+
 %% load recording information
-recordingInfo = readRecordingInfo();
-struct2var(recordingInfo(sessionInd));
-pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, pl2FileName);
 
-%% load recording data
-fprintf('\n-------------------------------------------------------\n');
-fprintf('Gratings Task Analysis\n');
-fprintf('Loading %s...\n', pl2FilePath);
-tic;
-isLoadSpikes = 1;
-isLoadLfp = 1;
-isLoadSpkc = 0;
-isLoadDirect = 1;
-D = loadPL2(pl2FilePath, sessionName, areaName, isLoadSpikes, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        spikeChannelPrefix, spikeChannelsToLoad, lfpChannelsToLoad, spkcChannelsToLoad, directChannelsToLoad); 
-
-processedDataDir = sprintf('%s/%s', processedDataRootDir, sessionName);
-if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
+if isZeroDistractors
+    scriptName = 'LFP_GRATINGS_0D';
+    taskName = 'GRATINGS_0D';
+else
+    scriptName = 'LFP_GRATINGS';
+    taskName = 'GRATINGS';
 end
-fprintf('... done (%0.2f s).\n', toc);
 
-assert(numel(blockNames) == numel(D.blockStartTimes));
-blockName = strjoin(blockNames(gratingsTask3DIndices), '-');
-fprintf('Analyzing block names: %s.\n', blockName);
+[R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
+        dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, ...
+        taskName, scriptName, 1, 1);
+sessionName = R.sessionName;
+areaName = R.areaName;
 
-%% remove spike and event times not during task to save memory
-D = trimSpikeTimesAndEvents(D, gratingsTask3DIndices);
-% D = adjustSpikeTimesLfpsAndEvents(D, gratingsTask3DIndices);
-
-%%  
 fprintf('Processing %s...\n', sessionName);
 
 dataDir = sprintf('%s/%s/', dataDirRoot, sessionName);
-logDir = sprintf('%s/%s', dataDir, sessionName(2:end));
-load('params.mat');
+gratingsTaskLogDir = sprintf('%s/%s', dataDir, sessionName(2:end));
 
 % process events and sort them into different conditions
-UE = getUsefulEvents2(logDir, gratingsTask3DLogIndices, 4, D);
+UE = getUsefulEvents2(gratingsTaskLogDir, R.gratingsTaskLogIndices, 4, D);
 
-totalTimeOverall = sum(D.blockStopTimes(gratingsTask3DIndices) - D.blockStartTimes(gratingsTask3DIndices));
-minFiringRateOverall = 0.2;
-minFiringRate = 1;
+plotFileNamePrefix = sprintf('%s_%s_ch%d-ch%d_%s-FPall', sessionName, areaName, lfpChannelsToLoad([1 end]), blockName);
 
-%% \
-fprintf('-------------------------------------------------------------\n');
-
+%% preprocess LFPs
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
 
-plotFileNamePrefix = sprintf('%s_%s_%s_FPall', sessionName, areaName, blockName);
+D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, lfpChannelsToLoad, Fs, D.allMUAStructs);
 
-adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, Fs, D.allSpikeStructs);
+hiCutoffFreq = 100;
+outlierCheckWindowOffset = [-0.25 0.3];
+[channelDataNorm,isTrialOutlier,isNoisyChannel] = preprocessLfpsGratingsTask(D.adjLfpsClean, Fs, D.lfpNames, UE, ...
+        processedDataDir, blockName, hiCutoffFreq, v); % TODO USE isTrialOutlier
 D.adjLfps = [];
-
-%% do common average reference first
-ref = 'RAW';
-if strcmp(ref, 'CAR')
-    adjLfpsRef = adjLfpsClean - nanmean(adjLfpsClean, 1);
-else
-    adjLfpsRef = adjLfpsClean;
-end
-% clear adjLfpsClean;
-
-%% remove obvious outliers and spike/lever artifacts before low-pass 
-% filtering further
-outlierMaxSDStep1 = 6;
-
-fprintf('Removing major outliers and spike/lever artifacts...\n');
-for j = 1:nChannels
-    fprintf('\tProcessing %s: ', D.lfpNames{j});
-    meanAdjLfp = nanmean(adjLfpsRef(j,:));
-    sdAdjLfp = nanstd(adjLfpsRef(j,:));
-    extremeIndices = adjLfpsRef(j,:) > meanAdjLfp + outlierMaxSDStep1 * sdAdjLfp | ...
-            adjLfpsRef(j,:) < meanAdjLfp - outlierMaxSDStep1 * sdAdjLfp;
-    if sum(extremeIndices) > 0
-        fprintf('Detected %d outlier time points because voltage is too extreme (> %0.1f SDs). Replacing them with mean.', ...
-                sum(extremeIndices), outlierMaxSDStep1);
-    end
-    fprintf('\n');
-    % TODO probably bad just to zero it out instead of smoothly dealing
-    % with it or NaNing it. fix this with filtering or case by case
-    adjLfpsRef(j,extremeIndices) = meanAdjLfp; 
-end
-clear extremeIndices;
-
-%% low-pass filter data even further
-% ideally don't low-pass at 300 and then again at another freq
-% fprintf('Low-pass filtering...\n');
-% hiCutoffFreqCustom = 100; % low-pass filter at 100 Hz
-% bFirLowPassCustom = fir1(3*fix(Fs/hiCutoffFreqCustom), hiCutoffFreqCustom/(Fs/2), 'low');
-% adjLfpsCAR(isnan(adjLfpsCAR)) = 0; % zero out nans
-% adjLfpsLP = filtfilt(bFirLowPassCustom, 1, adjLfpsCAR')';
-% clear adjLfpsCAR;
-
-
-% TODO low pass filter, remove line noise, remove outliers 
-% [~,channelDataNorm,flashOnsetsClean,isEventOutlier] = preprocessLfps(D.adjLfpsClean, Fs, D.lfpNames, flashOnsets);
-% D.adjLfps = [];
-% D.adjLfpsClean = [];
-
-%%
-% for j = 1:nChannels
-%     fprintf('Processing %s (%d/%d = %d%%)... \n', D.lfpNames{j}, j, ...
-%             nChannels, round(j/nChannels*100));
-%     lfp = adjLfpsCAR(j,:)';
-%     saveFileName = sprintf('%s/%s-%s-evokedLfps-v%d.mat', ...
-%             processedDataDir, D.lfpNames{j}, blockName, v);
-%     computeEvokedLfps(saveFileName, lfp, Fs, nLoc, UE);
-% end
-
-%%
-stop
+D.adjLfpsClean = [];
+D.adjDirects = [];
 
 %% save evoked file
-saveFileName = sprintf('%s/%s-allFP-%s-evokedLfps-v%d.mat', ...
-        processedDataDir, blockName, ref, v);
-computeEvokedLfps(saveFileName, adjLfpsRef, Fs, nLoc, UE);
+saveFileName = sprintf('%s/%s-allFP-evokedLfps-v%d.mat', ...
+        processedDataDir, blockName, v);
+computeEvokedLfps(saveFileName, channelDataNorm, Fs, nLoc, UE);
 
 %% load evoked file
-saveFileName = sprintf('%s/%s-allFP-%s-evokedLfps-v%d.mat', ...
-        processedDataDir, blockName, ref, v);
+% clear channelDataNorm;
+saveFileName = sprintf('%s/%s-allFP-evokedLfps-v%d.mat', ...
+        processedDataDir, blockName, v);
 EL = load(saveFileName);
 
 %% combined line plot
 cols = lines(nLoc);
-yScale = 100;
+yScale = 1;
 ySep = -1;
 xBounds = [-0.4 0.4];
 yBounds = [(nChannels+2)*ySep -1*ySep];
 
 baselineWindowOffset = [-0.3 0];
-baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetT, baselineWindowOffset);
+baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
 preCueBaseline = nan(nChannels, nLoc);
 for j = 1:nChannels    
     for m = 1:nLoc
-        preCueBaseline(j,m) = squeeze(mean(mean(EL.cueOnsetLfp(j,UE.cueLoc == m,baselineInd), 2), 3));
+        preCueBaseline(j,m) = squeeze(mean(mean(EL.cueOnsetLfp.lfp(j,UE.cueLoc == m,baselineInd), 2), 3));
     end
 end
 
@@ -175,7 +110,7 @@ hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
     for m = 1:nLoc
-        plot(EL.enterFixationT, (squeeze(mean(EL.enterFixationLfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.enterFixationLfp.t, (squeeze(mean(EL.enterFixationLfp.lfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
     end
 end
 xlim(xBounds);
@@ -192,7 +127,7 @@ hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
     for m = 1:nLoc
-        plot(EL.cueOnsetT, (squeeze(mean(EL.cueOnsetLfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.cueOnsetLfp.t, (squeeze(mean(EL.cueOnsetLfp.lfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
     end
 end
 xlim(xBounds);
@@ -208,7 +143,7 @@ hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
     for m = 1:nLoc
-        plot(EL.arrayOnsetT, (squeeze(mean(EL.arrayOnsetHoldLfp(j,UE.cueLocHold == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.arrayOnsetLfp.t, (squeeze(mean(EL.arrayOnsetHoldLfp.lfp(j,UE.cueLocHold == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
     end
 end
 xlim(xBounds);
@@ -224,7 +159,7 @@ hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
     for m = 1:nLoc
-        plot(EL.targetDimT, (squeeze(mean(EL.targetDimLfp(j,UE.cueLocHold == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.targetDimLfp.t, (squeeze(mean(EL.targetDimLfp.lfp(j,UE.cueLocHold == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
     end
 end
 xlim(xBounds);
@@ -240,7 +175,7 @@ hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
     for m = 1:nLoc
-        plot(EL.exitFixationT, (squeeze(mean(EL.exitFixationLfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.exitFixationLfp.t, (squeeze(mean(EL.exitFixationLfp.lfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:));
     end
 end
 xlim(xBounds);
@@ -255,19 +190,19 @@ axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on');
 title(axBig, sprintf('Session %s', sessionName), 'FontSize', 14);
 
-plotFileName = sprintf('%s/%s-allFP-evokedLfps-%s-combLinePlot-v%d.png', ...
-        processedDataDir, blockName, ref, v);
+plotFileName = sprintf('%s/%s-allFP-evokedLfps-combLinePlot-v%d.png', ...
+        processedDataDir, blockName, v);
 export_fig(plotFileName, '-nocrop');
 
 %% separated line plot
 cols = lines(4);
-yScale = 100;
+yScale = 1;
 ySep = -1;
 xBounds = [-0.4 0.4];
 yBounds = [(nChannels+2)*ySep -1*ySep];
 
 baselineWindowOffset = [-0.3 0];
-baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetT, baselineWindowOffset);
+baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
 
 figure_tr_inch(20, 10);
 clf;
@@ -275,13 +210,13 @@ set(gcf, 'renderer', 'painters');
 
 for m = 1:nLoc
     
-preCueBaseline = squeeze(mean(mean(EL.cueOnsetLfp(:,UE.cueLoc == m,baselineInd), 2), 3));
+preCueBaseline = squeeze(mean(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,baselineInd), 2), 3));
 
 subaxis(nLoc, 5, (m-1)*5 + 1, 'SH', 0.02, 'MT', 0.06);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
-        plot(EL.enterFixationT, (squeeze(mean(EL.enterFixationLfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.enterFixationLfp.t, (squeeze(mean(EL.enterFixationLfp.lfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
 end
 xlim(xBounds);
 ylim(yBounds);
@@ -300,7 +235,7 @@ subaxis(nLoc, 5, (m-1)*5 + 2);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
-        plot(EL.cueOnsetT, (squeeze(mean(EL.cueOnsetLfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.cueOnsetLfp.t, (squeeze(mean(EL.cueOnsetLfp.lfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
 end
 xlim(xBounds);
 ylim(yBounds);
@@ -318,7 +253,7 @@ subaxis(nLoc, 5, (m-1)*5 + 3);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
-        plot(EL.arrayOnsetT, (squeeze(mean(EL.arrayOnsetHoldLfp(j,UE.cueLocHold == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.arrayOnsetLfp.t, (squeeze(mean(EL.arrayOnsetHoldLfp.lfp(j,UE.cueLocHold == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
 end
 xlim(xBounds);
 ylim(yBounds);
@@ -336,7 +271,7 @@ subaxis(nLoc, 5, (m-1)*5 + 4);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
-        plot(EL.targetDimT, (squeeze(mean(EL.targetDimLfp(j,UE.cueLocHold == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.targetDimLfp.t, (squeeze(mean(EL.targetDimLfp.lfp(j,UE.cueLocHold == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
 end
 xlim(xBounds);
 ylim(yBounds);
@@ -354,7 +289,7 @@ subaxis(nLoc, 5, (m-1)*5 + 5);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
-        plot(EL.exitFixationT, (squeeze(mean(EL.exitFixationLfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
+        plot(EL.exitFixationLfp.t, (squeeze(mean(EL.exitFixationLfp.lfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
 end
 xlim(xBounds);
 ylim(yBounds);
@@ -374,18 +309,18 @@ axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on');
 title(axBig, sprintf('Session %s', sessionName), 'FontSize', 14);
 
-plotFileName = sprintf('%s/%s-allFP-evokedLfps-%s-sepLinePlot-v%d.png', ...
-        processedDataDir, blockName, ref, v);
+plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepLinePlot-v%d.png', ...
+        processedDataDir, blockName, v);
 export_fig(plotFileName, '-nocrop');
 
 %% image plot
 
 xBounds = [-0.4 0.4];
 yBounds = [1 nChannels];
-cBounds = [-0.02 0.02];
+cBounds = [-1 1];%[-0.02 0.02];
 
 baselineWindowOffset = [-0.3 0];
-baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetT, baselineWindowOffset);
+baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
 
 figure_tr_inch(20, 10); 
 clf;
@@ -393,11 +328,11 @@ set(gcf, 'renderer', 'painters');
 
 for m = 1:nLoc
     
-preCueBaseline = squeeze(mean(mean(EL.cueOnsetLfp(:,UE.cueLoc == m,baselineInd), 2), 3));
+preCueBaseline = squeeze(mean(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,baselineInd), 2), 3));
     
 subaxis(nLoc, 5, (m-1)*5 + 1, 'SH', 0.02, 'MT', 0.06);
 hold on;
-imagesc(EL.enterFixationT, 1:nChannels, squeeze(mean(EL.enterFixationLfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
+imagesc(EL.enterFixationLfp.t, 1:nChannels, squeeze(mean(EL.enterFixationLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 set(gca, 'YDir', 'reverse');
 xlim(xBounds);
@@ -414,7 +349,7 @@ ylabel('Channel Number');
 
 subaxis(nLoc, 5, (m-1)*5 + 2);
 hold on;
-imagesc(EL.cueOnsetT, 1:nChannels, squeeze(mean(EL.cueOnsetLfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
+imagesc(EL.cueOnsetLfp.t, 1:nChannels, squeeze(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 set(gca, 'YDir', 'reverse');
 xlim(xBounds);
@@ -430,7 +365,7 @@ end
 
 subaxis(nLoc, 5, (m-1)*5 + 3);
 hold on;
-imagesc(EL.arrayOnsetT, 1:nChannels, squeeze(mean(EL.arrayOnsetHoldLfp(:,UE.cueLocHold == m,:), 2)) - preCueBaseline);
+imagesc(EL.arrayOnsetLfp.t, 1:nChannels, squeeze(mean(EL.arrayOnsetHoldLfp.lfp(:,UE.cueLocHold == m,:), 2)) - preCueBaseline);
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 set(gca, 'YDir', 'reverse');
 xlim(xBounds);
@@ -446,7 +381,7 @@ end
 
 subaxis(nLoc, 5, (m-1)*5 + 4);
 hold on;
-imagesc(EL.targetDimT, 1:nChannels, squeeze(mean(EL.targetDimLfp(:,UE.cueLocHold == m,:), 2)) - preCueBaseline);
+imagesc(EL.targetDimLfp.t, 1:nChannels, squeeze(mean(EL.targetDimLfp.lfp(:,UE.cueLocHold == m,:), 2)) - preCueBaseline);
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 set(gca, 'YDir', 'reverse');
 xlim(xBounds);
@@ -462,7 +397,7 @@ end
 
 subaxis(nLoc, 5, (m-1)*5 + 5);
 hold on;
-imagesc(EL.exitFixationT, 1:nChannels, squeeze(mean(EL.exitFixationLfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
+imagesc(EL.exitFixationLfp.t, 1:nChannels, squeeze(mean(EL.exitFixationLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 set(gca, 'YDir', 'reverse');
 xlim(xBounds);
@@ -482,10 +417,12 @@ axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on');
 title(axBig, sprintf('Session %s', sessionName), 'FontSize', 14);
 
-plotFileName = sprintf('%s/%s-allFP-evokedLfps-%s-sepColorPlot-v%d.png', ...
-        processedDataDir, blockName, ref, v);
+plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepColorPlot-v%d.png', ...
+        processedDataDir, blockName, v);
 export_fig(plotFileName, '-nocrop');
 
+stop
+% below code has not been updated after the latest refactoring of EL vars
 
 %% image plot, bipolar reference
 
@@ -1320,5 +1257,4 @@ for channelInd = 2:31
             processedDataDir, blockName, channelInd, unitIDChar, ref, v);
     export_fig(plotFileName, '-nocrop');
     end
-end
 end
