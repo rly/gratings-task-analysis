@@ -760,6 +760,7 @@ export_fig(plotFileName, '-nocrop');
 
 %% Fano Factor cue target delay InRF ? ExRF
 % note that this uses spike counts not spdf rates
+% TODO match firing rates (see Mitchell et al 2007)
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
 nGoodUnits = sum(goodUnits);
 % unboxing
@@ -769,8 +770,8 @@ exRFLocsGoodUnits = exRFLocs(goodUnits);
 cueTargetDelayFanoFactorInRF = nan(nGoodUnits, 1);
 cueTargetDelayFanoFactorExRF = nan(nGoodUnits, 1);
 for i = 1:nGoodUnits
-    cueTargetDelayFanoFactorInRF(i) = cueTargetDelay(i).byLocSD(inRFLocsGoodUnits(i));
-    cueTargetDelayFanoFactorExRF(i) = cueTargetDelay(i).byLocSD(exRFLocsGoodUnits(i));
+    cueTargetDelayFanoFactorInRF(i) = cueTargetDelay(i).byLocSD(inRFLocsGoodUnits(i))^2 / cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
+    cueTargetDelayFanoFactorExRF(i) = cueTargetDelay(i).byLocSD(exRFLocsGoodUnits(i))^2 / cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
 end
 cueTargetDelayFanoFactorDiff = cueTargetDelayFanoFactorInRF - cueTargetDelayFanoFactorExRF;
 
@@ -998,8 +999,9 @@ plotFileName = sprintf('%s/allSessions-arrayHoldResponsePeakDiff-v%d.png', summa
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% fano factor array response InRF < ExRF
+%% Fano factor array response InRF < ExRF
 % note that this uses spike counts not spdf rates
+% TODO match firing rates (see Mitchell et al 2007)
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
 nGoodUnits = sum(goodUnits);
 % unboxing
@@ -1009,8 +1011,8 @@ exRFLocsGoodUnits = exRFLocs(goodUnits);
 arrayHoldResponseFanoFactorInRF = nan(nGoodUnits, 1);
 arrayHoldResponseFanoFactorExRF = nan(nGoodUnits, 1);
 for i = 1:nGoodUnits
-    arrayHoldResponseFanoFactorInRF(i) = arrayHoldResponse(i).byLocSD(inRFLocsGoodUnits(i));
-    arrayHoldResponseFanoFactorExRF(i) = arrayHoldResponse(i).byLocSD(exRFLocsGoodUnits(i));
+    arrayHoldResponseFanoFactorInRF(i) = arrayHoldResponse(i).byLocSD(inRFLocsGoodUnits(i))^2 / arrayHoldResponse(i).byLoc(inRFLocsGoodUnits(i));
+    arrayHoldResponseFanoFactorExRF(i) = arrayHoldResponse(i).byLocSD(exRFLocsGoodUnits(i))^2 / arrayHoldResponse(i).byLoc(exRFLocsGoodUnits(i));
 end
 arrayHoldResponseFanoFactorDiff = arrayHoldResponseFanoFactorInRF - arrayHoldResponseFanoFactorExRF;
 
