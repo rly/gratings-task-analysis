@@ -223,6 +223,9 @@ isSignificantSelectivityArrayHoldResponseDec = isCell & isSignificantSelectivity
 isSignificantSelectivityTargetDimDelayInc = isCell & isSignificantSelectivity(:,4) & diffRates(:,3) > 0;
 isSignificantSelectivityTargetDimDelayDec = isCell & isSignificantSelectivity(:,4) & diffRates(:,3) < 0;
 
+isInRFP1 = isCell & inRFLocs == 1;
+isInRFP3 = isCell & inRFLocs == 3;
+
 isInPulvinar = strcmp(localization, 'vPul') | strcmp(localization, 'dPul');
 % strcmp(localization, 'PLd') | strcmp(localization, 'PLv') | strcmp(localization, 'PM') | strcmp(localization, 'PI');
 
@@ -438,9 +441,18 @@ fprintf('\n');
 
 fprintf('-----------------------------\n');
 precondition = isInPulvinar & isSignificantCueResponseInc;
-
-
-
+fprintf('Of the %d units in the pulvinar that show significantly increased cue response compared to baseline:\n', sum(precondition));
+fprintf('\t%d (%d%%) has InRF P1\n', sum(precondition & isInRFP1), ...
+        round(sum(precondition & isInRFP1)/sum(precondition) * 100));
+fprintf('\t%d (%d%%) has InRF P3\n', sum(precondition & isInRFP3), ...
+        round(sum(precondition & isInRFP3)/sum(precondition) * 100));
+precondition = isInPulvinar & isSignificantCueResponseDec;
+fprintf('Of the %d units in the pulvinar that show significantly decreased cue response compared to baseline:\n', sum(precondition));
+fprintf('\t%d (%d%%) has InRF P1\n', sum(precondition & isInRFP1), ...
+        round(sum(precondition & isInRFP1)/sum(precondition) * 100));
+fprintf('\t%d (%d%%) has InRF P3\n', sum(precondition & isInRFP3), ...
+        round(sum(precondition & isInRFP3)/sum(precondition) * 100));
+    
 %%
 figure_tr_inch(8, 8);
 plot(earlyPreExitFixationSlope, latePreExitFixationSlope, '.', 'MarkerSize', 20);
