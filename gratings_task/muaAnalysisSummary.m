@@ -128,8 +128,8 @@ for i = 1:nSessions
     arrayHoldResponseLatencyExRF(currentUnitInds) = S.arrayHoldResponseLatencyExRF;
     arrayResponseLatencyInRF(currentUnitInds) = S.arrayResponseLatencyInRF;
     arrayResponseLatencyExRF(currentUnitInds) = S.arrayResponseLatencyExRF;
-    targetDimResponseLatencyInRF(currentUnitInds) = S.targetDimLatencyInRF;
-    targetDimResponseLatencyExRF(currentUnitInds) = S.targetDimLatencyExRF;
+    targetDimResponseLatencyInRF(currentUnitInds) = S.targetDimResponseLatencyInRF;
+    targetDimResponseLatencyExRF(currentUnitInds) = S.targetDimResponseLatencyExRF;
     
     fn = fieldnames(S.averageFiringRatesBySpdf);
     for j = 1:numel(fn)
@@ -435,6 +435,10 @@ fprintf('\t%d (%d%%) show significant selectivity during the array hold response
 fprintf('\t%d (%d%%) show significant selectivity during the target-dim delay\n', sum(precondition & isSignificantSelectivityTargetDimDelay), ...
         round(sum(precondition & isSignificantSelectivityTargetDimDelay)/sum(precondition) * 100));
 fprintf('\n');
+
+fprintf('-----------------------------\n');
+precondition = isInPulvinar & isSignificantCueResponseInc;
+
 
 
 %%
