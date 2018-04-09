@@ -179,7 +179,7 @@ for j = 1:nUnits
                 assert(any(isSig));
                 maxRespDiffFromBaseline = max(abs(respDiffFromBaseline(isSig)));
                 assert(~isempty(maxRespDiffFromBaseline));
-                cueResponseVsBootstrapBaselineDirection(unitCount) = maxRespDiffFromBaseline > 0;
+                cueResponseVsBootstrapBaselineDirection(unitCount) = sign(maxRespDiffFromBaseline);
                 clear respDiffFromBaseline isSig maxRespDiffFromBaseline;
             else
                 cueResponseVsBootstrapBaselineDirection(unitCount) = 0;
@@ -190,7 +190,7 @@ for j = 1:nUnits
                 assert(any(isSig));
                 maxRespDiffFromBaseline = max(abs(respDiffFromBaseline(isSig)));
                 assert(~isempty(maxRespDiffFromBaseline));
-                preExitFixationVsBootstrapBaselineDirection(unitCount) = maxRespDiffFromBaseline > 0;
+                preExitFixationVsBootstrapBaselineDirection(unitCount) = sign(maxRespDiffFromBaseline);
                 clear respDiffFromBaseline isSig maxRespDiffFromBaseline;
             else
                 preExitFixationVsBootstrapBaselineDirection(unitCount) = 0;
