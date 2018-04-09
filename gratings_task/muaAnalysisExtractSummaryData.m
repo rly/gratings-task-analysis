@@ -177,10 +177,11 @@ for j = 1:nUnits
                 respDiffFromBaseline = ES.averageFiringRatesBySpdf.cueResponse.byLoc - ES.meanBootstrappedMeanPreCueBaselines;
                 isSig = ES.cueResponsePValueByBootstrapBaselineSpdfByLoc < statAlpha / nLocUsed;
                 assert(any(isSig));
-                maxRespDiffFromBaseline = max(abs(respDiffFromBaseline(isSig)));
-                assert(~isempty(maxRespDiffFromBaseline));
-                cueResponseVsBootstrapBaselineDirection(unitCount) = sign(maxRespDiffFromBaseline);
-                clear respDiffFromBaseline isSig maxRespDiffFromBaseline;
+                respDiffFromBaselineSig = respDiffFromBaseline(isSig);
+                [~,maxInd] = max(abs(respDiffFromBaselineSig));
+                assert(~isempty(maxInd));
+                cueResponseVsBootstrapBaselineDirection(unitCount) = sign(respDiffFromBaselineSig(maxInd));
+                clear respDiffFromBaseline isSig respDiffFromBaselineSig maxInd;
             else
                 cueResponseVsBootstrapBaselineDirection(unitCount) = 0;
             end
@@ -188,10 +189,11 @@ for j = 1:nUnits
                 respDiffFromBaseline = ES.averageFiringRatesBySpdf.preExitFixation.byLoc - ES.meanBootstrappedMeanPreCueBaselines;
                 isSig = ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc < statAlpha / nLocUsed;
                 assert(any(isSig));
-                maxRespDiffFromBaseline = max(abs(respDiffFromBaseline(isSig)));
-                assert(~isempty(maxRespDiffFromBaseline));
-                preExitFixationVsBootstrapBaselineDirection(unitCount) = sign(maxRespDiffFromBaseline);
-                clear respDiffFromBaseline isSig maxRespDiffFromBaseline;
+                respDiffFromBaselineSig = respDiffFromBaseline(isSig);
+                [~,maxInd] = max(abs(respDiffFromBaselineSig));
+                assert(~isempty(maxInd));
+                preExitFixationVsBootstrapBaselineDirection(unitCount) = sign(respDiffFromBaselineSig(maxInd));
+                clear respDiffFromBaseline isSig  respDiffFromBaselineSig maxInd;
             else
                 preExitFixationVsBootstrapBaselineDirection(unitCount) = 0;
             end
