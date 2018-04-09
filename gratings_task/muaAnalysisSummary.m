@@ -161,10 +161,10 @@ fprintf('\n');
 for i = 1:nSessions
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
-    if nUnitsBySessionWithDelaySelectivity(i) > 0
+    if nUnitsBySessionWithDelaySelectivity(i) > 1
         fprintf('Session %s (index %d) has %d units with delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithDelaySelectivity(i));
     else
-        fprintf('Session %s (index %d) does **NOT** have units with delay selectivity\n', sessionName, sessionInd);
+        warning('Session %s (index %d) has %d units with delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithDelaySelectivity(i));
     end
 end
 fprintf('--------------\n');
@@ -172,10 +172,10 @@ fprintf('\n');
 for i = 1:nSessions
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
-    if nUnitsBySessionWithCueTargetDelaySelectivity(i) > 0
+    if nUnitsBySessionWithCueTargetDelaySelectivity(i) > 1
         fprintf('Session %s (index %d) has %d units with cue-target delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithCueTargetDelaySelectivity(i));
     else
-        fprintf('Session %s (index %d) does **NOT** have units with cue-target delay selectivity\n', sessionName, sessionInd);
+        warning('Session %s (index %d) has %d units with cue-target delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithCueTargetDelaySelectivity(i));
     end
 end
 fprintf('--------------\n');
@@ -183,10 +183,10 @@ fprintf('\n');
 for i = 1:nSessions
     sessionInd = sessionInds(i);
     sessionName = recordingInfo(sessionInd).sessionName;
-    if nUnitsBySessionWithTargetDimDelaySelectivity(i) > 0
+    if nUnitsBySessionWithTargetDimDelaySelectivity(i) > 1
         fprintf('Session %s (index %d) has %d units with target-dim delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithTargetDimDelaySelectivity(i));
     else
-        fprintf('Session %s (index %d) does **NOT** have units with target-dim delay selectivity\n', sessionName, sessionInd);
+        warning('Session %s (index %d) has %d units with target-dim delay selectivity\n', sessionName, sessionInd, nUnitsBySessionWithTargetDimDelaySelectivity(i));
     end
 end
 fprintf('--------------\n');
@@ -198,16 +198,16 @@ isCell = true(unitCount, 1); % for MUA, cannot distinguish between cell and not 
 
 % TODO compute these per unit above so that the right alpha is used
 isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBaseline, 2);
-isSignificantCueResponse = isCell & isSignificantResponseVsBaseline(:,1);
+isSignificantCueResponse = isCell & isSignificantResponseVsBootstrapBaseline(:,1);
 isSignificantArrayResponse = isCell & isSignificantResponseVsPreviousPeriod(:,2);
 isSignificantTargetDimResponse = isCell & isSignificantResponseVsPreviousPeriod(:,3);
 isSignificantPreExitFixation = isCell & isSignificantResponseVsPreviousPeriod(:,4);
-isSignificantPreExitFixationVsBaseline = isCell & isSignificantResponseVsBaseline(:,6);
+isSignificantPreExitFixationVsBaseline = isCell & isSignificantResponseVsBootstrapBaseline(:,6);
 
-isSignificantCueResponseInc = isCell & isSignificantResponseVsBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == 1;
-isSignificantCueResponseDec = isCell & isSignificantResponseVsBaseline(:,1) & cueResponseVsBootstrapBaselineDirection == -1;
-isSignificantPreExitFixationInc = isCell & isSignificantResponseVsBaseline(:,6) & preExitFixationVsBootstrapBaselineDirection == 1;
-isSignificantPreExitFixationDec = isCell & isSignificantResponseVsBaseline(:,6) & preExitFixationVsBootstrapBaselineDirection == -1;
+isSignificantCueResponseInc = isCell & isSignificantCueResponse & cueResponseVsBootstrapBaselineDirection == 1;
+isSignificantCueResponseDec = isCell & isSignificantCueResponse & cueResponseVsBootstrapBaselineDirection == -1;
+isSignificantPreExitFixationInc = isCell & isSignificantPreExitFixationVsBaseline & preExitFixationVsBootstrapBaselineDirection == 1;
+isSignificantPreExitFixationDec = isCell & isSignificantPreExitFixationVsBaseline & preExitFixationVsBootstrapBaselineDirection == -1;
 
 isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
@@ -452,6 +452,8 @@ fprintf('\t%d (%d%%) has InRF P1\n', sum(precondition & isInRFP1), ...
         round(sum(precondition & isInRFP1)/sum(precondition) * 100));
 fprintf('\t%d (%d%%) has InRF P3\n', sum(precondition & isInRFP3), ...
         round(sum(precondition & isInRFP3)/sum(precondition) * 100));
+    
+stop
     
 %%
 figure_tr_inch(8, 8);
@@ -1294,7 +1296,7 @@ end
 fprintf('\n');
 fprintf('Plotting mega figure of tiny baseline-corrected, normalized mean SPDFs...\n');
 % subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
-subdivisions = {'PUL'};%'all', 'vPul', 'dPul'};%, 'notVPul', 'notDPul'};
+subdivisions = {'PULCueInc', 'PULCueDec'};%'all', 'vPul', 'dPul'};%, 'notVPul', 'notDPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
@@ -1309,6 +1311,10 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInDPulvinar;
     elseif strcmp(subdivision, 'notDPul')
         isInSubdivision = ~isInDPulvinar;
+    elseif strcmp(subdivision, 'PULCueInc')
+        isInSubdivision = isInPulvinar & isSignificantCueResponseInc;
+    elseif strcmp(subdivision, 'PULCueDec')
+        isInSubdivision = isInPulvinar & isSignificantCueResponseDec;
     else
         isInSubdivision = strcmp(localization, subdivision);
     end

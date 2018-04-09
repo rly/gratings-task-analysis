@@ -172,28 +172,28 @@ for j = 1:nUnits
                     min(ES.preExitFixationPValueByBootstrapPreExitFixationEarlySpdfByLoc) < statAlpha / nLocUsed];
             
             
-            % look at most significant response which is not necessarily
-            % InRF location
-            [~,loc] = min(ES.cueResponsePValueByBootstrapBaselineSpdfByLoc);
-            if ES.averageFiringRatesBySpdf.cueResponse.byLoc(loc) > ES.meanBootstrappedMeanPreCueBaselines
-                cueResponseVsBootstrapBaselineDirection(unitCount) = 1;
-            else
-                cueResponseVsBootstrapBaselineDirection(unitCount) = -1;
+            % for significant responses, look at largest ABSOLUTE 
+            % difference from baseline to determine direction of response
+            if isSignificantResponseVsBootstrapBaseline(unitCount,1)
+                respDiffFromBaseline = ES.averageFiringRatesBySpdf.cueResponse.byLoc - ES.meanBootstrappedMeanPreCueBaselines;
+                isSig = ES.cueResponsePValueByBootstrapBaselineSpdfByLoc < statAlpha / nLocUsed;
+                maxRespDiffFromBaseline = max(abs(respDiffFromBaseline(isSig)));
+                cueResponseVsBootstrapBaselineDirection(unitCount) = maxRespDiffFromBaseline > 0;
+                clear respDiffFromBaseline isSig maxRespDiffFromBaseline;
             end
-            [~,loc] = min(ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc);
-            if ES.averageFiringRatesBySpdf.preExitFixation.byLoc(loc) > ES.meanBootstrappedMeanPreCueBaselines
-                preExitFixationVsBootstrapBaselineDirection(unitCount) = 1;
-            else
-                preExitFixationVsBootstrapBaselineDirection(unitCount) = -1;
+            if isSignificantResponseVsBootstrapBaseline(unitCount,6)
+                respDiffFromBaseline = ES.averageFiringRatesBySpdf.preExitFixation.byLoc - ES.meanBootstrappedMeanPreCueBaselines;
+                isSig = ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc < statAlpha / nLocUsed;
+                maxRespDiffFromBaseline = max(abs(respDiffFromBaseline(isSig)));
+                preExitFixationVsBootstrapBaselineDirection(unitCount) = maxRespDiffFromBaseline > 0;
+                clear respDiffFromBaseline isSig maxRespDiffFromBaseline;
             end
-            clear loc;
             
             % determine slope of firing rate prior to exit fixation saccade
             earlyPreExitFixationSlopeStruct = computeSlopeFiringRateBySpdf(earlyPreExitFixationWindowOffset, ES.exitFixation);
             latePreExitFixationSlopeStruct = computeSlopeFiringRateBySpdf(latePreExitFixationWindowOffset, ES.exitFixation);
             earlyPreExitFixationSlope(unitCount) = earlyPreExitFixationSlopeStruct.all;
             latePreExitFixationSlope(unitCount) = latePreExitFixationSlopeStruct.all;
-            
             
             isSignificantSelectivity(unitCount,:) = [...
                     ES.cueResponseInfoRateStruct.infoRatePValueByShuffleSpdf < statAlpha ...
