@@ -171,22 +171,29 @@ for j = 1:nUnits
                     min(ES.targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc) < statAlpha / nLocUsed ...
                     min(ES.preExitFixationPValueByBootstrapPreExitFixationEarlySpdfByLoc) < statAlpha / nLocUsed];
             
-            
             % for significant responses, look at largest ABSOLUTE 
             % difference from baseline to determine direction of response
             if isSignificantResponseVsBootstrapBaseline(unitCount,1)
                 respDiffFromBaseline = ES.averageFiringRatesBySpdf.cueResponse.byLoc - ES.meanBootstrappedMeanPreCueBaselines;
                 isSig = ES.cueResponsePValueByBootstrapBaselineSpdfByLoc < statAlpha / nLocUsed;
+                assert(any(isSig));
                 maxRespDiffFromBaseline = max(abs(respDiffFromBaseline(isSig)));
+                assert(~isempty(maxRespDiffFromBaseline));
                 cueResponseVsBootstrapBaselineDirection(unitCount) = maxRespDiffFromBaseline > 0;
                 clear respDiffFromBaseline isSig maxRespDiffFromBaseline;
+            else
+                cueResponseVsBootstrapBaselineDirection(unitCount) = 0;
             end
             if isSignificantResponseVsBootstrapBaseline(unitCount,6)
                 respDiffFromBaseline = ES.averageFiringRatesBySpdf.preExitFixation.byLoc - ES.meanBootstrappedMeanPreCueBaselines;
                 isSig = ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc < statAlpha / nLocUsed;
+                assert(any(isSig));
                 maxRespDiffFromBaseline = max(abs(respDiffFromBaseline(isSig)));
+                assert(~isempty(maxRespDiffFromBaseline));
                 preExitFixationVsBootstrapBaselineDirection(unitCount) = maxRespDiffFromBaseline > 0;
                 clear respDiffFromBaseline isSig maxRespDiffFromBaseline;
+            else
+                preExitFixationVsBootstrapBaselineDirection(unitCount) = 0;
             end
             
             % determine slope of firing rate prior to exit fixation saccade
