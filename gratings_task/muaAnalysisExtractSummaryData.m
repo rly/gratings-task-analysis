@@ -14,7 +14,6 @@ isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods >
 isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);
 isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
 cueResponseVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
-preExitFixationVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
 infoRates = nan(nUnitsApprox, 5); % 5 periods
 diffRates = nan(nUnitsApprox, 3); % 2 delay periods + array response
 attnIndices = nan(nUnitsApprox, 3); % 2 delay periods + array response
@@ -177,26 +176,11 @@ for j = 1:nUnits
             if isSignificantResponseVsBootstrapBaseline(unitCount,1)
                 respDiffFromBaseline = ES.averageFiringRatesBySpdf.cueResponse.byLoc - ES.meanBootstrappedMeanPreCueBaselines;
                 isSig = ES.cueResponsePValueByBootstrapBaselineSpdfByLoc < statAlpha / nLocUsed;
-                assert(any(isSig));
-                respDiffFromBaselineSig = respDiffFromBaseline(isSig);
-                [~,maxInd] = max(abs(respDiffFromBaselineSig));
-                assert(~isempty(maxInd));
-                cueResponseVsBootstrapBaselineDirection(unitCount) = sign(respDiffFromBaselineSig(maxInd));
-                clear respDiffFromBaseline isSig respDiffFromBaselineSig maxInd;
+                assert(~isempty(union(ES.inRFLocByExtreme, find(isSig)))); % check InRF Extreme loc has significant response
+                cueResponseVsBootstrapBaselineDirection(unitCount) = sign(respDiffFromBaseline(ES.inRFLocByExtreme));
+                clear respDiffFromBaseline isSig;
             else
                 cueResponseVsBootstrapBaselineDirection(unitCount) = 0;
-            end
-            if isSignificantResponseVsBootstrapBaseline(unitCount,6)
-                respDiffFromBaseline = ES.averageFiringRatesBySpdf.preExitFixation.byLoc - ES.meanBootstrappedMeanPreCueBaselines;
-                isSig = ES.preExitFixationPValueByBootstrapBaselineSpdfByLoc < statAlpha / nLocUsed;
-                assert(any(isSig));
-                respDiffFromBaselineSig = respDiffFromBaseline(isSig);
-                [~,maxInd] = max(abs(respDiffFromBaselineSig));
-                assert(~isempty(maxInd));
-                preExitFixationVsBootstrapBaselineDirection(unitCount) = sign(respDiffFromBaselineSig(maxInd));
-                clear respDiffFromBaseline isSig  respDiffFromBaselineSig maxInd;
-            else
-                preExitFixationVsBootstrapBaselineDirection(unitCount) = 0;
             end
             
             % determine slope of firing rate within baseline period
@@ -709,7 +693,6 @@ save(saveFileName, ...
         'isSignificantResponseVsBootstrapPreviousPeriod', ...
         'isSignificantSelectivity', ...
         'cueResponseVsBootstrapBaselineDirection', ...
-        'preExitFixationVsBootstrapBaselineDirection', ...
         'infoRates', ...
         'diffRates', ...
         'attnIndices', ...

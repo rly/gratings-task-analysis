@@ -24,7 +24,6 @@ isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods >
 isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);
 isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
 cueResponseVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
-preExitFixationVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
 infoRates = nan(nUnitsApprox, 5); % 5 periods
 diffRates = nan(nUnitsApprox, 3); % 2 delay periods + array response
 attnIndices = nan(nUnitsApprox, 3); % 2 delay periods + array response
@@ -83,7 +82,6 @@ for i = 1:nSessions
     isSignificantResponseVsBootstrapPreviousPeriod(currentUnitInds,:) = S.isSignificantResponseVsBootstrapPreviousPeriod;
     isSignificantSelectivity(currentUnitInds,:) = S.isSignificantSelectivity;
     cueResponseVsBootstrapBaselineDirection(currentUnitInds,:) = S.cueResponseVsBootstrapBaselineDirection;
-    preExitFixationVsBootstrapBaselineDirection(currentUnitInds,:) = S.preExitFixationVsBootstrapBaselineDirection;
     infoRates(currentUnitInds,:) = S.infoRates;
     diffRates(currentUnitInds,:) = S.diffRates;
     attnIndices(currentUnitInds,:) = S.attnIndices;
@@ -206,8 +204,6 @@ isSignificantPreExitFixationVsBaseline = isCell & isSignificantResponseVsBootstr
 
 isSignificantCueResponseInc = isCell & isSignificantCueResponse & cueResponseVsBootstrapBaselineDirection == 1;
 isSignificantCueResponseDec = isCell & isSignificantCueResponse & cueResponseVsBootstrapBaselineDirection == -1;
-isSignificantPreExitFixationInc = isCell & isSignificantPreExitFixationVsBaseline & preExitFixationVsBootstrapBaselineDirection == 1;
-isSignificantPreExitFixationDec = isCell & isSignificantPreExitFixationVsBaseline & preExitFixationVsBootstrapBaselineDirection == -1;
 
 isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
@@ -286,12 +282,6 @@ fprintf('Of the %d units in the pulvinar that show significant cue response vs b
         round(sum(isSignificantCueResponseInc & isInPulvinar)/sum(isSignificantCueResponse & isInPulvinar) * 100), ...
         sum(isSignificantCueResponseDec & isInPulvinar), ...
         round(sum(isSignificantCueResponseDec & isInPulvinar)/sum(isSignificantCueResponse & isInPulvinar) * 100));
-fprintf('Of the %d units in the pulvinar that show significant pre-saccadic activity vs baseline, \n\t%d (%d%%) are increases, %d (%d%%) are decreases\n', ...
-        sum(isSignificantPreExitFixation & isInPulvinar), ...
-        sum(isSignificantPreExitFixationInc & isInPulvinar), ...
-        round(sum(isSignificantPreExitFixationInc & isInPulvinar)/sum(isSignificantPreExitFixation & isInPulvinar) * 100), ...
-        sum(isSignificantPreExitFixationDec & isInPulvinar), ...
-        round(sum(isSignificantPreExitFixationDec & isInPulvinar)/sum(isSignificantPreExitFixation & isInPulvinar) * 100));
 fprintf('Note: the increase / decrease labeling is based on the location with the largest significant response. There may be both significant increases and decreases.\n');
 fprintf('\n');
 
@@ -448,9 +438,9 @@ fprintf('\t%d (%d%%) has InRF P3\n', sum(precondition & isInRFP3), ...
         round(sum(precondition & isInRFP3)/sum(precondition) * 100));
 precondition = isInPulvinar & isSignificantCueResponseDec;
 fprintf('Of the %d units in the pulvinar that show significantly decreased cue response compared to baseline:\n', sum(precondition));
-fprintf('\t%d (%d%%) has InRF P1\n', sum(precondition & isInRFP1), ...
+fprintf('\t%d (%d%%) has InRF P1 (significantly suppressed response to P3 for the 2 loc sessions)\n', sum(precondition & isInRFP1), ...
         round(sum(precondition & isInRFP1)/sum(precondition) * 100));
-fprintf('\t%d (%d%%) has InRF P3\n', sum(precondition & isInRFP3), ...
+fprintf('\t%d (%d%%) has InRF P3 (significantly suppressed response to P1 for the 2 loc sessions)\n', sum(precondition & isInRFP3), ...
         round(sum(precondition & isInRFP3)/sum(precondition) * 100));
     
 stop
