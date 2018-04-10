@@ -323,21 +323,23 @@ end
 assert(nLoc == 4); % next line based on nLoc == 4
 exRFLoc = mod(inRFLoc + 1, 4) + 1; % opposite location
 
-%% compute RF by max cue response and max SD cue response
+%% compute RF by max per-condition z-scored cue response
 cueResponseWindowIndices = getTimeLogicalWithTolerance(cueOnset.t, cueOnset.window(1) + cueResponseWindowOffset);
 maxCueResponseBaselineCorrByLoc = nan(nLoc, 1);
-maxSDCueResponseBaselineCorrByLoc = nan(nLoc, 1);
+extremeCueResponseBaselineCorrByLoc = nan(nLoc, 1);
 for i = 1:nLoc
-    maxCueResponseBaselineCorrByLoc(i) = max(cueOnset.spdfByLoc(i,cueResponseWindowIndices)) - averageFiringRatesBySpdf.preCueBaseline.byLoc(i);
-    maxSDCueResponseBaselineCorrByLoc(i) = (max(cueOnset.spdfByLoc(i,cueResponseWindowIndices)) - averageFiringRatesBySpdf.preCueBaseline.byLoc(i)) / ...
+    zScoredCueResponseBaselineCorrByLoc = (cueOnset.spdfByLoc(i,cueResponseWindowIndices) - averageFiringRatesBySpdf.preCueBaseline.byLoc(i)) / ...
             averageFiringRatesBySpdf.preCueBaseline.byLocSDOverTime(i);
+    maxCueResponseBaselineCorrByLoc(i) = max(zScoredCueResponseBaselineCorrByLoc);
+    extremeCueResponseBaselineCorrByLoc(i) = max(abs(zScoredCueResponseBaselineCorrByLoc));
 end
 [~,inRFLocByMax] = max(maxCueResponseBaselineCorrByLoc);
 exRFLocByMax = mod(inRFLocByMax + 1, 4) + 1; % opposite location
-[~,inRFLocByMaxSD] = max(maxSDCueResponseBaselineCorrByLoc);
-exRFLocByMaxSD = mod(inRFLocByMaxSD + 1, 4) + 1; % opposite location
+[~,inRFLocByExtreme] = max(extremeCueResponseBaselineCorrByLoc);
+exRFLocByExtreme = mod(inRFLocByExtreme + 1, 4) + 1; % opposite location
 
-clear cueResponseWindowIndices maxCueResponseBaselineCorrByLoc maxSDCueResponseBaselineCorrByLoc;
+clear cueResponseWindowIndices zScoredCueResponseBaselineCorrByLoc ...
+        maxCueResponseBaselineCorrByLoc extremeCueResponseBaselineCorrByLoc;
 
 %% compute cue response at InRF > baseline
 % bootstrap on mean of baseline SPDF with 500 shuffles
