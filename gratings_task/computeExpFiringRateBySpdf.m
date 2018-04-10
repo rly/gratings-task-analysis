@@ -29,9 +29,9 @@ for i = 1:size(timeLockedSpikesStruct.spdfByLoc, 1)
         % initialize the per location fit with the grand fit coeffs
         expBeta0 = table2array(returnStruct.allExpNLM.Coefficients(1:3,1));
         returnStruct.byLocExpNLM{i} = fitnlm(timeLockedSpikesStruct.t(analysisWindowLogical), timeLockedSpikesStruct.spdfByLoc(i, analysisWindowLogical), expFun, expBeta0);
-        plot(timeLockedSpikesStruct.t(analysisWindowLogical), timeLockedSpikesStruct.spdfByLoc(i, analysisWindowLogical));
-        plot(timeLockedSpikesStruct.t(analysisWindow2Logical), timeLockedSpikesStruct.spdfByLoc(i, analysisWindow2Logical));
-        plot(timeLockedSpikesStruct.t(analysisWindow3Logical), predict(returnStruct.byLocExpNLM{i}, timeLockedSpikesStruct.t(analysisWindow3Logical)'));
+%         plot(timeLockedSpikesStruct.t(analysisWindowLogical), timeLockedSpikesStruct.spdfByLoc(i, analysisWindowLogical));
+%         plot(timeLockedSpikesStruct.t(analysisWindow2Logical), timeLockedSpikesStruct.spdfByLoc(i, analysisWindow2Logical));
+%         plot(timeLockedSpikesStruct.t(analysisWindow3Logical), predict(returnStruct.byLocExpNLM{i}, timeLockedSpikesStruct.t(analysisWindow3Logical)'));
     else
         returnStruct.byLocExpNLM{i} = NaN;
     end
