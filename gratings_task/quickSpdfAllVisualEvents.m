@@ -163,7 +163,7 @@ for i = 1:nLoc
             'Color', cols(i,:), 'LineWidth', 2);
     if ~isnan(ES.cueOnset.latencyBootByLoc(i))
         plot(ES.cueOnset.latencyBootByLoc(i), ES.cueOnset.spdfByLoc(i,ES.cueOnset.latencyBootInfoByLoc{i}.latencyTInd), ...
-                '.', 'Color', cols(i,:), 'MarkerSize', 16, 'LineWidth', 2);
+                '.', 'Color', cols(i,:) * 0.9, 'MarkerSize', 18, 'LineWidth', 2);
     end
     legendEntry{i} = sprintf('{\\color[rgb]{%f,%f,%f}N = %d}', ...
             cols(i,:), numel(ES.cueOnset.spikeTimesByLoc{i}));
@@ -203,7 +203,7 @@ for i = 1:nLoc
             'Color', cols(i,:), 'LineWidth', 2);
     if ~isnan(ES.arrayOnsetHold.latencyBootByLoc(i))
         plot(ES.arrayOnsetHold.latencyBootByLoc(i), ES.arrayOnsetHold.spdfByLoc(i,ES.arrayOnsetHold.latencyBootInfoByLoc{i}.latencyTInd), ...
-                '.', 'Color', cols(i,:), 'MarkerSize', 16, 'LineWidth', 2);
+                '.', 'Color', cols(i,:) * 0.9, 'MarkerSize', 18, 'LineWidth', 2);
     end
     legendEntry{i} = sprintf('{\\color[rgb]{%f,%f,%f}N = %d}', ...
             cols(i,:), numel(ES.arrayOnsetHold.spikeTimesByLoc{i}));
@@ -242,7 +242,7 @@ for i = 1:nLoc
             'Color', cols(i,:), 'LineWidth', 2);
     if ~isnan(ES.targetDim.latencyBootByLoc(i))
         plot(ES.targetDim.latencyBootByLoc(i), ES.targetDim.spdfByLoc(i,ES.targetDim.latencyBootInfoByLoc{i}.latencyTInd), ...
-                '.', 'Color', cols(i,:), 'MarkerSize', 16, 'LineWidth', 2);
+                '.', 'Color', cols(i,:) * 0.9, 'MarkerSize', 18, 'LineWidth', 2);
     end
 end
 origYLim = ylim();
