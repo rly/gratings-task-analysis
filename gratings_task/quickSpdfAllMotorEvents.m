@@ -35,8 +35,8 @@ spdfTargetDimLeft = spdfEnterFixationLeft;
 spdfExitFixationLeft = spdfCueOnsetLeft;
 
 btm = 0.07;
-infoTextTop = btm + 0.02;
-infoText2Top = infoTextTop + 0.62;
+infoTextTop = 0.02;
+infoText2Top = btm + 0.64;
 rasterBtm = btm + spdfH + 0.08;
 spdfTopRowBtm = rasterBtm;
 waveformBtm = 0.76;
@@ -76,8 +76,8 @@ hold on;
 
 xlim(xBounds);
 ylim(origYLim);
-xlabel('Time from enter fixation (s)');
-ylabel('Estimated spike rate (Hz)');
+xlabel('Time from Enter Fixation (s)');
+ylabel('Estimated Spike Rate (Hz)');
 
 axEnterFixationHist = axes('Position', [spdfEnterFixationLeft spdfTopRowBtm spdfW histH]); 
 hold on;
@@ -121,8 +121,8 @@ hold on;
 
 xlim(xBounds);
 ylim(origYLim);
-xlabel('Time from cue onset (s)');
-% ylabel('Estimated spike rate (Hz)');
+xlabel('Time from Cue Onset (s)');
+% ylabel('Estimated Spike Rate (Hz)');
 
 text(0.9, 1, legendEntry, 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
 
@@ -157,8 +157,8 @@ hold on;
 
 xlim(xBounds);
 ylim(origYLim);
-xlabel('Time from target dim (s)');
-ylabel('Estimated spike rate (Hz)');
+xlabel('Time from Target Dim (s)');
+ylabel('Estimated Spike Rate (Hz)');
 
 text(0.9, 1, legendEntry, 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
 
@@ -197,8 +197,8 @@ hold on;
 
 xlim(xBounds);
 ylim(origYLim);
-xlabel('Time from exit fixation (s)');
-% ylabel('Estimated spike rate (Hz)');
+xlabel('Time from Exit Fixation (s)');
+% ylabel('Estimated Spike Rate (Hz)');
 
 text(0.72, 1, legendEntry, 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
 
@@ -232,5 +232,6 @@ text(axBig, -0.03, infoText2Top, {...
 
 %% save
 if ~isempty(plotFileName)
+    fprintf('\tSaving figure to file %s...\n', plotFileName);
     export_fig(plotFileName, '-nocrop');
 end

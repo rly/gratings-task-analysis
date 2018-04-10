@@ -71,20 +71,20 @@ fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
 
 saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
     	processedDataDir, unitName, blockName, v);
-if exists(saveFileName, 'file')
+if exist(saveFileName, 'file')
     fprintf('\tLoading evoked spiking file %s...\n', saveFileName);
     ES = load(saveFileName);
     
     if isFiringRateGreaterThanMin(ES, minFiringRate)
         plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
-        fprintf('\tSaving figure to file %s...\n', plotFileName);
-
+        fprintf('\tPlotting...\n');
+        
         quickSpdfAllVisualEvents(ES, blockName, ...
                 D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
         close;
 
         plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
-        fprintf('\tSaving figure to file %s...\n', plotFileName);
+        fprintf('\tPlotting...\n');
 
         quickSpdfAllMotorEvents(ES, blockName, ...
                 D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);

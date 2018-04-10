@@ -598,6 +598,7 @@ preExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(average
 postExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
         averageFiringRatesByCount.postExitFixation.trialRateByLoc);
 
+% by location -- use sign-rank test here
 cueResponseVsBaselineSignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRateByLoc, ...
         averageFiringRatesByCount.cueResponse.trialRateByLoc);
 arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.cueTargetDelayHold.trialRateByLoc, ...
@@ -658,7 +659,7 @@ else
 end
 clear cueTargetDelayWindowIndices arrayOnsetSpikeTimesInRFExRF;
 
-%% rank sum test on target-dim delay period using individual trial spike counts
+%% rank sum test on cue-target delay period using individual trial spike counts
 cueTargetDelayDiffPValueByRankSumTest = ranksum(...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{inRFLoc}, ...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{exRFLoc});
@@ -702,7 +703,7 @@ else
 end
 clear arrayOnsetHoldWindowIndices arrayOnsetSpikeTimesInRFExRF;
 
-%% rank sum test on target-dim delay period using individual trial spike counts
+%% rank sum test on array hold response using individual trial spike counts
 arrayHoldResponseDiffPValueByRankSumTest = ranksum(...
         averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc{inRFLoc}, ...
         averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc{exRFLoc});
