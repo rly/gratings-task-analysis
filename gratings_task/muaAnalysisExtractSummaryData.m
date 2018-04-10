@@ -21,6 +21,7 @@ attnIndices = nan(nUnitsApprox, 3); % 2 delay periods + array response
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
+preCueBaselineExpFit = cell(nUnitsApprox, 1);
 earlyPreExitFixationSlope = nan(nUnitsApprox, 1);
 latePreExitFixationSlope = nan(nUnitsApprox, 1);
 earlyPreExitFixationWindowOffset = [-0.2 -0.05];
@@ -197,6 +198,10 @@ for j = 1:nUnits
             else
                 preExitFixationVsBootstrapBaselineDirection(unitCount) = 0;
             end
+            
+            % determine slope of firing rate within baseline period
+            % not used currently
+            preCueBaselineExpFit{unitCount} = computeExpFiringRateBySpdf([-0.25 0], ES.cueOnset);
             
             % determine slope of firing rate prior to exit fixation saccade
             earlyPreExitFixationSlopeStruct = computeSlopeFiringRateBySpdf(earlyPreExitFixationWindowOffset, ES.exitFixation);
@@ -711,6 +716,7 @@ save(saveFileName, ...
         'localization', ...
         'isInVPulvinar', ...
         'isInDPulvinar', ...
+        'preCueBaselineExpFit', ...
         'earlyPreExitFixationSlope', ...
         'latePreExitFixationSlope', ...
         'spdfInfo', ...
