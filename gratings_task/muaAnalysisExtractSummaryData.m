@@ -45,6 +45,8 @@ targetDimResponseLatencyExRF = nan(nUnitsApprox, 1);
 averageFiringRatesBySpdf = struct();
 averageFiringRatesByCount = struct();
 
+popSpikeTs = [];
+
 unitCount = 0;
 minFiringRate = 2; % use only cells with a time-locked response > 1 Hz in any window
 statAlpha = 0.05; % account for multiple comparisons later
@@ -640,6 +642,9 @@ for j = 1:nUnits
                 end
             end
             
+            % compile all spike times together from ALL units in this
+            % recording, regardless of location
+            popSpikeTs = [popSpikeTs; ES.spikeTs];
         end
     else
         fprintf('Skipping %s due to min firing rate requirement...\n', unitName);
@@ -668,6 +673,12 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% single trial population latency relationship with RT
+arrayOnsetPop.window = ES.arrayOnset.window;
+arrayOnsetPop.spdfWindowOffset = ES.arrayOnset.spdfWindowOffset;
+arrayOnsetPop = createTimeLockedSpdf(popSpikeTs, ES.UE.arrayOnset, ES.UE.arrayOnsetByLoc, arrayOnsetPop, ES.kernelSigma);
+
+arrayOnsetPop = computeResponseLatencyByLoc(arrayOnsetPop, ES.isLocUsed);
+
 
 %% compute single trial population latency by combining spikes across recordings on a probe
 rtRelByLoc = cell(nLoc, 1);
