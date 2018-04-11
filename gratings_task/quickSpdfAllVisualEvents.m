@@ -4,7 +4,6 @@ function quickSpdfAllVisualEvents(ES, blockName, ...
 unitName = spikeStruct.name;
 nTrials = numel(ES.UE.cueOnset);
 cols = lines(4);
-latencyCol = [0.6 0.05 0.6];
 
 %%
 f = figure_tr_inch(13, 7.5); clf;

@@ -32,6 +32,12 @@ for k = 1:nLoc
     % get the earlier one
     eventStruct.latencyInfoByLoc{k} = getEarlierPeakTroughLatencyInfo(peakLatencyInfo, troughLatencyInfo);
     eventStruct.latencyByLoc(k) = eventStruct.latencyInfoByLoc{k}.latency;
+    
+    % store some parameters
+    eventStruct.latencyInfoByLoc{k}.baselineWindowOffset = baselineWindowOffset;
+    eventStruct.latencyInfoByLoc{k}.latencyWindowOffset = latencyWindowOffset;
+    eventStruct.latencyInfoByLoc{k}.minPeakForLatency = minPeakForLatency;
+    eventStruct.latencyInfoByLoc{k}.maxTroughForLatency = maxTroughForLatency;
 end
 
 %% use time to significant deviation from resampled baseline method
@@ -73,5 +79,13 @@ for k = 1:nLoc
     end
     eventStruct.latencyBootInfoByLoc{k} = var2struct(latency, latencyTInd, latencyRate);
     eventStruct.latencyBootByLoc(k) = latency;
+    
+    % store some parameters
+    eventStruct.latencyBootInfoByLoc{k}.baselineWindowOffset = baselineWindowOffset;
+    eventStruct.latencyBootInfoByLoc{k}.latencyWindowOffset = latencyWindowOffset;
+    eventStruct.latencyBootInfoByLoc{k}.alpha = alpha;
+    eventStruct.latencyBootInfoByLoc{k}.kernelSigma = kernelSigma;
+    eventStruct.latencyBootInfoByLoc{k}.numRandomizations = numRandomizations;
+    eventStruct.latencyBootInfoByLoc{k}.minNumSigSamples = minNumSigSamples;
 end
 

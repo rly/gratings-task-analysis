@@ -14,15 +14,13 @@ maxTroughForLatency = -minPeakForLatency;
 nLoc = numel(isLocUsed);
 
 xBounds = [0 0.13];
-figure_tr_inch(15, 5);
+f = figure_tr_inch(15, 5);
 
 for k = 1:nLoc
     if isLocUsed(k)
         nTrials = size(spikeTimesByLoc{k}, 2);
         assert(numel(rtByLoc{k}) == nTrials);
         latencies = nan(nTrials, 1);
-%         f1 = figure;
-%         hold on;
         unitCondition = inRFLocs == k;
         for i = 1:nTrials
             psthResponse = fixedPsth(spikeTimesByLoc{k}(unitCondition,i)', kernelSigma, 0, eventPsthT);
@@ -48,12 +46,10 @@ for k = 1:nLoc
 %                         'Color', 'k', 'MarkerSize', 8, 'LineWidth', 2);
 %                 plot(latencyInfo.timeEventToPeak, psthResponse(latencyInfo.peakTInd), 'o', ...
 %                         'Color', 'k', 'MarkerSize', 8, 'LineWidth', 2);
-%                 figure(f1);
-%                 plot(latencyInfo.timeEventToPeak, rtByLoc{k}(i), '.', 'MarkerSize', 20);
 %             end
-%             pause;
         end
-
+        
+        figure(f);
         subaxis(1, nLoc, k);
         hold on;
         plot(latencies, rtByLoc{k}, '.', 'MarkerSize', 20);
@@ -64,7 +60,7 @@ for k = 1:nLoc
         xlabel('Response Latency (s)');
         ylabel('Response Time (s)');
         [r,p] = corr(latencies(~isnan(latencies)), rtByLoc{k}(~isnan(latencies)), 'type', 'Spearman');
-        title(sprintf('Loc %d, NUnits = %d, NTrials = %d, r = %0.2f, p=%0.3f', k, sum(unitCondition), sum(~isnan(latencies)), r, p));
+        title(sprintf('Loc %d, NUnits = %d, NTrials = %d, Spear r = %0.2f, p=%0.3f', k, sum(unitCondition), sum(~isnan(latencies)), r, p));
     end
 end
 

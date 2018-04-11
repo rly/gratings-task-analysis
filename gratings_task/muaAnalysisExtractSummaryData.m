@@ -187,7 +187,7 @@ for j = 1:nUnits
             
             % determine slope of firing rate within baseline period
             % not used currently
-            preCueBaselineExpFit{unitCount} = computeExpFiringRateBySpdf([-0.25 0], ES.cueOnset);
+%             preCueBaselineExpFit{unitCount} = computeExpFiringRateBySpdf([-0.25 0], ES.cueOnset);
             
             % determine slope of firing rate prior to exit fixation saccade
             earlyPreExitFixationSlopeStruct = computeSlopeFiringRateBySpdf(earlyPreExitFixationWindowOffset, ES.exitFixation);
@@ -672,15 +672,8 @@ plotFileName = sprintf('%s/%s-sessionInd%d-preSaccadicSlopes-v%d.png', outputDir
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% single trial population latency relationship with RT
-arrayOnsetPop.window = ES.arrayOnset.window;
-arrayOnsetPop.spdfWindowOffset = ES.arrayOnset.spdfWindowOffset;
-arrayOnsetPop = createTimeLockedSpdf(popSpikeTs, ES.UE.arrayOnset, ES.UE.arrayOnsetByLoc, arrayOnsetPop, ES.kernelSigma);
-
-arrayOnsetPop = computeResponseLatencyByLoc(arrayOnsetPop, ES.isLocUsed);
-
-
 %% compute single trial population latency by combining spikes across recordings on a probe
+% correlate population latency with RT
 rtRelByLoc = cell(nLoc, 1);
 rtHoldByLoc = cell(nLoc, 1);
 for k = 1:nLoc
