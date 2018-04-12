@@ -1,19 +1,33 @@
-function usefulEvents = getUsefulEvents2(dataDir, logIndices, nLoc, D)
+function usefulEvents = getUsefulEvents2(logDir, logIndices, nLoc, D, blockName)
 
 holdDurMid = 850; % ms; for splitting short vs long hold
 logRoot = 'gratings_task_eye_tracking_';
 
-cueP3Event = D.events{2}(:,1);
+% cueP3Event = D.events{2}(:,1);
 cueOnsetEvent = D.events{4}(:,1);
 arrayOnsetHoldEvent = D.events{6}(:,1); % TODO
 arrayOnsetReleaseEvent = D.events{7}(:,1);
-arrayOnsetHoldP1Event = D.events{14}(:,1);
-arrayOnsetReleaseP1Event = D.events{15}(:,1);
+% arrayOnsetHoldP1Event = D.events{14}(:,1);
+% arrayOnsetReleaseP1Event = D.events{15}(:,1);
 targetDimEvent = D.events{16}(:,1);
 juiceEvent = D.events{8}(:,1);
 
 %%
-trialParamsAllCorrect = readPresentationLogCorrectTrial(dataDir, logRoot, logIndices);
+trialParamsAllCorrect = readPresentationLogCorrectTrial(logDir, logRoot, logIndices);
+
+%% load more detailed trial info from json -> mat
+% use saveGratingsTaskResultsJsonToMatRunner.m to generate mat files
+load(sprintf('%s/gratingsTaskResultsJson-%s.mat', logDir, blockName), 'trialStructs', 'arrayShapes');
+trialResults = cellfun(@(x) x.response.type, trialStructs, 'UniformOutput', false);
+isCorrect = strcmp(trialResults, 'correct-response');
+trialStructsCorrect = trialStructs(isCorrect);
+verifyGratingsTaskLogsAndJsonCorrect(trialParamsAllCorrect, trialStructsCorrect);
+arrayShapesCorrect = arrayShapes(isCorrect);
+isArrayRelBalanced = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect)';
+isArrayHoldBalanced = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesCorrect)';
+
+isCorrectRelTrial = cellfun(@(x,y) y(x.cueLoc) == 'R', trialStructsCorrect, arrayShapesCorrect)';
+isCorrectHoldTrial = cellfun(@(x,y) y(x.cueLoc) == 'H', trialStructsCorrect, arrayShapesCorrect)';
 
 %% clean up juice events
 % store only the first juice event
@@ -89,13 +103,20 @@ end
 maxArrayOnsetToJuiceTimeReleaseShape = 0.925;
 isHoldTrial = firstJuiceEvent - arrayOnset >= maxArrayOnsetToJuiceTimeReleaseShape;
 assert(all(isHoldTrial == (trialParamsAllCorrect(:,7) ~= -1)));
+% assert(all(isHoldTrial == isCorrectHoldTrial)); % FIXME
 
 arrayOnsetRel = arrayOnset(~isHoldTrial);
 arrayOnsetHold = arrayOnset(isHoldTrial);
 
+arrayOnsetRelBal = arrayOnset(~isHoldTrial & isArrayRelBalanced);
+arrayOnsetHoldBal = arrayOnset(isHoldTrial & isArrayHoldBalanced);
+
 arrayOnsetByLoc = cell(nLoc, 1);
 arrayOnsetRelByLoc = cell(nLoc, 1);
 arrayOnsetHoldByLoc = cell(nLoc, 1);
+arrayOnsetBalByLoc = cell(nLoc, 1);
+arrayOnsetRelBalByLoc = cell(nLoc, 1);
+arrayOnsetHoldBalByLoc = cell(nLoc, 1);
 arrayOnsetShortHoldByLoc = cell(nLoc, 1);
 arrayOnsetLongHoldByLoc = cell(nLoc, 1);
 
@@ -103,6 +124,9 @@ for i = 1:nLoc
     arrayOnsetByLoc{i} = arrayOnset(cueLoc == i);
     arrayOnsetRelByLoc{i} = arrayOnset(~isHoldTrial & cueLoc == i);
     arrayOnsetHoldByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i);
+    arrayOnsetBalByLoc{i} = arrayOnset(cueLoc == i & (isArrayRelBalanced | isArrayHoldBalanced));
+    arrayOnsetRelBalByLoc{i} = arrayOnset(~isHoldTrial & cueLoc == i & isArrayRelBalanced);
+    arrayOnsetHoldBalByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & isArrayHoldBalanced);
     arrayOnsetShortHoldByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & targetDimDelayDur < holdDurMid);
     arrayOnsetLongHoldByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & targetDimDelayDur >= holdDurMid);
 end
@@ -121,6 +145,7 @@ for i = 1:nLoc
 end 
 
 %% get target dim events corresponding to correct trials only
+% TODO use time of lever response instead of juice onset
 maxTargetDimToJuiceTime = 1; % seconds
 targetDimMatch = nan(numel(firstJuiceEvent), 1);
 rt = nan(numel(firstJuiceEvent), 1);
@@ -136,17 +161,20 @@ for i = 1:numel(firstJuiceEvent)
 end
 
 targetDim = targetDimMatch(~isnan(targetDimMatch));
+targetDimBal = targetDimMatch(~isnan(targetDimMatch) & isArrayHoldBalanced);
 targetDimShortHold = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid);
 targetDimLongHold = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid);
 assert(numel(unique(targetDim)) == numel(targetDim));
 
 targetDimByLoc = cell(nLoc, 1);
+targetDimBalByLoc = cell(nLoc, 1);
 targetDimShortHoldByLoc = cell(nLoc, 1);
 targetDimLongHoldByLoc = cell(nLoc, 1);
 nTrialShortHold = sum(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid);
 nTrialLongHold = sum(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid);
 for i = 1:nLoc
     targetDimByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & cueLoc == i);
+    targetDimBalByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & cueLoc == i & isArrayHoldBalanced);
     targetDimShortHoldByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
             cueLoc == i & targetDimDelayDur < holdDurMid);
     targetDimLongHoldByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
@@ -171,6 +199,8 @@ usefulEvents = var2struct(cueOnset, cueOnsetByLoc, ...
         targetDimShortHoldByLoc, targetDimLongHoldByLoc, ...
         nTrialShortHold, nTrialLongHold, cueLoc, cueLocHold, cueLocRel, ...
         cueTargetDelayDur, targetDimDelayDur, isHoldTrial, rt, ...
-        fixationAndLeverTimes, firstJuiceEvent, targetDimMatch);
+        fixationAndLeverTimes, firstJuiceEvent, targetDimMatch, ...
+        arrayOnsetRelBal, arrayOnsetHoldBal, arrayOnsetRelBalByLoc, ...
+        arrayOnsetHoldBalByLoc, targetDimBal, targetDimBalByLoc);
 
 

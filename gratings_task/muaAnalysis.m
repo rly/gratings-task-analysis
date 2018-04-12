@@ -58,7 +58,7 @@ dataDir = sprintf('%s/%s/', dataDirRoot, sessionName);
 gratingsTaskLogDir = sprintf('%s/%s', dataDir, sessionName(2:end));
 
 % process events and sort them into different conditions
-UE = getUsefulEvents2(gratingsTaskLogDir, R.gratingsTaskLogIndices, 4, D);
+UE = getUsefulEvents2(gratingsTaskLogDir, R.gratingsTaskLogIndices, 4, D, blockName);
 
 totalTimeOverall = sum(D.blockStopTimes(R.blockIndices) - D.blockStartTimes(R.blockIndices));
 minFiringRateOverall = 0.2; % Hz

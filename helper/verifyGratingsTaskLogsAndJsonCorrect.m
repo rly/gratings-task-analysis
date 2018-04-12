@@ -1,8 +1,4 @@
-function verifyGratingsTaskLogsAndJsonCorrect(trialParamsAllCorrect, trialStructs)
-
-trialResults = cellfun(@(x) x.response.type, trialStructs, 'UniformOutput', false);
-isCorrect = strcmp(trialResults, 'correct-response');
-trialStructsCorrect = trialStructs(isCorrect);
+function verifyGratingsTaskLogsAndJsonCorrect(trialParamsAllCorrect, trialStructsCorrect)
 
 assert(size(trialParamsAllCorrect, 1) == numel(trialStructsCorrect));
 % assert(numel(rt) == numel(trialStructsCorrect));
