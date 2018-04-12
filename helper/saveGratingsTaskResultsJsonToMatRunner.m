@@ -10,6 +10,8 @@ fprintf('------------------------\n');
 recordingInfo = readRecordingInfo(recordingInfoFileName);
 for sessionInd = 1:numel(recordingInfo)
     tic;
+    % note this is not efficient because there are multiple sessionInds for
+    % the same session (same log file)
     R = recordingInfo(sessionInd);
     if ~isZeroDistractors
         R.blockIndices = R.gratingsTask3DIndices;
@@ -23,8 +25,9 @@ for sessionInd = 1:numel(recordingInfo)
     end
     blockName = strjoin(R.blockNames(R.blockIndices), '-');
     sessionName = R.sessionName;
-
-    fprintf('Processing %s...\n', sessionName);
+    
+    fprintf('------------------------\n');
+    fprintf('Processing session index %d, %s...\n', sessionInd, sessionName);
 
     dataDir = sprintf('%s/%s/', dataDirRoot, sessionName);
     gratingsTaskLogDir = sprintf('%s/%s', dataDir, sessionName(2:end));
