@@ -129,18 +129,18 @@ text(0.9, 1, legendEntry, 'VerticalAlignment', 'top', 'Units', 'normalized', 'Fo
 %% spdf for target dim
 axTargetDimSpdf = axes('Position', [spdfTargetDimLeft btm spdfW spdfH]); 
 
-t = ES.targetDim.t - ES.targetDim.window(1);
+t = ES.targetDimBal.t - ES.targetDimBal.window(1);
 xBounds = [-0.6 0.6];
 hold on;
 legendEntry = cell(nLoc, 1);
 for i = 1:nLoc
-    if any(isnan(ES.targetDim.spdfByLoc(i,:)))
+    if any(isnan(ES.targetDimBal.spdfByLoc(i,:)))
         continue;
     end
-    plot(t, ES.targetDim.spdfByLoc(i,:),  ...
+    plot(t, ES.targetDimBal.spdfByLoc(i,:),  ...
             'Color', cols(i,:), 'LineWidth', 2);
     legendEntry{i} = sprintf('{\\color[rgb]{%f,%f,%f}N = %d}', ...
-            cols(i,:), numel(ES.targetDim.spikeTimesByLoc{i}));
+            cols(i,:), numel(ES.targetDimBal.spikeTimesByLoc{i}));
 end
 origYLim = ylim();
 plot([0 0], [0 1000], '-', 'Color', 0.3 * ones(3, 1));
@@ -201,6 +201,7 @@ xlabel('Time from Exit Fixation (s)');
 % ylabel('Estimated Spike Rate (Hz)');
 
 text(0.72, 1, legendEntry, 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
+text(0.02, 1, 'All Trials', 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
 
 axExitFixationHist = axes('Position', [spdfExitFixationLeft btm spdfW histH]); 
 hold on;
@@ -213,6 +214,7 @@ set(gca, 'Color', 'none');
 set(gca, 'box', 'off');
 set(gca, 'XTick', []);
 set(gca, 'YTick', []);
+
 
 %% adjust all ylim
 allYBounds = [ylim(axEnterFixationSpdf) ylim(axCueOnsetSpdf) ylim(axTargetDimSpdf) ylim(axExitFixationSpdf)];

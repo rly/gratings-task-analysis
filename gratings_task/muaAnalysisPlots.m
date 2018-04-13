@@ -76,12 +76,12 @@ if exist(saveFileName, 'file')
     ES = load(saveFileName);
     
     if isFiringRateGreaterThanMin(ES, minFiringRate)
-%         plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
-%         fprintf('\tPlotting...\n');
-%         
-%         quickSpdfAllVisualEvents(ES, blockName, ...
-%                 D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
-%         close;
+        plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
+        fprintf('\tPlotting...\n');
+        
+        quickSpdfAllVisualEvents(ES, blockName, ...
+                D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
+        close;
         
         plotFileName = sprintf('%s/%s-%s-visualLatency-v%d.png', processedDataDir, unitName, blockName, v);
         fprintf('\tPlotting...\n');
@@ -90,12 +90,12 @@ if exist(saveFileName, 'file')
                 D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
         close;
 
-%         plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
-%         fprintf('\tPlotting...\n');
-% 
-%         quickSpdfAllMotorEvents(ES, blockName, ...
-%                 D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
-%         close;
+        plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
+        fprintf('\tPlotting...\n');
+
+        quickSpdfAllMotorEvents(ES, blockName, ...
+                D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
+        close;
     else
         fprintf('\tTask-related firing rate < minimum task-related firing rate = %0.2f Hz - skipping.\n', ...
                 minFiringRate);

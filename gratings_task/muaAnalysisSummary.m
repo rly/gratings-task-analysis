@@ -44,12 +44,12 @@ meanRTRelExRF = nan(nSessions, 1);
 meanRTHoldInRF = nan(nSessions, 1);
 meanRTHoldExRF = nan(nSessions, 1);
 
-arrayHoldResponseLatencyInRF = nan(nUnitsApprox, 1);
-arrayHoldResponseLatencyExRF = nan(nUnitsApprox, 1);
+arrayHoldBalLatencyInRF = nan(nUnitsApprox, 1);
+arrayHoldBalLatencyExRF = nan(nUnitsApprox, 1);
 arrayResponseLatencyInRF = nan(nUnitsApprox, 1);
 arrayResponseLatencyExRF = nan(nUnitsApprox, 1);
-targetDimResponseLatencyInRF = nan(nUnitsApprox, 1);
-targetDimResponseLatencyExRF = nan(nUnitsApprox, 1);
+targetDimBalLatencyInRF = nan(nUnitsApprox, 1);
+targetDimBalLatencyExRF = nan(nUnitsApprox, 1);
 
 averageFiringRatesBySpdf = struct();
 averageFiringRatesByCount = struct();
@@ -122,12 +122,10 @@ for i = 1:nSessions
         end
     end
     
-    arrayHoldResponseLatencyInRF(currentUnitInds) = S.arrayHoldResponseLatencyInRF;
-    arrayHoldResponseLatencyExRF(currentUnitInds) = S.arrayHoldResponseLatencyExRF;
-    arrayResponseLatencyInRF(currentUnitInds) = S.arrayResponseLatencyInRF;
-    arrayResponseLatencyExRF(currentUnitInds) = S.arrayResponseLatencyExRF;
-    targetDimResponseLatencyInRF(currentUnitInds) = S.targetDimResponseLatencyInRF;
-    targetDimResponseLatencyExRF(currentUnitInds) = S.targetDimResponseLatencyExRF;
+    arrayHoldBalLatencyInRF(currentUnitInds) = S.arrayHoldBalLatencyInRF;
+    arrayHoldBalLatencyExRF(currentUnitInds) = S.arrayHoldBalLatencyExRF;
+    targetDimBalLatencyInRF(currentUnitInds) = S.targetDimBalLatencyInRF;
+    targetDimBalLatencyExRF(currentUnitInds) = S.targetDimBalLatencyExRF;
     
     fn = fieldnames(S.averageFiringRatesBySpdf);
     for j = 1:numel(fn)
@@ -812,12 +810,12 @@ export_fig(plotFileName, '-nocrop');
 
 %% compare InRF vs ExRF array response latency
 maxLatency = 0.125;
-goodUnits = ~isnan(arrayHoldResponseLatencyInRF) & ~isnan(arrayHoldResponseLatencyExRF) & ...
-        arrayHoldResponseLatencyInRF <= maxLatency & arrayHoldResponseLatencyExRF <= maxLatency & ...
+goodUnits = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
         isInPulvinar & isSignificantCueResponseInc;
-arrayOnsetHoldLatencyDiff = arrayHoldResponseLatencyInRF(goodUnits) - arrayHoldResponseLatencyExRF(goodUnits);
-fprintf('Mean array onset latency InRF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldResponseLatencyInRF(goodUnits)), median(arrayHoldResponseLatencyInRF(goodUnits)));
-fprintf('Mean array onset latency ExRF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldResponseLatencyExRF(goodUnits)), median(arrayHoldResponseLatencyExRF(goodUnits)));
+arrayOnsetHoldLatencyDiff = arrayHoldBalLatencyInRF(goodUnits) - arrayHoldBalLatencyExRF(goodUnits);
+fprintf('Mean array onset latency InRF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldBalLatencyInRF(goodUnits)), median(arrayHoldBalLatencyInRF(goodUnits)));
+fprintf('Mean array onset latency ExRF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldBalLatencyExRF(goodUnits)), median(arrayHoldBalLatencyExRF(goodUnits)));
 fprintf('Number of units with latency reduction >= 10 ms: %d (%d%%)\n', ...
         sum(arrayOnsetHoldLatencyDiff <= -0.01), round(sum(arrayOnsetHoldLatencyDiff <= -0.01)/numel(arrayOnsetHoldLatencyDiff) * 100));
 fprintf('Number of units with latency increase >= 10 ms: %d (%d%%)\n', ...
@@ -833,7 +831,7 @@ histBinEdges = histXBounds(1):binStep:histXBounds(2);
 figure_tr_inch(16, 5);
 subaxis(1, 3, 1);
 hold on;
-plot(arrayHoldResponseLatencyInRF(goodUnits), arrayHoldResponseLatencyExRF(goodUnits), '.', 'MarkerSize', 20);
+plot(arrayHoldBalLatencyInRF(goodUnits), arrayHoldBalLatencyExRF(goodUnits), '.', 'MarkerSize', 20);
 plot([0 1], [0 1], 'Color', 0.3*ones(3, 1)); 
 axis equal;
 xlim(latBounds); 
@@ -855,8 +853,8 @@ box off;
 
 subaxis(1, 3, 3);
 hold on;
-c1 = cdfplot(arrayHoldResponseLatencyInRF(goodUnits));
-c2 = cdfplot(arrayHoldResponseLatencyExRF(goodUnits));
+c1 = cdfplot(arrayHoldBalLatencyInRF(goodUnits));
+c2 = cdfplot(arrayHoldBalLatencyExRF(goodUnits));
 set(c1, 'LineWidth', 2);
 set(c2, 'LineWidth', 2);
 xlim(latBounds); 
@@ -1052,8 +1050,8 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% does attention-related difference in delay firing correlate with reduction of latency to array onset
-goodUnits = ~isnan(arrayHoldResponseLatencyInRF) & ~isnan(arrayHoldResponseLatencyExRF) & ...
-        arrayHoldResponseLatencyInRF <= maxLatency & arrayHoldResponseLatencyExRF <= maxLatency & ...
+goodUnits = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
         isInPulvinar & isSignificantCueResponseInc;
 nGoodUnits = sum(goodUnits);
 % unboxing
@@ -1067,7 +1065,7 @@ for i = 1:nGoodUnits
     cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
 end
 cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
-arrayOnsetHoldLatencyDiff = arrayHoldResponseLatencyInRF(goodUnits) - arrayHoldResponseLatencyExRF(goodUnits);
+arrayOnsetHoldLatencyDiff = arrayHoldBalLatencyInRF(goodUnits) - arrayHoldBalLatencyExRF(goodUnits);
 
 maxAbsDiffFR = max(abs(cueTargetDelayFiringDiff));
 frDiffBounds = maxAbsDiffFR * [-1 1];
@@ -1141,8 +1139,8 @@ export_fig(plotFileName, '-nocrop');
     
 %% does attention-related reduction in latency of array response correlate with attention-related difference in array response
 maxLatency = 0.075;
-goodUnits = ~isnan(arrayHoldResponseLatencyInRF) & ~isnan(arrayHoldResponseLatencyExRF) & ...
-        arrayHoldResponseLatencyInRF <= maxLatency & arrayHoldResponseLatencyExRF <= maxLatency & ...
+goodUnits = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
         isInPulvinar & isSignificantCueResponseInc;
 nGoodUnits = sum(goodUnits);
 % unboxing
@@ -1156,7 +1154,7 @@ for i = 1:nGoodUnits
     arrayHoldResponseMeanFiringExRF(i) = arrayHoldResponse(i).byLoc(exRFLocsGoodUnits(i));
 end
 arrayHoldResponseMeanFiringDiff = arrayHoldResponseMeanFiringInRF - arrayHoldResponseMeanFiringExRF;
-arrayOnsetHoldLatencyDiff = arrayHoldResponseLatencyInRF(goodUnits) - arrayHoldResponseLatencyExRF(goodUnits);
+arrayOnsetHoldLatencyDiff = arrayHoldBalLatencyInRF(goodUnits) - arrayHoldBalLatencyExRF(goodUnits);
 
 maxAbsDiffFR = max(abs(arrayHoldResponseMeanFiringDiff));
 frDiffBounds = maxAbsDiffFR * [-1 1];
@@ -1183,8 +1181,8 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% does latency of array response correlate with strength of array response
-goodUnits = ~isnan(arrayHoldResponseLatencyInRF) & ~isnan(arrayHoldResponseLatencyExRF) & ...
-        arrayHoldResponseLatencyInRF <= maxLatency & arrayHoldResponseLatencyExRF <= maxLatency & ...
+goodUnits = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
         isInPulvinar & isSignificantCueResponseInc;
 nGoodUnits = sum(goodUnits);
 % unboxing
@@ -1197,8 +1195,8 @@ for i = 1:nGoodUnits
     arrayHoldResponseMeanFiringInRF(i) = arrayHoldResponse(i).byLoc(inRFLocsGoodUnits(i));
     arrayHoldResponseMeanFiringExRF(i) = arrayHoldResponse(i).byLoc(exRFLocsGoodUnits(i));
 end
-arrayHoldResponseLatencyInRFSub = arrayHoldResponseLatencyInRF(goodUnits);
-arrayHoldResponseLatencyExRFSub = arrayHoldResponseLatencyExRF(goodUnits);
+arrayHoldResponseLatencyInRFSub = arrayHoldBalLatencyInRF(goodUnits);
+arrayHoldResponseLatencyExRFSub = arrayHoldBalLatencyExRF(goodUnits);
 
 frBounds = [0 max([max(arrayHoldResponseMeanFiringInRF) max(arrayHoldResponseMeanFiringExRF)])];
 latBounds = [0 0.125];

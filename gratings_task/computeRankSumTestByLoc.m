@@ -1,18 +1,21 @@
-function rankSumStatsByLoc = computeRankSumTestByLoc(group1, group2ByLoc)
+function statsByLoc = computeRankSumTestByLoc(group1, group2ByLoc, statsByLoc)
 % check assumptions
 % test difference in medians
 % does not test difference in variance (see levene's test)
 
+if nargin < 3
+    statsByLoc = struct();
+end
+
 nLoc = numel(group2ByLoc);
-rankSumStatsByLoc = struct();
 for i = 1:nLoc
     if ~isempty(group2ByLoc{i})
-        [rankSumStatsByLoc(i).p,~,stats] = ranksum(group1, group2ByLoc{i});
-        fn = fieldnames(stats);
-        for j = 1:numel(fn)
-            rankSumStatsByLoc(i).(fn{j}) = stats.(fn{j});
-        end
+        [statsByLoc(i).rankSum.p,~,stats] = ranksum(group1, group2ByLoc{i});
+        statsByLoc(i).rankSum.zval = stats.zval;
+        statsByLoc(i).rankSum.ranksum = stats.ranksum;
     else
-        rankSumStatsByLoc(i).p = NaN;
+        statsByLoc(i).rankSum.p = NaN;
+        statsByLoc(i).rankSum.zval = NaN;
+        statsByLoc(i).rankSum.ranksum = NaN;
     end
 end
