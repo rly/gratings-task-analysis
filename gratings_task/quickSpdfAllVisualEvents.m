@@ -85,13 +85,13 @@ set(gca, 'XTickLabel', []);
 xlabel('Cue Onset');
 ylabel('Trial Number');
 
-%% plot raster aligned to array
+%% plot raster aligned to array - hold balanced
 axes('Position', [rasterArrayOnsetLeft rasterBtm rasterW rasterH]); 
 hold on;
 
 xBounds = [-0.25 0.25];
-window = ES.arrayOnsetHold.window;
-data = ES.arrayOnsetHold.spikeTimes; % TODO show release trials
+window = ES.arrayOnsetHoldBal.window;
+data = ES.arrayOnsetHoldBal.spikeTimes; % TODO show release trials
 rasterY = 0;
 lineParams = {'Color', [0 0 0], 'LineWidth', 1};
 lineHeight = 5;
@@ -187,25 +187,25 @@ ylabel('Estimated Spike Rate (Hz)');
 
 text(0.9, 1, legendEntry, 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
 
-%% spdf for array onset
+%% spdf for array onset - hold balanced
 axArrayOnsetSpdf = axes('Position', [spdfArrayOnsetLeft btm arrayOnsetSpdfW spdfH]); 
 
-t = ES.arrayOnsetHold.t - ES.arrayOnsetHold.window(1);
+t = ES.arrayOnsetHoldBal.t - ES.arrayOnsetHoldBal.window(1);
 xBounds = [-0.6 0.6];
 hold on;
 legendEntry = cell(nLoc, 1);
 for i = 1:nLoc
-    if any(isnan(ES.arrayOnsetHold.spdfByLoc(i,:))) % TODO show release trials
+    if any(isnan(ES.arrayOnsetHoldBal.spdfByLoc(i,:))) % TODO show release trials
         continue;
     end
-    plot(t, ES.arrayOnsetHold.spdfByLoc(i,:),  ...
+    plot(t, ES.arrayOnsetHoldBal.spdfByLoc(i,:),  ...
             'Color', cols(i,:), 'LineWidth', 2);
-    if ~isnan(ES.arrayOnsetHold.latencyBootByLoc(i))
-        plot(ES.arrayOnsetHold.latencyBootByLoc(i), ES.arrayOnsetHold.spdfByLoc(i,ES.arrayOnsetHold.latencyBootInfoByLoc{i}.latencyTInd), ...
+    if ~isnan(ES.arrayOnsetHoldBal.latencyBootByLoc(i))
+        plot(ES.arrayOnsetHoldBal.latencyBootByLoc(i), ES.arrayOnsetHolBald.spdfByLoc(i,ES.arrayOnsetHoldBal.latencyBootInfoByLoc{i}.latencyTInd), ...
                 '.', 'Color', cols(i,:) * 0.9, 'MarkerSize', 18, 'LineWidth', 2);
     end
     legendEntry{i} = sprintf('{\\color[rgb]{%f,%f,%f}N = %d}', ...
-            cols(i,:), numel(ES.arrayOnsetHold.spikeTimesByLoc{i}));
+            cols(i,:), numel(ES.arrayOnsetHoldBal.spikeTimesByLoc{i}));
 end
 origYLim = ylim();
 plot([0 0], [0 1000], '-', 'Color', 0.3 * ones(3, 1));
@@ -225,22 +225,22 @@ xlabel('Time from Array Onset (s)');
 ylabel('Estimated Spike Rate (Hz)');
 
 text(0.9, 1, legendEntry, 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
-text(0.02, 1, 'Hold Trials Only', 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
+text(0.02, 1, 'Hold Trials Balanced Only', 'VerticalAlignment', 'top', 'Units', 'normalized', 'FontSize', 10);
 
-%% spdf for target dim
+%% spdf for target dim - balanced
 axTargetDimSpdf = axes('Position', [spdfTargetDimLeft btm targetDimSpdfW spdfH]); 
 
-t = ES.targetDim.t - ES.targetDim.window(1);
+t = ES.targetDimBal.t - ES.targetDimBal.window(1);
 xBounds = [-0.6 0.6];
 hold on;
 for i = 1:nLoc
-    if any(isnan(ES.targetDim.spdfByLoc(i,:)))
+    if any(isnan(ES.targetDimBal.spdfByLoc(i,:)))
         continue;
     end
-    plot(t, ES.targetDim.spdfByLoc(i,:),  ...
+    plot(t, ES.targetDimBal.spdfByLoc(i,:),  ...
             'Color', cols(i,:), 'LineWidth', 2);
-    if ~isnan(ES.targetDim.latencyBootByLoc(i))
-        plot(ES.targetDim.latencyBootByLoc(i), ES.targetDim.spdfByLoc(i,ES.targetDim.latencyBootInfoByLoc{i}.latencyTInd), ...
+    if ~isnan(ES.targetDimBal.latencyBootByLoc(i))
+        plot(ES.targetDimBal.latencyBootByLoc(i), ES.targetDimBal.spdfByLoc(i,ES.targetDimBal.latencyBootInfoByLoc{i}.latencyTInd), ...
                 '.', 'Color', cols(i,:) * 0.9, 'MarkerSize', 18, 'LineWidth', 2);
     end
 end
@@ -321,28 +321,28 @@ else
     cueResponseVsBaselinePValueExRFCol = redCol;
 end
 
-if ES.arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc(ES.inRFLoc).p < 0.05 / numel(ES.unusedLocs)
-    arrayHoldResponseVsBaselinePValueInRFCol = greenCol;
+if ES.arrayHoldBalResponseVsCTDelayHoldBalSignRankTestStatsByLoc(ES.inRFLoc).p < 0.05 / numel(ES.unusedLocs)
+    arrayHoldBalResponseVsBaselinePValueInRFCol = greenCol;
 else
-    arrayHoldResponseVsBaselinePValueInRFCol = redCol;
+    arrayHoldBalResponseVsBaselinePValueInRFCol = redCol;
 end
 
-if ES.arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc(ES.exRFLoc).p < 0.05 / numel(ES.unusedLocs)
-    arrayHoldResponseVsBaselinePValueExRFCol = greenCol;
+if ES.arrayHoldBalResponseVsCTDelayHoldBalSignRankTestStatsByLoc(ES.exRFLoc).p < 0.05 / numel(ES.unusedLocs)
+    arrayHoldBalResponseVsBaselinePValueExRFCol = greenCol;
 else
-    arrayHoldResponseVsBaselinePValueExRFCol = redCol;
+    arrayHoldBalResponseVsBaselinePValueExRFCol = redCol;
 end
 
-if ES.targetDimResponseVsTargetDimDelaySignRankTestStatsByLoc(ES.inRFLoc).p < 0.05 / numel(ES.unusedLocs)
-    targetDimResponseVsBaselinePValueInRFCol = greenCol;
+if ES.targetDimBalResponseVsTargetDimBalDelaySignRankTestStatsByLoc(ES.inRFLoc).p < 0.05 / numel(ES.unusedLocs)
+    targetDimBalResponseVsBaselinePValueInRFCol = greenCol;
 else
-    targetDimResponseVsBaselinePValueInRFCol = redCol;
+    targetDimBalResponseVsBaselinePValueInRFCol = redCol;
 end
 
-if ES.targetDimResponseVsTargetDimDelaySignRankTestStatsByLoc(ES.exRFLoc).p < 0.05 / numel(ES.unusedLocs)
-    targetDimResponseVsBaselinePValueExRFCol = greenCol;
+if ES.targetDimBalResponseVsTargetDimBalDelaySignRankTestStatsByLoc(ES.exRFLoc).p < 0.05 / numel(ES.unusedLocs)
+    targetDimBalResponseVsBaselinePValueExRFCol = greenCol;
 else
-    targetDimResponseVsBaselinePValueExRFCol = redCol;
+    targetDimBalResponseVsBaselinePValueExRFCol = redCol;
 end
 
 if ES.cueTargetDelayDiffPValueByShuffleSpdf < 0.05
@@ -351,10 +351,10 @@ else
     cueTargetDelayDiffPValueByShuffleSpdfCol = redCol;
 end
 
-if ES.targetDimDelayDiffPValueByShuffleSpdf < 0.05
-    targetDimDelayDiffPValueByShuffleSpdfCol = greenCol;
+if ES.targetDimBalDelayDiffPValueByShuffleSpdf < 0.05
+    targetDimBalDelayDiffPValueByShuffleSpdfCol = greenCol;
 else
-    targetDimDelayDiffPValueByShuffleSpdfCol = redCol;
+    targetDimBalDelayDiffPValueByShuffleSpdfCol = redCol;
 end
 
 if ES.cueTargetDelayAIPValueByShuffleSpdf < 0.05
@@ -363,10 +363,10 @@ else
     cueTargetDelayAICol = redCol;
 end
 
-if ES.targetDimDelayAIPValueByShuffleSpdf < 0.05
-    targetDimDelayAICol = greenCol;
+if ES.targetDimBalDelayAIPValueByShuffleSpdf < 0.05
+    targetDimBalDelayAICol = greenCol;
 else
-    targetDimDelayAICol = redCol;
+    targetDimBalDelayAICol = redCol;
 end
 
 if ES.cueResponseInfoRateStruct.infoRatePValueByShuffleSpdf < 0.05
@@ -381,22 +381,22 @@ else
     cueTargetDelayInfoRateCol = redCol;
 end
 
-if ES.arrayHoldResponseInfoRateStruct.infoRatePValueByShuffleSpdf < 0.05
-    arrayHoldResponseInfoRateCol = greenCol;
+if ES.arrayHoldBalResponseInfoRateStruct.infoRatePValueByShuffleSpdf < 0.05
+    arrayHoldBalResponseInfoRateCol = greenCol;
 else
-    arrayHoldResponseInfoRateCol = redCol;
+    arrayHoldBalResponseInfoRateCol = redCol;
 end
 
-if ES.targetDimDelayInfoRateStruct.infoRatePValueByShuffleSpdf < 0.05
-    targetDimDelayInfoRateCol = greenCol;
+if ES.targetDimBalDelayInfoRateStruct.infoRatePValueByShuffleSpdf < 0.05
+    targetDimBalDelayInfoRateCol = greenCol;
 else
-    targetDimDelayInfoRateCol = redCol;
+    targetDimBalDelayInfoRateCol = redCol;
 end
 
-if ES.targetDimResponseInfoRateStruct.infoRatePValueByShuffleSpdf < 0.05
-    targetDimResponseInfoRateCol = greenCol;
+if ES.targetDimBalResponseInfoRateStruct.infoRatePValueByShuffleSpdf < 0.05
+    targetDimBalResponseInfoRateCol = greenCol;
 else
-    targetDimResponseInfoRateCol = redCol;
+    targetDimBalResponseInfoRateCol = redCol;
 end
 
 textParams = {'Units', 'normalized', 'FontSize', 8, 'VerticalAlignment', 'top'};
@@ -418,13 +418,13 @@ text(axBig, -0.03, infoText2Top, {...
         sprintf('{\\color[rgb]{%f,%f,%f}ExRF}: Cue {\\neq} Baseline {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
             cols(ES.exRFLoc,:), cueResponseVsBaselinePValueExRFCol, ES.cueResponseVsBaselineSignRankTestStatsByLoc(ES.exRFLoc).p), ...
         sprintf('{\\color[rgb]{%f,%f,%f}InRF}: Array Hold {\\neq} CT Delay {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            cols(ES.inRFLoc,:), arrayHoldResponseVsBaselinePValueInRFCol, ES.arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc(ES.inRFLoc).p), ...
+            cols(ES.inRFLoc,:), arrayHoldBalResponseVsBaselinePValueInRFCol, ES.arrayHoldBalResponseVsCTDelayHoldBalSignRankTestStatsByLoc(ES.inRFLoc).p), ...
         sprintf('{\\color[rgb]{%f,%f,%f}ExRF}: Array Hold {\\neq} CT Delay {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            cols(ES.exRFLoc,:), arrayHoldResponseVsBaselinePValueExRFCol, ES.arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc(ES.exRFLoc).p), ...
+            cols(ES.exRFLoc,:), arrayHoldBalResponseVsBaselinePValueExRFCol, ES.arrayHoldBalResponseVsCTDelayHoldBalSignRankTestStatsByLoc(ES.exRFLoc).p), ...
         sprintf('{\\color[rgb]{%f,%f,%f}InRF}: Dimming {\\neq} TD Delay {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            cols(ES.inRFLoc,:), targetDimResponseVsBaselinePValueInRFCol, ES.targetDimResponseVsTargetDimDelaySignRankTestStatsByLoc(ES.inRFLoc).p), ...
+            cols(ES.inRFLoc,:), targetDimBalResponseVsBaselinePValueInRFCol, ES.targetDimBalResponseVsTargetDimBalDelaySignRankTestStatsByLoc(ES.inRFLoc).p), ...
         sprintf('{\\color[rgb]{%f,%f,%f}ExRF}: Dimming {\\neq} TD Delay {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            cols(ES.exRFLoc,:), targetDimResponseVsBaselinePValueExRFCol, ES.targetDimResponseVsTargetDimDelaySignRankTestStatsByLoc(ES.exRFLoc).p), ...
+            cols(ES.exRFLoc,:), targetDimBalResponseVsBaselinePValueExRFCol, ES.targetDimBalResponseVsTargetDimBalDelaySignRankTestStatsByLoc(ES.exRFLoc).p), ...
         '', ...
         sprintf('Cue Latency: {\\color[rgb]{%f,%f,%f}InRF}: %d ms, {\\color[rgb]{%f,%f,%f}ExRF}: %d ms', ...
             cols(ES.inRFLoc,:), round(ES.cueOnset.latencyBootByLoc(ES.inRFLoc) * 1000), ...
@@ -446,14 +446,14 @@ text(axBig, -0.03, infoText2Top, {...
             cueTargetDelayInfoRateCol, ES.cueTargetDelayInfoRateStruct.infoRate, ...
             cueTargetDelayInfoRateCol, ES.cueTargetDelayInfoRateStruct.infoRatePValueByShuffleSpdf), ...
         sprintf('Array Hold Info: {\\color[rgb]{%f,%f,%f}%0.2f}, Shuf {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            arrayHoldResponseInfoRateCol, ES.arrayHoldResponseInfoRateStruct.infoRate, ...
-            arrayHoldResponseInfoRateCol, ES.arrayHoldResponseInfoRateStruct.infoRatePValueByShuffleSpdf), ...
+            arrayHoldBalResponseInfoRateCol, ES.arrayHoldBalResponseInfoRateStruct.infoRate, ...
+            arrayHoldBalResponseInfoRateCol, ES.arrayHoldBalResponseInfoRateStruct.infoRatePValueByShuffleSpdf), ...
         sprintf('TD Delay Info: {\\color[rgb]{%f,%f,%f}%0.2f}, Shuf {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            targetDimDelayInfoRateCol, ES.targetDimDelayInfoRateStruct.infoRate, ...
-            targetDimDelayInfoRateCol, ES.targetDimDelayInfoRateStruct.infoRatePValueByShuffleSpdf), ...
+            targetDimBalDelayInfoRateCol, ES.targetDimBalDelayInfoRateStruct.infoRate, ...
+            targetDimBalDelayInfoRateCol, ES.targetDimBalDelayInfoRateStruct.infoRatePValueByShuffleSpdf), ...
         sprintf('Dimming Info: {\\color[rgb]{%f,%f,%f}%0.2f}, Shuf {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            targetDimResponseInfoRateCol, ES.targetDimResponseInfoRateStruct.infoRate, ...
-            targetDimResponseInfoRateCol, ES.targetDimResponseInfoRateStruct.infoRatePValueByShuffleSpdf), ...
+            targetDimBalResponseInfoRateCol, ES.targetDimBalResponseInfoRateStruct.infoRate, ...
+            targetDimBalResponseInfoRateCol, ES.targetDimBalResponseInfoRateStruct.infoRatePValueByShuffleSpdf), ...
         '', ...
         sprintf('CT Delay Diff: {\\color[rgb]{%f,%f,%f}%0.1f Hz}, Shuf {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
             cueTargetDelayDiffPValueByShuffleSpdfCol, ES.cueTargetDelayDiff, ...
@@ -461,10 +461,10 @@ text(axBig, -0.03, infoText2Top, {...
         sprintf('CT Delay AI: {\\color[rgb]{%f,%f,%f}%0.2f}, Shuf {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
             cueTargetDelayAICol, ES.cueTargetDelayAI, cueTargetDelayAICol, ES.cueTargetDelayAIPValueByShuffleSpdf), ...
         sprintf('TD Delay Diff: {\\color[rgb]{%f,%f,%f}%0.1f Hz}, Shuf {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            targetDimDelayDiffPValueByShuffleSpdfCol, ES.targetDimDelayDiff, ...
-            targetDimDelayDiffPValueByShuffleSpdfCol, ES.targetDimDelayDiffPValueByShuffleSpdf), ...
+            targetDimBalDelayDiffPValueByShuffleSpdfCol, ES.targetDimBalDelayDiff, ...
+            targetDimBalDelayDiffPValueByShuffleSpdfCol, ES.targetDimBalDelayDiffPValueByShuffleSpdf), ...
         sprintf('TD Delay AI: {\\color[rgb]{%f,%f,%f}%0.2f}, Shuf {\\color[rgb]{%f,%f,%f}P = %0.3f}', ...
-            targetDimDelayAICol, ES.targetDimDelayAI, targetDimDelayAICol, ES.targetDimDelayAIPValueByShuffleSpdf), ...
+            targetDimBalDelayAICol, ES.targetDimDelayAI, targetDimBalDelayAICol, ES.targetDimBalDelayAIPValueByShuffleSpdf), ...
         }, ...
         textParams{:});
 

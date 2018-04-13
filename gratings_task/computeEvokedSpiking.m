@@ -33,7 +33,7 @@ kernelSigma = 0.01;
 clear spikeStruct;
 
 nTrials = numel(UE.cueOnset);
-nTrialsHold = numel(UE.arrayOnsetHold);
+nTrialsHoldBal = numel(UE.arrayOnsetHoldBal);
 nTrialsByLoc = cellfun(@numel, UE.cueOnsetByLoc);
 isLocUsed = nTrialsByLoc > 0;
 fprintf('Computing evoked spiking with SPDF sigma %0.3f seconds and %d randomizations over %d trials...\n', ...
@@ -55,20 +55,26 @@ arrayOnset.window = [0.8 0.8]; % seconds before, after
 arrayOnset.spdfWindowOffset = [-0.7 0.7]; % tighter window for spdf to avoid edge effects
 arrayOnsetRel = arrayOnset; % copy
 arrayOnsetHold = arrayOnset; % copy
+arrayOnsetRelBal = arrayOnset; % copy
+arrayOnsetHoldBal = arrayOnset; % copy
 
 arrayOnset = createTimeLockedSpdf(spikeTs, UE.arrayOnset, UE.arrayOnsetByLoc, arrayOnset, kernelSigma);
 arrayOnsetRel = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRel, UE.arrayOnsetRelByLoc, arrayOnsetRel, kernelSigma);
 arrayOnsetHold = createTimeLockedSpdf(spikeTs, UE.arrayOnsetHold, UE.arrayOnsetHoldByLoc, arrayOnsetHold, kernelSigma);
+arrayOnsetRelBal = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRelBal, UE.arrayOnsetRelBalByLoc, arrayOnsetRelBal, kernelSigma);
+arrayOnsetHoldBal = createTimeLockedSpdf(spikeTs, UE.arrayOnsetHoldBal, UE.arrayOnsetHoldBalByLoc, arrayOnsetHoldBal, kernelSigma);
 
 %% align spikes to target dimming, compute spdf
 targetDim.window = [0.8 0.8]; % seconds before, after
 targetDim.spdfWindowOffset = [-0.7 0.7]; % tighter window for spdf to avoid edge effects
-targetDimShortHold = targetDim;
-targetDimLongHold = targetDim;
+targetDimBalShortHold = targetDim;
+targetDimBalLongHold = targetDim;
+targetDimBal = targetDim;
 
 targetDim = createTimeLockedSpdf(spikeTs, UE.targetDim, UE.targetDimByLoc, targetDim, kernelSigma);
-targetDimShortHold = createTimeLockedSpdf(spikeTs, UE.targetDimShortHold, UE.targetDimShortHoldByLoc, targetDimShortHold, kernelSigma);
-targetDimLongHold = createTimeLockedSpdf(spikeTs, UE.targetDimLongHold, UE.targetDimLongHoldByLoc, targetDimLongHold, kernelSigma);
+targetDimBalShortHold = createTimeLockedSpdf(spikeTs, UE.targetDimBalShortHold, UE.targetDimBalShortHoldByLoc, targetDimBalShortHold, kernelSigma);
+targetDimBalLongHold = createTimeLockedSpdf(spikeTs, UE.targetDimBalLongHold, UE.targetDimBalLongHoldByLoc, targetDimBalLongHold, kernelSigma);
+targetDimBal = createTimeLockedSpdf(spikeTs, UE.targetDimBal, UE.targetDimBalByLoc, targetDimBal, kernelSigma);
 
 %% look at lever-locked responses and saccade-locked responses
 % note that this includes both hold and release trials
@@ -158,34 +164,34 @@ averageFiringRatesByCount.cueResponse = computeAverageFiringRateByCount(...
         cueResponseWindowOffset, cueOnset);
 averageFiringRatesByCount.cueTargetDelay = computeAverageFiringRateByCount(...
         cueTargetDelayWindowOffset, arrayOnset);
-averageFiringRatesByCount.cueTargetDelayRel = computeAverageFiringRateByCount(...
-        cueTargetDelayWindowOffset, arrayOnsetRel);
-averageFiringRatesByCount.cueTargetDelayHold = computeAverageFiringRateByCount(...
-        cueTargetDelayWindowOffset, arrayOnsetHold);
+averageFiringRatesByCount.cueTargetDelayRelBal = computeAverageFiringRateByCount(...
+        cueTargetDelayWindowOffset, arrayOnsetRelBal);
+averageFiringRatesByCount.cueTargetDelayHoldBal = computeAverageFiringRateByCount(...
+        cueTargetDelayWindowOffset, arrayOnsetHoldBal);
 averageFiringRatesByCount.cueTargetDelayLong = computeAverageFiringRateByCount(...
         cueTargetDelayLongWindowOffset, arrayOnset);
-averageFiringRatesByCount.cueTargetDelayLongRel = computeAverageFiringRateByCount(...
-        cueTargetDelayLongWindowOffset, arrayOnsetRel);
-averageFiringRatesByCount.cueTargetDelayLongHold = computeAverageFiringRateByCount(...
-        cueTargetDelayLongWindowOffset, arrayOnsetHold);
+averageFiringRatesByCount.cueTargetDelayLongRelBal = computeAverageFiringRateByCount(...
+        cueTargetDelayLongWindowOffset, arrayOnsetRelBal);
+averageFiringRatesByCount.cueTargetDelayLongHoldBal = computeAverageFiringRateByCount(...
+        cueTargetDelayLongWindowOffset, arrayOnsetHoldBal);
 averageFiringRatesByCount.arrayResponse = computeAverageFiringRateByCount(...
         arrayResponseWindowOffset, arrayOnset);
-averageFiringRatesByCount.arrayRelResponse = computeAverageFiringRateByCount(...
-        arrayResponseWindowOffset, arrayOnsetRel);
-averageFiringRatesByCount.arrayHoldResponse = computeAverageFiringRateByCount(...
-        arrayResponseWindowOffset, arrayOnsetHold);
-averageFiringRatesByCount.targetDimDelay = computeAverageFiringRateByCount(...
-        targetDimDelayWindowOffset, targetDim);
-averageFiringRatesByCount.targetDimDelayLong = computeAverageFiringRateByCount(...
-        targetDimDelayLongWindowOffset, targetDim);
-averageFiringRatesByCount.targetDimResponse = computeAverageFiringRateByCount(...
-        targetDimResponseWindowOffset, targetDim);
-averageFiringRatesByCount.targetDimShortHoldResponse = computeAverageFiringRateByCount(...
-        targetDimResponseWindowOffset, targetDimShortHold);
-averageFiringRatesByCount.targetDimLongHoldResponse = computeAverageFiringRateByCount(...
-        targetDimResponseWindowOffset, targetDimLongHold);
-averageFiringRatesByCount.postTargetDimMotorResponse = computeAverageFiringRateByCount(...
-        postTargetDimMotorResponseWindowOffset, targetDim);
+averageFiringRatesByCount.arrayRelBalResponse = computeAverageFiringRateByCount(...
+        arrayResponseWindowOffset, arrayOnsetRelBal);
+averageFiringRatesByCount.arrayHoldBalResponse = computeAverageFiringRateByCount(...
+        arrayResponseWindowOffset, arrayOnsetHoldBal);
+averageFiringRatesByCount.targetDimBalDelay = computeAverageFiringRateByCount(...
+        targetDimDelayWindowOffset, targetDimBal);
+averageFiringRatesByCount.targetDimBalDelayLong = computeAverageFiringRateByCount(...
+        targetDimDelayLongWindowOffset, targetDimBal);
+averageFiringRatesByCount.targetDimBalResponse = computeAverageFiringRateByCount(...
+        targetDimResponseWindowOffset, targetDimBal);
+averageFiringRatesByCount.targetDimBalShortHoldResponse = computeAverageFiringRateByCount(...
+        targetDimResponseWindowOffset, targetDimBalShortHold);
+averageFiringRatesByCount.targetDimBalLongHoldResponse = computeAverageFiringRateByCount(...
+        targetDimResponseWindowOffset, targetDimBalLongHold);
+averageFiringRatesByCount.postTargetDimBalMotorResponse = computeAverageFiringRateByCount(...
+        postTargetDimMotorResponseWindowOffset, targetDimBal);
 averageFiringRatesByCount.preExitFixation = computeAverageFiringRateByCount(...
         preExitFixationWindowOffset, exitFixation);
 averageFiringRatesByCount.preExitFixationEarly = computeAverageFiringRateByCount(...
@@ -208,34 +214,34 @@ averageFiringRatesBySpdf.cueResponse = computeAverageFiringRateBySpdf(...
         cueResponseWindowOffset, cueOnset);
 averageFiringRatesBySpdf.cueTargetDelay = computeAverageFiringRateBySpdf(...
         cueTargetDelayWindowOffset, arrayOnset);
-averageFiringRatesBySpdf.cueTargetDelayRel = computeAverageFiringRateBySpdf(...
-        cueTargetDelayWindowOffset, arrayOnsetRel);
-averageFiringRatesBySpdf.cueTargetDelayHold = computeAverageFiringRateBySpdf(...
-        cueTargetDelayWindowOffset, arrayOnsetHold);
+averageFiringRatesBySpdf.cueTargetDelayRelBal = computeAverageFiringRateBySpdf(...
+        cueTargetDelayWindowOffset, arrayOnsetRelBal);
+averageFiringRatesBySpdf.cueTargetDelayHoldBal = computeAverageFiringRateBySpdf(...
+        cueTargetDelayWindowOffset, arrayOnsetHoldBal);
 averageFiringRatesBySpdf.cueTargetDelayLong = computeAverageFiringRateBySpdf(...
         cueTargetDelayLongWindowOffset, arrayOnset);
-averageFiringRatesBySpdf.cueTargetDelayLongRel = computeAverageFiringRateBySpdf(...
-        cueTargetDelayLongWindowOffset, arrayOnsetRel);
-averageFiringRatesBySpdf.cueTargetDelayLongHold = computeAverageFiringRateBySpdf(...
-        cueTargetDelayLongWindowOffset, arrayOnsetHold);
+averageFiringRatesBySpdf.cueTargetDelayLongRelBal = computeAverageFiringRateBySpdf(...
+        cueTargetDelayLongWindowOffset, arrayOnsetRelBal);
+averageFiringRatesBySpdf.cueTargetDelayLongHoldBal = computeAverageFiringRateBySpdf(...
+        cueTargetDelayLongWindowOffset, arrayOnsetHoldBal);
 averageFiringRatesBySpdf.arrayResponse = computeAverageFiringRateBySpdf(...
         arrayResponseWindowOffset, arrayOnset);
-averageFiringRatesBySpdf.arrayRelResponse = computeAverageFiringRateBySpdf(...
-        arrayResponseWindowOffset, arrayOnsetRel);
-averageFiringRatesBySpdf.arrayHoldResponse = computeAverageFiringRateBySpdf(...
-        arrayResponseWindowOffset, arrayOnsetHold);
-averageFiringRatesBySpdf.targetDimDelay = computeAverageFiringRateBySpdf(...
-        targetDimDelayWindowOffset, targetDim);
-averageFiringRatesBySpdf.targetDimDelayLong = computeAverageFiringRateBySpdf(...
-        targetDimDelayLongWindowOffset, targetDim);
-averageFiringRatesBySpdf.targetDimResponse = computeAverageFiringRateBySpdf(...
-        targetDimResponseWindowOffset, targetDim);
-averageFiringRatesBySpdf.targetDimShortHoldResponse = computeAverageFiringRateBySpdf(...
-        targetDimResponseWindowOffset, targetDimShortHold);
-averageFiringRatesBySpdf.targetDimLongHoldResponse = computeAverageFiringRateBySpdf(...
-        targetDimResponseWindowOffset, targetDimLongHold);
-averageFiringRatesBySpdf.postTargetDimMotorResponse = computeAverageFiringRateBySpdf(...
-        postTargetDimMotorResponseWindowOffset, targetDim);
+averageFiringRatesBySpdf.arrayRelBalResponse = computeAverageFiringRateBySpdf(...
+        arrayResponseWindowOffset, arrayOnsetRelBal);
+averageFiringRatesBySpdf.arrayHoldBalResponse = computeAverageFiringRateBySpdf(...
+        arrayResponseWindowOffset, arrayOnsetHoldBal);
+averageFiringRatesBySpdf.targetDimBalDelay = computeAverageFiringRateBySpdf(...
+        targetDimDelayWindowOffset, targetDimBal);
+averageFiringRatesBySpdf.targetDimBalDelayLong = computeAverageFiringRateBySpdf(...
+        targetDimDelayLongWindowOffset, targetDimBal);
+averageFiringRatesBySpdf.targetDimBalResponse = computeAverageFiringRateBySpdf(...
+        targetDimResponseWindowOffset, targetDimBal);
+averageFiringRatesBySpdf.targetDimBalShortHoldResponse = computeAverageFiringRateBySpdf(...
+        targetDimResponseWindowOffset, targetDimBalShortHold);
+averageFiringRatesBySpdf.targetDimBalLongHoldResponse = computeAverageFiringRateBySpdf(...
+        targetDimResponseWindowOffset, targetDimBalLongHold);
+averageFiringRatesBySpdf.postTargetDimBalMotorResponse = computeAverageFiringRateBySpdf(...
+        postTargetDimMotorResponseWindowOffset, targetDimBal);
 averageFiringRatesBySpdf.preExitFixation = computeAverageFiringRateBySpdf(...
         preExitFixationWindowOffset, exitFixation);
 averageFiringRatesBySpdf.preExitFixationEarly = computeAverageFiringRateBySpdf(...
@@ -275,11 +281,11 @@ targetDimNormalizationLogical = getTimeLogicalWithTolerance(targetDim.t, targetD
 % chain time courses into long vectors for each location
 allSpdfsByLoc = [cueOnset.spdfByLoc(:,cueOnsetNormalizationLogical) ...
         arrayOnset.spdfByLoc(:,arrayOnsetRelNormalizationLogical) ... % be conservative and use rel here
-        arrayOnsetRel.spdfByLoc(:,arrayOnsetRelNormalizationLogical) ...
-        arrayOnsetHold.spdfByLoc(:,arrayOnsetHoldNormalizationLogical) ...
-        targetDim.spdfByLoc(:,targetDimNormalizationLogical) ...
-        targetDimShortHold.spdfByLoc(:,targetDimNormalizationLogical) ...
-        targetDimLongHold.spdfByLoc(:,targetDimNormalizationLogical)];
+        arrayOnsetRelBal.spdfByLoc(:,arrayOnsetRelNormalizationLogical) ...
+        arrayOnsetHoldBal.spdfByLoc(:,arrayOnsetHoldNormalizationLogical) ...
+        targetDimBal.spdfByLoc(:,targetDimNormalizationLogical) ...
+        targetDimBalShortHold.spdfByLoc(:,targetDimNormalizationLogical) ...
+        targetDimBalLongHold.spdfByLoc(:,targetDimNormalizationLogical)];
 maxFiringRateBySpdf = max(max(allSpdfsByLoc));
 minFiringRateBySpdf = min(min(allSpdfsByLoc));
 
@@ -298,11 +304,11 @@ exitFixationInclMotorNormalizationLogical = getTimeLogicalWithTolerance(exitFixa
 allSpdfsByLoc = [enterFixation.spdfByLoc(:,enterFixationInclMotorNormalizationLogical) ...
         cueOnset.spdfByLoc(:,cueOnsetInclMotorNormalizationLogical) ...
         arrayOnset.spdfByLoc(:,arrayOnsetHoldNormalizationLogical) ... % be conservative and use hold here
-        arrayOnsetRel.spdfByLoc(:,arrayOnsetRelInclMotorNormalizationLogical) ...
-        arrayOnsetHold.spdfByLoc(:,arrayOnsetHoldNormalizationLogical) ...
-        targetDim.spdfByLoc(:,targetDimInclMotorNormalizationLogical) ...
-        targetDimShortHold.spdfByLoc(:,targetDimInclMotorNormalizationLogical) ...
-        targetDimLongHold.spdfByLoc(:,targetDimInclMotorNormalizationLogical)...
+        arrayOnsetRelBal.spdfByLoc(:,arrayOnsetRelInclMotorNormalizationLogical) ...
+        arrayOnsetHoldBal.spdfByLoc(:,arrayOnsetHoldNormalizationLogical) ...
+        targetDimBal.spdfByLoc(:,targetDimInclMotorNormalizationLogical) ...
+        targetDimBalShortHold.spdfByLoc(:,targetDimInclMotorNormalizationLogical) ...
+        targetDimBalLongHold.spdfByLoc(:,targetDimInclMotorNormalizationLogical)...
         exitFixation.spdfByLoc(:,exitFixationInclMotorNormalizationLogical)];
 maxFiringRateBySpdfInclMotor = max(max(allSpdfsByLoc));
 minFiringRateBySpdfInclMotor = min(min(allSpdfsByLoc));
@@ -374,7 +380,6 @@ for i = 1:nLoc
 end
 
 %% compute cue target delay at any location ~= baseline
-% TODO consider change from delay also as a response
 cueTargetDelayPValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
 for i = 1:nLoc
     if averageFiringRatesBySpdf.cueTargetDelay.byLoc(i) > meanBootstrappedMeanPreCueBaselines
@@ -385,40 +390,36 @@ for i = 1:nLoc
 end
 
 %% compute array response (HOLD) at any location ~= baseline
-% TODO consider change from delay also as a response
-arrayHoldResponsePValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
+arrayHoldBalResponsePValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
 for i = 1:nLoc
-    if averageFiringRatesBySpdf.arrayHoldResponse.byLoc(i) > meanBootstrappedMeanPreCueBaselines
-        arrayHoldResponsePValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.arrayHoldResponse.byLoc(i) < bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+    if averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(i) > meanBootstrappedMeanPreCueBaselines
+        arrayHoldBalResponsePValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(i) < bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
     else
-        arrayHoldResponsePValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.arrayHoldResponse.byLoc(i) > bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+        arrayHoldBalResponsePValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(i) > bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
     end
 end
 
 %% compute target dim delay at any location ~= baseline
-% TODO consider change from delay also as a response
-targetDimDelayPValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
+targetDimBalDelayPValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
 for i = 1:nLoc
-    if averageFiringRatesBySpdf.targetDimDelay.byLoc(i) > meanBootstrappedMeanPreCueBaselines
-        targetDimDelayPValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimDelay.byLoc(i) < bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+    if averageFiringRatesBySpdf.targetDimBalDelay.byLoc(i) > meanBootstrappedMeanPreCueBaselines
+        targetDimBalDelayPValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimBalDelay.byLoc(i) < bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
     else
-        targetDimDelayPValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimDelay.byLoc(i) > bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+        targetDimBalDelayPValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimBalDelay.byLoc(i) > bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
     end
 end
 
 %% compute target dim response at any location ~= baseline
-% TODO consider change from delay also as a response
-targetDimResponsePValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
+targetDimBalResponsePValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
 for i = 1:nLoc
-    if averageFiringRatesBySpdf.targetDimResponse.byLoc(i) > meanBootstrappedMeanPreCueBaselines
-        targetDimResponsePValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimResponse.byLoc(i) < bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+    if averageFiringRatesBySpdf.targetDimBalResponse.byLoc(i) > meanBootstrappedMeanPreCueBaselines
+        targetDimBalResponsePValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimBalResponse.byLoc(i) < bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
     else
-        targetDimResponsePValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimResponse.byLoc(i) > bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
+        targetDimBalResponsePValueByBootstrapBaselineSpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimBalResponse.byLoc(i) > bootstrappedMeanPreCueBaselines) / numRandomizations * 2;
     end
 end
 
 %% compute pre exit fixation response at any location ~= baseline
-% TODO consider change from delay also as a response
 preExitFixationPValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
 for i = 1:nLoc
     if averageFiringRatesBySpdf.preExitFixation.byLoc(i) > meanBootstrappedMeanPreCueBaselines
@@ -429,7 +430,6 @@ for i = 1:nLoc
 end
 
 %% compute post exit fixation response at any location ~= baseline
-% TODO consider change from delay also as a response
 postExitFixationPValueByBootstrapBaselineSpdfByLoc = nan(nLoc, 1);
 for i = 1:nLoc
     if averageFiringRatesBySpdf.postExitFixation.byLoc(i) > meanBootstrappedMeanPreCueBaselines
@@ -447,7 +447,7 @@ end
 bootstrappedMeanCueTargetDelays = zeros(numRandomizations, 1);
 cueTargetDelayWindowIndices = getTimeLogicalWithTolerance(arrayOnset.t, arrayOnset.window(1) + cueTargetDelayWindowOffset);
 for m = 1:numRandomizations
-    bootRandInd = randi(nTrialsHold, 1, nTrialsHold);
+    bootRandInd = randi(nTrialsHoldBal, 1, nTrialsHoldBal);
     bootstrapPsth = fixedPsth(arrayOnset.spikeTimes(bootRandInd), kernelSigma, 0, arrayOnset.t);
     if ~isempty(bootstrapPsth)
         bootstrappedMeanCueTargetDelays(m) = mean(bootstrapPsth(cueTargetDelayWindowIndices));
@@ -459,15 +459,15 @@ clear m bootRandInd bootstrapPsthResponse cueTargetDelayWindowIndices;
 
 % inRFLoc is defined as location with largest mean cue response > baseline
 % directional test
-arrayHoldResponsePValueByBootstrapCueTargetDelaySpdfInRF = sum(averageFiringRatesBySpdf.arrayHoldResponse.byLoc(inRFLoc) < bootstrappedMeanCueTargetDelays) / numRandomizations;
+arrayHoldBalResponsePValueByBootstrapCueTargetDelaySpdfInRF = sum(averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(inRFLoc) < bootstrappedMeanCueTargetDelays) / numRandomizations;
 
 %% compute array response (HOLD) at any location ~= cue-target delay
-arrayHoldResponsePValueByBootstrapCueTargetDelaySpdfByLoc = nan(nLoc, 1);
+arrayHoldBalResponsePValueByBootstrapCueTargetDelaySpdfByLoc = nan(nLoc, 1);
 for i = 1:nLoc
-    if averageFiringRatesBySpdf.arrayHoldResponse.byLoc(i) > meanBootstrappedMeanCueTargetDelays
-        arrayHoldResponsePValueByBootstrapCueTargetDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.arrayHoldResponse.byLoc(i) < bootstrappedMeanCueTargetDelays) / numRandomizations * 2;
+    if averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(i) > meanBootstrappedMeanCueTargetDelays
+        arrayHoldBalResponsePValueByBootstrapCueTargetDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(i) < bootstrappedMeanCueTargetDelays) / numRandomizations * 2;
     else
-        arrayHoldResponsePValueByBootstrapCueTargetDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.arrayHoldResponse.byLoc(i) > bootstrappedMeanCueTargetDelays) / numRandomizations * 2;
+        arrayHoldBalResponsePValueByBootstrapCueTargetDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(i) > bootstrappedMeanCueTargetDelays) / numRandomizations * 2;
     end
 end
 
@@ -476,62 +476,30 @@ end
 % compare actual mean SPDF target-dim response to distribution of bootstrapped
 % target-dim delay
 % TODO using count should be faster than psth
-bootstrappedMeanTargetDimDelays = zeros(numRandomizations, 1);
-targetDimDelayWindowIndices = getTimeLogicalWithTolerance(targetDim.t, targetDim.window(1) + targetDimDelayWindowOffset);
+bootstrappedMeanTargetDimBalDelays = zeros(numRandomizations, 1);
+targetDimBalDelayWindowIndices = getTimeLogicalWithTolerance(targetDim.t, targetDim.window(1) + targetDimDelayWindowOffset);
 for m = 1:numRandomizations
-    bootRandInd = randi(nTrialsHold, 1, nTrialsHold);
-    bootstrapPsth = fixedPsth(targetDim.spikeTimes(bootRandInd), kernelSigma, 0, targetDim.t);
+    bootRandInd = randi(nTrialsHoldBal, 1, nTrialsHoldBal);
+    bootstrapPsth = fixedPsth(targetDimBal.spikeTimes(bootRandInd), kernelSigma, 0, targetDim.t);
     if ~isempty(bootstrapPsth)
-        bootstrappedMeanTargetDimDelays(m) = mean(bootstrapPsth(targetDimDelayWindowIndices));
+        bootstrappedMeanTargetDimBalDelays(m) = mean(bootstrapPsth(targetDimBalDelayWindowIndices));
     end % else, then there were no spikes and leave as zeros
 end
 fprintf('.');
-meanBootstrappedMeanTargetDimDelays = mean(bootstrappedMeanTargetDimDelays);
-clear m bootRandInd bootstrapPsthResponse targetDimDelayWindowIndices;
+meanBootstrappedMeanTargetDimBalDelays = mean(bootstrappedMeanTargetDimBalDelays);
+clear m bootRandInd bootstrapPsthResponse targetDimBalDelayWindowIndices;
 
 % inRFLoc is defined as location with largest mean cue response > baseline
 % directional test
-targetDimResponsePValueByBootstrapTargetDimDelaySpdfInRF = sum(averageFiringRatesBySpdf.targetDimResponse.byLoc(inRFLoc) < bootstrappedMeanTargetDimDelays) / numRandomizations;
+targetDimBalResponsePValueByBootstrapTargetDimBalDelaySpdfInRF = sum(averageFiringRatesBySpdf.targetDimBalResponse.byLoc(inRFLoc) < bootstrappedMeanTargetDimBalDelays) / numRandomizations;
 
 %% compute target dim response at any location ~= target-dim delay
-targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc = nan(nLoc, 1);
+targetDimBalResponsePValueByBootstrapTargetDimBalDelaySpdfByLoc = nan(nLoc, 1);
 for i = 1:nLoc
-    if averageFiringRatesBySpdf.targetDimResponse.byLoc(i) > meanBootstrappedMeanTargetDimDelays
-        targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimResponse.byLoc(i) < bootstrappedMeanTargetDimDelays) / numRandomizations * 2;
+    if averageFiringRatesBySpdf.targetDimBalResponse.byLoc(i) > meanBootstrappedMeanTargetDimBalDelays
+        targetDimBalResponsePValueByBootstrapTargetDimBalDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimBalResponse.byLoc(i) < bootstrappedMeanTargetDimBalDelays) / numRandomizations * 2;
     else
-        targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimResponse.byLoc(i) > bootstrappedMeanTargetDimDelays) / numRandomizations * 2;
-    end
-end
-
-%% compute target-dim response at InRF > target-dim delay
-% bootstrap on mean of target-dim delay SPDF with 500 shuffles
-% compare actual mean SPDF target-dim response to distribution of bootstrapped
-% target-dim delay
-% TODO using count should be faster than psth
-bootstrappedMeanTargetDimDelays = zeros(numRandomizations, 1);
-targetDimDelayWindowIndices = getTimeLogicalWithTolerance(targetDim.t, targetDim.window(1) + targetDimDelayWindowOffset);
-for m = 1:numRandomizations
-    bootRandInd = randi(nTrialsHold, 1, nTrialsHold);
-    bootstrapPsth = fixedPsth(targetDim.spikeTimes(bootRandInd), kernelSigma, 0, targetDim.t);
-    if ~isempty(bootstrapPsth)
-        bootstrappedMeanTargetDimDelays(m) = mean(bootstrapPsth(targetDimDelayWindowIndices));
-    end % else, then there were no spikes and leave as zeros
-end
-fprintf('.');
-meanBootstrappedMeanTargetDimDelays = mean(bootstrappedMeanTargetDimDelays);
-clear m bootRandInd bootstrapPsthResponse targetDimDelayWindowIndices;
-
-% inRFLoc is defined as location with largest mean cue response > baseline
-% directional test
-targetDimResponsePValueByBootstrapTargetDimDelaySpdfInRF = sum(averageFiringRatesBySpdf.targetDimResponse.byLoc(inRFLoc) < bootstrappedMeanTargetDimDelays) / numRandomizations;
-
-%% compute target dim response at any location ~= target-dim delay
-targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc = nan(nLoc, 1);
-for i = 1:nLoc
-    if averageFiringRatesBySpdf.targetDimResponse.byLoc(i) > meanBootstrappedMeanTargetDimDelays
-        targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimResponse.byLoc(i) < bootstrappedMeanTargetDimDelays) / numRandomizations * 2;
-    else
-        targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimResponse.byLoc(i) > bootstrappedMeanTargetDimDelays) / numRandomizations * 2;
+        targetDimBalResponsePValueByBootstrapTargetDimBalDelaySpdfByLoc(i) = sum(averageFiringRatesBySpdf.targetDimBalResponse.byLoc(i) > bootstrappedMeanTargetDimBalDelays) / numRandomizations * 2;
     end
 end
 
@@ -589,12 +557,12 @@ cueResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiri
         averageFiringRatesByCount.cueResponse.trialRateByLoc);
 cueTargetDelayVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc);
-arrayHoldResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
-        averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc);
-targetDimDelayVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
-        averageFiringRatesByCount.targetDimDelay.trialRateByLoc);
-targetDimResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
-        averageFiringRatesByCount.targetDimResponse.trialRateByLoc);
+arrayHoldBalResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
+        averageFiringRatesByCount.arrayHoldBalResponse.trialRateByLoc);
+targetDimBalDelayVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
+        averageFiringRatesByCount.targetDimBalDelay.trialRateByLoc);
+targetDimBalResponseVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
+        averageFiringRatesByCount.targetDimBalResponse.trialRateByLoc);
 preExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
         averageFiringRatesByCount.preExitFixation.trialRateByLoc);
 postExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRate, ...
@@ -603,10 +571,10 @@ postExitFixationVsBaselineRankSumTestStatsByLoc = computeRankSumTestByLoc(averag
 % by location -- use sign-rank test here
 cueResponseVsBaselineSignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.preCueBaseline.trialRateByLoc, ...
         averageFiringRatesByCount.cueResponse.trialRateByLoc);
-arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.cueTargetDelayHold.trialRateByLoc, ...
-        averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc);
-targetDimResponseVsTargetDimDelaySignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.targetDimDelay.trialRateByLoc, ...
-        averageFiringRatesByCount.targetDimResponse.trialRateByLoc);
+arrayHoldBalResponseVsCTDelayHoldBalSignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.cueTargetDelayHoldBal.trialRateByLoc, ...
+        averageFiringRatesByCount.arrayHoldBalResponse.trialRateByLoc);
+targetDimBalResponseVsTargetDimBalDelaySignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.targetDimBalDelay.trialRateByLoc, ...
+        averageFiringRatesByCount.targetDimBalResponse.trialRateByLoc);
 preExitFixationVsPreExitFixationEarlySignRankTestStatsByLoc = computeSignRankTestByLoc(averageFiringRatesByCount.preExitFixationEarly.trialRateByLoc, ...
         averageFiringRatesByCount.preExitFixation.trialRateByLoc);
 
@@ -629,11 +597,11 @@ cueTargetDelayWindowIndices = getTimeLogicalWithTolerance(arrayOnset.t, arrayOns
 nTrialsInRF = numel(arrayOnset.spikeTimesByLoc{inRFLoc});
 nTrialsExRF = numel(arrayOnset.spikeTimesByLoc{exRFLoc});
 nTrialsInRFExRF = nTrialsInRF + nTrialsExRF;
-arrayOnsetSpikeTimesInRFExRF = [arrayOnset.spikeTimesByLoc{inRFLoc} arrayOnset.spikeTimesByLoc{exRFLoc}];
+arrayOnsetHoldBalSpikeTimesInRFExRF = [arrayOnset.spikeTimesByLoc{inRFLoc} arrayOnset.spikeTimesByLoc{exRFLoc}];
 for m = 1:numRandomizations
     shuffleIndices = randperm(nTrialsInRFExRF);
-    randSpikeTimesInRF = arrayOnsetSpikeTimesInRFExRF(shuffleIndices(1:nTrialsInRF));
-    randSpikeTimesExRF = arrayOnsetSpikeTimesInRFExRF(shuffleIndices(nTrialsInRF+1:end));
+    randSpikeTimesInRF = arrayOnsetHoldBalSpikeTimesInRFExRF(shuffleIndices(1:nTrialsInRF));
+    randSpikeTimesExRF = arrayOnsetHoldBalSpikeTimesInRFExRF(shuffleIndices(nTrialsInRF+1:end));
     
     shufflePsthInRF = fixedPsth(randSpikeTimesInRF, kernelSigma, 0, arrayOnset.t);
     shufflePsthExRF = fixedPsth(randSpikeTimesExRF, kernelSigma, 0, arrayOnset.t);
@@ -666,93 +634,93 @@ cueTargetDelayDiffPValueByRankSumTest = ranksum(...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{inRFLoc}, ...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{exRFLoc});
 
-%% permutation test on array onset response period - hold trials only
-shuffleArrayHoldResponseDiff = zeros(numRandomizations, 1);
-shuffleArrayHoldResponseAI = zeros(numRandomizations, 1);
-arrayHoldResponesWindowIndices = getTimeLogicalWithTolerance(arrayOnsetHold.t, arrayOnsetHold.window(1) + arrayResponseWindowOffset);
-nTrialsInRF = numel(arrayOnsetHold.spikeTimesByLoc{inRFLoc});
-nTrialsExRF = numel(arrayOnsetHold.spikeTimesByLoc{exRFLoc});
+%% permutation test on array onset response period - hold balanced trials only
+shuffleArrayHoldBalResponseDiff = zeros(numRandomizations, 1);
+shuffleArrayHoldBalResponseAI = zeros(numRandomizations, 1);
+arrayHoldBalResponseWindowIndices = getTimeLogicalWithTolerance(arrayOnsetHoldBal.t, arrayOnsetHoldBal.window(1) + arrayResponseWindowOffset);
+nTrialsInRF = numel(arrayOnsetHoldBal.spikeTimesByLoc{inRFLoc});
+nTrialsExRF = numel(arrayOnsetHoldBal.spikeTimesByLoc{exRFLoc});
 nTrialsInRFExRF = nTrialsInRF + nTrialsExRF;
-arrayOnsetSpikeTimesInRFExRF = [arrayOnsetHold.spikeTimesByLoc{inRFLoc} arrayOnsetHold.spikeTimesByLoc{exRFLoc}];
+arrayOnsetHoldBalSpikeTimesInRFExRF = [arrayOnsetHoldBal.spikeTimesByLoc{inRFLoc} arrayOnsetHoldBal.spikeTimesByLoc{exRFLoc}];
 for m = 1:numRandomizations
     shuffleIndices = randperm(nTrialsInRFExRF);
-    randSpikeTimesInRF = arrayOnsetSpikeTimesInRFExRF(shuffleIndices(1:nTrialsInRF));
-    randSpikeTimesExRF = arrayOnsetSpikeTimesInRFExRF(shuffleIndices(nTrialsInRF+1:end));
+    randSpikeTimesInRF = arrayOnsetHoldBalSpikeTimesInRFExRF(shuffleIndices(1:nTrialsInRF));
+    randSpikeTimesExRF = arrayOnsetHoldBalSpikeTimesInRFExRF(shuffleIndices(nTrialsInRF+1:end));
     
-    shufflePsthInRF = fixedPsth(randSpikeTimesInRF, kernelSigma, 0, arrayOnsetHold.t);
-    shufflePsthExRF = fixedPsth(randSpikeTimesExRF, kernelSigma, 0, arrayOnsetHold.t);
-    meanResponseShufflePsthInRF = mean(shufflePsthInRF(arrayHoldResponesWindowIndices));
-    meanResponseShufflePsthExRF = mean(shufflePsthExRF(arrayHoldResponesWindowIndices));
-    shuffleArrayHoldResponseDiff(m) = meanResponseShufflePsthInRF - meanResponseShufflePsthExRF;
-    shuffleArrayHoldResponseAI(m) = (meanResponseShufflePsthInRF - meanResponseShufflePsthExRF) / ...
+    shufflePsthInRF = fixedPsth(randSpikeTimesInRF, kernelSigma, 0, arrayOnsetHoldBal.t);
+    shufflePsthExRF = fixedPsth(randSpikeTimesExRF, kernelSigma, 0, arrayOnsetHoldBal.t);
+    meanResponseShufflePsthInRF = mean(shufflePsthInRF(arrayHoldBalResponseWindowIndices));
+    meanResponseShufflePsthExRF = mean(shufflePsthExRF(arrayHoldBalResponseWindowIndices));
+    shuffleArrayHoldBalResponseDiff(m) = meanResponseShufflePsthInRF - meanResponseShufflePsthExRF;
+    shuffleArrayHoldBalResponseAI(m) = (meanResponseShufflePsthInRF - meanResponseShufflePsthExRF) / ...
             (meanResponseShufflePsthInRF + meanResponseShufflePsthExRF);
 end
 fprintf('.');
-arrayHoldResponseDiff = averageFiringRatesBySpdf.arrayHoldResponse.byLoc(inRFLoc) - averageFiringRatesBySpdf.arrayHoldResponse.byLoc(exRFLoc);
-arrayHoldResponseAI = (averageFiringRatesBySpdf.arrayHoldResponse.byLoc(inRFLoc) - averageFiringRatesBySpdf.arrayHoldResponse.byLoc(exRFLoc)) / ...
-        (averageFiringRatesBySpdf.arrayHoldResponse.byLoc(inRFLoc) + averageFiringRatesBySpdf.arrayHoldResponse.byLoc(exRFLoc));
+arrayHoldBalResponseDiff = averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(inRFLoc) - averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(exRFLoc);
+arrayHoldBalResponseAI = (averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(inRFLoc) - averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(exRFLoc)) / ...
+        (averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(inRFLoc) + averageFiringRatesBySpdf.arrayHoldBalResponse.byLoc(exRFLoc));
 % inRFLoc is defined as location with largest mean > baseline
-if arrayHoldResponseDiff > mean(shuffleArrayHoldResponseDiff)
-    arrayHoldResponseDiffPValueByShuffleSpdf = sum(arrayHoldResponseDiff < shuffleArrayHoldResponseDiff) / numRandomizations * 2;
+if arrayHoldBalResponseDiff > mean(shuffleArrayHoldBalResponseDiff)
+    arrayHoldBalResponseDiffPValueByShuffleSpdf = sum(arrayHoldBalResponseDiff < shuffleArrayHoldBalResponseDiff) / numRandomizations * 2;
 else
-    arrayHoldResponseDiffPValueByShuffleSpdf = sum(arrayHoldResponseDiff > shuffleArrayHoldResponseDiff) / numRandomizations * 2;
+    arrayHoldBalResponseDiffPValueByShuffleSpdf = sum(arrayHoldBalResponseDiff > shuffleArrayHoldBalResponseDiff) / numRandomizations * 2;
 end
 
-if arrayHoldResponseAI > mean(shuffleArrayHoldResponseAI)
-    arrayHoldResponseAIPValueByShuffleSpdf = sum(arrayHoldResponseAI < shuffleArrayHoldResponseAI) / numRandomizations * 2;
+if arrayHoldBalResponseAI > mean(shuffleArrayHoldBalResponseAI)
+    arrayHoldBalResponseAIPValueByShuffleSpdf = sum(arrayHoldBalResponseAI < shuffleArrayHoldBalResponseAI) / numRandomizations * 2;
 else
-    arrayHoldResponseAIPValueByShuffleSpdf = sum(arrayHoldResponseAI > shuffleArrayHoldResponseAI) / numRandomizations * 2;
+    arrayHoldBalResponseAIPValueByShuffleSpdf = sum(arrayHoldBalResponseAI > shuffleArrayHoldBalResponseAI) / numRandomizations * 2;
 end
-clear arrayOnsetHoldWindowIndices arrayOnsetSpikeTimesInRFExRF;
+clear arrayHoldBalResponseWindowIndices arrayOnsetHoldBalSpikeTimesInRFExRF;
 
 %% rank sum test on array hold response using individual trial spike counts
-arrayHoldResponseDiffPValueByRankSumTest = ranksum(...
-        averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc{inRFLoc}, ...
-        averageFiringRatesByCount.arrayHoldResponse.trialRateByLoc{exRFLoc});
+arrayHoldBalResponseDiffPValueByRankSumTest = ranksum(...
+        averageFiringRatesByCount.arrayHoldBalResponse.trialRateByLoc{inRFLoc}, ...
+        averageFiringRatesByCount.arrayHoldBalResponse.trialRateByLoc{exRFLoc});
     
 %% permutation test on target-dim delay period
-shuffleTargetDimDelayDiff = zeros(numRandomizations, 1);
-shuffleTargetDimDelayAI = zeros(numRandomizations, 1);
-targetDimDelayWindowIndices = getTimeLogicalWithTolerance(targetDim.t, targetDim.window(1) + targetDimDelayWindowOffset);
-nTrialsInRF = numel(targetDim.spikeTimesByLoc{inRFLoc});
-nTrialsExRF = numel(targetDim.spikeTimesByLoc{exRFLoc});
+shuffleTargetDimBalDelayDiff = zeros(numRandomizations, 1);
+shuffleTargetDimBalDelayAI = zeros(numRandomizations, 1);
+targetDimBalDelayWindowIndices = getTimeLogicalWithTolerance(targetDimBal.t, targetDimBal.window(1) + targetDimDelayWindowOffset);
+nTrialsInRF = numel(targetDimBal.spikeTimesByLoc{inRFLoc});
+nTrialsExRF = numel(targetDimBal.spikeTimesByLoc{exRFLoc});
 nTrialsInRFExRF = nTrialsInRF + nTrialsExRF;
-targetDimSpikeTimesInRFExRF = [targetDim.spikeTimesByLoc{inRFLoc} targetDim.spikeTimesByLoc{exRFLoc}];
+targetDimBalSpikeTimesInRFExRF = [targetDimBal.spikeTimesByLoc{inRFLoc} targetDimBal.spikeTimesByLoc{exRFLoc}];
 for m = 1:numRandomizations    
     shuffleIndices = randperm(nTrialsInRFExRF);
-    randSpikeTimesInRF = targetDimSpikeTimesInRFExRF(shuffleIndices(1:nTrialsInRF));
-    randSpikeTimesExRF = targetDimSpikeTimesInRFExRF(shuffleIndices(nTrialsInRF+1:end));
+    randSpikeTimesInRF = targetDimBalSpikeTimesInRFExRF(shuffleIndices(1:nTrialsInRF));
+    randSpikeTimesExRF = targetDimBalSpikeTimesInRFExRF(shuffleIndices(nTrialsInRF+1:end));
     
-    shufflePsthInRF = fixedPsth(randSpikeTimesInRF, kernelSigma, 0, targetDim.t);
-    shufflePsthExRF = fixedPsth(randSpikeTimesExRF, kernelSigma, 0, targetDim.t);
-    meanResponseShufflePsthInRF = mean(shufflePsthInRF(targetDimDelayWindowIndices));
-    meanResponseShufflePsthExRF = mean(shufflePsthExRF(targetDimDelayWindowIndices));
-    shuffleTargetDimDelayDiff(m) = meanResponseShufflePsthInRF - meanResponseShufflePsthExRF;
-    shuffleTargetDimDelayAI(m) = (meanResponseShufflePsthInRF - meanResponseShufflePsthExRF) / ...
+    shufflePsthInRF = fixedPsth(randSpikeTimesInRF, kernelSigma, 0, targetDimBal.t);
+    shufflePsthExRF = fixedPsth(randSpikeTimesExRF, kernelSigma, 0, targetDimBal.t);
+    meanResponseShufflePsthInRF = mean(shufflePsthInRF(targetDimBalDelayWindowIndices));
+    meanResponseShufflePsthExRF = mean(shufflePsthExRF(targetDimBalDelayWindowIndices));
+    shuffleTargetDimBalDelayDiff(m) = meanResponseShufflePsthInRF - meanResponseShufflePsthExRF;
+    shuffleTargetDimBalDelayAI(m) = (meanResponseShufflePsthInRF - meanResponseShufflePsthExRF) / ...
             (meanResponseShufflePsthInRF + meanResponseShufflePsthExRF);
 end
 fprintf('.');
-targetDimDelayDiff = averageFiringRatesBySpdf.targetDimDelay.byLoc(inRFLoc) - averageFiringRatesBySpdf.targetDimDelay.byLoc(exRFLoc);
-targetDimDelayAI = (averageFiringRatesBySpdf.targetDimDelay.byLoc(inRFLoc) - averageFiringRatesBySpdf.targetDimDelay.byLoc(exRFLoc)) / ...
-        (averageFiringRatesBySpdf.targetDimDelay.byLoc(inRFLoc) + averageFiringRatesBySpdf.targetDimDelay.byLoc(exRFLoc));
+targetDimBalDelayDiff = averageFiringRatesBySpdf.targetDimBalDelay.byLoc(inRFLoc) - averageFiringRatesBySpdf.targetDimBalDelay.byLoc(exRFLoc);
+targetDimBalDelayAI = (averageFiringRatesBySpdf.targetDimBalDelay.byLoc(inRFLoc) - averageFiringRatesBySpdf.targetDimBalDelay.byLoc(exRFLoc)) / ...
+        (averageFiringRatesBySpdf.targetDimBalDelay.byLoc(inRFLoc) + averageFiringRatesBySpdf.targetDimBalDelay.byLoc(exRFLoc));
 % inRFLoc is defined as location with largest mean > baseline
-if targetDimDelayDiff > mean(shuffleTargetDimDelayDiff)
-    targetDimDelayDiffPValueByShuffleSpdf = sum(targetDimDelayDiff < shuffleTargetDimDelayDiff) / numRandomizations * 2;
+if targetDimBalDelayDiff > mean(shuffleTargetDimBalDelayDiff)
+    targetDimBalDelayDiffPValueByShuffleSpdf = sum(targetDimBalDelayDiff < shuffleTargetDimBalDelayDiff) / numRandomizations * 2;
 else
-    targetDimDelayDiffPValueByShuffleSpdf = sum(targetDimDelayDiff > shuffleTargetDimDelayDiff) / numRandomizations * 2;
+    targetDimBalDelayDiffPValueByShuffleSpdf = sum(targetDimBalDelayDiff > shuffleTargetDimBalDelayDiff) / numRandomizations * 2;
 end
 
-if targetDimDelayAI > mean(shuffleTargetDimDelayAI)
-    targetDimDelayAIPValueByShuffleSpdf = sum(targetDimDelayAI < shuffleTargetDimDelayAI) / numRandomizations * 2;
+if targetDimBalDelayAI > mean(shuffleTargetDimBalDelayAI)
+    targetDimBalDelayAIPValueByShuffleSpdf = sum(targetDimBalDelayAI < shuffleTargetDimBalDelayAI) / numRandomizations * 2;
 else
-    targetDimDelayAIPValueByShuffleSpdf = sum(targetDimDelayAI > shuffleTargetDimDelayAI) / numRandomizations * 2;
+    targetDimBalDelayAIPValueByShuffleSpdf = sum(targetDimBalDelayAI > shuffleTargetDimBalDelayAI) / numRandomizations * 2;
 end
-clear targetDimDelayWindowIndices targetDimSpikeTimesInRFExRF;
+clear targetDimBalDelayWindowIndices targetDimBalSpikeTimesInRFExRF;
 
 %% rank-sum test on target-dim delay period using individual trial spike counts
-targetDimDelayDiffPValueByRankSumTest = ranksum(...
-        averageFiringRatesByCount.targetDimDelay.trialRateByLoc{inRFLoc}, ...
-        averageFiringRatesByCount.targetDimDelay.trialRateByLoc{exRFLoc});
+targetDimBalDelayDiffPValueByRankSumTest = ranksum(...
+        averageFiringRatesByCount.targetDimBalDelay.trialRateByLoc{inRFLoc}, ...
+        averageFiringRatesByCount.targetDimBalDelay.trialRateByLoc{exRFLoc});
 
 %% spatial selectivity during pre-cue baseline using info rate (control)
 preCueBaselineInfoRateStruct = computeInfoRatePValueByShuffle(...
@@ -770,37 +738,36 @@ cueTargetDelayInfoRateStruct = computeInfoRatePValueByShuffle(...
 fprintf('.');
 
 %% spatial selectivity during array response using info rate
-arrayHoldResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
-        arrayOnsetHold, averageFiringRatesBySpdf.arrayHoldResponse, arrayResponseWindowOffset, numRandomizations);
+arrayHoldBalResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
+        arrayOnsetHoldBal, averageFiringRatesBySpdf.arrayHoldBalResponse, arrayResponseWindowOffset, numRandomizations);
 fprintf('.');
 
 %% spatial selectivity during target dim delay period using info rate
-targetDimDelayInfoRateStruct = computeInfoRatePValueByShuffle(...
-        targetDim, averageFiringRatesBySpdf.targetDimDelay, targetDimDelayWindowOffset, numRandomizations);
+targetDimBalDelayInfoRateStruct = computeInfoRatePValueByShuffle(...
+        targetDimBal, averageFiringRatesBySpdf.targetDimBalDelay, targetDimDelayWindowOffset, numRandomizations);
 fprintf('.');
 
 %% spatial selectivity during target dimming using info rate
-targetDimResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
-        targetDim, averageFiringRatesBySpdf.targetDimResponse, targetDimResponseWindowOffset, numRandomizations);
+targetDimBalResponseInfoRateStruct = computeInfoRatePValueByShuffle(...
+        targetDimBal, averageFiringRatesBySpdf.targetDimBalResponse, targetDimResponseWindowOffset, numRandomizations);
 fprintf('.');
 
 %% latency of response by location
 cueOnset = computeResponseLatencyByLoc(cueOnset, isLocUsed);
-arrayOnset = computeResponseLatencyByLoc(arrayOnset, isLocUsed);
-arrayOnsetRel = computeResponseLatencyByLoc(arrayOnsetRel, isLocUsed);
-arrayOnsetHold = computeResponseLatencyByLoc(arrayOnsetHold, isLocUsed);
-targetDim = computeResponseLatencyByLoc(targetDim, isLocUsed);
+arrayOnsetRelBal = computeResponseLatencyByLoc(arrayOnsetRelBal, isLocUsed);
+arrayOnsetHoldBal = computeResponseLatencyByLoc(arrayOnsetHoldBal, isLocUsed);
+targetDimBal = computeResponseLatencyByLoc(targetDimBal, isLocUsed);
 
 %% clean up unused locations
 % temp until the change is made in computeEvokedSpiking
 cueResponsePValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
 cueTargetDelayPValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-arrayHoldResponsePValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-targetDimDelayPValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-targetDimResponsePValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
+arrayHoldBalResponsePValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
+targetDimBalDelayPValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
+targetDimBalResponsePValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
 preExitFixationPValueByBootstrapBaselineSpdfByLoc(~isLocUsed) = NaN;
-arrayHoldResponsePValueByBootstrapCueTargetDelaySpdfByLoc(~isLocUsed) = NaN;
-targetDimResponsePValueByBootstrapTargetDimDelaySpdfByLoc(~isLocUsed) = NaN;
+arrayHoldBalResponsePValueByBootstrapCueTargetDelaySpdfByLoc(~isLocUsed) = NaN;
+targetDimBalResponsePValueByBootstrapTargetDimBalDelaySpdfByLoc(~isLocUsed) = NaN;
 preExitFixationPValueByBootstrapPreExitFixationEarlySpdfByLoc(~isLocUsed) = NaN;
 
 unusedLocs = find(~isLocUsed);
@@ -809,13 +776,13 @@ for i = 1:numel(unusedLocs)
     if k <= nLoc
         cueResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
         cueTargetDelayVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-        arrayHoldResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-        targetDimDelayVsBaselineRankSumTestStatsByLoc(k).p = NaN;
-        targetDimResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
+        arrayHoldBalResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
+        targetDimBalDelayVsBaselineRankSumTestStatsByLoc(k).p = NaN;
+        targetDimBalResponseVsBaselineRankSumTestStatsByLoc(k).p = NaN;
         preExitFixationVsBaselineRankSumTestStatsByLoc(k).p = NaN;
         cueResponseVsBaselineSignRankTestStatsByLoc(k).p = NaN;
-        arrayHoldResponseVsCueTargetDelaySignRankTestStatsByLoc(k).p = NaN;
-        targetDimResponseVsTargetDimDelaySignRankTestStatsByLoc(k).p = NaN;
+        arrayHoldBalResponseVsCTDelayHoldBalSignRankTestStatsByLoc(k).p = NaN;
+        targetDimBalResponseVsTargetDimBalDelaySignRankTestStatsByLoc(k).p = NaN;
         preExitFixationVsPreExitFixationEarlySignRankTestStatsByLoc(k).p = NaN;
     end
 end

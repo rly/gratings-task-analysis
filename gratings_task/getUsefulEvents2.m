@@ -117,8 +117,8 @@ arrayOnsetHoldByLoc = cell(nLoc, 1);
 arrayOnsetBalByLoc = cell(nLoc, 1);
 arrayOnsetRelBalByLoc = cell(nLoc, 1);
 arrayOnsetHoldBalByLoc = cell(nLoc, 1);
-arrayOnsetShortHoldByLoc = cell(nLoc, 1);
-arrayOnsetLongHoldByLoc = cell(nLoc, 1);
+arrayOnsetHoldBalShortHoldByLoc = cell(nLoc, 1);
+arrayOnsetHoldBalLongHoldByLoc = cell(nLoc, 1);
 
 for i = 1:nLoc
     arrayOnsetByLoc{i} = arrayOnset(cueLoc == i);
@@ -127,8 +127,8 @@ for i = 1:nLoc
     arrayOnsetBalByLoc{i} = arrayOnset(cueLoc == i & (isArrayRelBalanced | isArrayHoldBalanced));
     arrayOnsetRelBalByLoc{i} = arrayOnset(~isHoldTrial & cueLoc == i & isArrayRelBalanced);
     arrayOnsetHoldBalByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & isArrayHoldBalanced);
-    arrayOnsetShortHoldByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & targetDimDelayDur < holdDurMid);
-    arrayOnsetLongHoldByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & targetDimDelayDur >= holdDurMid);
+    arrayOnsetHoldBalShortHoldByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & targetDimDelayDur < holdDurMid & isArrayHoldBalanced);
+    arrayOnsetHoldBalLongHoldByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & targetDimDelayDur >= holdDurMid & isArrayHoldBalanced);
 end
 
 cueLocHold = cueLoc(isHoldTrial);
@@ -162,23 +162,23 @@ end
 
 targetDim = targetDimMatch(~isnan(targetDimMatch));
 targetDimBal = targetDimMatch(~isnan(targetDimMatch) & isArrayHoldBalanced);
-targetDimShortHold = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid);
-targetDimLongHold = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid);
+targetDimBalShortHold = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid & isArrayHoldBalanced);
+targetDimBalLongHold = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid & isArrayHoldBalanced);
 assert(numel(unique(targetDim)) == numel(targetDim));
 
 targetDimByLoc = cell(nLoc, 1);
 targetDimBalByLoc = cell(nLoc, 1);
-targetDimShortHoldByLoc = cell(nLoc, 1);
-targetDimLongHoldByLoc = cell(nLoc, 1);
-nTrialShortHold = sum(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid);
-nTrialLongHold = sum(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid);
+targetDimBalShortHoldByLoc = cell(nLoc, 1);
+targetDimBalLongHoldByLoc = cell(nLoc, 1);
+nTrialShortHold = sum(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid & isArrayHoldBalanced);
+nTrialLongHold = sum(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid & isArrayHoldBalanced);
 for i = 1:nLoc
     targetDimByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & cueLoc == i);
     targetDimBalByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & cueLoc == i & isArrayHoldBalanced);
-    targetDimShortHoldByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
-            cueLoc == i & targetDimDelayDur < holdDurMid);
-    targetDimLongHoldByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
-            cueLoc == i & targetDimDelayDur >= holdDurMid);
+    targetDimBalShortHoldByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
+            cueLoc == i & targetDimDelayDur < holdDurMid & isArrayHoldBalanced);
+    targetDimBalLongHoldByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
+            cueLoc == i & targetDimDelayDur >= holdDurMid & isArrayHoldBalanced);
 end
 
 %%
@@ -193,14 +193,15 @@ usefulEvents = var2struct(cueOnset, cueOnsetByLoc, ...
         cueOnsetRel, cueOnsetHold, cueOnsetRelByLoc, cueOnsetHoldByLoc, ...
         arrayOnset, arrayOnsetRel, arrayOnsetHold, arrayOnsetByLoc, ...
         arrayOnsetRelByLoc, arrayOnsetHoldByLoc, ...
-        arrayOnsetShortHoldByLoc, arrayOnsetLongHoldByLoc, ...
+        arrayOnsetHoldBalShortHoldByLoc, arrayOnsetHoldBalLongHoldByLoc, ...
         targetDim, targetDimByLoc, ...
-        targetDimShortHold, targetDimLongHold, ...
-        targetDimShortHoldByLoc, targetDimLongHoldByLoc, ...
+        targetDimBalShortHold, targetDimBalLongHold, ...
+        targetDimBalShortHoldByLoc, targetDimBalLongHoldByLoc, ...
         nTrialShortHold, nTrialLongHold, cueLoc, cueLocHold, cueLocRel, ...
         cueTargetDelayDur, targetDimDelayDur, isHoldTrial, rt, ...
         fixationAndLeverTimes, firstJuiceEvent, targetDimMatch, ...
         arrayOnsetRelBal, arrayOnsetHoldBal, arrayOnsetRelBalByLoc, ...
-        arrayOnsetHoldBalByLoc, targetDimBal, targetDimBalByLoc);
+        arrayOnsetHoldBalByLoc, targetDimBal, targetDimBalByLoc, ...
+        isArrayRelBalanced, isArrayHoldBalanced);
 
 
