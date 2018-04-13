@@ -10,3 +10,4 @@ addpath(genpath(fullfile(pwd, 'util')));
 addpath(genpath(fullfile(pwd, 'matlab_sdk')));
 addpath(genpath(fullfile(pwd, 'snapshot_plots')));
 addpath(genpath(fullfile(pwd, 'gratings_task')));
+addpath(genpath(fullfile(pwd, 'debug')));
