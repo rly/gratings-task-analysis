@@ -23,11 +23,6 @@ isCorrect = strcmp(trialResults, 'correct-response');
 trialStructsCorrect = trialStructs(isCorrect);
 verifyGratingsTaskLogsAndJsonCorrect(trialParamsAllCorrect, trialStructsCorrect);
 arrayShapesCorrect = arrayShapes(isCorrect);
-isRelBal = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect)';
-isHoldBal = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesCorrect)';
-
-isCorrectRelTrial = cellfun(@(x,y) y(x.cueLoc) == 'R', trialStructsCorrect, arrayShapesCorrect)';
-isCorrectHoldTrial = cellfun(@(x,y) y(x.cueLoc) == 'H', trialStructsCorrect, arrayShapesCorrect)';
 
 %% clean up juice events
 % store only the first juice event
@@ -66,6 +61,15 @@ end
 firstJuiceEvent = firstJuiceEvent(trialsToKeep);
 trialParamsAllCorrect = trialParamsAllCorrect(trialsToKeep,:);
 fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), numel(trialsToKeep));
+
+trialStructsCorrect = trialStructsCorrect(trialsToKeep);
+arrayShapesCorrect = arrayShapesCorrect(trialsToKeep);
+
+isRelBal = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect)';
+isHoldBal = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesCorrect)';
+
+isCorrectRelTrial = cellfun(@(x,y) y(x.cueLoc) == 'R', trialStructsCorrect, arrayShapesCorrect)';
+isCorrectHoldTrial = cellfun(@(x,y) y(x.cueLoc) == 'H', trialStructsCorrect, arrayShapesCorrect)';
 
 %%
 % TODO get only trials that are not repeats

@@ -1,8 +1,10 @@
 clear;
-sessionInd = 23;
+sessionInd = 3;
 processedDataRootDir = 'Y:/gratings-task-analysis/processed_data/';
-dataDirRoot = 'Z:/McCartney/originals';
+dataDirRoot = 'Z:/McCartney/merged';
 muaDataDirRoot = 'Y:/simple-mua-detection/processed_data/';
 recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 channelsToLoad = 1;
 muaChannelsToLoad = 1;
+isZeroDistractors = 0;
+numRandomizations = 2;
