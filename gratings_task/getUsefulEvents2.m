@@ -68,8 +68,8 @@ arrayShapesCorrect = arrayShapesCorrect(trialsToKeep);
 isRelBal = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect)';
 isHoldBal = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesCorrect)';
 
-isCorrectRelTrial = cellfun(@(x,y) y(x.cueLoc) == 'R', trialStructsCorrect, arrayShapesCorrect)';
-isCorrectHoldTrial = cellfun(@(x,y) y(x.cueLoc) == 'H', trialStructsCorrect, arrayShapesCorrect)';
+isCorrectRelTrialLog = cellfun(@(x,y) y(1) == 'R', trialStructsCorrect, arrayShapesCorrect)';
+isCorrectHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsCorrect, arrayShapesCorrect)';
 
 %%
 % TODO get only trials that are not repeats
@@ -107,10 +107,11 @@ end
 maxArrayOnsetToJuiceTimeReleaseShape = 0.925;
 isHoldTrial = firstJuiceEvent - arrayOnset >= maxArrayOnsetToJuiceTimeReleaseShape;
 assert(all(isHoldTrial == (trialParamsAllCorrect(:,7) ~= -1)));
-% assert(all(isHoldTrial == isCorrectHoldTrial)); % FIXME
+assert(all(isHoldTrial == isCorrectHoldTrialLog));
+assert(all(~isHoldTrial == isCorrectRelTrialLog));
 
-% arrayOnsetRel = arrayOnset(~isHoldTrial);
-% arrayOnsetHold = arrayOnset(isHoldTrial);
+arrayOnsetRel = arrayOnset(~isHoldTrial);
+arrayOnsetHold = arrayOnset(isHoldTrial);
 
 arrayOnsetRelBal = arrayOnset(~isHoldTrial & isRelBal);
 arrayOnsetHoldBal = arrayOnset(isHoldTrial & isHoldBal);
@@ -153,19 +154,15 @@ end
 % TODO use time of lever response instead of juice onset
 maxTargetDimToJuiceTime = 1; % seconds
 targetDimMatch = nan(numel(firstJuiceEvent), 1);
-rt = nan(numel(firstJuiceEvent), 1);
 for i = 1:numel(firstJuiceEvent)  
     prevEvent7Ind = find((firstJuiceEvent(i) - targetDimEvent < maxTargetDimToJuiceTime) & ...
             (firstJuiceEvent(i) - targetDimEvent > 0), 1, 'last');
     if ~isempty(prevEvent7Ind)
         targetDimMatch(i) = targetDimEvent(prevEvent7Ind);
-        rt(i) = firstJuiceEvent(i) - targetDimMatch(i);
-    else
-        rt(i) = firstJuiceEvent(i) - arrayOnset(i);
     end
 end
 
-% targetDim = targetDimMatch(~isnan(targetDimMatch));
+targetDim = targetDimMatch(~isnan(targetDimMatch));
 targetDimBal = targetDimMatch(~isnan(targetDimMatch) & isHoldBal);
 targetDimShortHoldBal = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid & isHoldBal);
 targetDimLongHoldBal = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid & isHoldBal);
@@ -192,6 +189,46 @@ if isfield(D, 'adjDirects') && ~isempty(D.adjDirects)
     fprintf('Determining fixation and lever event times around each trial.\n');
     fixationAndLeverTimes = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc);
 end
+
+%% check rt match across logs and event timing
+% four ways to compute RT
+% 1) rtPresLogs: time between correct event and array onset or target
+% dimming event in presentation logs
+% 2) rtJuice: juice digital event minus array onset or target dimming event
+% -- this is discretized in 12 ms bins
+% 3) rtJsonLogs: reported RT from array onset in json file (using hold
+% shape duration reported in json file)
+% 4) rtLever: lever release minus array onset or target dimming event
+% 5) rtLogEvent: time from array onset (where hold shape duration is
+% defined as time between target dimming and array onset events)
+rtPresLogs = trialParamsAllCorrect(:,8);
+rtJuice = nan(numel(trialStructsCorrect), 1);
+rtJsonLogs = nan(numel(trialStructsCorrect), 1);
+rtLever = nan(numel(trialStructsCorrect), 1);
+rtLogEvent = nan(numel(trialStructsCorrect), 1);
+for i = 1:numel(trialStructsCorrect)
+    if isCorrectRelTrialLog(i)
+        rtJuice(i) = firstJuiceEvent(i) - arrayOnset(i);
+        rtJsonLogs(i) = trialStructsCorrect{i}.response.responseTime / 1000;
+        rtLever(i) = fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(i) - arrayOnset(i);
+        rtLogEvent(i) = trialStructsCorrect{i}.response.responseTime / 1000;
+        % fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(i) is
+        % based on analog signal
+        % arrayOnset is based on digital event signal
+    else
+        rtJuice(i) = firstJuiceEvent(i) - targetDimMatch(i);
+        rtJsonLogs(i) = (trialStructsCorrect{i}.response.responseTime - trialStructsCorrect{i}.holdShapeDuration) / 1000;
+        rtLever(i) = fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(i) - targetDimMatch(i);
+        rtLogEvent(i) = trialStructsCorrect{i}.response.responseTime / 1000 - (targetDimMatch(i) - arrayOnset(i));
+    end
+end
+rt = rtPresLogs;
+ 
+% mean(rtJuice - rtPresLogs) % offset by mean 8 ms, sd 4 ms
+% mean(rtJuice - rtJsonLogs) % offset by mean 9 ms, sd 5 ms
+% mean(rtJuice - rtLever) % offset by mean 37 ms, sd 4 ms
+% mean(rtJuice - rtLogEvent) % offset by mean 8 ms, sd 5 ms
+% mean(rtPresLogs - rtLever) % offset by mean 30 ms, sd 3 ms
 
 %%
 usefulEvents = var2struct(...

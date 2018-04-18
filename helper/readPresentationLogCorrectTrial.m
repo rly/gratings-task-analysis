@@ -113,8 +113,7 @@ for ifile = 1:numel(logIndices)%size(sortfile,1)
             
             correctCell = textscan(data{1,2}{irow}, 'correct %dx juice');
 %             assert(trialType == correctCell{1});
-%             rt = correctCell{2};
-            rt = 0;
+            rt = double(data{1,7}(irow) - data{1,7}(irow-1)) / 10000;
             
             % append new row to trial param -- correct trials only
             trialParams = [trialParams; ...
