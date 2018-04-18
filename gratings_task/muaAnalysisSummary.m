@@ -39,10 +39,6 @@ nUnitsBySessionWithCueTargetDelaySelectivity = zeros(nSessions, 1);
 nUnitsBySessionWithTargetDimDelaySelectivity = zeros(nSessions, 1);
 
 rtFiringRateStruct = struct();
-meanRTRelInRF = nan(nSessions, 1); % currently unused
-meanRTRelExRF = nan(nSessions, 1);
-meanRTHoldInRF = nan(nSessions, 1);
-meanRTHoldExRF = nan(nSessions, 1);
 
 arrayHoldBalLatencyInRF = nan(nUnitsApprox, 1);
 arrayHoldBalLatencyExRF = nan(nUnitsApprox, 1);

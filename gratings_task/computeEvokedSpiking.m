@@ -36,6 +36,8 @@ nTrials = numel(UE.cueOnset);
 nTrialsHoldBal = numel(UE.arrayOnsetHoldBal);
 nTrialsByLoc = cellfun(@numel, UE.cueOnsetByLoc);
 isLocUsed = nTrialsByLoc > 0;
+unusedLocs = find(~isLocUsed);
+
 fprintf('Computing evoked spiking with SPDF sigma %0.3f seconds and %d randomizations over %d trials...\n', ...
         kernelSigma, numRandomizations, nTrials);
 fprintf('\t');
@@ -524,9 +526,6 @@ fprintf('.');
 targetDimResponseInfoRate = computeInfoRatePValueByShuffle(...
         targetDimBal, averageFiringRatesBySpdf.targetDimResponseBal, targetDimResponseWindowOffset, numRandomizations);
 fprintf('.');
-
-%% clean up unused locations
-unusedLocs = find(~isLocUsed);
 
 %% save
 clear i;

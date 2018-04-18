@@ -26,6 +26,7 @@ latePreExitFixationSlope = nan(nUnitsApprox, 1);
 earlyPreExitFixationWindowOffset = [-0.2 -0.05];
 latePreExitFixationWindowOffset = [-0.05 0];
 
+diffTargetDimLatencySplitThirdsRT = nan(nUnitsApprox, 1);
 rtFiringRateStruct = struct();
 
 nLoc = 4;
@@ -42,6 +43,9 @@ targetDimBalLatencyExRF = nan(nUnitsApprox, 1);
 
 averageFiringRatesBySpdf = struct();
 averageFiringRatesByCount = struct();
+
+targetDimDelayHoldInRFRateAll = cell(nUnitsApprox, 1);
+rtHoldInRFAll = cell(nUnitsApprox, 1);
 
 unitCount = 0;
 minFiringRate = 2; % use only cells with a time-locked response > 1 Hz in any window
@@ -227,7 +231,9 @@ for j = 1:nUnits
             rtRelExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isRelBal);
             rtHoldInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
             rtHoldExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
-
+            targetDimInRF = ES.UE.targetDimMatch(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
+            targetDimExRF = ES.UE.targetDimMatch(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
+            
             % use long balanced trials only
             cueTargetDelayRelInRFRate = ES.averageFiringRatesByCount.cueTargetDelayRelBalLong.trialRateByLoc{inRFLoc};
             cueTargetDelayRelExRFRate = ES.averageFiringRatesByCount.cueTargetDelayRelBalLong.trialRateByLoc{exRFLoc};
@@ -258,6 +264,45 @@ for j = 1:nUnits
             assert(nTrialsRelExRF == numel(cueTargetDelayRelExRFRate));
             assert(all(nTrialsHoldInRF == [numel(cueTargetDelayHoldInRFRate) numel(targetDimDelayHoldInRFRate)]));
             assert(all(nTrialsHoldExRF == [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]));
+            
+            [~,sortRTHoldInRFInd] = sortBreakOrder(rtHoldInRF);
+            [~,sortRTHoldExRFInd] = sortBreakOrder(rtHoldExRF);
+            
+            % slowest RTs
+            targetDimByLocSlowThirdRT = cell(nLoc, 1);
+            targetDimByLocSlowThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(topThirdIndicesHoldInRF));
+            targetDimByLocSlowThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(topThirdIndicesHoldExRF));
+            targetDimSlowThirdRT.window = ES.targetDimBal.window;
+            targetDimSlowThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
+            targetDimSlowThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocSlowThirdRT, targetDimSlowThirdRT, ES.kernelSigma);
+            targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, ES.isLocUsed);
+            
+            % fastest RTs
+            targetDimByLocFastThirdRT = cell(nLoc, 1);
+            targetDimByLocFastThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(bottomThirdIndicesHoldInRF));
+            targetDimByLocFastThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(bottomThirdIndicesHoldExRF));
+            targetDimFastThirdRT.window = ES.targetDimBal.window;
+            targetDimFastThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
+            targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
+            targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, ES.isLocUsed);
+
+            % InRF only
+            diffTargetDimLatencySplitThirdsRT(unitCount) = targetDimSlowThirdRT.latencyInfoByLoc{inRFLoc}.latency - ...
+                    targetDimFastThirdRT.latencyInfoByLoc{inRFLoc}.latency;
+            if ~isnan(diffTargetDimLatencySplitThirdsRT(unitCount))
+                figure_tr_inch(6, 5);
+                hold on;
+                targetDimT = targetDimSlowThirdRT.t - targetDimSlowThirdRT.window(1);
+                plot(targetDimT, targetDimSlowThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
+                plot(targetDimT, targetDimFastThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
+                xlabel('Time from Target Dimming (s)');
+                ylabel('Estimated Firing Rate (Hz)');
+                title(sprintf('%s Target Dim InRF - Slow vs Fast RTs', unitName), 'Interpreter', 'none');
+                legend({'Slow Third of RTs', 'Fast Third of RTs'});
+                plotFileName = sprintf('%s/%s-%s-targetDimSlowVsFastRT-v%d.png', processedDataDir, unitName, blockName, v);
+                fprintf('\tSaving figure to file %s...\n', plotFileName);
+                export_fig(plotFileName, '-nocrop');
+            end
             
             % algorithm:
             % sort trials according to firing rate during each delay period
@@ -479,7 +524,12 @@ for j = 1:nUnits
                     rtFiringRateStruct(unitCount), unitName, isZeroDistractors, plotFileName);
             close;
             
-%%            
+            %%
+            % note there may be different numbers of trials in each 
+            targetDimDelayHoldInRFRateAll{unitCount} = targetDimDelayHoldInRFRate;
+            rtHoldInRFAll{unitCount} = rtHoldInRF;
+            
+            %%            
             inRFPreCueBaseline = ES.averageFiringRatesBySpdf.preCueBaseline.byLoc(inRFLoc);
             exRFPreCueBaseline = ES.averageFiringRatesBySpdf.preCueBaseline.byLoc(exRFLoc);
 
@@ -666,6 +716,22 @@ plotRTLatencyCorrelation(ES.arrayOnsetRelBal, ES.isLocUsed, rtRelBalByLoc, array
 plotFileName = sprintf('%s/%s-sessionInd%d-rtVsTargetDimLatency-v%d.png', outputDir, sessionName, sessionInd, v);
 plotRTLatencyCorrelation(ES.targetDimBal, ES.isLocUsed, rtHoldBalByLoc, targetDimBalSpikeTimesByLoc, inRFLocs, plotFileName);
 
+%% correlate target dim delay activity (rank trial within unit) with rt (rank trial)
+% not enough variance within target dim delay activity across trials
+% targetDimDelayHoldInRFRankAll = [];
+% rtHoldInRFRankAll = [];
+% figure;
+% hold on;
+% for i = 1:unitCount
+%     assert(numel(targetDimDelayHoldInRFRateAll{i}) == numel(rtHoldInRFAll{i}));
+%     nTrialInRF = numel(rtHoldInRFAll{i});
+%     if mean(targetDimDelayHoldInRFRateAll{i}) > 10
+%         targetDimDelayHoldInRFRankAll = [targetDimDelayHoldInRFRankAll; tiedrank(targetDimDelayHoldInRFRateAll{i}) / nTrialInRF];
+%         rtHoldInRFRankAll = [rtHoldInRFRankAll; rtHoldInRFAll{i}];
+%         plot(tiedrank(targetDimDelayHoldInRFRateAll{i}) / nTrialInRF, rtHoldInRFAll{i}, '.');
+%     end
+% end
+
 %% save
 saveFileName = sprintf('%s/%s-sessionInd%d-muaAnalysisSummaryData-v%d.mat', outputDir, sessionName, sessionInd, v);
 fprintf('\n');
@@ -694,10 +760,6 @@ save(saveFileName, ...
         'targetDimT', ...
         'exitFixationT', ...
         'rtFiringRateStruct', ...
-        'rtRelInRF', ...
-        'rtRelExRF', ...
-        'rtHoldInRF', ...
-        'rtHoldExRF', ...
         'arrayHoldBalLatencyInRF', ...
         'arrayHoldBalLatencyExRF', ...
         'targetDimBalLatencyInRF', ...
