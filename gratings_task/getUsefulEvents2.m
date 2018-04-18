@@ -1,7 +1,6 @@
 function usefulEvents = getUsefulEvents2(logDir, logIndices, nLoc, D, blockName)
 
 holdDurMid = 850; % ms; for splitting short vs long hold
-logRoot = 'gratings_task_eye_tracking_';
 
 % cueP3Event = D.events{2}(:,1);
 cueOnsetEvent = D.events{4}(:,1);
@@ -12,11 +11,12 @@ arrayOnsetReleaseEvent = D.events{7}(:,1);
 targetDimEvent = D.events{16}(:,1);
 juiceEvent = D.events{8}(:,1);
 
-%%
+%% load presentation log information on correct trials only
+logRoot = 'gratings_task_eye_tracking_';
 trialParamsAllCorrect = readPresentationLogCorrectTrial(logDir, logRoot, logIndices);
 
 %% load more detailed trial info from json -> mat
-% use saveGratingsTaskResultsJsonToMatRunner.m to generate mat files
+% use saveGratingsTaskResultsJsonToMatRunner.m to generate .mat files
 load(sprintf('%s/gratingsTaskResultsJson-%s.mat', logDir, blockName), 'trialStructs', 'arrayShapes');
 trialResults = cellfun(@(x) x.response.type, trialStructs, 'UniformOutput', false);
 isCorrect = strcmp(trialResults, 'correct-response');
@@ -65,6 +65,7 @@ fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), num
 trialStructsCorrect = trialStructsCorrect(trialsToKeep);
 arrayShapesCorrect = arrayShapesCorrect(trialsToKeep);
 
+%%
 isRelBal = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect)';
 isHoldBal = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesCorrect)';
 
@@ -78,10 +79,11 @@ isCorrectHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsCorrect, arraySh
 trialParams = trialParamsAllCorrect;%(notRepeatLogical,:);
 % numNonRptCorrectTrials = size(trialParams, 1);
 
-cueLoc = trialParams(:,4);%(trialParams(:,4) + 3) / 2;
-% here, P1 is btm right, P2 is top right, P3 is top left, P4 is btm left
+cueLoc = trialParams(:,4);
 cueTargetDelayDur = trialParams(:,6);
 targetDimDelayDur = trialParams(:,7);
+% these are the reported delay durations, but may not be the actual delay
+% durations
 
 %% get cue onset events corresponding to correct trials only
 cueOnsetByLoc = cell(nLoc, 1);
@@ -106,7 +108,7 @@ end
 % split release and hold shapes - not the best way, but works for now
 maxArrayOnsetToJuiceTimeReleaseShape = 0.925;
 isHoldTrial = firstJuiceEvent - arrayOnset >= maxArrayOnsetToJuiceTimeReleaseShape;
-assert(all(isHoldTrial == (trialParamsAllCorrect(:,7) ~= -1)));
+assert(all(isHoldTrial == (trialParams(:,7) ~= -1)));
 assert(all(isHoldTrial == isCorrectHoldTrialLog));
 assert(all(~isHoldTrial == isCorrectRelTrialLog));
 
@@ -151,7 +153,6 @@ for i = 1:nLoc
 end 
 
 %% get target dim events corresponding to correct trials only
-% TODO use time of lever response instead of juice onset
 maxTargetDimToJuiceTime = 1; % seconds
 targetDimMatch = nan(numel(firstJuiceEvent), 1);
 for i = 1:numel(firstJuiceEvent)  
@@ -201,7 +202,7 @@ end
 % 4) rtLever: lever release minus array onset or target dimming event
 % 5) rtLogEvent: time from array onset (where hold shape duration is
 % defined as time between target dimming and array onset events)
-rtPresLogs = trialParamsAllCorrect(:,8);
+rtPresLogs = trialParams(:,8);
 rtJuice = nan(numel(trialStructsCorrect), 1);
 rtJsonLogs = nan(numel(trialStructsCorrect), 1);
 rtLever = nan(numel(trialStructsCorrect), 1);
