@@ -602,11 +602,11 @@ for j = 1:nUnits
             exRFLocs(unitCount) = exRFLoc;
             
             % could use peak method or resampled baseline method
-            arrayHoldBalLatencyInRF(unitCount) = ES.arrayOnsetHoldBal.latencyBootByLoc(inRFLoc);
-            arrayHoldBalLatencyExRF(unitCount) = ES.arrayOnsetHoldBal.latencyBootByLoc(exRFLoc);
+            arrayHoldBalLatencyInRF(unitCount) = ES.arrayOnsetHoldBal.latencyByLoc(inRFLoc);
+            arrayHoldBalLatencyExRF(unitCount) = ES.arrayOnsetHoldBal.latencyByLoc(exRFLoc);
             
-            targetDimBalLatencyInRF(unitCount) = ES.targetDimBal.latencyBootByLoc(inRFLoc);
-            targetDimBalLatencyExRF(unitCount) = ES.targetDimBal.latencyBootByLoc(exRFLoc);
+            targetDimBalLatencyInRF(unitCount) = ES.targetDimBal.latencyByLoc(inRFLoc);
+            targetDimBalLatencyExRF(unitCount) = ES.targetDimBal.latencyByLoc(exRFLoc);
             
             fn = fieldnames(ES.averageFiringRatesBySpdf);
             for k = 1:numel(fn)
