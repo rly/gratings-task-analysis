@@ -2,7 +2,7 @@ function quickSpdfAllEvents5InARowPopMean(enterFixationSpdfInRFNorm, enterFixati
         cueOnsetSpdfInRFNorm, cueOnsetSpdfExRFNorm, ...
         arrayOnsetHoldSpdfInRFNorm, arrayOnsetHoldSpdfExRFNorm, targetDimSpdfInRFNorm, ...
         targetDimSpdfExRFNorm, exitFixationSpdfInRFNorm, exitFixationSpdfExRFNorm, ...
-        enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, plotFileName)
+        enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, yBounds, isShowLabels, plotFileName)
 
 % check size assert
 nSessions = size(cueOnsetSpdfInRFNorm, 1);
@@ -38,7 +38,6 @@ seTargetDimSpdfExRFNorm = std(targetDimSpdfExRFNorm)/sqrt(nSessions);
 seExitFixationSpdfInRFNorm = std(exitFixationSpdfInRFNorm)/sqrt(nSessions);
 seExitFixationSpdfExRFNorm = std(exitFixationSpdfExRFNorm)/sqrt(nSessions);
 
-cols = lines(4);
 inRFCol = [0.9 0 0];
 exRFCol = [0 0 0.9];
 
@@ -80,9 +79,11 @@ jbfill(enterFixationT, ...
 plot(enterFixationT, meanEnterFixationSpdfInRFNorm, 'Color', inRFCol, 'LineWidth', 4);
 
 xlim(xBounds);
-% xlabel('Time from Begin Fixation (s)');
-% ylabel('Mean Normalized Firing Rate');
-set(gca, 'FontSize', 26);
+if isShowLabels
+    xlabel('Time from Begin Fixation (s)');
+    ylabel('Mean Normalized Firing Rate');
+end
+set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
 set(gca, 'FontName', 'Calibri');
 set(gca, 'LineWidth', 2);
@@ -108,8 +109,10 @@ jbfill(cueOnsetT, ...
 plot(cueOnsetT, meanCueOnsetSpdfInRFNorm, 'Color', inRFCol, 'LineWidth', 4);
 
 xlim(xBounds);
-% xlabel('Time from Cue Onset (s)');
-set(gca, 'FontSize', 26);
+if isShowLabels
+	xlabel('Time from Cue Onset (s)');
+end
+set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
 set(gca, 'FontName', 'Calibri');
 set(gca, 'YTickLabel', []);
@@ -137,8 +140,10 @@ jbfill(arrayOnsetT, ...
 plot(arrayOnsetT, meanArrayOnsetHoldSpdfInRFNorm, 'Color', inRFCol, 'LineWidth', 4);
 
 xlim(xBounds);
-% xlabel('Time from Array Onset (s)');
-set(gca, 'FontSize', 26);
+if isShowLabels
+    xlabel('Time from Array Onset (s)');
+end
+set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
 set(gca, 'FontName', 'Calibri');
 set(gca, 'YTickLabel', []);
@@ -167,8 +172,10 @@ jbfill(targetDimT, ...
 plot(targetDimT, meanTargetDimSpdfInRFNorm, 'Color', inRFCol, 'LineWidth', 4);
 
 xlim(xBounds);
-% xlabel('Time from Target Dimming (s)');
-set(gca, 'FontSize', 26);
+if isShowLabels
+    xlabel('Time from Target Dimming (s)');
+end
+set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
 set(gca, 'FontName', 'Calibri');
 set(gca, 'YTickLabel', []);
@@ -197,8 +204,10 @@ jbfill(exitFixationT, ...
 plot(exitFixationT, meanExitFixationSpdfInRFNorm, 'Color', inRFCol, 'LineWidth', 4);
 
 xlim(xBounds);
-% xlabel('Time from End Fixation (s)');
-set(gca, 'FontSize', 26);
+if isShowLabels
+    xlabel('Time from End Fixation (s)');
+end
+set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
 set(gca, 'FontName', 'Calibri');
 set(gca, 'YTickLabel', []);
@@ -206,7 +215,6 @@ set(gca, 'LineWidth', 2);
 
 %% adjust all ylim
 allYBounds = [ylim(axEnterFixationSpdf) ylim(axCueOnsetSpdf) ylim(axArrayOnsetSpdf) ylim(axTargetDimSpdf) ylim(axExitFixationSpdf)];
-yBounds = [-0.25 0.5];
 ylim(axEnterFixationSpdf, yBounds);
 ylim(axCueOnsetSpdf, yBounds);
 ylim(axArrayOnsetSpdf, yBounds);

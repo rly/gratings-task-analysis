@@ -323,7 +323,7 @@ clear cueOnsetNormalizationLogical arrayOnsetHoldNormalizationLogical ...
         arrayOnsetRelInclMotorNormalizationLogical targetDimInclMotorNormalizationLogical ...
         exitFixationInclMotorNormalizationLogical;
 
-%% compute RF as largest mean cue response over baseline
+%% compute InRF as largest mean cue response over per-condition baseline
 meanCueResponseBaselineCorrByLoc = nan(nLoc, 1);
 for i = 1:nLoc
     meanCueResponseBaselineCorrByLoc(i) = averageFiringRatesBySpdf.cueResponse.byLoc(i) - averageFiringRatesBySpdf.preCueBaseline.byLoc(i);
@@ -332,7 +332,10 @@ end
 assert(nLoc == 4); % next line based on nLoc == 4
 exRFLoc = mod(inRFLoc + 1, 4) + 1; % opposite location
 
-%% compute RF by max per-condition z-scored cue response
+% InRF and ExRF are always defined, even if there is no significant
+% response
+
+%% compute InRF by max per-condition z-scored cue response
 cueResponseWindowIndices = getTimeLogicalWithTolerance(cueOnset.t, cueOnset.window(1) + cueResponseWindowOffset);
 maxCueResponseBaselineCorrByLoc = nan(nLoc, 1);
 extremeCueResponseBaselineCorrByLoc = nan(nLoc, 1);

@@ -183,10 +183,12 @@ isSignificantCueResponse = isCell & isSignificantResponseVsPreviousPeriod(:,1);
 isSignificantArrayResponse = isCell & isSignificantResponseVsPreviousPeriod(:,2);
 isSignificantTargetDimResponse = isCell & isSignificantResponseVsPreviousPeriod(:,3);
 isSignificantPreExitFixation = isCell & isSignificantResponseVsPreviousPeriod(:,4);
-isSignificantPreExitFixationVsBaseline = isCell & isSignificantResponseVsPreviousPeriod(:,6);
 
 isSignificantCueResponseInc = isCell & isSignificantCueResponse & cueResponseVsBaselineDirection == 1;
 isSignificantCueResponseDec = isCell & isSignificantCueResponse & cueResponseVsBaselineDirection == -1;
+
+isCTDelayBelowBaseline = ([averageFiringRatesBySpdf.cueTargetDelay.all] < [averageFiringRatesBySpdf.preCueBaseline.all])';
+isSignificantCTDelayBelowBaseline = isCell & isSignificantResponseVsBaseline(:,2) & isCTDelayBelowBaseline;
 
 isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
@@ -223,15 +225,12 @@ fprintf('%d/%d = %d%% units show significant cue response compared to baseline.\
 fprintf('%d/%d = %d%% units show significant array response compared to cue-target delay.\n', ...
         sum(isSignificantArrayResponse), nUnitsAll, ...
         round(sum(isSignificantArrayResponse)/nUnitsAll * 100));
-fprintf('%d/%d = %d%% units show significant target dim activity compared to target-dim delay.\n', ...
+fprintf('%d/%d = %d%% units show significant target dim response compared to target-dim delay.\n', ...
         sum(isSignificantTargetDimResponse), nUnitsAll, ...
         round(sum(isSignificantTargetDimResponse)/nUnitsAll * 100));
 fprintf('%d/%d = %d%% units show significant pre-saccadic activity compared to previous period.\n', ...
         sum(isSignificantPreExitFixation), nUnitsAll, ...
         round(sum(isSignificantPreExitFixation)/nUnitsAll * 100));
-fprintf('%d/%d = %d%% units show significant pre-saccadic activity compared to baseline.\n', ...
-        sum(isSignificantPreExitFixationVsBaseline), nUnitsAll, ...
-        round(sum(isSignificantPreExitFixationVsBaseline)/nUnitsAll * 100));
 fprintf('\n');
 
 fprintf('%d/%d = %d%% units show significant spatial selectivity during some task period.\n', ...
@@ -254,7 +253,7 @@ fprintf('%d/%d = %d%% pulvinar units show significant cue response compared to b
 fprintf('%d/%d = %d%% pulvinar units show significant array response compared to cue-target delay.\n', ...
         sum(isSignificantArrayResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantArrayResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
-fprintf('%d/%d = %d%% units show significant target dim activity compared to target-dim delay.\n', ...
+fprintf('%d/%d = %d%% pulvinar units show significant target dim response compared to target-dim delay.\n', ...
         sum(isSignificantTargetDimResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantTargetDimResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
 fprintf('%d/%d = %d%% pulvinar units show significant pre-saccadic activity compared to previous period.\n', ...
@@ -470,25 +469,26 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %%
-[pcaCoeff,pcaScore,~,~,pcaPctExplained] = pca(spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices));
+data = spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices);
+[pcaCoeff,pcaPreSaccadeScore,~,~,pcaPctExplained] = pca(data);
 fprintf('\n');
-fprintf('PCA: %d variables, %d observations\n', size(pcaScore, 2), size(pcaScore, 1));
+fprintf('PCA: %d variables, %d observations\n', size(data, 2), size(data, 1));
 fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
 fprintf('\tPC2 explains %0.1f%% of the variance.\n', pcaPctExplained(2));
 fprintf('\tPC3 explains %0.1f%% of the variance.\n', pcaPctExplained(3));
 fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:2)));
 fprintf('\tPC1 + PC2 + PC3 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:3)));
 
-cols = lines(4);
+cols = lines(6);
 figure_tr_inch(7.5, 7.5);
 subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
 hold on;
-sh = scatter(pcaScore(:,1), pcaScore(:,2), 100, 'k');
+sh = scatter(pcaPreSaccadeScore(:,1), pcaPreSaccadeScore(:,2), 100, 'k');
 sh.MarkerFaceAlpha = 0.8;
-sh = scatter(pcaScore(isInDPulvinar,1), pcaScore(isInDPulvinar,2), 100, cols(1,:));
+sh = scatter(pcaPreSaccadeScore(isInDPulvinar,1), pcaPreSaccadeScore(isInDPulvinar,2), 100, cols(1,:));
 sh.MarkerFaceAlpha = 0.8;
 sh.LineWidth = 2;
-sh = scatter(pcaScore(isInVPulvinar,1), pcaScore(isInVPulvinar,2), 100, cols(2,:));
+sh = scatter(pcaPreSaccadeScore(isInVPulvinar,1), pcaPreSaccadeScore(isInVPulvinar,2), 100, cols(2,:));
 sh.MarkerFaceAlpha = 0.8;
 sh.LineWidth = 2;
 xlabel('PC1');
@@ -604,7 +604,7 @@ export_fig(plotFileName, '-nocrop');
 % https://stats.stackexchange.com/questions/8019/averaging-correlation-values
 % or transform the r values using Fisher transform
 
-condition = isSignificantCueResponseInc & isInVPulvinar;
+condition = isSignificantCueResponseInc & isInPulvinar;% & rtFiringRateStruct.spearmanCorrCoefPValHoldInRFCTDelayRT < 0.05;
 % isInDPulvinar;
 fprintf('N = %d\n', sum(condition));
 corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelInRFCTDelayRT(condition);
@@ -808,6 +808,7 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% compare InRF vs ExRF array response latency
+cols = lines(6);
 maxLatency = 0.125;
 minLatency = 0.025;
 goodUnits = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
@@ -822,6 +823,16 @@ fprintf('Number of units with latency reduction >= 10 ms: %d (%d%%)\n', ...
 fprintf('Number of units with latency increase >= 10 ms: %d (%d%%)\n', ...
         sum(arrayOnsetHoldLatencyDiff >= 0.01), round(sum(arrayOnsetHoldLatencyDiff >= 0.01)/numel(arrayOnsetHoldLatencyDiff) * 100));
 
+goodUnitsDPul = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
+        arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
+        isInDPulvinar & isSignificantCueResponseInc;
+    
+goodUnitsVPul = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
+        arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
+        isInVPulvinar & isSignificantCueResponseInc;
+    
 latBounds = [0 0.13];
 maxAbsDiffFR = max(abs(arrayOnsetHoldLatencyDiff));
 
@@ -833,6 +844,8 @@ figure_tr_inch(16, 5);
 subaxis(1, 3, 1);
 hold on;
 plot(arrayHoldBalLatencyInRF(goodUnits), arrayHoldBalLatencyExRF(goodUnits), '.', 'MarkerSize', 20);
+h1 = plot(arrayHoldBalLatencyInRF(goodUnitsDPul), arrayHoldBalLatencyExRF(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
+h2 = plot(arrayHoldBalLatencyInRF(goodUnitsVPul), arrayHoldBalLatencyExRF(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
 plot([0 1], [0 1], 'Color', 0.3*ones(3, 1)); 
 axis equal;
 xlim(latBounds); 
@@ -840,10 +853,12 @@ ylim(latBounds);
 xlabel('Array Onset Latency InRF (s)');
 ylabel('Array Onset Latency ExRF (s)');
 box off;
+legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
 
 subaxis(1, 3, 2); 
 hold on;
-histogram(arrayOnsetHoldLatencyDiff, histBinEdges);
+histH = histogram(arrayOnsetHoldLatencyDiff, histBinEdges);
+histH.FaceColor = cols(4,:);
 origYLim = ylim();
 plot([0 0], origYLim, 'k', 'LineWidth', 2); 
 xlim(histXBounds);
@@ -1299,9 +1314,11 @@ export_fig(plotFileName, '-nocrop');
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
-subdivisions = {'endPC2Neg'}; %{'PULCueInc', 'PULCueDec', 'vPul', 'dPul'};
+subdivisions = {'suppCTDelay'}; %{'PULCueInc', 'PULCueDec', 'vPul', 'dPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
+    yBounds = [-0.25 0.5];
+    isShowLabels = 1;
     if strcmp(subdivision, 'all')
         isInSubdivision = true(nUnitsAll, 1);
     elseif strcmp(subdivision, 'PUL')
@@ -1315,31 +1332,77 @@ for j = 1:numel(subdivisions)
     elseif strcmp(subdivision, 'PULCueDec')
         isInSubdivision = isInPulvinar & isSignificantCueResponseDec;
     elseif strcmp(subdivision, 'endPC2Pos')
-        isInSubdivision = isInPulvinar & pcaScore(:,2) > 0;
+        isInSubdivision = isInPulvinar & pcaPreSaccadeScore(:,2) > 0;
     elseif strcmp(subdivision, 'endPC2Neg')
-        isInSubdivision = isInPulvinar & pcaScore(:,2) < 0;
+        isInSubdivision = isInPulvinar & pcaPreSaccadeScore(:,2) < 0;
+    elseif strcmp(subdivision, 'dPulCueInc')
+        isInSubdivision = isInDPulvinar & isSignificantCueResponseInc;
+    elseif strcmp(subdivision, 'dPulCueDec')
+        isInSubdivision = isInDPulvinar & isSignificantCueResponseDec;
+    elseif strcmp(subdivision, 'vPulCueInc')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponseInc;
+    elseif strcmp(subdivision, 'vPulCueDec')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponseDec;
+    elseif strcmp(subdivision, 'concatPC3High')
+        isInSubdivision = false(size(isInPulvinar));
+        isInSubdivision(isInPulvinar) = pcaConcatAllScore(:,3) > 50;
+        yBounds = [-0.5 0.5];
+    elseif strcmp(subdivision, 'concatPC3Low')
+        isInSubdivision = false(size(isInPulvinar));
+        isInSubdivision(isInPulvinar) = pcaConcatAllScore(:,3) < -50;
+    elseif strcmp(subdivision, 'concatPC2High')
+        isInSubdivision = false(size(isInPulvinar));
+        isInSubdivision(isInPulvinar) = pcaConcatAllScore(:,2) > 50;
+        yBounds = [-0.5 0.5];
+    elseif strcmp(subdivision, 'suppCTDelay')
+        isInSubdivision = isInPulvinar & isSignificantCTDelayBelowBaseline;
     else
         isInSubdivision = strcmp(localization, subdivision);
     end
     
     quickSpdfAllEvents5InARowPopMeanRunner(subdivision, isInSubdivision, spdfInfo, ...
             enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
+            yBounds, isShowLabels, summaryDataDir, v);
+    
+    quickImagePlotAllEvents5InARowRunner(subdivision, isInSubdivision, spdfInfo, ...
+            enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
             summaryDataDir, v);
 end
 
-%%
+%% test runs
 subdivision = 'test';
-isInSubdivision = isInDPulvinar & arrayHoldBalLatencyInRF < 0.125 & arrayHoldBalLatencyExRF < 0.125;
-isInSubdivision = isSignificantSelectivityTargetDimDelayDec & isInPulvinar;
+% isInSubdivision = isInPulvinar;
+isInSubdivision = false(size(isInPulvinar));
+isInSubdivision(isInPulvinar) = pcaConcatAllScore(:,3) < -50;
+% isInSubdivision = isSignificantSelectivityTargetDimDelayDec & isInPulvinar;
 
 quickSpdfAllEvents5InARowPopMeanRunner(subdivision, isInSubdivision, spdfInfo, ...
         enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
         summaryDataDir, v)
 
+quickImagePlotAllEvents5InARowRunner(subdivision, isInSubdivision, spdfInfo, ...
+        enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
+        summaryDataDir, v);
+    
+%% test runs
+condition = isCell & isInSubdivision;
+unitNamesSub = unitNames(condition);
+
+arrayOnsetHoldSpdfInRFNormSub = (spdfInfo.arrayOnsetHoldSpdfInRFNorm(condition,:));
+arrayOnsetHoldSpdfExRFNormSub = (spdfInfo.arrayOnsetHoldSpdfExRFNorm(condition,:));
+
+arrayOnsetHoldSpdfInRFNormErrSub = (spdfInfo.arrayOnsetHoldSpdfInRFNormErr(condition,:));
+arrayOnsetHoldSpdfExRFNormErrSub = (spdfInfo.arrayOnsetHoldSpdfExRFNormErr(condition,:));
+
+titleBase = sprintf('%s: Array Onset Hold', subdivision);
+plotFileBaseName = 'test';
+makeTinyPlotsOfPopulation(arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfInRFNormErrSub, ...
+        arrayOnsetHoldSpdfExRFNormSub, arrayOnsetHoldSpdfExRFNormErrSub, arrayOnsetT, unitNamesSub, titleBase, plotFileBaseName);
+
 %% mega figure of tiny bc normalized plots per unit by subdivision
 fprintf('\n');
 fprintf('Plotting mega figure of tiny baseline-corrected, normalized mean SPDFs...\n');
-subdivisions = {'PULCueInc'};%{'PULCueInc', 'PULCueDec', 'vPul', 'dPul'};
+subdivisions = {'dPulCueInc', 'vPulCueInc'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
@@ -1350,10 +1413,18 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInVPulvinar;
     elseif strcmp(subdivision, 'dPul')
         isInSubdivision = isInDPulvinar;
-    elseif strcmp(subdivision, 'PULCueInc')
+    elseif strcmp(subdivision, 'PulCueInc')
         isInSubdivision = isInPulvinar & isSignificantCueResponseInc;
-    elseif strcmp(subdivision, 'PULCueDec')
+    elseif strcmp(subdivision, 'PulCueDec')
         isInSubdivision = isInPulvinar & isSignificantCueResponseDec;
+    elseif strcmp(subdivision, 'dPulCueInc')
+        isInSubdivision = isInDPulvinar & isSignificantCueResponseInc;
+    elseif strcmp(subdivision, 'dPulCueDec')
+        isInSubdivision = isInDPulvinar & isSignificantCueResponseDec;
+    elseif strcmp(subdivision, 'vPulCueInc')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponseInc;
+    elseif strcmp(subdivision, 'vPulCueDec')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponseDec;
     else
         isInSubdivision = strcmp(localization, subdivision);
     end
@@ -1383,53 +1454,7 @@ for j = 1:numel(subdivisions)
     exitFixationSpdfExRFNormErrSub = (spdfInfo.exitFixationSpdfExRFNormErr(condition,:));
 
     fprintf('\t%s: %d cells\n', subdivision, sum(condition));
-    
-    %%
-    isDiff = 1;
-    
-    eventName = 'Enter Fixation';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfDiff1-enterFixation-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(enterFixationSpdfInRFNormSub - enterFixationSpdfExRFNormSub, enterFixationT, subdivision, eventName, isDiff, plotFileName);
-    
-    eventName = 'Cue Onset';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfDiff2-cueOnset-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(cueOnsetSpdfInRFNormSub - cueOnsetSpdfExRFNormSub, cueOnsetT, subdivision, eventName, isDiff, plotFileName);
-    
-    eventName = 'Array Onset Hold';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfDiff3-arrayOnsetHold-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(arrayOnsetHoldSpdfInRFNormSub - arrayOnsetHoldSpdfExRFNormSub, arrayOnsetT, subdivision, eventName, isDiff, plotFileName);
-    
-    eventName = 'Target Dim';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfDiff4-targetDim-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(targetDimSpdfInRFNormSub - targetDimSpdfExRFNormSub, targetDimT, subdivision, eventName, isDiff, plotFileName);
-    
-    eventName = 'Exit Fixation';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfDiff5-exitFixation-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(exitFixationSpdfInRFNormSub - exitFixationSpdfExRFNormSub, exitFixationT, subdivision, eventName, isDiff, plotFileName);
-    
-    %%
-    isDiff = 0;
-    
-    eventName = 'Enter Fixation';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfInRF1-enterFixation-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(enterFixationSpdfInRFNormSub, enterFixationT, subdivision, eventName, isDiff, plotFileName);
-    
-    eventName = 'Cue Onset';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfInRF2-cueOnset-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(cueOnsetSpdfInRFNormSub, cueOnsetT, subdivision, eventName, isDiff, plotFileName);
-    
-    eventName = 'Array Onset Hold';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfInRF3-arrayOnsetHold-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(arrayOnsetHoldSpdfInRFNormSub, arrayOnsetT, subdivision, eventName, isDiff, plotFileName);
-    
-    eventName = 'Target Dim';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfInRF4-targetDim-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(targetDimSpdfInRFNormSub, targetDimT, subdivision, eventName, isDiff, plotFileName);
-    
-    eventName = 'Exit Fixation';
-    plotFileName = sprintf('%s/allSessions-%s-imagePop-meanSpdfInRF5-exitFixation-v%d', summaryDataDir, subdivision, v);
-    makeImagePlotOfPopulation(exitFixationSpdfInRFNormSub, exitFixationT, subdivision, eventName, isDiff, plotFileName);
-      
+
     %%
     titleBase = sprintf('%s: Enter Fixation', subdivision);
     plotFileBaseName = sprintf('%s/allSessions-%s-tinyPop-meanSpdf1-enterFixation-v%d', summaryDataDir, subdivision, v);
@@ -1457,11 +1482,84 @@ for j = 1:numel(subdivisions)
             exitFixationSpdfExRFNormSub, exitFixationSpdfExRFNormErrSub, exitFixationT, unitNamesSub, titleBase, plotFileBaseName);
 end
 
+%% PCA on activity space by unit
+superdivision = isCell & isInPulvinar;
+data = spdfInfo.meanSpdfInRFConcatAll(superdivision,:);
+[pcaCoeff,pcaConcatAllScore,~,~,pcaPctExplained] = pca(data);
+fprintf('\n');
+fprintf('PCA: %d variables, %d observations\n', size(data, 2), size(data, 1));
+fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
+fprintf('\tPC2 explains %0.1f%% of the variance.\n', pcaPctExplained(2));
+fprintf('\tPC3 explains %0.1f%% of the variance.\n', pcaPctExplained(3));
+fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:2)));
+fprintf('\tPC1 + PC2 + PC3 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:3)));
+
+figure_tr_inch(10, 6);
+subaxis(1, 1, 1, 'MB', 0.12, 'ML', 0.1);
+hold on;
+plot(pcaCoeff(:,1), 'LineWidth', 5);
+plot(pcaCoeff(:,2), 'LineWidth', 5);
+plot(pcaCoeff(:,3), 'LineWidth', 5);
+xlim([0 size(data, 2)]);
+xlabel('Concatenated Event-Locked Time (s)');
+ylabel('');
+set(gca, 'FontSize', 14);
+set(gca, 'FontWeight', 'bold');
+set(gca, 'box', 'off');
+set(gca, 'LineWidth', 2);
+legend({'PC1', 'PC2', 'PC3'}, 'LineWidth', 0.5);
+
+plotFileName = sprintf('%s/allSessions-concatDataPCAComponents-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 %%
+figure;
+histogram(pcaConcatAllScore(:,3))
+
+
+%% PCA score plot by subdivision
+figure_tr_inch(7.5, 7.5);
+subaxis(1, 1, 1, 'MB', 0.1, 'MT', 0.03, 'ML', 0.12, 'MR', 0.06)
+hold on;
+
+cols = lines(6);
+cols = [cols(1,:); cols(3,:); cols(5,:); cols(2,:)];
+
+subdivisions = {'vPul', 'dPul'};
+localizationSuper = localization(superdivision);
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
+    isInSubdivision = strcmp(localizationSuper, subdivision);
+    fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
+
+    sh = scatter(pcaConcatAllScore(isInSubdivision,1), pcaConcatAllScore(isInSubdivision,2), 50, cols(j,:), 'MarkerFaceColor', cols(j,:));
+    sh.MarkerFaceAlpha = 0.6;
+end
+
+xlabel('First Principal Component');
+ylabel('Second Principal Component');
+% xlim([-25 120]);
+% ylim([-30 60]);
+set(gca, 'box', 'off');
+set(gca, 'LineWidth', 2);
+set(gca, 'FontSize', 16);
+set(gca, 'FontName', 'Calibri');
+set(gca, 'FontWeight', 'bold');
+
+plotFileName = sprintf('%s/allSessions-pcaConcat-splitBySubdivision-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+%% electrophoresis plot
 figure_tr_inch(10, 10);
-pulLoc = zeros(nUnitsAll, 3);
+pulLoc = zeros(nUnitsAll, 8);
+
 pulLoc(isInDPulvinar,1) = 2;
 pulLoc(isInVPulvinar,1) = 1;
+maxLatency = 0.125;
+minLatency = 0.025;
 latencyDec = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
         arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
         arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
@@ -1470,12 +1568,37 @@ latencyInc = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) &
         arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
         arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
         isSignificantCueResponseInc & arrayHoldBalLatencyInRF - arrayHoldBalLatencyExRF > 0;
-pulLoc(latencyDec,2) = 4;
+pulLoc(latencyDec,2) = 5;
 pulLoc(latencyInc,2) = 3;
 pulLoc(isSignificantCueResponseInc,3) = 2;
 pulLoc(isSignificantCueResponseDec,3) = 1;
+pulLoc(isSignificantArrayResponse,4) = 3;
+pulLoc(isSignificantDelaySelectivity,5) = 2;
+pulLoc(pcaPreSaccadeScore(:,2) > 0 & isSignificantArrayResponse & isSignificantCueResponseInc,6) = 5;
+pulLoc(pcaPreSaccadeScore(:,2) < 0 & isSignificantArrayResponse & isSignificantCueResponseInc,6) = 3;
+maxLatency = 0.125;
+minLatency = 0.065;
+latencyLong = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
+        arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
+        isSignificantCueResponseInc & arrayHoldBalLatencyInRF - arrayHoldBalLatencyExRF > 0;
+maxLatency = 0.065;
+minLatency = 0.025;
+latencyShort = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
+        arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
+        isSignificantCueResponseInc & arrayHoldBalLatencyInRF - arrayHoldBalLatencyExRF > 0;
+pulLoc(latencyLong,7) = 2;
+pulLoc(latencyShort,7) = 1;
+a = find(superdivision);
+b = a(pcaConcatAllScore(:,2) <= 0);
+c = a(pcaConcatAllScore(:,2) > 0);
+pulLoc(b,8) = 5;
+pulLoc(c,8) = 3;
+pulLoc(isInDPulvinar,9) = 2;
+pulLoc(isInVPulvinar,9) = 1;
 imagesc(pulLoc);
-colormap(lines(6));
+colormap([0.3 0.3 0.3; lines(6)]);
 
 
 
@@ -1811,9 +1934,9 @@ export_fig(plotFileName, '-nocrop');
 
 %% PCA on activity space by cell
 superdivision = isCell & isInPulvinar;
-[pcaCoeff,pcaScore,~,~,pcaPctExplained] = pca([meanNormSpdfInRFAllWindowsAll(superdivision,[1:2 4:end])]);
+[pcaCoeff,pcaConcatAllScore,~,~,pcaPctExplained] = pca([meanNormSpdfInRFAllWindowsAll(superdivision,[1:2 4:end])]);
 fprintf('\n');
-fprintf('PCA: %d variables, %d observations\n', size(pcaScore, 2), size(pcaScore, 1));
+fprintf('PCA: %d variables, %d observations\n', size(pcaConcatAllScore, 2), size(pcaConcatAllScore, 1));
 fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
 fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', pcaPctExplained(1) + pcaPctExplained(2));
 
@@ -1831,7 +1954,7 @@ for j = 1:numel(subdivisions)
     isInSubdivision = strcmp(localizationSuper, subdivision);
     fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
 
-    sh = scatter(pcaScore(isInSubdivision,1), pcaScore(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
+    sh = scatter(pcaConcatAllScore(isInSubdivision,1), pcaConcatAllScore(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
     sh.MarkerFaceAlpha = 0.9;
 end
 
@@ -1850,9 +1973,9 @@ export_fig(plotFileName, '-nocrop');
 
 %% PCA on activity space by cell
 superdivision = isCell & isInPulvinar;
-[pcaCoeff,pcaScore,~,~,pcaPctExplained] = pca([meanNormSpdfInRFAllWindowsAll(superdivision,[1:2 4:end])]);
+[pcaCoeff,pcaConcatAllScore,~,~,pcaPctExplained] = pca([meanNormSpdfInRFAllWindowsAll(superdivision,[1:2 4:end])]);
 fprintf('\n');
-fprintf('PCA: %d variables, %d observations\n', size(pcaScore, 2), size(pcaScore, 1));
+fprintf('PCA: %d variables, %d observations\n', size(pcaConcatAllScore, 2), size(pcaConcatAllScore, 1));
 fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
 fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', pcaPctExplained(1) + pcaPctExplained(2));
 
@@ -1871,7 +1994,7 @@ for j = 1:numel(subdivisions)
     isInSubdivision = strcmp(localizationSuper, subdivision);
     fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
 
-    sh = scatter(pcaScore(isInSubdivision,1), pcaScore(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
+    sh = scatter(pcaConcatAllScore(isInSubdivision,1), pcaConcatAllScore(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
     sh.MarkerFaceAlpha = 0.9;
 end
 
