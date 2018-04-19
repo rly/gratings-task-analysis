@@ -9,7 +9,9 @@ nLoc = numel(actualByLoc);
 medianNullDist = median(nullDist);
 
 for i = 1:nLoc
-    if actualByLoc(i) > medianNullDist
+    if isnan(actualByLoc(i))
+        statsByLoc(i).bootstrap.p = NaN;
+    elseif actualByLoc(i) > medianNullDist
         statsByLoc(i).bootstrap.p = sum(actualByLoc(i) < nullDist) / numRandomizations * 2;
     else
         statsByLoc(i).bootstrap.p = sum(actualByLoc(i) > nullDist) / numRandomizations * 2;

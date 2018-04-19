@@ -414,43 +414,43 @@ preExitFixationVsPrevStatsByLoc = computeSignRankTestByLoc(...
         averageFiringRatesByCount.preExitFixationEarly.trialRateByLoc, ...
         averageFiringRatesByCount.preExitFixation.trialRateByLoc);
 
-%% compute cue response at InRF > baseline
+%% compute cue response at InRF > baseline (SLOW)
 % bootstrap on mean of baseline SPDF with 500 shuffles
 % compare actual mean SPDF cue response to distribution of bootstrapped
 % pre-cue baselines
 % TODO using count should be faster than psth
-bootstrappedMeanPreCueBaselines = generateNullDistMeanPsth(cueOnset, preCueBaselineWindowOffset, kernelSigma, numRandomizations);
-fprintf('.');
-
-% compute array response at InRF > cue-target delay
-bootstrappedMeanCueTargetDelays = generateNullDistMeanPsth(arrayOnset, cueTargetDelayWindowOffset, kernelSigma, numRandomizations);
-fprintf('.');
-
-% compute target-dim response at InRF > target-dim delay
-bootstrappedMeanTargetDimBalDelays = generateNullDistMeanPsth(targetDimBal, targetDimDelayWindowOffset, kernelSigma, numRandomizations);
-fprintf('.');
-
-% compute pre-exit fixation response at InRF > earlier pre-exit fixation window
-bootstrappedMeanPreExitFixationEarlys = generateNullDistMeanPsth(exitFixation, preExitFixationEarlyWindowOffset, kernelSigma, numRandomizations);
-fprintf('.');
+% bootstrappedMeanPreCueBaselines = generateNullDistMeanPsth(cueOnset, preCueBaselineWindowOffset, kernelSigma, numRandomizations);
+% fprintf('.');
+% 
+% % compute array response > cue-target delay
+% bootstrappedMeanCueTargetDelayHoldBals = generateNullDistMeanPsth(arrayOnsetHoldBal, cueTargetDelayWindowOffset, kernelSigma, numRandomizations);
+% fprintf('.');
+% 
+% % compute target-dim response > target-dim delay
+% bootstrappedMeanTargetDimDelayBals = generateNullDistMeanPsth(targetDimBal, targetDimDelayWindowOffset, kernelSigma, numRandomizations);
+% fprintf('.');
+% 
+% % compute pre-exit fixation response > earlier pre-exit fixation window
+% bootstrappedMeanPreExitFixationEarlys = generateNullDistMeanPsth(exitFixation, preExitFixationEarlyWindowOffset, kernelSigma, numRandomizations);
+% fprintf('.');
 
 %% bootstrap test on x vs y using average SPDFs
 % versus the pre-cue baseline
-cueResponseVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.cueResponse.byLoc, bootstrappedMeanPreCueBaselines, cueResponseVsBaselineStatsByLoc);
-cueTargetDelayVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.cueTargetDelay.byLoc, bootstrappedMeanPreCueBaselines, cueTargetDelayVsBaselineStatsByLoc);
-
-% balanced trials only
-arrayResponseHoldVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.arrayResponseHoldBal.byLoc, bootstrappedMeanPreCueBaselines, arrayResponseHoldVsBaselineStatsByLoc);
-targetDimDelayVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.targetDimDelayBal.byLoc, bootstrappedMeanPreCueBaselines, targetDimDelayVsBaselineStatsByLoc);
-targetDimResponseVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.targetDimResponseBal.byLoc, bootstrappedMeanPreCueBaselines, targetDimResponseVsBaselineStatsByLoc);
-
-% all trials: hold, release, balanced, unbalanced
-preExitFixationVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.preExitFixation.byLoc, bootstrappedMeanPreCueBaselines, preExitFixationVsBaselineStatsByLoc);
-
-% versus the previous window
-arrayResponseHoldVsPrevStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.arrayResponseHoldBal.byLoc, bootstrappedMeanCueTargetDelays, arrayResponseHoldVsPrevStatsByLoc);
-targetDimResponseVsPrevStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.targetDimResponseBal.byLoc, bootstrappedMeanTargetDimBalDelays, targetDimResponseVsPrevStatsByLoc);
-preExitFixationVsPrevStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.preExitFixationEarly.byLoc, bootstrappedMeanPreExitFixationEarlys, preExitFixationVsPrevStatsByLoc);
+% cueResponseVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.cueResponse.byLoc, bootstrappedMeanPreCueBaselines, cueResponseVsBaselineStatsByLoc);
+% cueTargetDelayVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.cueTargetDelay.byLoc, bootstrappedMeanPreCueBaselines, cueTargetDelayVsBaselineStatsByLoc);
+% 
+% % balanced trials only
+% arrayResponseHoldVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.arrayResponseHoldBal.byLoc, bootstrappedMeanPreCueBaselines, arrayResponseHoldVsBaselineStatsByLoc);
+% targetDimDelayVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.targetDimDelayBal.byLoc, bootstrappedMeanPreCueBaselines, targetDimDelayVsBaselineStatsByLoc);
+% targetDimResponseVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.targetDimResponseBal.byLoc, bootstrappedMeanPreCueBaselines, targetDimResponseVsBaselineStatsByLoc);
+% 
+% % all trials: hold, release, balanced, unbalanced
+% preExitFixationVsBaselineStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.preExitFixation.byLoc, bootstrappedMeanPreCueBaselines, preExitFixationVsBaselineStatsByLoc);
+% 
+% % versus the previous window
+% arrayResponseHoldVsPrevStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.arrayResponseHoldBal.byLoc, bootstrappedMeanCueTargetDelayHoldBals, arrayResponseHoldVsPrevStatsByLoc);
+% targetDimResponseVsPrevStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.targetDimResponseBal.byLoc, bootstrappedMeanTargetDimDelayBals, targetDimResponseVsPrevStatsByLoc);
+% preExitFixationVsPrevStatsByLoc = getNullDistPValByLoc(averageFiringRatesBySpdf.preExitFixationEarly.byLoc, bootstrappedMeanPreExitFixationEarlys, preExitFixationVsPrevStatsByLoc);
 
 %% shuffle test on cue onset time as another test for cue-evoked change in activity
 % concatenate the two time periods in a trial and circularly permute the

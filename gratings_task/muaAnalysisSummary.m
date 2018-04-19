@@ -20,10 +20,10 @@ nUnitsApprox = nSessions * 16; % should be equal or an underestimate
 unitNames = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 isSignificantResponseVsPreviousPeriod = false(nUnitsApprox, 4);
-isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
-isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);
+% isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
+% isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);
 isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
-cueResponseVsBootstrapBaselineDirection = zeros(nUnitsApprox, 1);
+cueResponseVsBaselineDirection = zeros(nUnitsApprox, 1);
 infoRates = nan(nUnitsApprox, 5); % 5 periods
 diffRates = nan(nUnitsApprox, 3); % 2 delay periods + array response
 attnIndices = nan(nUnitsApprox, 3); % 2 delay periods + array response
@@ -74,10 +74,10 @@ for i = 1:nSessions
     unitNames(currentUnitInds) = S.unitNames;
     isSignificantResponseVsBaseline(currentUnitInds,:) = S.isSignificantResponseVsBaseline;
     isSignificantResponseVsPreviousPeriod(currentUnitInds,:) = S.isSignificantResponseVsPreviousPeriod;
-    isSignificantResponseVsBootstrapBaseline(currentUnitInds,:) = S.isSignificantResponseVsBootstrapBaseline;
-    isSignificantResponseVsBootstrapPreviousPeriod(currentUnitInds,:) = S.isSignificantResponseVsBootstrapPreviousPeriod;
+%     isSignificantResponseVsBootstrapBaseline(currentUnitInds,:) = S.isSignificantResponseVsBootstrapBaseline;
+%     isSignificantResponseVsBootstrapPreviousPeriod(currentUnitInds,:) = S.isSignificantResponseVsBootstrapPreviousPeriod;
     isSignificantSelectivity(currentUnitInds,:) = S.isSignificantSelectivity;
-    cueResponseVsBootstrapBaselineDirection(currentUnitInds,:) = S.cueResponseVsBootstrapBaselineDirection;
+    cueResponseVsBaselineDirection(currentUnitInds,:) = S.cueResponseVsBaselineDirection;
     infoRates(currentUnitInds,:) = S.infoRates;
     diffRates(currentUnitInds,:) = S.diffRates;
     attnIndices(currentUnitInds,:) = S.attnIndices;
@@ -179,14 +179,14 @@ isCell = true(unitCount, 1); % for MUA, cannot distinguish between cell and not 
 
 % TODO compute these per unit above so that the right alpha is used
 isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBaseline, 2);
-isSignificantCueResponse = isCell & isSignificantResponseVsBootstrapBaseline(:,1);
+isSignificantCueResponse = isCell & isSignificantResponseVsPreviousPeriod(:,1);
 isSignificantArrayResponse = isCell & isSignificantResponseVsPreviousPeriod(:,2);
 isSignificantTargetDimResponse = isCell & isSignificantResponseVsPreviousPeriod(:,3);
 isSignificantPreExitFixation = isCell & isSignificantResponseVsPreviousPeriod(:,4);
-isSignificantPreExitFixationVsBaseline = isCell & isSignificantResponseVsBootstrapBaseline(:,6);
+isSignificantPreExitFixationVsBaseline = isCell & isSignificantResponseVsPreviousPeriod(:,6);
 
-isSignificantCueResponseInc = isCell & isSignificantCueResponse & cueResponseVsBootstrapBaselineDirection == 1;
-isSignificantCueResponseDec = isCell & isSignificantCueResponse & cueResponseVsBootstrapBaselineDirection == -1;
+isSignificantCueResponseInc = isCell & isSignificantCueResponse & cueResponseVsBaselineDirection == 1;
+isSignificantCueResponseDec = isCell & isSignificantCueResponse & cueResponseVsBaselineDirection == -1;
 
 isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
@@ -251,10 +251,13 @@ fprintf('%d/%d = %d%% pulvinar units show significant task modulation compared t
 fprintf('%d/%d = %d%% pulvinar units show significant cue response compared to baseline.\n', ...
         sum(isSignificantCueResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantCueResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
-fprintf('%d/%d = %d%% pulvinar units show significant array response compared to baseline.\n', ...
+fprintf('%d/%d = %d%% pulvinar units show significant array response compared to cue-target delay.\n', ...
         sum(isSignificantArrayResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantArrayResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
-fprintf('%d/%d = %d%% pulvinar units show significant pre-saccadic activity compared to baseline.\n', ...
+fprintf('%d/%d = %d%% units show significant target dim activity compared to target-dim delay.\n', ...
+        sum(isSignificantTargetDimResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
+        round(sum(isSignificantTargetDimResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
+fprintf('%d/%d = %d%% pulvinar units show significant pre-saccadic activity compared to previous period.\n', ...
         sum(isSignificantPreExitFixation & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantPreExitFixation & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
 fprintf('\n');
@@ -1454,6 +1457,29 @@ for j = 1:numel(subdivisions)
             exitFixationSpdfExRFNormSub, exitFixationSpdfExRFNormErrSub, exitFixationT, unitNamesSub, titleBase, plotFileBaseName);
 end
 
+%%
+figure_tr_inch(10, 10);
+pulLoc = zeros(nUnitsAll, 3);
+pulLoc(isInDPulvinar,1) = 2;
+pulLoc(isInVPulvinar,1) = 1;
+latencyDec = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
+        arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
+        isSignificantCueResponseInc & arrayHoldBalLatencyInRF - arrayHoldBalLatencyExRF < 0;
+latencyInc = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
+        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
+        arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
+        isSignificantCueResponseInc & arrayHoldBalLatencyInRF - arrayHoldBalLatencyExRF > 0;
+pulLoc(latencyDec,2) = 4;
+pulLoc(latencyInc,2) = 3;
+pulLoc(isSignificantCueResponseInc,3) = 2;
+pulLoc(isSignificantCueResponseDec,3) = 1;
+imagesc(pulLoc);
+colormap(lines(6));
+
+
+
+%%
 stop
 %% Pie Chart localizing attentional modulation in the pulvinar
 % We found x pulvinar cells that show significant attentional modulation. 
