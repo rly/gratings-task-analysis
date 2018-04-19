@@ -1,5 +1,5 @@
-function [channelDataNorm,isTrialOutlier,isNoisyChannel] = preprocessLfpsGratingsTask(adjLfps, Fs, channelNames, UE, ...
-        processedDataDir, blockName, hiCutoffFreq, v)
+function [channelDataNorm,isTrialOutlier,isNoisyChannel,refMeanNorm] = preprocessLfpsGratingsTask(adjLfps, Fs, channelNames, UE, ...
+        processedDataDir, fileNamePrefix, hiCutoffFreq, v)
 % remove events with outlier data and apply CAR and low-pass filtering to adjLfps
 
 doOutlierCheckPlot = 1;
@@ -18,7 +18,8 @@ outlierCheckArrayOnsetWindowOffset = [-0.8 0.25];
 outlierCheckTargetDimWindowOffset = [-1.3 0.25];
 
 %% do common average reference first
-adjLfpsCAR = adjLfps - nanmean(adjLfps, 1);
+refMean = nanmean(adjLfps, 1);
+adjLfpsCAR = adjLfps - refMean;
 clear adjLfps;
 
 %% plot histogram of SD of each channel's LFP
@@ -37,8 +38,8 @@ title('LFPs SD by Channel');
 xlim([1 nChannels] + [-0.5 0.5]);
 xlabel('Channel Number');
 ylabel('Standard Deviation of LFP (mV)');
-plotFileName = sprintf('%s/allFP-%s-%s-%s-CARdata-SDByChannel_v%d.png', ...
-        processedDataDir, channelNames{[1 end]}, blockName, v);
+plotFileName = sprintf('%s/%s-allFP-CARdata-SDByChannel_v%d.png', ...
+        processedDataDir, fileNamePrefix, v);
 fprintf('Saving SD by channel plot to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 close;
@@ -57,7 +58,7 @@ for j = 1:nChannels
             xlim([1 size(adjLfpsCAR, 2)]);
             
             plotFileName = sprintf('%s/%s-%s-CARdata_v%d.png', ...
-                    processedDataDir, channelNames{j}, blockName, v);
+                    processedDataDir, fileNamePrefix, channelNames{j}, v);
             fprintf('\tSaving CAR data plot to %s...\n', plotFileName);
             export_fig(plotFileName, '-nocrop');
             savefig([plotFileName(1:end-3) 'fig']);
@@ -109,6 +110,11 @@ clear adjLfpsCAR;
 % set missing vals back to nan
 adjLfpsLP(isNanOrig) = NaN;
 
+% do the same to refMean
+refMean(isnan(refMean)) = 0; % zero out nans
+refMeanLp = filtfilt(bFirLowPass, 1, refMean')';
+clear refMean;
+
 %% redo common average reference
 adjLfpsLpCAR = adjLfpsLP - nanmean(adjLfpsLP, 1);
 clear adjLfpsLP;
@@ -122,6 +128,10 @@ clear adjLfpsLP;
 channelDataNorm = (adjLfpsLpCAR - nanmean(adjLfpsLpCAR, 2)) ./ nanstd(adjLfpsLpCAR, 0, 2);
 assert(all(size(adjLfpsLpCAR) == size(channelDataNorm)));
 clear adjLfpsLpCAR;
+
+% do the same to refMeanLp
+refMeanNorm = (refMeanLp - nanmean(refMeanLp, 2)) ./ nanstd(refMeanLp, 0, 2);
+clear refMeanLp;
 
 %% detect events with outlier activity (e.g. amp saturated)
 outlierCheckWindowOffsetAll = {outlierCheckCueOnsetWindowOffset, UE.cueOnset, 'Cue Onset';
@@ -192,7 +202,7 @@ for i = 1:size(outlierCheckWindowOffsetAll, 1)
             ylim([-8 8]);
 
             plotFileName = sprintf('%s/%s-%s-event%s-outlierCheck_v%d.png', ...
-                    processedDataDir, channelNames{j}, blockName, eventName(~isspace(eventName)), v);
+                    processedDataDir, fileNamePrefix, channelNames{j}, eventName(~isspace(eventName)), v);
             fprintf('\t\tSaving outlier check plot to %s...\n', plotFileName);
             export_fig(plotFileName, '-nocrop');
             close;

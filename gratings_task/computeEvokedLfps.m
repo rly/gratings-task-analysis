@@ -1,4 +1,4 @@
-function EL = computeEvokedLfps(saveFileName, lfp, Fs, nLoc, UE)
+function saveFileName = computeEvokedLfps(saveFileName, lfp, Fs, nLoc, UE)
 % lfp = 1-D vector
 % UE = useful events struct
 % assert(iscolumn(lfp));
@@ -18,11 +18,11 @@ cueOnsetLfp = alignLfpToEvents(lfp, UE.cueOnset, Fs, cueOnsetLfp);
 
 %% align spikes to array onset
 arrayOnsetLfp.windowOffset = [-0.7 0.7];
-arrayOnsetRelLfp.windowOffset = [-0.7 0.7];
-arrayOnsetHoldLfp.windowOffset = [-0.7 0.7];
+arrayOnsetRelBalLfp.windowOffset = [-0.7 0.7];
+arrayOnsetHoldBalLfp.windowOffset = [-0.7 0.7];
 arrayOnsetLfp = alignLfpToEvents(lfp, UE.arrayOnset, Fs, arrayOnsetLfp);
-arrayOnsetRelLfp = alignLfpToEvents(lfp, UE.arrayOnsetRel, Fs, arrayOnsetRelLfp);
-arrayOnsetHoldLfp = alignLfpToEvents(lfp, UE.arrayOnsetHold, Fs, arrayOnsetHoldLfp);
+arrayOnsetRelBalLfp = alignLfpToEvents(lfp, UE.arrayOnsetRelBal, Fs, arrayOnsetRelBalLfp);
+arrayOnsetHoldBalLfp = alignLfpToEvents(lfp, UE.arrayOnsetHoldBal, Fs, arrayOnsetHoldBalLfp);
 
 % arrayOnsetLfpByLoc = cell(nLoc, 1);
 % arrayOnsetRelLfpByLoc = cell(nLoc, 1);
@@ -34,8 +34,8 @@ arrayOnsetHoldLfp = alignLfpToEvents(lfp, UE.arrayOnsetHold, Fs, arrayOnsetHoldL
 % end
 
 %% align spikes to target dimming
-targetDimLfp.windowOffset = [-0.7 0.7];
-targetDimLfp = alignLfpToEvents(lfp, UE.targetDim, Fs, targetDimLfp);
+targetDimBalLfp.windowOffset = [-0.7 0.7];
+targetDimBalLfp = alignLfpToEvents(lfp, UE.targetDimBal, Fs, targetDimBalLfp);
 
 % targetDimLfpByLoc = cell(nLoc, 1);
 % for i = 1:nLoc
@@ -65,16 +65,16 @@ exitFixationLfp = alignLfpToEvents(lfp, UE.fixationAndLeverTimes.firstExitFixati
 % end
 
 %% align spikes to lever press and release
-leverPressLfp.windowOffset = [-0.7 0.7];
-leverPressLfp = alignLfpToEvents(lfp, UE.fixationAndLeverTimes.firstLeverPressTimesPreCue, Fs, leverPressLfp);
+% leverPressLfp.windowOffset = [-0.7 0.7];
+% leverPressLfp = alignLfpToEvents(lfp, UE.fixationAndLeverTimes.firstLeverPressTimesPreCue, Fs, leverPressLfp);
 
 % leverPressLfpByLoc = cell(nLoc, 1);
 % for i = 1:nLoc
 %     leverPressLfpByLoc{i} = alignLfpToEvents(lfp, UE.fixationAndLeverTimes.firstLeverPressTimesPreCueByLoc{i}, Fs, leverPressWindowOffset);
 % end
 
-leverReleaseLfp.windowOffset = [-0.7 0.7];
-leverReleaseLfp = alignLfpToEvents(lfp, UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice, Fs, leverReleaseLfp);
+% leverReleaseLfp.windowOffset = [-0.7 0.7];
+% leverReleaseLfp = alignLfpToEvents(lfp, UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice, Fs, leverReleaseLfp);
 
 % leverReleaseLfpByLoc = cell(nLoc, 1);
 % for i = 1:nLoc
@@ -86,16 +86,16 @@ assert(numel(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue) == numel(UE
 assert(numel(UE.firstJuiceEvent) == numel(UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice));
 assert(numel(UE.firstJuiceEvent) == numel(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice));
 
-arrayOnsetRelToJuiceEventTime = UE.firstJuiceEvent(~UE.isHoldTrial) - UE.arrayOnsetRel; % almost same as UE.rt(~isHoldTrial)?
-targetDimToJuiceEventTime = UE.firstJuiceEvent(UE.isHoldTrial) - UE.targetDim; % almost same as UE.rt(isHoldTrial)?
-enterFixationToLeverPressTime = UE.fixationAndLeverTimes.firstLeverPressTimesPreCue - UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue;
-enterFixationToCueOnsetTime = UE.cueOnset - UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue;
-exitFixationToJuiceEventTime = UE.firstJuiceEvent - UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice;
-exitFixationToLeverReleaseTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice - UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice;
-arrayOnsetRelToExitFixationTime = UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice(~UE.isHoldTrial) - UE.arrayOnsetRel;
-targetDimToExitFixationTime = UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice(UE.isHoldTrial) - UE.targetDim;
-arrayOnsetRelToLeverReleaseTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(~UE.isHoldTrial) - UE.arrayOnsetRel;
-targetDimToLeverReleaseTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(UE.isHoldTrial) - UE.targetDim;
+% arrayOnsetRelToJuiceEventTime = UE.firstJuiceEvent(~UE.isHoldTrial) - UE.arrayOnsetRel; % almost same as UE.rt(~isHoldTrial)?
+% targetDimToJuiceEventTime = UE.firstJuiceEvent(UE.isHoldTrial) - UE.targetDim; % almost same as UE.rt(isHoldTrial)?
+% enterFixationToLeverPressTime = UE.fixationAndLeverTimes.firstLeverPressTimesPreCue - UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue;
+% enterFixationToCueOnsetTime = UE.cueOnset - UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue;
+% exitFixationToJuiceEventTime = UE.firstJuiceEvent - UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice;
+% exitFixationToLeverReleaseTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice - UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice;
+% arrayOnsetRelToExitFixationTime = UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice(~UE.isHoldTrial) - UE.arrayOnsetRel;
+% targetDimToExitFixationTime = UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice(UE.isHoldTrial) - UE.targetDim;
+% arrayOnsetRelToLeverReleaseTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(~UE.isHoldTrial) - UE.arrayOnsetRel;
+% targetDimToLeverReleaseTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(UE.isHoldTrial) - UE.targetDim;
 
 %% analysis time windows
 preLeverReleaseWindowOffset = [-0.175 0];
