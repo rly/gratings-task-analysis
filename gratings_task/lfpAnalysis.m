@@ -223,6 +223,7 @@ title(axBig, sprintf('Session %s (Ch %d-%d)', sessionName, lfpChannelsToLoad([1 
 
 plotFileName = sprintf('%s/%s-allFP-evokedLfps-combLinePlot-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
+fprintf('Saving figure to file %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% separated line plot
@@ -342,6 +343,7 @@ title(axBig, sprintf('Session %s (Ch %d-%d)', sessionName, lfpChannelsToLoad([1 
 
 plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepLinePlot-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
+fprintf('Saving figure to file %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% image plot
@@ -447,6 +449,7 @@ title(axBig, sprintf('Session %s (Ch %d-%d)', sessionName, lfpChannelsToLoad([1 
 
 plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepColorPlot-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
+fprintf('Saving figure to file %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 
@@ -573,6 +576,7 @@ for channelInd = 1:nChannels+1
         plotFileName = sprintf('%s/%s-FPCAR-power-v%d.png', ...
                 processedDataDir, fileNamePrefix, v);
     end
+    fprintf('Saving figure to file %s...\n', plotFileName);
     export_fig(plotFileName, '-nocrop');
 end
 
@@ -668,6 +672,7 @@ for channelInd = 1:nChannels+1
 %         plotFileName = sprintf('%s/%s-FPCAR-powerTfr-v%d.png', ...
 %                 processedDataDir, fileNamePrefix, v);
 %     end
+%     fprintf('Saving figure to file %s...\n', plotFileName);
 %     export_fig(plotFileName, '-nocrop');
 
     figure_tr_inch(20, 5);
@@ -728,6 +733,7 @@ for channelInd = 1:nChannels+1
         plotFileName = sprintf('%s/%s-FPCAR-powerTfrDiff-v%d.png', ...
                 processedDataDir, fileNamePrefix, v);
     end
+    fprintf('Saving figure to file %s...\n', plotFileName);
     export_fig(plotFileName, '-nocrop');
 end
 
@@ -895,6 +901,7 @@ for unitInd = 1:nUnits
         plotFileName = sprintf('%s/%s-FPCAR-%s-sfc-v%d.png', ...
                 processedDataDir, fileNamePrefix, unitIDChar, v);
     end
+    fprintf('Saving figure to file %s...\n', plotFileName);
     export_fig(plotFileName, '-nocrop');
 end
 
@@ -934,6 +941,7 @@ if channelInd == nChannels + 1
     plotFileName = sprintf('%s/%s-FPCAR-allMUA-meanSfcDiff-v%d.png', ...
             processedDataDir, fileNamePrefix, v);
 end
+fprintf('Saving figure to file %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %%
