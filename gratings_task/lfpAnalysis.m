@@ -470,8 +470,11 @@ cueTargetDelayInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, cueTa
 arrayHoldResponseOffset = [0 0.3];
 arrayHoldResponseInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, arrayHoldResponseOffset);
 
-targetDimDelayOffset = [0 0.3];
+targetDimDelayOffset = [-0.3 0];
 targetDimDelayInd = getTimeLogicalWithTolerance(EL.targetDimBalLfp.t, targetDimDelayOffset);
+
+targetDimResponseOffset = [0 0.3];
+targetDimResponseInd = getTimeLogicalWithTolerance(EL.targetDimBalLfp.t, targetDimResponseOffset);
 
 params.tapers = [2 3];
 params.fpass = [5 60];
@@ -482,11 +485,12 @@ xBounds = params.fpass;
 yBounds = [-45 -15];
 
 for channelInd = 1:nChannels+1
-    preCueBaselineResponses = cell(nLoc, 1);
-    cueResponses = cell(nLoc, 1);
-    cueTargetDelayResponses = cell(nLoc, 1);
-    arrayOnsetHoldResponses = cell(nLoc, 1);
-    targetDimDelayResponses = cell(nLoc, 1);
+    preCueBaselineLfps = cell(nLoc, 1);
+    cueOnsetLfps = cell(nLoc, 1);
+    cueTargetDelayLfps = cell(nLoc, 1);
+    arrayOnsetHoldLfps = cell(nLoc, 1);
+    targetDimDelayLfps = cell(nLoc, 1);
+    targetDimLfps = cell(nLoc, 1);
     
     for m = 1:nLoc
         cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
@@ -498,19 +502,20 @@ for channelInd = 1:nChannels+1
         arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
         targetDimLfpCurrent = squeeze(EL.targetDimBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
         
-        preCueBaselineResponses{m} = cueOnsetLfpCurrent(baselineInd,:);
-        cueResponses{m} = cueOnsetLfpCurrent(cueResponseInd,:);
-        cueTargetDelayResponses{m} = arrayOnsetLfpCurrent(cueTargetDelayInd,:);
-        arrayOnsetHoldResponses{m} = arrayOnsetHoldLfpCurrent(arrayHoldResponseInd,:);
-        targetDimDelayResponses{m} = targetDimLfpCurrent(targetDimDelayInd,:);
+        preCueBaselineLfps{m} = cueOnsetLfpCurrent(baselineInd,:);
+        cueOnsetLfps{m} = cueOnsetLfpCurrent(cueResponseInd,:);
+        cueTargetDelayLfps{m} = arrayOnsetLfpCurrent(cueTargetDelayInd,:);
+        arrayOnsetHoldLfps{m} = arrayOnsetHoldLfpCurrent(arrayHoldResponseInd,:);
+        targetDimDelayLfps{m} = targetDimLfpCurrent(targetDimDelayInd,:);
+        targetDimLfps{m} = targetDimLfpCurrent(targetDimResponseInd,:);
     end
 
     figure_tr_inch(20, 5);
-    subaxis(1, 5, 1, 'SH', 0.03);
+    subaxis(1, 6, 1, 'SH', 0.03);
     hold on;
     for m = 1:nLoc
-        if ~isempty(preCueBaselineResponses{m})
-            [S,f] = mtspectrumc(preCueBaselineResponses{m}, params);
+        if ~isempty(preCueBaselineLfps{m})
+            [S,f] = mtspectrumc(preCueBaselineLfps{m}, params);
             plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
         end
     end
@@ -518,11 +523,11 @@ for channelInd = 1:nChannels+1
     ylim(yBounds);
     title('Pre Cue Baseline');
 
-    subaxis(1, 5, 2);
+    subaxis(1, 6, 2);
     hold on;
     for m = 1:nLoc
-        if ~isempty(cueResponses{m})
-            [S,f] = mtspectrumc(cueResponses{m}, params);
+        if ~isempty(cueOnsetLfps{m})
+            [S,f] = mtspectrumc(cueOnsetLfps{m}, params);
             plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
         end
     end
@@ -530,11 +535,11 @@ for channelInd = 1:nChannels+1
     ylim(yBounds);
     title('Cue Response');
 
-    subaxis(1, 5, 3);
+    subaxis(1, 6, 3);
     hold on;
     for m = 1:nLoc
-        if ~isempty(cueTargetDelayResponses{m})
-            [S,f] = mtspectrumc(cueTargetDelayResponses{m}, params);
+        if ~isempty(cueTargetDelayLfps{m})
+            [S,f] = mtspectrumc(cueTargetDelayLfps{m}, params);
             plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
         end
     end
@@ -542,11 +547,11 @@ for channelInd = 1:nChannels+1
     ylim(yBounds);
     title('Cue-Target Delay');
     
-    subaxis(1, 5, 4);
+    subaxis(1, 6, 4);
     hold on;
     for m = 1:nLoc
-        if ~isempty(arrayOnsetHoldResponses{m})
-            [S,f] = mtspectrumc(arrayOnsetHoldResponses{m}, params);
+        if ~isempty(arrayOnsetHoldLfps{m})
+            [S,f] = mtspectrumc(arrayOnsetHoldLfps{m}, params);
             plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
         end
     end
@@ -554,17 +559,29 @@ for channelInd = 1:nChannels+1
     ylim(yBounds);
     title('Array Hold Response');
     
-    subaxis(1, 5, 5);
+    subaxis(1, 6, 5);
     hold on;
     for m = 1:nLoc
-        if ~isempty(targetDimDelayResponses{m})
-            [S,f] = mtspectrumc(targetDimDelayResponses{m}, params);
+        if ~isempty(targetDimDelayLfps{m})
+            [S,f] = mtspectrumc(targetDimDelayLfps{m}, params);
             plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
         end
     end
     xlim(xBounds);
     ylim(yBounds);
     title('Target-Dim Delay');
+    
+    subaxis(1, 6, 6);
+    hold on;
+    for m = 1:nLoc
+        if ~isempty(targetDimLfps{m})
+            [S,f] = mtspectrumc(targetDimLfps{m}, params);
+            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
+        end
+    end
+    xlim(xBounds);
+    ylim(yBounds);
+    title('Target-Dim Response');
     
     suptitle(sprintf('Channel %d', channelInd));
     
@@ -606,9 +623,9 @@ cDiffBounds = [-1.5 1.5];
 movingWin = [0.2 0.05];
 
 for channelInd = 1:nChannels+1
-    cueResponses = cell(nLoc, 1);
-    arrayOnsetHoldResponses = cell(nLoc, 1);
-    targetDimResponses = cell(nLoc, 1);
+    cueOnsetLfps = cell(nLoc, 1);
+    arrayOnsetHoldLfps = cell(nLoc, 1);
+    targetDimLfps = cell(nLoc, 1);
     
     for m = 1:nLoc
         cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
@@ -619,9 +636,9 @@ for channelInd = 1:nChannels+1
         arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
         targetDimLfpCurrent = squeeze(EL.targetDimBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
         
-        cueResponses{m} = cueOnsetLfpCurrent(periCueOnsetInd,:);
-        arrayOnsetHoldResponses{m} = arrayOnsetHoldLfpCurrent(periArrayOnsetInd,:);
-        targetDimResponses{m} = targetDimLfpCurrent(periTargetDimInd,:);
+        cueOnsetLfps{m} = cueOnsetLfpCurrent(periCueOnsetInd,:);
+        arrayOnsetHoldLfps{m} = arrayOnsetHoldLfpCurrent(periArrayOnsetInd,:);
+        targetDimLfps{m} = targetDimLfpCurrent(periTargetDimInd,:);
     end
     
 %     figure_tr_inch(20, 10);
@@ -681,9 +698,9 @@ for channelInd = 1:nChannels+1
     
     subaxis(1, 3, 1, 'SH', 0.03);
     hold on;
-    if ~isempty(cueResponses{inRFLoc})
-        [SInRF,t,f] = mtspecgramc(cueResponses{inRFLoc}, movingWin, params);
-        [SExRF,t,f] = mtspecgramc(cueResponses{exRFLoc}, movingWin, params);
+    if ~isempty(cueOnsetLfps{inRFLoc})
+        [SInRF,t,f] = mtspecgramc(cueOnsetLfps{inRFLoc}, movingWin, params);
+        [SExRF,t,f] = mtspecgramc(cueOnsetLfps{exRFLoc}, movingWin, params);
         SDiff = 10*log10(SInRF') - 10*log10(SExRF');
         imagesc(t + periCueOnsetWindowOffset(1), f, SDiff);
         set(gca, 'YDir', 'normal');
@@ -696,9 +713,9 @@ for channelInd = 1:nChannels+1
 
     subaxis(1, 3, 2);
     hold on;
-    if ~isempty(arrayOnsetHoldResponses{inRFLoc})
-        [SInRF,t,f] = mtspecgramc(arrayOnsetHoldResponses{inRFLoc}, movingWin, params);
-        [SExRF,t,f] = mtspecgramc(arrayOnsetHoldResponses{exRFLoc}, movingWin, params);
+    if ~isempty(arrayOnsetHoldLfps{inRFLoc})
+        [SInRF,t,f] = mtspecgramc(arrayOnsetHoldLfps{inRFLoc}, movingWin, params);
+        [SExRF,t,f] = mtspecgramc(arrayOnsetHoldLfps{exRFLoc}, movingWin, params);
         SDiff = 10*log10(SInRF') - 10*log10(SExRF');
         imagesc(t + periArrayOnsetWindowOffset(1), f, SDiff);
         set(gca, 'YDir', 'normal');
@@ -711,9 +728,9 @@ for channelInd = 1:nChannels+1
 
     subaxis(1, 3, 3);
     hold on;
-    if ~isempty(targetDimResponses{inRFLoc})
-        [SInRF,t,f] = mtspecgramc(targetDimResponses{inRFLoc}, movingWin, params);
-        [SExRF,t,f] = mtspecgramc(targetDimResponses{exRFLoc}, movingWin, params);
+    if ~isempty(targetDimLfps{inRFLoc})
+        [SInRF,t,f] = mtspecgramc(targetDimLfps{inRFLoc}, movingWin, params);
+        [SExRF,t,f] = mtspecgramc(targetDimLfps{exRFLoc}, movingWin, params);
         SDiff = 10*log10(SInRF') - 10*log10(SExRF');
         imagesc(t + periTargetDimWindowOffset(1), f, SDiff);
         set(gca, 'YDir', 'normal');
@@ -765,9 +782,9 @@ channelInd = nChannels+1; % CAR
 inRFLoc = 3;
 exRFLoc = 1;
 
-cueResponses = cell(nLoc, 1);
-arrayOnsetHoldResponses = cell(nLoc, 1);
-targetDimResponses = cell(nLoc, 1);
+cueOnsetLfps = cell(nLoc, 1);
+arrayOnsetHoldLfps = cell(nLoc, 1);
+targetDimLfps = cell(nLoc, 1);
 
 for m = 1:nLoc
     cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
@@ -778,9 +795,9 @@ for m = 1:nLoc
     arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
     targetDimLfpCurrent = squeeze(EL.targetDimBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
 
-    cueResponses{m} = cueOnsetLfpCurrent(periCueOnsetInd,:);
-    arrayOnsetHoldResponses{m} = arrayOnsetHoldLfpCurrent(periArrayOnsetInd,:);
-    targetDimResponses{m} = targetDimLfpCurrent(periTargetDimInd,:);
+    cueOnsetLfps{m} = cueOnsetLfpCurrent(periCueOnsetInd,:);
+    arrayOnsetHoldLfps{m} = arrayOnsetHoldLfpCurrent(periArrayOnsetInd,:);
+    targetDimLfps{m} = targetDimLfpCurrent(periTargetDimInd,:);
 end
 
 nUnits = numel(D.allMUAStructs);
@@ -798,7 +815,7 @@ for unitInd = 1:nUnits
         
     subaxis(3, 3, 1);
     alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.cueOnsetByLoc{inRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(cueResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(cueOnsetLfps{inRFLoc}, alignedSpikeTs, movingWin, params);
     imagesc(t + periCueOnsetWindowOffset(1), f, C');
     set(gca, 'YDir', 'normal');
     xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
@@ -810,7 +827,7 @@ for unitInd = 1:nUnits
     
     subaxis(3, 3, 4);
     alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.cueOnsetByLoc{exRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(cueResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(cueOnsetLfps{exRFLoc}, alignedSpikeTs, movingWin, params);
     imagesc(t + periCueOnsetWindowOffset(1), f, C');
     set(gca, 'YDir', 'normal');
     xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
@@ -831,7 +848,7 @@ for unitInd = 1:nUnits
     
     subaxis(3, 3, 2);
     alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetHoldBalByLoc{inRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(arrayOnsetHoldResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(arrayOnsetHoldLfps{inRFLoc}, alignedSpikeTs, movingWin, params);
     imagesc(t + periArrayOnsetWindowOffset(1), f, C');
     set(gca, 'YDir', 'normal');
     xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
@@ -842,7 +859,7 @@ for unitInd = 1:nUnits
     
     subaxis(3, 3, 5);
     alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetHoldBalByLoc{exRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(arrayOnsetHoldResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(arrayOnsetHoldLfps{exRFLoc}, alignedSpikeTs, movingWin, params);
     imagesc(t + periArrayOnsetWindowOffset(1), f, C');
     set(gca, 'YDir', 'normal');
     xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
@@ -863,7 +880,7 @@ for unitInd = 1:nUnits
     
     subaxis(3, 3, 3);
     alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.targetDimBalByLoc{inRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(targetDimResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(targetDimLfps{inRFLoc}, alignedSpikeTs, movingWin, params);
     imagesc(t + periTargetDimWindowOffset(1), f, C');
     set(gca, 'YDir', 'normal');
     xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
@@ -874,7 +891,7 @@ for unitInd = 1:nUnits
     
     subaxis(3, 3, 6);
     alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.targetDimBalByLoc{exRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(targetDimResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(targetDimLfps{exRFLoc}, alignedSpikeTs, movingWin, params);
     imagesc(t + periTargetDimWindowOffset(1), f, C');
     set(gca, 'YDir', 'normal');
     xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
@@ -947,6 +964,42 @@ export_fig(plotFileName, '-nocrop');
 %%
 return;
 % below code has not been updated after the latest refactoring of EL vars
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

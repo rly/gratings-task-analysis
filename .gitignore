@@ -2,6 +2,7 @@
 processed_data/
 dist
 test_read_pl2/*.mat
+gratings_task/*.mat
 
 # ghostscript version
 util/append_pdfs/.ignore/
