@@ -1,4 +1,4 @@
-function lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, isZeroDistractors)
+% function lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, isZeroDistractors)
 % 325ms fixation before pre-cue marker
 % 25-125ms fixation between pre-cue marker and cue onset
 % 100ms cue onset to cue offset
@@ -449,8 +449,492 @@ plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepColorPlot-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
 export_fig(plotFileName, '-nocrop');
 
+
+
+
+%% power all channels
+cols = lines(6);
+
+baselineWindowOffset = [-0.3 0];
+baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
+
+cueResponseOffset = [0 0.3];
+cueResponseInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, cueResponseOffset);
+
+cueTargetDelayOffset = [-0.3 0];
+cueTargetDelayInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, cueTargetDelayOffset);
+
+arrayHoldResponseOffset = [0 0.3];
+arrayHoldResponseInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, arrayHoldResponseOffset);
+
+targetDimDelayOffset = [0 0.3];
+targetDimDelayInd = getTimeLogicalWithTolerance(EL.targetDimBalLfp.t, targetDimDelayOffset);
+
+params.tapers = [2 3];
+params.fpass = [5 60];
+params.pad = 2;
+params.Fs = D.lfpFs;
+params.trialave = 1;
+xBounds = params.fpass;
+yBounds = [-45 -15];
+
+for channelInd = 1:nChannels+1
+    preCueBaselineResponses = cell(nLoc, 1);
+    cueResponses = cell(nLoc, 1);
+    cueTargetDelayResponses = cell(nLoc, 1);
+    arrayOnsetHoldResponses = cell(nLoc, 1);
+    targetDimDelayResponses = cell(nLoc, 1);
+    
+    for m = 1:nLoc
+        cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
+        if isempty(cueOnsetLfpCurrent)
+            continue;
+        end
+
+        arrayOnsetLfpCurrent = squeeze(EL.arrayOnsetLfp.lfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
+        arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
+        targetDimLfpCurrent = squeeze(EL.targetDimBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
+        
+        preCueBaselineResponses{m} = cueOnsetLfpCurrent(baselineInd,:);
+        cueResponses{m} = cueOnsetLfpCurrent(cueResponseInd,:);
+        cueTargetDelayResponses{m} = arrayOnsetLfpCurrent(cueTargetDelayInd,:);
+        arrayOnsetHoldResponses{m} = arrayOnsetHoldLfpCurrent(arrayHoldResponseInd,:);
+        targetDimDelayResponses{m} = targetDimLfpCurrent(targetDimDelayInd,:);
+    end
+
+    figure_tr_inch(20, 5);
+    subaxis(1, 5, 1, 'SH', 0.03);
+    hold on;
+    for m = 1:nLoc
+        if ~isempty(preCueBaselineResponses{m})
+            [S,f] = mtspectrumc(preCueBaselineResponses{m}, params);
+            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
+        end
+    end
+    xlim(xBounds);
+    ylim(yBounds);
+    title('Pre Cue Baseline');
+
+    subaxis(1, 5, 2);
+    hold on;
+    for m = 1:nLoc
+        if ~isempty(cueResponses{m})
+            [S,f] = mtspectrumc(cueResponses{m}, params);
+            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
+        end
+    end
+    xlim(xBounds);
+    ylim(yBounds);
+    title('Cue Response');
+
+    subaxis(1, 5, 3);
+    hold on;
+    for m = 1:nLoc
+        if ~isempty(cueTargetDelayResponses{m})
+            [S,f] = mtspectrumc(cueTargetDelayResponses{m}, params);
+            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
+        end
+    end
+    xlim(xBounds);
+    ylim(yBounds);
+    title('Cue-Target Delay');
+    
+    subaxis(1, 5, 4);
+    hold on;
+    for m = 1:nLoc
+        if ~isempty(arrayOnsetHoldResponses{m})
+            [S,f] = mtspectrumc(arrayOnsetHoldResponses{m}, params);
+            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
+        end
+    end
+    xlim(xBounds);
+    ylim(yBounds);
+    title('Array Hold Response');
+    
+    subaxis(1, 5, 5);
+    hold on;
+    for m = 1:nLoc
+        if ~isempty(targetDimDelayResponses{m})
+            [S,f] = mtspectrumc(targetDimDelayResponses{m}, params);
+            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
+        end
+    end
+    xlim(xBounds);
+    ylim(yBounds);
+    title('Target-Dim Delay');
+    
+    suptitle(sprintf('Channel %d', channelInd));
+    
+    drawnow;
+    
+    plotFileName = sprintf('%s/%s-FP%03d-power-v%d.png', ...
+            processedDataDir, fileNamePrefix, channelInd, v);
+    export_fig(plotFileName, '-nocrop');
+end
+
+%% look specifically at session M20170130, channel 20 
+% right in the middle of the section of putative PI channels with strong
+% flash- and cue-evoked potentials
+
+    
+%% spectrogram    
+periCueOnsetWindowOffset = [-0.4 0.4];
+periCueOnsetInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, periCueOnsetWindowOffset);
+
+periArrayOnsetWindowOffset = [-0.4 0.4];
+periArrayOnsetInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, periArrayOnsetWindowOffset);
+
+periTargetDimWindowOffset = [-0.4 0.4];
+periTargetDimInd = getTimeLogicalWithTolerance(EL.targetDimBalLfp.t, periTargetDimWindowOffset);
+
+params.tapers = [2 3];
+params.fpass = [5 60];
+params.pad = 2;
+params.Fs = D.lfpFs;
+params.trialave = 1;
+yBounds = params.fpass;
+cBounds = [-45 -15];
+cDiffBounds = [-1.5 1.5];
+movingWin = [0.2 0.05];
+
+for channelInd = 1:nChannels+1
+    cueResponses = cell(nLoc, 1);
+    arrayOnsetHoldResponses = cell(nLoc, 1);
+    targetDimResponses = cell(nLoc, 1);
+    
+    for m = 1:nLoc
+        cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
+        if isempty(cueOnsetLfpCurrent)
+            continue;
+        end
+
+        arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
+        targetDimLfpCurrent = squeeze(EL.targetDimBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
+        
+        cueResponses{m} = cueOnsetLfpCurrent(periCueOnsetInd,:);
+        arrayOnsetHoldResponses{m} = arrayOnsetHoldLfpCurrent(periArrayOnsetInd,:);
+        targetDimResponses{m} = targetDimLfpCurrent(periTargetDimInd,:);
+    end
+    
+%     figure_tr_inch(20, 10);
+%     
+%     for m = 1:nLoc
+%         subaxis(nLoc, 3, (m-1)*3+1, 'SH', 0.03);
+%         hold on;
+%         if ~isempty(cueResponses{m})
+%             [S,t,f] = mtspecgramc(cueResponses{m}, movingWin, params);
+%             imagesc(t + periCueOnsetWindowOffset(1), f, 10*log10(S'));
+%             set(gca, 'YDir', 'normal');
+%             xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+%             ylim(yBounds);
+%             caxis(cBounds);
+%             xlabel('Time from Cue Onset (s)');
+%         end
+%     
+%         subaxis(nLoc, 3, (m-1)*3+2);
+%         hold on;
+%         if ~isempty(arrayOnsetHoldResponses{m})
+%             [S,t,f] = mtspecgramc(arrayOnsetHoldResponses{m}, movingWin, params);
+%             imagesc(t + periArrayOnsetWindowOffset(1), f, 10*log10(S'));
+%             set(gca, 'YDir', 'normal');
+%             xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+%             ylim(yBounds);
+%             caxis(cBounds);
+%             xlabel('Time from Array Onset (s)');
+%         end
+%     
+%         subaxis(nLoc, 3, (m-1)*3+3);
+%         hold on;
+%         if ~isempty(targetDimResponses{m})
+%             [S,t,f] = mtspecgramc(targetDimResponses{m}, movingWin, params);
+%             imagesc(t + periTargetDimWindowOffset(1), f, 10*log10(S'));
+%             set(gca, 'YDir', 'normal');
+%             xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+%             ylim(yBounds);
+%             caxis(cBounds);
+%             xlabel('Time from Target Dimming (s)');
+%         end
+%     end
+
+%     suptitle(sprintf('Channel %d', channelInd));
+    
+%     plotFileName = sprintf('%s/%s-FP%03d-powerTfr-v%d.png', ...
+%             processedDataDir, fileNamePrefix, channelInd, v);
+%     export_fig(plotFileName, '-nocrop');
+
+    figure_tr_inch(20, 5);
+    inRFLoc = 3;
+    exRFLoc = 1;
+    
+    subaxis(1, 3, 1, 'SH', 0.03);
+    hold on;
+    if ~isempty(cueResponses{inRFLoc})
+        [SInRF,t,f] = mtspecgramc(cueResponses{inRFLoc}, movingWin, params);
+        [SExRF,t,f] = mtspecgramc(cueResponses{exRFLoc}, movingWin, params);
+        SDiff = 10*log10(SInRF') - 10*log10(SExRF');
+        imagesc(t + periCueOnsetWindowOffset(1), f, SDiff);
+        set(gca, 'YDir', 'normal');
+        xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+        ylim(yBounds);
+        caxis(cDiffBounds);
+        xlabel('Time from Cue Onset (s)');
+        colormap(getCoolWarmMap());
+    end
+
+    subaxis(1, 3, 2);
+    hold on;
+    if ~isempty(arrayOnsetHoldResponses{inRFLoc})
+        [SInRF,t,f] = mtspecgramc(arrayOnsetHoldResponses{inRFLoc}, movingWin, params);
+        [SExRF,t,f] = mtspecgramc(arrayOnsetHoldResponses{exRFLoc}, movingWin, params);
+        SDiff = 10*log10(SInRF') - 10*log10(SExRF');
+        imagesc(t + periArrayOnsetWindowOffset(1), f, SDiff);
+        set(gca, 'YDir', 'normal');
+        xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+        ylim(yBounds);
+        caxis(cDiffBounds);
+        xlabel('Time from Array Onset (s)');
+        colormap(getCoolWarmMap());
+    end
+
+    subaxis(1, 3, 3);
+    hold on;
+    if ~isempty(targetDimResponses{inRFLoc})
+        [SInRF,t,f] = mtspecgramc(targetDimResponses{inRFLoc}, movingWin, params);
+        [SExRF,t,f] = mtspecgramc(targetDimResponses{exRFLoc}, movingWin, params);
+        SDiff = 10*log10(SInRF') - 10*log10(SExRF');
+        imagesc(t + periTargetDimWindowOffset(1), f, SDiff);
+        set(gca, 'YDir', 'normal');
+        xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+        ylim(yBounds);
+        caxis(cDiffBounds);
+        xlabel('Time from Target Dimming (s)');
+        colormap(getCoolWarmMap());
+    end
+    
+    suptitle(sprintf('Channel %d', channelInd));
+    
+    drawnow;
+    plotFileName = sprintf('%s/%s-FP%03d-powerTfrDiff-v%d.png', ...
+            processedDataDir, fileNamePrefix, channelInd, v);
+    export_fig(plotFileName, '-nocrop');
+end
+
+%% spike field coherence -- chronux first
+% units 20a, 20b (45, 46)
+% units 19a, 19b, 19c (42, 43, 44)
+
+periCueOnsetWindowOffset = [-0.4 0.4];
+periCueOnsetInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, periCueOnsetWindowOffset);
+
+periArrayOnsetWindowOffset = [-0.4 0.4];
+periArrayOnsetInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, periArrayOnsetWindowOffset);
+
+periTargetDimWindowOffset = [-0.4 0.4];
+periTargetDimInd = getTimeLogicalWithTolerance(EL.targetDimBalLfp.t, periTargetDimWindowOffset);
+
+params.tapers = [2 3];
+params.fpass = [5 60];
+params.pad = 2;
+params.Fs = D.lfpFs;
+params.trialave = 1;
+yBounds = params.fpass;
+spikeEventAlignWindow = [0.4 0.4]; % should match others
+cBounds = [0 0.16];
+cDiffBounds = [-0.1 0.1];
+
+channelInd = nChannels+1; % CAR
+
+inRFLoc = 3;
+exRFLoc = 1;
+
+cueResponses = cell(nLoc, 1);
+arrayOnsetHoldResponses = cell(nLoc, 1);
+targetDimResponses = cell(nLoc, 1);
+
+for m = 1:nLoc
+    cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
+    if isempty(cueOnsetLfpCurrent)
+        continue;
+    end
+
+    arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
+    targetDimLfpCurrent = squeeze(EL.targetDimBalLfp.lfp(channelInd,UE.cueLocHoldBal == m,:))'; % each column is a trial
+
+    cueResponses{m} = cueOnsetLfpCurrent(periCueOnsetInd,:);
+    arrayOnsetHoldResponses{m} = arrayOnsetHoldLfpCurrent(periArrayOnsetInd,:);
+    targetDimResponses{m} = targetDimLfpCurrent(periTargetDimInd,:);
+end
+
+nUnits = numel(D.allMUAStructs);
+CDiffCueOnset = nan(nUnits, 13, 56);
+CDiffArrayOnsetHold = nan(nUnits, 13, 56);
+CDiffTargetDim = nan(nUnits, 13, 56);
+
+for unitInd = 1:nUnits
+    unitIDChar = D.allMUAStructs{unitInd}.unitIDChar;
+    spikeTs = D.allMUAStructs{unitInd}.ts;
+    
+    figure_tr_inch(16, 10);
+    
+    suptitle(sprintf('SFC Unit %s - Channel %d\n', unitIDChar, channelInd));
+        
+    subaxis(3, 3, 1);
+    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.cueOnsetByLoc{inRFLoc}, spikeEventAlignWindow);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(cueResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
+    imagesc(t + periCueOnsetWindowOffset(1), f, C');
+    set(gca, 'YDir', 'normal');
+    xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cBounds);
+    colorbar;
+    CInRF = C;
+    
+    
+    subaxis(3, 3, 4);
+    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.cueOnsetByLoc{exRFLoc}, spikeEventAlignWindow);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(cueResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
+    imagesc(t + periCueOnsetWindowOffset(1), f, C');
+    set(gca, 'YDir', 'normal');
+    xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cBounds);
+    colorbar;
+    CExRF = C;
+
+    subaxis(3, 3, 7);
+    imagesc(t + periCueOnsetWindowOffset(1), f, CInRF' - CExRF');
+    set(gca, 'YDir', 'normal');
+    xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cDiffBounds);
+    colormap(gca, getCoolWarmMap());
+    colorbar;
+    CDiffCueOnset(unitInd,:,:) = CInRF - CExRF;
+    
+    subaxis(3, 3, 2);
+    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetHoldBalByLoc{inRFLoc}, spikeEventAlignWindow);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(arrayOnsetHoldResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
+    imagesc(t + periArrayOnsetWindowOffset(1), f, C');
+    set(gca, 'YDir', 'normal');
+    xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cBounds);
+    colorbar;
+    CInRF = C;
+    
+    subaxis(3, 3, 5);
+    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetHoldBalByLoc{exRFLoc}, spikeEventAlignWindow);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(arrayOnsetHoldResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
+    imagesc(t + periArrayOnsetWindowOffset(1), f, C');
+    set(gca, 'YDir', 'normal');
+    xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cBounds);
+    colorbar;
+    CExRF = C;
+
+    subaxis(3, 3, 8);
+    imagesc(t + periArrayOnsetWindowOffset(1), f, CInRF' - CExRF');
+    set(gca, 'YDir', 'normal');
+    xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cDiffBounds);
+    colormap(gca, getCoolWarmMap());
+    colorbar;
+    CDiffArrayOnsetHold(unitInd,:,:) = CInRF - CExRF;
+    
+    subaxis(3, 3, 3);
+    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.targetDimBalByLoc{inRFLoc}, spikeEventAlignWindow);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(targetDimResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
+    imagesc(t + periTargetDimWindowOffset(1), f, C');
+    set(gca, 'YDir', 'normal');
+    xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cBounds);
+    colorbar;
+    CInRF = C;
+    
+    subaxis(3, 3, 6);
+    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.targetDimBalByLoc{exRFLoc}, spikeEventAlignWindow);
+    [C,phi,S12,S1,S2,t,f] = cohgramcpt(targetDimResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
+    imagesc(t + periTargetDimWindowOffset(1), f, C');
+    set(gca, 'YDir', 'normal');
+    xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cBounds);
+    colorbar;
+    CExRF = C;
+
+    subaxis(3, 3, 9);
+    imagesc(t + periTargetDimWindowOffset(1), f, CInRF' - CExRF');
+    set(gca, 'YDir', 'normal');
+    xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+    ylim(yBounds);
+    caxis(cDiffBounds);
+    colormap(gca, getCoolWarmMap());
+    colorbar;
+    CDiffTargetDim(unitInd,:,:) = CInRF - CExRF;
+    
+    drawnow;
+    
+    plotFileName = sprintf('%s/%s-FP%03d-%s-sfc-v%d.png', ...
+            processedDataDir, fileNamePrefix, channelInd, unitIDChar, v);
+    export_fig(plotFileName, '-nocrop');
+end
+
+%% plot mean difference SFC InRF-ExRF
+
+cDiffBounds = [-0.02 0.02];
+
+figure_tr_inch(15, 5);
+
+subaxis(1, 3, 1);
+imagesc(t + periCueOnsetWindowOffset(1), f, squeeze(mean(CDiffCueOnset, 1))');
+set(gca, 'YDir', 'normal');
+xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+ylim(yBounds);
+caxis(cDiffBounds);
+colormap(gca, getCoolWarmMap());
+
+subaxis(1, 3, 2);
+imagesc(t + periArrayOnsetWindowOffset(1), f, squeeze(mean(CDiffArrayOnsetHold, 1))');
+set(gca, 'YDir', 'normal');
+xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+ylim(yBounds);
+caxis(cDiffBounds);
+colormap(gca, getCoolWarmMap());
+
+subaxis(1, 3, 3);
+imagesc(t + periTargetDimWindowOffset(1), f, squeeze(mean(CDiffTargetDim, 1))');
+set(gca, 'YDir', 'normal');
+xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
+ylim(yBounds);
+caxis(cDiffBounds);
+colormap(gca, getCoolWarmMap());
+
+plotFileName = sprintf('%s/%s-FP%03d-allMUA-meanSfcDiff-v%d.png', ...
+        processedDataDir, fileNamePrefix, channelInd, v);
+export_fig(plotFileName, '-nocrop');
+
+%%
 return;
 % below code has not been updated after the latest refactoring of EL vars
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 %% image plot, bipolar reference
 
@@ -822,467 +1306,3 @@ figure;
 imagesc(t - 0.7, f, 10*log10(S'));
 set(gca, 'YDir', 'normal');
 
-%% power all channels
-
-baselineWindowOffset = [-0.3 0];
-baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetT, baselineWindowOffset);
-
-cueResponseOffset = [0 0.3];
-cueResponseInd = getTimeLogicalWithTolerance(EL.cueOnsetT, cueResponseOffset);
-
-cueTargetDelayOffset = [-0.3 0];
-cueTargetDelayInd = getTimeLogicalWithTolerance(EL.arrayOnsetT, cueTargetDelayOffset);
-
-arrayHoldResponseOffset = [0 0.3];
-arrayHoldResponseInd = getTimeLogicalWithTolerance(EL.arrayOnsetT, arrayHoldResponseOffset);
-
-targetDimDelayOffset = [0 0.3];
-targetDimDelayInd = getTimeLogicalWithTolerance(EL.targetDimT, targetDimDelayOffset);
-
-hiCutoffFreqCustom = 80; % low-pass filter at 80 Hz
-bFirLowPassCustom = fir1(3*fix(Fs/hiCutoffFreqCustom), hiCutoffFreqCustom/(Fs/2), 'low');
-
-params.tapers = [2 3];
-params.fpass = [8 60];
-params.pad = 2;
-xBounds = params.fpass;
-yBounds = [-75 -56];
-
-for i = 1:nChannels
-    channelInd = i;
-    
-    cueOnsetLfpFilt = cell(nLoc, 1);
-    arrayOnsetHoldLfpFilt = cell(nLoc, 1);
-    targetDimLfpFilt = cell(nLoc, 1);
-    
-    preCueBaselineResponses = cell(nLoc, 1);
-    cueResponses = cell(nLoc, 1);
-    cueTargetDelayResponses = cell(nLoc, 1);
-    arrayHoldResponses = cell(nLoc, 1);
-    targetDimDelayResponses = cell(nLoc, 1);
-    for m = 1:nLoc
-        cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
-        if isempty(cueOnsetLfpCurrent)
-            continue;
-        end
-        
-        arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldLfp(channelInd,UE.cueLocHold == m,:))'; % each column is a trial
-        targetDimLfpCurrent = squeeze(EL.targetDimLfp(channelInd,UE.cueLocHold == m,:))'; % each column is a trial
-        cueOnsetLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, cueOnsetLfpCurrent);
-        arrayOnsetHoldLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, arrayOnsetHoldLfpCurrent);
-        targetDimLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, targetDimLfpCurrent);
-        
-        preCueBaselineResponses{m} = cueOnsetLfpFilt{m}(baselineInd,:);
-        cueResponses{m} = cueOnsetLfpFilt{m}(cueResponseInd,:);
-        cueTargetDelayResponses{m} = arrayOnsetHoldLfpFilt{m}(cueTargetDelayInd,:);
-        arrayHoldResponses{m} = arrayOnsetHoldLfpFilt{m}(arrayHoldResponseInd,:);
-        targetDimDelayResponses{m} = targetDimLfpFilt{m}(targetDimDelayInd,:);
-    end
-    
-
-    figure_tr_inch(20, 5);
-    subaxis(1, 5, 1, 'SH', 0.03);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(preCueBaselineResponses{m})
-            [S,f,Serr] = mtspectrumc(preCueBaselineResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-
-    subaxis(1, 5, 2);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(cueResponses{m})
-            [S,f,Serr] = mtspectrumc(cueResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-
-    subaxis(1, 5, 3);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(cueTargetDelayResponses{m})
-            [S,f,Serr] = mtspectrumc(cueTargetDelayResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-    title(sprintf('Channel %d', i));
-    
-    subaxis(1, 5, 4);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(arrayHoldResponses{m})
-            [S,f,Serr] = mtspectrumc(arrayHoldResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-    
-    subaxis(1, 5, 5);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(targetDimDelayResponses{m})
-            [S,f,Serr] = mtspectrumc(targetDimDelayResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-    
-    drawnow;
-
-end
-
-%% look specifically at session M20170130, channel 20 
-% right in the middle of the section of putative PI channels with strong
-% flash- and cue-evoked potentials
-
-%% first with chronux
-
-baselineWindowOffset = [-0.3 0];
-baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetT, baselineWindowOffset);
-
-cueResponseOffset = [0 0.3];
-cueResponseInd = getTimeLogicalWithTolerance(EL.cueOnsetT, cueResponseOffset);
-
-cueTargetDelayOffset = [-0.3 0];
-cueTargetDelayInd = getTimeLogicalWithTolerance(EL.arrayOnsetT, cueTargetDelayOffset);
-
-arrayHoldResponseOffset = [0 0.3];
-arrayHoldResponseInd = getTimeLogicalWithTolerance(EL.arrayOnsetT, arrayHoldResponseOffset);
-
-targetDimDelayOffset = [0 0.3];
-targetDimDelayInd = getTimeLogicalWithTolerance(EL.targetDimT, targetDimDelayOffset);
-
-hiCutoffFreqCustom = 80; % low-pass filter at 80 Hz
-bFirLowPassCustom = fir1(3*fix(Fs/hiCutoffFreqCustom), hiCutoffFreqCustom/(Fs/2), 'low');
-
-params.tapers = [2 3];
-params.fpass = [8 60];
-params.pad = 2;
-xBounds = params.fpass;
-if strcmp(ref, 'CAR')
-    yBounds = [-75 -56];
-else
-    yBounds = [-70 -50];
-end
-
-    channelInd = 20;
-    
-    cueOnsetLfpFilt = cell(nLoc, 1);
-    arrayOnsetHoldLfpFilt = cell(nLoc, 1);
-    targetDimLfpFilt = cell(nLoc, 1);
-    
-    preCueBaselineResponses = cell(nLoc, 1);
-    cueResponses = cell(nLoc, 1);
-    cueTargetDelayResponses = cell(nLoc, 1);
-    arrayHoldResponses = cell(nLoc, 1);
-    targetDimDelayResponses = cell(nLoc, 1);
-    for m = 1:nLoc
-        cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
-        if isempty(cueOnsetLfpCurrent)
-            continue;
-        end
-        
-        arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldLfp(channelInd,UE.cueLocHold == m,:))'; % each column is a trial
-        targetDimLfpCurrent = squeeze(EL.targetDimLfp(channelInd,UE.cueLocHold == m,:))'; % each column is a trial
-        cueOnsetLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, cueOnsetLfpCurrent);
-        arrayOnsetHoldLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, arrayOnsetHoldLfpCurrent);
-        targetDimLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, targetDimLfpCurrent);
-        
-        preCueBaselineResponses{m} = cueOnsetLfpFilt{m}(baselineInd,:);
-        cueResponses{m} = cueOnsetLfpFilt{m}(cueResponseInd,:);
-        cueTargetDelayResponses{m} = arrayOnsetHoldLfpFilt{m}(cueTargetDelayInd,:);
-        arrayHoldResponses{m} = arrayOnsetHoldLfpFilt{m}(arrayHoldResponseInd,:);
-        targetDimDelayResponses{m} = targetDimLfpFilt{m}(targetDimDelayInd,:);
-    end
-    
-
-    figure_tr_inch(20, 5);
-    subaxis(1, 5, 1, 'SH', 0.03);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(preCueBaselineResponses{m})
-            [S,f,Serr] = mtspectrumc(preCueBaselineResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-
-    subaxis(1, 5, 2);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(cueResponses{m})
-            [S,f,Serr] = mtspectrumc(cueResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-
-    subaxis(1, 5, 3);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(cueTargetDelayResponses{m})
-            [S,f,Serr] = mtspectrumc(cueTargetDelayResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-    title(sprintf('Channel %d', channelInd));
-    
-    subaxis(1, 5, 4);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(arrayHoldResponses{m})
-            [S,f,Serr] = mtspectrumc(arrayHoldResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-    
-    subaxis(1, 5, 5);
-    hold on;
-    for m = 1:nLoc
-        if ~isempty(targetDimDelayResponses{m})
-            [S,f,Serr] = mtspectrumc(targetDimDelayResponses{m}, params);
-            plot(f, 10*log10(S), 'LineWidth', 2, 'Color', cols(m,:));
-        end
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-    
-    drawnow;
-    
-    plotFileName = sprintf('%s/%s-FP%03d-evokedLfp-%s-power-v%d.png', ...
-            processedDataDir, blockName, channelInd, ref, v);
-    export_fig(plotFileName, '-nocrop');
-
-    
-    %% spectrogram
-    
-periCueOnsetWindowOffset = [-0.5 0.5];
-periCueOnsetInd = getTimeLogicalWithTolerance(EL.cueOnsetT, periCueOnsetWindowOffset);
-
-periArrayOnsetWindowOffset = [-0.5 0.5];
-periArrayOnsetInd = getTimeLogicalWithTolerance(EL.arrayOnsetT, periArrayOnsetWindowOffset);
-
-periTargetDimWindowOffset = [-0.5 0.5];
-periTargetDimInd = getTimeLogicalWithTolerance(EL.targetDimT, periTargetDimWindowOffset);
-
-hiCutoffFreqCustom = 80; % low-pass filter at 80 Hz
-bFirLowPassCustom = fir1(3*fix(Fs/hiCutoffFreqCustom), hiCutoffFreqCustom/(Fs/2), 'low');
-
-params.tapers = [2 3];
-params.fpass = [8 60];
-params.pad = 2;
-yBounds = params.fpass;
-if strcmp(ref, 'CAR')
-    cBounds = [-75 -48];
-else
-    cBounds = [-65 -50];
-end
-
-for channelInd = 2:31
-
-%     channelInd = 19;
-    
-    cueOnsetLfpFilt = cell(nLoc, 1);
-    arrayOnsetHoldLfpFilt = cell(nLoc, 1);
-    targetDimLfpFilt = cell(nLoc, 1);
-    
-    cueResponses = cell(nLoc, 1);
-    arrayHoldResponses = cell(nLoc, 1);
-    targetDimResponses = cell(nLoc, 1);
-    for m = 1:nLoc
-        % mean over channel before and after
-%         cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp(channelInd,UE.cueLoc == m,:))'; % each column is a trial
-        cueOnsetLfpCurrent = squeeze(mean(EL.cueOnsetLfp([channelInd-1 channelInd+1],UE.cueLoc == m,:), 1))'; % each column is a trial
-        if isempty(cueOnsetLfpCurrent)
-            continue;
-        end
-        
-%         arrayOnsetHoldLfpCurrent = squeeze(EL.arrayOnsetHoldLfp(channelInd,UE.cueLocHold == m,:))'; % each column is a trial
-        arrayOnsetHoldLfpCurrent = squeeze(mean(EL.arrayOnsetHoldLfp([channelInd-1 channelInd+1],UE.cueLocHold == m,:), 1))';
-%         targetDimLfpCurrent = squeeze(EL.targetDimLfp(channelInd,UE.cueLocHold == m,:))'; % each column is a trial
-        targetDimLfpCurrent = squeeze(mean(EL.targetDimLfp([channelInd-1 channelInd+1],UE.cueLocHold == m,:), 1))'; % each column is a trial
-        
-        cueOnsetLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, cueOnsetLfpCurrent);
-        arrayOnsetHoldLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, arrayOnsetHoldLfpCurrent);
-        targetDimLfpFilt{m} = filtfilt(bFirLowPassCustom, 1, targetDimLfpCurrent);
-        
-        cueResponses{m} = cueOnsetLfpFilt{m}(periCueOnsetInd,:);
-        arrayHoldResponses{m} = arrayOnsetHoldLfpFilt{m}(periArrayOnsetInd,:);
-        targetDimResponses{m} = targetDimLfpFilt{m}(periTargetDimInd,:);
-    end
-    
-    movingWin = [0.2 0.05];
-    
-    figure_tr_inch(20, 10);
-    
-    for m = 1:nLoc
-        subaxis(nLoc, 3, (m-1)*3+1, 'SH', 0.03);
-        hold on;
-        if ~isempty(cueResponses{m})
-            [S,t,f,Serr] = mtspecgramc(cueResponses{m}, movingWin, params);
-            imagesc(t + periCueOnsetWindowOffset(1), f, 10*log10(S'));
-            set(gca, 'YDir', 'normal');
-            xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-            ylim(yBounds);
-            caxis(cBounds);
-        end
-    
-        subaxis(nLoc, 3, (m-1)*3+2);
-        hold on;
-        if ~isempty(arrayHoldResponses{m})
-            [S,t,f,Serr] = mtspecgramc(arrayHoldResponses{m}, movingWin, params);
-            imagesc(t + periArrayOnsetWindowOffset(1), f, 10*log10(S'));
-            set(gca, 'YDir', 'normal');
-            xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-            ylim(yBounds);
-            caxis(cBounds);
-        end
-    
-        subaxis(nLoc, 3, (m-1)*3+3);
-        hold on;
-        if ~isempty(targetDimResponses{m})
-            [S,t,f,Serr] = mtspecgramc(targetDimResponses{m}, movingWin, params);
-            imagesc(t + periTargetDimWindowOffset(1), f, 10*log10(S'));
-            set(gca, 'YDir', 'normal');
-            xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-            ylim(yBounds);
-            caxis(cBounds);
-        end
-    end
-
-    plotFileName = sprintf('%s/%s-FP%03d-evokedLfp-%s-powerTfr-v%d.png', ...
-            processedDataDir, blockName, channelInd, ref, v);
-    export_fig(plotFileName, '-nocrop');
-    
-    %% spike field coherence -- chronux first
-    % units 20a, 20b (45, 46)
-    % units 19a, 19b, 19c (42, 43, 44)
-    
-    for unitInd = findAllUnitsOnCh(D.allSpikeStructs, channelInd)
-    
-%     unitInd = 44;
-    inRFLoc = 3;
-    exRFLoc = 1;
-    unitIDChar = D.allSpikeStructs{unitInd}.unitIDChar;
-    spikeTs = D.allSpikeStructs{unitInd}.ts;
-    spikeEventAlignWindow = [0.5 0.5];
-    cBounds = [0 0.16];
-    cDiffBounds = [-0.1 0.1];
-    
-    figure_tr_inch(16, 10);
-    
-    subaxis(3, 3, 1);
-    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.cueOnsetByLoc{inRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(cueResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
-    imagesc(t + periCueOnsetWindowOffset(1), f, C');
-    set(gca, 'YDir', 'normal');
-    xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cBounds);
-    colorbar;
-    CInRF = C;
-    
-    subaxis(3, 3, 4);
-    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.cueOnsetByLoc{exRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(cueResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
-    imagesc(t + periCueOnsetWindowOffset(1), f, C');
-    set(gca, 'YDir', 'normal');
-    xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cBounds);
-    colorbar;
-    CExRF = C;
-
-    subaxis(3, 3, 7);
-    imagesc(t + periCueOnsetWindowOffset(1), f, CInRF' - CExRF');
-    set(gca, 'YDir', 'normal');
-    xlim(periCueOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cDiffBounds);
-    colormap(gca, getCoolWarmMap());
-    colorbar;
-    
-    subaxis(3, 3, 2);
-    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetHoldByLoc{inRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(arrayHoldResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
-    imagesc(t + periArrayOnsetWindowOffset(1), f, C');
-    set(gca, 'YDir', 'normal');
-    xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cBounds);
-    colorbar;
-    CInRF = C;
-    
-    subaxis(3, 3, 5);
-    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetHoldByLoc{exRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(arrayHoldResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
-    imagesc(t + periArrayOnsetWindowOffset(1), f, C');
-    set(gca, 'YDir', 'normal');
-    xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cBounds);
-    colorbar;
-    CExRF = C;
-
-    subaxis(3, 3, 8);
-    imagesc(t + periArrayOnsetWindowOffset(1), f, CInRF' - CExRF');
-    set(gca, 'YDir', 'normal');
-    xlim(periArrayOnsetWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cDiffBounds);
-    colormap(gca, getCoolWarmMap());
-    colorbar;
-    
-    
-    subaxis(3, 3, 3);
-    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.targetDimByLoc{inRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(targetDimResponses{inRFLoc}, alignedSpikeTs, movingWin, params);
-    imagesc(t + periTargetDimWindowOffset(1), f, C');
-    set(gca, 'YDir', 'normal');
-    xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cBounds);
-    colorbar;
-    CInRF = C;
-    
-    subaxis(3, 3, 6);
-    alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.targetDimByLoc{exRFLoc}, spikeEventAlignWindow);
-    [C,phi,S12,S1,S2,t,f] = cohgramcpt(targetDimResponses{exRFLoc}, alignedSpikeTs, movingWin, params);
-    imagesc(t + periTargetDimWindowOffset(1), f, C');
-    set(gca, 'YDir', 'normal');
-    xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cBounds);
-    colorbar;
-    CExRF = C;
-
-    subaxis(3, 3, 9);
-    imagesc(t + periTargetDimWindowOffset(1), f, CInRF' - CExRF');
-    set(gca, 'YDir', 'normal');
-    xlim(periTargetDimWindowOffset + [movingWin(1)/2 -movingWin(1)/2]);
-    ylim(yBounds);
-    caxis(cDiffBounds);
-    colormap(gca, getCoolWarmMap());
-    colorbar;
-    
-    plotFileName = sprintf('%s/%s-FP%03d-%s-evokedLfp-%s-sfc-v%d.png', ...
-            processedDataDir, blockName, channelInd, unitIDChar, ref, v);
-    export_fig(plotFileName, '-nocrop');
-    end
-end
