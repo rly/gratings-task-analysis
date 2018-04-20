@@ -569,6 +569,10 @@ for channelInd = 1:nChannels+1
     
     plotFileName = sprintf('%s/%s-FP%03d-power-v%d.png', ...
             processedDataDir, fileNamePrefix, channelInd, v);
+    if channelInd == nChannels + 1
+        plotFileName = sprintf('%s/%s-FPCAR-power-v%d.png', ...
+                processedDataDir, fileNamePrefix, v);
+    end
     export_fig(plotFileName, '-nocrop');
 end
 
@@ -660,6 +664,10 @@ for channelInd = 1:nChannels+1
     
 %     plotFileName = sprintf('%s/%s-FP%03d-powerTfr-v%d.png', ...
 %             processedDataDir, fileNamePrefix, channelInd, v);
+%     if channelInd == nChannels + 1
+%         plotFileName = sprintf('%s/%s-FPCAR-powerTfr-v%d.png', ...
+%                 processedDataDir, fileNamePrefix, v);
+%     end
 %     export_fig(plotFileName, '-nocrop');
 
     figure_tr_inch(20, 5);
@@ -716,6 +724,10 @@ for channelInd = 1:nChannels+1
     drawnow;
     plotFileName = sprintf('%s/%s-FP%03d-powerTfrDiff-v%d.png', ...
             processedDataDir, fileNamePrefix, channelInd, v);
+    if channelInd == nChannels + 1
+        plotFileName = sprintf('%s/%s-FPCAR-powerTfrDiff-v%d.png', ...
+                processedDataDir, fileNamePrefix, v);
+    end
     export_fig(plotFileName, '-nocrop');
 end
 
@@ -879,6 +891,10 @@ for unitInd = 1:nUnits
     
     plotFileName = sprintf('%s/%s-FP%03d-%s-sfc-v%d.png', ...
             processedDataDir, fileNamePrefix, channelInd, unitIDChar, v);
+    if channelInd == nChannels + 1
+        plotFileName = sprintf('%s/%s-FPCAR-%s-sfc-v%d.png', ...
+                processedDataDir, fileNamePrefix, unitIDChar, v);
+    end
     export_fig(plotFileName, '-nocrop');
 end
 
@@ -914,6 +930,10 @@ colormap(gca, getCoolWarmMap());
 
 plotFileName = sprintf('%s/%s-FP%03d-allMUA-meanSfcDiff-v%d.png', ...
         processedDataDir, fileNamePrefix, channelInd, v);
+if channelInd == nChannels + 1
+    plotFileName = sprintf('%s/%s-FPCAR-allMUA-meanSfcDiff-v%d.png', ...
+            processedDataDir, fileNamePrefix, v);
+end
 export_fig(plotFileName, '-nocrop');
 
 %%
