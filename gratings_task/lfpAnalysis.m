@@ -1,4 +1,4 @@
-% function lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, isZeroDistractors)
+function lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, isZeroDistractors)
 % 325ms fixation before pre-cue marker
 % 25-125ms fixation between pre-cue marker and cue onset
 % 100ms cue onset to cue offset
