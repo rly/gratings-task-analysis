@@ -759,9 +759,16 @@ exRFLocsGoodUnits = exRFLocs(goodUnits);
 cueTargetDelayFanoFactorInRF = nan(nGoodUnits, 1);
 cueTargetDelayFanoFactorExRF = nan(nGoodUnits, 1);
 for i = 1:nGoodUnits
-    cueTargetDelayFanoFactorInRF(i) = cueTargetDelay(i).byLocSD(inRFLocsGoodUnits(i))^2 / cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
-    cueTargetDelayFanoFactorExRF(i) = cueTargetDelay(i).byLocSD(exRFLocsGoodUnits(i))^2 / cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
+    cueTargetDelayFanoFactorInRF(i) = computeFanoFactor(cueTargetDelay(i), inRFLocsGoodUnits(i));
+    cueTargetDelayFanoFactorExRF(i) = computeFanoFactor(cueTargetDelay(i), exRFLocsGoodUnits(i));
 end
+
+maxFanoFactor = 5;
+toRemove = cueTargetDelayFanoFactorInRF > maxFanoFactor | cueTargetDelayFanoFactorExRF > maxFanoFactor;
+cueTargetDelayFanoFactorInRF(toRemove) = [];
+cueTargetDelayFanoFactorExRF(toRemove) = [];
+fprintf('Removed %d units because of outlier Fano factor (> %0.1f)', sum(toRemove), maxFanoFactor);
+
 cueTargetDelayFanoFactorDiff = cueTargetDelayFanoFactorInRF - cueTargetDelayFanoFactorExRF;
 
 fprintf('Mean cue-target delay Fano Factor InRF: %0.3f Hz\n', mean(cueTargetDelayFanoFactorInRF));
@@ -770,7 +777,7 @@ fprintf('Mean cue-target delay Fano Factor ExRF: %0.3f Hz\n', mean(cueTargetDela
 frBounds = [0 max([max(cueTargetDelayFanoFactorInRF) max(cueTargetDelayFanoFactorExRF)])];
 maxAbsDiffFR = max(abs(cueTargetDelayFanoFactorDiff));
 
-binStep = 1;
+binStep = 0.25;
 histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
 histBinEdges = histXBounds(1):binStep:histXBounds(2);
 
@@ -814,7 +821,7 @@ minLatency = 0.025;
 goodUnits = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
         arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
         arrayHoldBalLatencyInRF >= minLatency & arrayHoldBalLatencyExRF >= minLatency & ...
-        isInVPulvinar & isSignificantCueResponseInc;
+        isInPulvinar & isSignificantCueResponseInc;
 arrayOnsetHoldLatencyDiff = arrayHoldBalLatencyInRF(goodUnits) - arrayHoldBalLatencyExRF(goodUnits);
 fprintf('Mean array onset latency InRF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldBalLatencyInRF(goodUnits)), median(arrayHoldBalLatencyInRF(goodUnits)));
 fprintf('Mean array onset latency ExRF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldBalLatencyExRF(goodUnits)), median(arrayHoldBalLatencyExRF(goodUnits)));
@@ -910,6 +917,9 @@ fprintf('Mean array response ExRF: %0.3f Hz\n', mean(arrayResponseHoldMeanFiring
 frBounds = [0 max([max(arrayResponseHoldMeanFiringInRF) max(arrayResponseHoldMeanFiringExRF)])];
 maxAbsDiffFR = max(abs(arrayResponseHoldMeanFiringDiff));
 
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc;
+
 binStep = 1;
 histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
 histBinEdges = histXBounds(1):binStep:histXBounds(2);
@@ -918,6 +928,8 @@ figure_tr_inch(10, 5);
 subaxis(1, 2, 1);
 hold on;
 plot(arrayResponseHoldMeanFiringInRF, arrayResponseHoldMeanFiringExRF, '.', 'MarkerSize', 20);
+h1 = plot(arrayResponseHoldMeanFiringInRF(goodUnitsDPul), arrayResponseHoldMeanFiringExRF(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
+h2 = plot(arrayResponseHoldMeanFiringInRF(goodUnitsVPul), arrayResponseHoldMeanFiringExRF(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
 plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
 axis equal;
 xlim(frBounds); 
@@ -1017,9 +1029,16 @@ exRFLocsGoodUnits = exRFLocs(goodUnits);
 arrayResponseHoldFanoFactorInRF = nan(nGoodUnits, 1);
 arrayResponseHoldFanoFactorExRF = nan(nGoodUnits, 1);
 for i = 1:nGoodUnits
-    arrayResponseHoldFanoFactorInRF(i) = arrayResponseHold(i).byLocSD(inRFLocsGoodUnits(i))^2 / arrayResponseHold(i).byLoc(inRFLocsGoodUnits(i));
-    arrayResponseHoldFanoFactorExRF(i) = arrayResponseHold(i).byLocSD(exRFLocsGoodUnits(i))^2 / arrayResponseHold(i).byLoc(exRFLocsGoodUnits(i));
+    arrayResponseHoldFanoFactorInRF(i) = computeFanoFactor(arrayResponseHold(i), inRFLocsGoodUnits(i));
+    arrayResponseHoldFanoFactorExRF(i) = computeFanoFactor(arrayResponseHold(i), exRFLocsGoodUnits(i));
 end
+
+maxFanoFactor = 5;
+toRemove = arrayResponseHoldFanoFactorInRF > maxFanoFactor | arrayResponseHoldFanoFactorExRF > maxFanoFactor;
+arrayResponseHoldFanoFactorInRF(toRemove) = [];
+arrayResponseHoldFanoFactorExRF(toRemove) = [];
+fprintf('Removed %d units because of outlier Fano factor (> %0.1f)', sum(toRemove), maxFanoFactor);
+
 arrayResponseHoldFanoFactorDiff = arrayResponseHoldFanoFactorInRF - arrayResponseHoldFanoFactorExRF;
 
 fprintf('Fano Factor array response InRF: %0.3f Hz\n', mean(arrayResponseHoldFanoFactorInRF));
@@ -1028,7 +1047,7 @@ fprintf('Fano Factor array response ExRF: %0.3f Hz\n', mean(arrayResponseHoldFan
 frBounds = [0 max([max(arrayResponseHoldFanoFactorInRF) max(arrayResponseHoldFanoFactorExRF)])];
 maxAbsDiffFR = max(abs(arrayResponseHoldFanoFactorDiff));
 
-binStep = 1;
+binStep = 0.25;
 histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
 histBinEdges = histXBounds(1):binStep:histXBounds(2);
 
