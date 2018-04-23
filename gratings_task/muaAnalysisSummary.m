@@ -196,6 +196,7 @@ isSignificantDelaySelectivity = isCell & any(isSignificantSelectivity(:,[2 4]), 
 isSignificantSelectivityCueTargetDelay = isCell & isSignificantSelectivity(:,2);
 isSignificantSelectivityArrayHoldResponse = isCell & isSignificantSelectivity(:,3);
 isSignificantSelectivityTargetDimDelay = isCell & isSignificantSelectivity(:,4);
+isSignificantSelectivityTargetDimResponse = isCell & isSignificantSelectivity(:,5);
 
 isSignificantSelectivityCueTargetDelayInc = isCell & isSignificantSelectivity(:,2) & diffRates(:,1) > 0;
 isSignificantSelectivityCueTargetDelayDec = isCell & isSignificantSelectivity(:,2) & diffRates(:,1) < 0;
@@ -389,6 +390,17 @@ fprintf('\t%d/%d = %d%% dPul units\n',...
         round(sum(isCell & isSignificantSelectivityTargetDimDelay & strcmp(localization, 'dPul'))/sum(isCell & strcmp(localization, 'dPul')) * 100));
 fprintf('\n');
 
+fprintf('Significant selectivity in target-dim response:\n');
+fprintf('\t%d/%d = %d%% vPul units\n',...
+        sum(isCell & isSignificantSelectivityTargetDimResponse & strcmp(localization, 'vPul')), ...
+        sum(isCell & strcmp(localization, 'vPul')), ...
+        round(sum(isCell & isSignificantSelectivityTargetDimResponse & strcmp(localization, 'vPul'))/sum(isCell & strcmp(localization, 'vPul')) * 100));
+fprintf('\t%d/%d = %d%% dPul units\n',...
+        sum(isCell & isSignificantSelectivityTargetDimResponse & strcmp(localization, 'dPul')), ...
+        sum(isCell & strcmp(localization, 'dPul')), ...
+        round(sum(isCell & isSignificantSelectivityTargetDimResponse & strcmp(localization, 'dPul'))/sum(isCell & strcmp(localization, 'dPul')) * 100));
+fprintf('\n');
+
 fprintf('Significant selectivity in both delay periods:\n');
 fprintf('\t%d/%d = %d%% vPul units\n',...
         sum(isCell & isSignificantSelectivityCueTargetDelay & isSignificantSelectivityTargetDimDelay & strcmp(localization, 'vPul')), ...
@@ -412,6 +424,8 @@ fprintf('\t%d (%d%%) show significant selectivity during the array hold response
         round(sum(precondition & isSignificantSelectivityArrayHoldResponse)/sum(precondition) * 100));
 fprintf('\t%d (%d%%) show significant selectivity during the target-dim delay\n', sum(precondition & isSignificantSelectivityTargetDimDelay), ...
         round(sum(precondition & isSignificantSelectivityTargetDimDelay)/sum(precondition) * 100));
+fprintf('\t%d (%d%%) show significant selectivity during the target-dim response\n', sum(precondition & isSignificantSelectivityTargetDimResponse), ...
+        round(sum(precondition & isSignificantSelectivityTargetDimResponse)/sum(precondition) * 100));
 fprintf('\n');
 
 fprintf('-----------------------------\n');
@@ -862,6 +876,8 @@ xlabel('Array Onset Latency InRF (s)');
 ylabel('Array Onset Latency ExRF (s)');
 box off;
 legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
+set(gca, 'FontSize', 14);
+set(gca, 'LineWidth', 1);
 
 subaxis(1, 3, 2); 
 hold on;
@@ -874,6 +890,8 @@ ylim(origYLim);
 xlabel('Array Onset Latency InRF - ExRF (s)');
 ylabel('Number of Units');
 box off;
+set(gca, 'FontSize', 14);
+set(gca, 'LineWidth', 1);
 
 subaxis(1, 3, 3);
 hold on;
@@ -885,6 +903,8 @@ xlim(latBounds);
 xlabel('Array Onset Latency (s)');
 ylabel('Proportion of Units');
 legend({'InRF', 'ExRF'}, 'Location', 'SouthEast');
+set(gca, 'FontSize', 14);
+set(gca, 'LineWidth', 1);
 
 
 meanArrayOnsetHoldLatencyDiff = mean(arrayOnsetHoldLatencyDiff);
@@ -912,34 +932,13 @@ for i = 1:nGoodUnits
     cueTargetDelayFiringInRF(i) = cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
     cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
 end
-cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
-arrayOnsetHoldLatencyDiff = arrayHoldBalLatencyInRF(goodUnits) - arrayHoldBalLatencyExRF(goodUnits);
 
-goodUnitsDPul = isInDPulvinar(goodUnits);
-goodUnitsVPul = isInVPulvinar(goodUnits);
+plotCorr(cueTargetDelayFiringInRF, cueTargetDelayFiringExRF, ...
+        arrayHoldBalLatencyInRF(goodUnits), arrayHoldBalLatencyExRF(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
 
-maxAbsDiffFR = max(abs(cueTargetDelayFiringDiff));
-frDiffBounds = maxAbsDiffFR * [-1 1];
-maxAbsDiffLat = max(abs(arrayOnsetHoldLatencyDiff));
-latDiffBounds = maxAbsDiffLat * [-1 1];
-
-figure_tr_inch(6, 6);
-hold on;
-plot(frDiffBounds, frDiffBounds, 'Color', 0.3*ones(3, 1)); 
-plot(frDiffBounds, [0 0], 'Color', zeros(3, 1)); 
-plot([0 0], frDiffBounds, 'Color', zeros(3, 1)); 
-plot(cueTargetDelayFiringDiff, arrayOnsetHoldLatencyDiff, '.', 'MarkerSize', 20, 'Color', lines(1));
-h1 = plot(cueTargetDelayFiringDiff(goodUnitsDPul), arrayOnsetHoldLatencyDiff(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(cueTargetDelayFiringDiff(goodUnitsVPul), arrayOnsetHoldLatencyDiff(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
-xlim(frDiffBounds);
-ylim(latDiffBounds);
 xlabel('Cue-Target Delay Firing InRF-ExRF (Hz)');
 ylabel('Array Hold Response Latency InRF-ExRF (s)');
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
-
-[r, p] = corr(cueTargetDelayFiringDiff, arrayOnsetHoldLatencyDiff, 'type', 'Spearman');
-fprintf('Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
-        r, p, nGoodUnits);
     
 plotFileName = sprintf('%s/allSessions-cueTargetDelayFiringDiffVsArrayResponseHoldLatencyDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -958,7 +957,6 @@ for i = 1:nGoodUnits
     cueTargetDelayFiringInRF(i) = cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
     cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
 end
-cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
 
 arrayResponseHold = averageFiringRatesBySpdf.arrayResponseHoldBal(goodUnits);
 arrayResponseHoldMeanFiringInRF = nan(nGoodUnits, 1);
@@ -967,32 +965,15 @@ for i = 1:nGoodUnits
     arrayResponseHoldMeanFiringInRF(i) = arrayResponseHold(i).byLoc(inRFLocsGoodUnits(i));
     arrayResponseHoldMeanFiringExRF(i) = arrayResponseHold(i).byLoc(exRFLocsGoodUnits(i));
 end
-arrayResponseHoldMeanFiringDiff = arrayResponseHoldMeanFiringInRF - arrayResponseHoldMeanFiringExRF;
 
-goodUnitsDPul = isInDPulvinar(goodUnits);
-goodUnitsVPul = isInVPulvinar(goodUnits);
+plotCorr(cueTargetDelayFiringInRF, cueTargetDelayFiringExRF, ...
+        arrayResponseHoldMeanFiringInRF, arrayResponseHoldMeanFiringExRF, ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
 
-maxAbsDiffFR = max([max(abs(cueTargetDelayFiringDiff)) max(abs(arrayResponseHoldMeanFiringDiff))]);
-frDiffBounds = maxAbsDiffFR * [-1 1];
-
-figure_tr_inch(6, 6);
-hold on;
-plot(frDiffBounds, frDiffBounds, 'Color', 0.3*ones(3, 1)); 
-plot(frDiffBounds, [0 0], 'Color', zeros(3, 1)); 
-plot([0 0], frDiffBounds, 'Color', zeros(3, 1)); 
-plot(cueTargetDelayFiringDiff, arrayResponseHoldMeanFiringDiff, '.', 'MarkerSize', 20, 'Color', lines(1));
-h1 = plot(cueTargetDelayFiringDiff(goodUnitsDPul), arrayResponseHoldMeanFiringDiff(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(cueTargetDelayFiringDiff(goodUnitsVPul), arrayResponseHoldMeanFiringDiff(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
-xlim(frDiffBounds);
-ylim(frDiffBounds);
 xlabel('Cue-Target Delay Firing InRF-ExRF (Hz)');
 ylabel('Array Hold Response Firing InRF-ExRF (Hz)');
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
+axis equal;
 
-[r, p] = corr(cueTargetDelayFiringDiff, arrayResponseHoldMeanFiringDiff, 'type', 'Spearman');
-fprintf('Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
-        r, p, nGoodUnits);
-    
 plotFileName = sprintf('%s/allSessions-cueTargetDelayFiringDiffVsArrayResponseHoldFiringDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
@@ -1013,35 +994,14 @@ for i = 1:nGoodUnits
     arrayResponseHoldMeanFiringInRF(i) = arrayResponseHold(i).byLoc(inRFLocsGoodUnits(i));
     arrayResponseHoldMeanFiringExRF(i) = arrayResponseHold(i).byLoc(exRFLocsGoodUnits(i));
 end
-arrayResponseHoldMeanFiringDiff = arrayResponseHoldMeanFiringInRF - arrayResponseHoldMeanFiringExRF;
-arrayOnsetHoldLatencyDiff = arrayHoldBalLatencyInRF(goodUnits) - arrayHoldBalLatencyExRF(goodUnits);
 
-goodUnitsDPul = isInDPulvinar(goodUnits);
-goodUnitsVPul = isInVPulvinar(goodUnits);
-
-maxAbsDiffFR = max(abs(arrayResponseHoldMeanFiringDiff));
-frDiffBounds = maxAbsDiffFR * [-1 1];
-maxAbsDiffLat = max(abs(arrayOnsetHoldLatencyDiff));
-latDiffBounds = maxAbsDiffLat * [-1 1];
-
-figure_tr_inch(6, 6);
-hold on;
-plot(frDiffBounds, frDiffBounds, 'Color', 0.3*ones(3, 1)); 
-plot(frDiffBounds, [0 0], 'Color', zeros(3, 1)); 
-plot([0 0], frDiffBounds, 'Color', zeros(3, 1)); 
-plot(arrayResponseHoldMeanFiringDiff, arrayOnsetHoldLatencyDiff, '.', 'MarkerSize', 20, 'Color', lines(1));
-h1 = plot(arrayResponseHoldMeanFiringDiff(goodUnitsDPul), arrayOnsetHoldLatencyDiff(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(arrayResponseHoldMeanFiringDiff(goodUnitsVPul), arrayOnsetHoldLatencyDiff(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
-xlim(frDiffBounds);
-ylim(latDiffBounds);
+plotCorr(arrayResponseHoldMeanFiringInRF, arrayResponseHoldMeanFiringExRF, ...
+        arrayHoldBalLatencyInRF(goodUnits), arrayHoldBalLatencyExRF(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+    
 xlabel('Array Hold Response Firing InRF-ExRF (Hz)');
 ylabel('Array Hold Response Latency InRF-ExRF (s)');
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
 
-[r, p] = corr(arrayResponseHoldMeanFiringDiff, arrayOnsetHoldLatencyDiff, 'type', 'Spearman');
-fprintf('Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
-        r, p, nGoodUnits);
-    
 plotFileName = sprintf('%s/allSessions-arrayHoldResponseFiringDiffVsArrayResponseHoldLatencyDiff-maxLat%0.3f-v%d.png', summaryDataDir, maxLatency, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
@@ -1067,7 +1027,7 @@ arrayResponseHoldLatencyExRFSub = arrayHoldBalLatencyExRF(goodUnits);
 frBounds = [0 max([max(arrayResponseHoldMeanFiringInRF) max(arrayResponseHoldMeanFiringExRF)])];
 latBounds = [0 0.125];
 
-figure_tr_inch(6, 6);
+figure_tr_inch(5, 5);
 hold on;
 plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
 plot(frBounds, [0 0], 'Color', zeros(3, 1)); 
@@ -1079,18 +1039,12 @@ ylim(latBounds);
 xlabel('Array Hold Response Firing (Hz)');
 ylabel('Array Hold Response Latency (s)');
 legend([h1 h2], {'InRF', 'ExRF'}, 'Location', 'NorthEast');
-
-[r, p] = corr(arrayResponseHoldMeanFiringInRF, arrayResponseHoldLatencyInRFSub, 'type', 'Spearman');
-fprintf('InRF: Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
-        r, p, nGoodUnits);
-[r, p] = corr(arrayResponseHoldMeanFiringExRF, arrayResponseHoldLatencyExRFSub, 'type', 'Spearman');
-fprintf('ExRF: Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
-        r, p, nGoodUnits);
+set(gca, 'FontSize', 14);
+set(gca, 'LineWidth', 1);
     
 plotFileName = sprintf('%s/allSessions-arrayResponseHoldFiringVsArrayResponseHoldLatency-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
-
 
 %% does cue-target delay modulation predict target-dim delay modulation
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
@@ -1105,7 +1059,6 @@ for i = 1:nGoodUnits
     cueTargetDelayFiringInRF(i) = cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
     cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
 end
-cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
 
 targetDimDelay = averageFiringRatesBySpdf.targetDimDelayBal(goodUnits);
 targetDimDelayFiringInRF = nan(nGoodUnits, 1);
@@ -1114,38 +1067,50 @@ for i = 1:nGoodUnits
     targetDimDelayFiringInRF(i) = targetDimDelay(i).byLoc(inRFLocsGoodUnits(i));
     targetDimDelayFiringExRF(i) = targetDimDelay(i).byLoc(exRFLocsGoodUnits(i));
 end
-targetDimDelayFiringDiff = targetDimDelayFiringInRF - targetDimDelayFiringExRF;
 
-goodUnitsDPul = isInDPulvinar(goodUnits);
-goodUnitsVPul = isInVPulvinar(goodUnits);
+plotCorr(cueTargetDelayFiringInRF, cueTargetDelayFiringExRF, ...
+        targetDimDelayFiringInRF, targetDimDelayFiringExRF, ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
 
-maxAbsDiffFR = max([max(abs(cueTargetDelayFiringDiff)) max(abs(targetDimDelayFiringDiff))]);
-frDiffBounds = maxAbsDiffFR * [-1 1];
-
-binStep = 1;
-histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
-histBinEdges = histXBounds(1):binStep:histXBounds(2);
-
-figure_tr_inch(6, 6);
-hold on;
-plot(frDiffBounds, frDiffBounds, 'Color', 0.3*ones(3, 1)); 
-plot(frDiffBounds, [0 0], 'Color', zeros(3, 1)); 
-plot([0 0], frDiffBounds, 'Color', zeros(3, 1)); 
-plot(cueTargetDelayFiringDiff, targetDimDelayFiringDiff, '.', 'MarkerSize', 20, 'Color', lines(1));
-h1 = plot(cueTargetDelayFiringDiff(goodUnitsDPul), targetDimDelayFiringDiff(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(cueTargetDelayFiringDiff(goodUnitsVPul), targetDimDelayFiringDiff(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
+xlabel('Cue-Target Delay Firing InRF-ExRF (Hz)');
+ylabel('Target-Dim Delay Firing InRF-ExRF (Hz)');
 axis equal;
-xlim(frDiffBounds); 
-ylim(frDiffBounds);
-xlabel('Mean Cue-Target Delay Firing InRF - ExRF (Hz)');
-ylabel('Mean Target-Dim Delay Firing InRF - ExRF (Hz)');
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
-
-[r, p] = corr(cueTargetDelayFiringDiff, targetDimDelayFiringDiff, 'type', 'Spearman');
-fprintf('Spearman rho = %0.2f, p = %0.5f, N = %d\n', ...
-        r, p, nGoodUnits);
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayDiffVsTargetDimDelayDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% does attention-related difference in delay firing correlate with attention-related difference in mean array response
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+nGoodUnits = sum(goodUnits);
+% unboxing
+arrayResponseHold = averageFiringRatesBySpdf.arrayResponseHoldBal(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+arrayResponseHoldMeanFiringInRF = nan(nGoodUnits, 1);
+arrayResponseHoldMeanFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    arrayResponseHoldMeanFiringInRF(i) = arrayResponseHold(i).byLoc(inRFLocsGoodUnits(i));
+    arrayResponseHoldMeanFiringExRF(i) = arrayResponseHold(i).byLoc(exRFLocsGoodUnits(i));
+end
+
+targetDimDelay = averageFiringRatesBySpdf.targetDimDelayBal(goodUnits);
+targetDimDelayMeanFiringInRF = nan(nGoodUnits, 1);
+targetDimDelayMeanFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    targetDimDelayMeanFiringInRF(i) = targetDimDelay(i).byLoc(inRFLocsGoodUnits(i));
+    targetDimDelayMeanFiringExRF(i) = targetDimDelay(i).byLoc(exRFLocsGoodUnits(i));
+end
+
+plotCorr(arrayResponseHoldMeanFiringInRF, arrayResponseHoldMeanFiringExRF, ...
+        targetDimDelayFiringInRF, targetDimDelayFiringExRF, ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+
+xlabel('Array Hold Response Firing InRF-ExRF (Hz)');
+ylabel('Target-Dim Delay Firing InRF-ExRF (Hz)');
+axis equal;
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldFiringDiffVsTargetDimResponseFiringDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
