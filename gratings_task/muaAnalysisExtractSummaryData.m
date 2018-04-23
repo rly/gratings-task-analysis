@@ -341,7 +341,7 @@ for j = 1:nUnits
             
             % make session-wise RT plots while processing the first unit
             if unitCount == 1
-                assert(all(ES.UE.rt >= 0.3 & ES.UE.rt <= 0.8)); 
+                assert(all(ES.UE.rt >= 0.28 & ES.UE.rt <= 0.8)); 
                 checkRTStatAlpha = 0.05;
                 plotFileName = sprintf('%s/%s-sessionInd%d-rtDist-v%d.png', outputDir, sessionName, sessionInd, v);
                 plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
