@@ -83,6 +83,13 @@ if exist(saveFileName, 'file')
                 D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
         close;
         
+        plotFileName = sprintf('%s/%s-%s-visualError-v%d.png', processedDataDir, unitName, blockName, v);
+        fprintf('\tPlotting...\n');
+        
+        quickSpdfAllVisualEventsError(ES, blockName, ...
+                D, i, muaStruct, nLoc, isZeroDistractors, plotFileName);
+        close;
+        
         plotFileName = sprintf('%s/%s-%s-visualLatency-v%d.png', processedDataDir, unitName, blockName, v);
         fprintf('\tPlotting...\n');
         

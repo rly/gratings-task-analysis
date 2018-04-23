@@ -45,12 +45,14 @@ fprintf('\t');
 %% align spikes to cue onset, compute spdf
 cueOnset.window = [0.8 0.8]; % seconds before, after
 cueOnset.spdfWindowOffset = [-0.7 0.7]; % tighter window for spdf to avoid edge effects
-cueOnsetRel = cueOnset; % copy
-cueOnsetHold = cueOnset; % copy
+% cueOnsetRel = cueOnset; % copy
+% cueOnsetHold = cueOnset; % copy
+cueOnsetError = cueOnset; % copy
 
 cueOnset = createTimeLockedSpdf(spikeTs, UE.cueOnset, UE.cueOnsetByLoc, cueOnset, kernelSigma);
 % cueOnsetRel = createTimeLockedSpdf(spikeTs, UE.cueOnsetRel, UE.cueOnsetRelByLoc, cueOnsetRel, kernelSigma);
 % cueOnsetHold = createTimeLockedSpdf(spikeTs, UE.cueOnsetHold, UE.cueOnsetHoldByLoc, cueOnsetHold, kernelSigma);
+cueOnsetError = createTimeLockedSpdf(spikeTs, UE.cueOnsetError, UE.cueOnsetErrorByLoc, cueOnsetError, kernelSigma);
 
 %% align spikes to array onset, compute spdf
 arrayOnset.window = [0.8 0.8]; % seconds before, after
@@ -59,12 +61,18 @@ arrayOnset.spdfWindowOffset = [-0.7 0.7]; % tighter window for spdf to avoid edg
 % arrayOnsetHold = arrayOnset; % copy
 arrayOnsetRelBal = arrayOnset; % copy
 arrayOnsetHoldBal = arrayOnset; % copy
+arrayOnsetError = arrayOnset;
+arrayOnsetRelBalError = arrayOnset; % copy
+arrayOnsetHoldBalError = arrayOnset; % copy
 
 arrayOnset = createTimeLockedSpdf(spikeTs, UE.arrayOnset, UE.arrayOnsetByLoc, arrayOnset, kernelSigma);
 % arrayOnsetRel = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRel, UE.arrayOnsetRelByLoc, arrayOnsetRel, kernelSigma);
 % arrayOnsetHold = createTimeLockedSpdf(spikeTs, UE.arrayOnsetHold, UE.arrayOnsetHoldByLoc, arrayOnsetHold, kernelSigma);
 arrayOnsetRelBal = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRelBal, UE.arrayOnsetRelBalByLoc, arrayOnsetRelBal, kernelSigma);
 arrayOnsetHoldBal = createTimeLockedSpdf(spikeTs, UE.arrayOnsetHoldBal, UE.arrayOnsetHoldBalByLoc, arrayOnsetHoldBal, kernelSigma);
+arrayOnsetError = createTimeLockedSpdf(spikeTs, UE.arrayOnsetError, UE.arrayOnsetErrorByLoc, arrayOnsetError, kernelSigma);
+arrayOnsetRelBalError = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRelBalError, UE.arrayOnsetRelBalErrorByLoc, arrayOnsetRelBalError, kernelSigma);
+arrayOnsetHoldBalError = createTimeLockedSpdf(spikeTs, UE.arrayOnsetHoldBalError, UE.arrayOnsetHoldBalErrorByLoc, arrayOnsetHoldBalError, kernelSigma);
 
 %% align spikes to target dimming, compute spdf
 targetDimBal.window = [0.8 0.8]; % seconds before, after
@@ -87,9 +95,12 @@ enterFixation.spdfWindowOffset = [-0.7 0.7]; % tighter window for spdf to avoid 
 enterFixationRel = enterFixation; % copy
 enterFixationHold = enterFixation; % copy
 
-enterFixation = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue, UE.fixationAndLeverTimes.firstEnterFixationTimesPreCueByLoc, enterFixation, kernelSigma);
-enterFixationRel = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstEnterFixationRelTimesPreCue, UE.fixationAndLeverTimes.firstEnterFixationRelTimesPreCueByLoc, enterFixationRel, kernelSigma);
-enterFixationHold = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstEnterFixationHoldTimesPreCue, UE.fixationAndLeverTimes.firstEnterFixationHoldTimesPreCueByLoc, enterFixationHold, kernelSigma);
+enterFixation = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue, ...
+        UE.fixationAndLeverTimes.firstEnterFixationTimesPreCueByLoc, enterFixation, kernelSigma);
+enterFixationRel = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstEnterFixationRelTimesPreCue, ...
+        UE.fixationAndLeverTimes.firstEnterFixationRelTimesPreCueByLoc, enterFixationRel, kernelSigma);
+enterFixationHold = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstEnterFixationHoldTimesPreCue, ...
+        UE.fixationAndLeverTimes.firstEnterFixationHoldTimesPreCueByLoc, enterFixationHold, kernelSigma);
 
 exitFixation.window = [0.8 0.8]; % seconds before, after
 exitFixation.spdfWindowOffset = [-0.7 0.7]; % tighter window for spdf to avoid edge effects
@@ -98,11 +109,16 @@ exitFixationRight = exitFixation; % copy
 exitFixationRel = exitFixation; % copy
 exitFixationHold = exitFixation; % copy
 
-exitFixation = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice, UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuiceByLoc, exitFixation, kernelSigma);
-exitFixationLeft = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationLeftTimesAroundJuice, UE.fixationAndLeverTimes.firstExitFixationLeftTimesAroundJuiceByLoc, exitFixationLeft, kernelSigma);
-exitFixationRight = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationRightTimesAroundJuice, UE.fixationAndLeverTimes.firstExitFixationRightTimesAroundJuiceByLoc, exitFixationRight, kernelSigma);
-exitFixationRel = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationRelTimesAroundJuice, UE.fixationAndLeverTimes.firstExitFixationRelTimesAroundJuiceByLoc, exitFixationRel, kernelSigma);
-exitFixationHold = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationHoldTimesAroundJuice, UE.fixationAndLeverTimes.firstExitFixationHoldTimesAroundJuiceByLoc, exitFixationHold, kernelSigma);
+exitFixation = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice, ...
+        UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuiceByLoc, exitFixation, kernelSigma);
+exitFixationLeft = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationLeftTimesAroundJuice, ...
+        UE.fixationAndLeverTimes.firstExitFixationLeftTimesAroundJuiceByLoc, exitFixationLeft, kernelSigma);
+exitFixationRight = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationRightTimesAroundJuice, ...
+        UE.fixationAndLeverTimes.firstExitFixationRightTimesAroundJuiceByLoc, exitFixationRight, kernelSigma);
+exitFixationRel = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationRelTimesAroundJuice, ...
+        UE.fixationAndLeverTimes.firstExitFixationRelTimesAroundJuiceByLoc, exitFixationRel, kernelSigma);
+exitFixationHold = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationHoldTimesAroundJuice, ...
+        UE.fixationAndLeverTimes.firstExitFixationHoldTimesAroundJuiceByLoc, exitFixationHold, kernelSigma);
 
 %% align spikes to lever press and release, compute spdf
 leverPress.window = [0.8 0.8]; % seconds before, after
@@ -161,29 +177,29 @@ averageFiringRatesByCount.postEnterFixation = computeAverageFiringRateByCount(..
 averageFiringRatesByCount.postEnterFixationLate = computeAverageFiringRateByCount(...
         postEnterFixationLateWindowOffset, enterFixation);
 averageFiringRatesByCount.preCueBaseline = computeAverageFiringRateByCount(...
-        preCueBaselineWindowOffset, cueOnset);
+        preCueBaselineWindowOffset, cueOnset, cueOnsetError);
 averageFiringRatesByCount.cueResponse = computeAverageFiringRateByCount(...
-        cueResponseWindowOffset, cueOnset);
+        cueResponseWindowOffset, cueOnset, cueOnsetError);
 averageFiringRatesByCount.cueTargetDelay = computeAverageFiringRateByCount(...
-        cueTargetDelayWindowOffset, arrayOnset);
+        cueTargetDelayWindowOffset, arrayOnset, arrayOnsetError);
 averageFiringRatesByCount.cueTargetDelayRelBal = computeAverageFiringRateByCount(...
-        cueTargetDelayWindowOffset, arrayOnsetRelBal);
+        cueTargetDelayWindowOffset, arrayOnsetRelBal, arrayOnsetRelBalError);
 averageFiringRatesByCount.cueTargetDelayHoldBal = computeAverageFiringRateByCount(...
-        cueTargetDelayWindowOffset, arrayOnsetHoldBal);
+        cueTargetDelayWindowOffset, arrayOnsetHoldBal, arrayOnsetHoldBalError);
 averageFiringRatesByCount.cueTargetDelayLong = computeAverageFiringRateByCount(...
-        cueTargetDelayLongWindowOffset, arrayOnset);
+        cueTargetDelayLongWindowOffset, arrayOnset, arrayOnsetError);
 averageFiringRatesByCount.cueTargetDelayRelBalLong = computeAverageFiringRateByCount(...
-        cueTargetDelayLongWindowOffset, arrayOnsetRelBal);
+        cueTargetDelayLongWindowOffset, arrayOnsetRelBal, arrayOnsetRelBalError);
 averageFiringRatesByCount.cueTargetDelayHoldBalLong = computeAverageFiringRateByCount(...
-        cueTargetDelayLongWindowOffset, arrayOnsetHoldBal);
+        cueTargetDelayLongWindowOffset, arrayOnsetHoldBal, arrayOnsetHoldBalError);
 averageFiringRatesByCount.arrayResponse = computeAverageFiringRateByCount(...
-        arrayResponseWindowOffset, arrayOnset);
+        arrayResponseWindowOffset, arrayOnset, arrayOnsetError);
 averageFiringRatesByCount.arrayResponseRelBal = computeAverageFiringRateByCount(...
-        arrayResponseWindowOffset, arrayOnsetRelBal);
+        arrayResponseWindowOffset, arrayOnsetRelBal, arrayOnsetRelBalError);
 averageFiringRatesByCount.arrayResponseHoldBal = computeAverageFiringRateByCount(...
-        arrayResponseWindowOffset, arrayOnsetHoldBal);
+        arrayResponseWindowOffset, arrayOnsetHoldBal, arrayOnsetHoldBalError);
 averageFiringRatesByCount.arrayResponseHoldLateBal = computeAverageFiringRateByCount(...
-        arrayResponseLateWindowOffset, arrayOnsetHoldBal);
+        arrayResponseLateWindowOffset, arrayOnsetHoldBal, arrayOnsetHoldBalError);
 averageFiringRatesByCount.targetDimDelayBal = computeAverageFiringRateByCount(...
         targetDimDelayWindowOffset, targetDimBal);
 averageFiringRatesByCount.targetDimDelayBalLong = computeAverageFiringRateByCount(...
@@ -211,29 +227,29 @@ averageFiringRatesBySpdf.postEnterFixation = computeAverageFiringRateBySpdf(...
 averageFiringRatesBySpdf.postEnterFixationLate = computeAverageFiringRateBySpdf(...
         postEnterFixationLateWindowOffset, enterFixation);
 averageFiringRatesBySpdf.preCueBaseline = computeAverageFiringRateBySpdf(...
-        preCueBaselineWindowOffset, cueOnset);
+        preCueBaselineWindowOffset, cueOnset, cueOnsetError);
 averageFiringRatesBySpdf.cueResponse = computeAverageFiringRateBySpdf(...
-        cueResponseWindowOffset, cueOnset);
+        cueResponseWindowOffset, cueOnset, cueOnsetError);
 averageFiringRatesBySpdf.cueTargetDelay = computeAverageFiringRateBySpdf(...
-        cueTargetDelayWindowOffset, arrayOnset);
+        cueTargetDelayWindowOffset, arrayOnset, arrayOnsetError);
 averageFiringRatesBySpdf.cueTargetDelayRelBal = computeAverageFiringRateBySpdf(...
-        cueTargetDelayWindowOffset, arrayOnsetRelBal);
+        cueTargetDelayWindowOffset, arrayOnsetRelBal, arrayOnsetRelBalError);
 averageFiringRatesBySpdf.cueTargetDelayHoldBal = computeAverageFiringRateBySpdf(...
-        cueTargetDelayWindowOffset, arrayOnsetHoldBal);
+        cueTargetDelayWindowOffset, arrayOnsetHoldBal, arrayOnsetHoldBalError);
 averageFiringRatesBySpdf.cueTargetDelayLong = computeAverageFiringRateBySpdf(...
-        cueTargetDelayLongWindowOffset, arrayOnset);
+        cueTargetDelayLongWindowOffset, arrayOnset, arrayOnsetError);
 averageFiringRatesBySpdf.cueTargetDelayRelBalLong = computeAverageFiringRateBySpdf(...
-        cueTargetDelayLongWindowOffset, arrayOnsetRelBal);
+        cueTargetDelayLongWindowOffset, arrayOnsetRelBal, arrayOnsetRelBalError);
 averageFiringRatesBySpdf.cueTargetDelayHoldBalLong = computeAverageFiringRateBySpdf(...
-        cueTargetDelayLongWindowOffset, arrayOnsetHoldBal);
+        cueTargetDelayLongWindowOffset, arrayOnsetHoldBal, arrayOnsetHoldBalError);
 averageFiringRatesBySpdf.arrayResponse = computeAverageFiringRateBySpdf(...
-        arrayResponseWindowOffset, arrayOnset);
+        arrayResponseWindowOffset, arrayOnset, arrayOnsetError);
 averageFiringRatesBySpdf.arrayResponseRelBal = computeAverageFiringRateBySpdf(...
-        arrayResponseWindowOffset, arrayOnsetRelBal);
+        arrayResponseWindowOffset, arrayOnsetRelBal, arrayOnsetRelBalError);
 averageFiringRatesBySpdf.arrayResponseHoldBal = computeAverageFiringRateBySpdf(...
-        arrayResponseWindowOffset, arrayOnsetHoldBal);
+        arrayResponseWindowOffset, arrayOnsetHoldBal, arrayOnsetHoldBalError);
 averageFiringRatesBySpdf.arrayResponseHoldLateBal = computeAverageFiringRateBySpdf(...
-        arrayResponseLateWindowOffset, arrayOnsetHoldBal);
+        arrayResponseLateWindowOffset, arrayOnsetHoldBal, arrayOnsetHoldBalError);
 averageFiringRatesBySpdf.targetDimDelayBal = computeAverageFiringRateBySpdf(...
         targetDimDelayWindowOffset, targetDimBal);
 averageFiringRatesBySpdf.targetDimDelayBalLong = computeAverageFiringRateBySpdf(...
@@ -538,7 +554,7 @@ fprintf('.');
 %% save
 clear i;
 
-% save all workspace variables not cleared above into mat file
+% save ALL workspace variables not cleared above into mat file
 fprintf('\n');
 fprintf('Saving to %s.\n', saveFileName);
 save(saveFileName);

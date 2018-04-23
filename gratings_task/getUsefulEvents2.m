@@ -2,14 +2,15 @@ function usefulEvents = getUsefulEvents2(logDir, logIndices, nLoc, D, blockName)
 
 holdDurMid = 850; % ms; for splitting short vs long hold
 
-% cueP3Event = D.events{2}(:,1);
-cueOnsetEvent = D.events{4}(:,1);
-arrayOnsetHoldEvent = D.events{6}(:,1); % TODO
-arrayOnsetReleaseEvent = D.events{7}(:,1);
-% arrayOnsetHoldP1Event = D.events{14}(:,1);
-% arrayOnsetReleaseP1Event = D.events{15}(:,1);
-targetDimEvent = D.events{16}(:,1);
-juiceEvent = D.events{8}(:,1);
+% cueP3Event = D.events{2};
+cueOnsetEvent = D.events{4};
+arrayOnsetHoldEvent = D.events{6}; % TODO
+arrayOnsetReleaseEvent = D.events{7};
+% firstFixationEvent = D.events{13}; % TODO use for assertions
+% arrayOnsetHoldP1Event = D.events{14};
+% arrayOnsetReleaseP1Event = D.events{15};
+targetDimEvent = D.events{16};
+juiceEvent = D.events{8};
 
 %% load presentation log information on correct trials only
 logRoot = 'gratings_task_eye_tracking_';
@@ -18,6 +19,8 @@ trialParamsAllCorrect = readPresentationLogCorrectTrial(logDir, logRoot, logIndi
 %% load more detailed trial info from json -> mat
 % use saveGratingsTaskResultsJsonToMatRunner.m to generate .mat files
 load(sprintf('%s/gratingsTaskResultsJson-%s.mat', logDir, blockName), 'trialStructs', 'arrayShapes');
+trialStructs = trialStructs'; % make column
+arrayShapes = arrayShapes'; % make column
 trialResults = cellfun(@(x) x.response.type, trialStructs, 'UniformOutput', false);
 isCorrect = strcmp(trialResults, 'correct-response');
 trialStructsCorrect = trialStructs(isCorrect);
@@ -66,11 +69,11 @@ trialStructsCorrect = trialStructsCorrect(trialsToKeep);
 arrayShapesCorrect = arrayShapesCorrect(trialsToKeep);
 
 %%
-isRelBal = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect)';
-isHoldBal = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesCorrect)';
+isRelBal = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect);
+isHoldBal = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesCorrect);
 
-isCorrectRelTrialLog = cellfun(@(x,y) y(1) == 'R', trialStructsCorrect, arrayShapesCorrect)';
-isCorrectHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsCorrect, arrayShapesCorrect)';
+isCorrectRelTrialLog = cellfun(@(x,y) y(1) == 'R', trialStructsCorrect, arrayShapesCorrect);
+isCorrectHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsCorrect, arrayShapesCorrect);
 
 %%
 % TODO get only trials that are not repeats
@@ -84,6 +87,10 @@ cueTargetDelayDur = trialParams(:,6);
 targetDimDelayDur = trialParams(:,7);
 % these are the reported delay durations, but may not be the actual delay
 % durations
+assert(all(cellfun(@(x) x.cueLoc, trialStructsCorrect) == cueLoc));
+assert(all(cellfun(@(x) x.cueArrayDelayDuration, trialStructsCorrect) == cueTargetDelayDur));
+assert(all(cellfun(@(x) x.holdShapeDuration .* (x.holdShapeDuration ~= 15000) + -1 * (x.holdShapeDuration == 15000), ...
+        trialStructsCorrect) == targetDimDelayDur));
 
 %% get cue onset events corresponding to correct trials only
 cueOnsetByLoc = cell(nLoc, 1);
@@ -112,8 +119,8 @@ assert(all(isHoldTrial == (trialParams(:,7) ~= -1)));
 assert(all(isHoldTrial == isCorrectHoldTrialLog));
 assert(all(~isHoldTrial == isCorrectRelTrialLog));
 
-arrayOnsetRel = arrayOnset(~isHoldTrial);
-arrayOnsetHold = arrayOnset(isHoldTrial);
+% arrayOnsetRel = arrayOnset(~isHoldTrial);
+% arrayOnsetHold = arrayOnset(isHoldTrial);
 
 arrayOnsetRelBal = arrayOnset(~isHoldTrial & isRelBal);
 arrayOnsetHoldBal = arrayOnset(isHoldTrial & isHoldBal);
@@ -163,7 +170,7 @@ for i = 1:numel(firstJuiceEvent)
     end
 end
 
-targetDim = targetDimMatch(~isnan(targetDimMatch));
+% targetDim = targetDimMatch(~isnan(targetDimMatch));
 targetDimBal = targetDimMatch(~isnan(targetDimMatch) & isHoldBal);
 targetDimShortHoldBal = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid & isHoldBal);
 targetDimLongHoldBal = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid & isHoldBal);
@@ -231,6 +238,178 @@ rt = rtPresLogs;
 % mean(rtJuice - rtLogEvent) % offset by mean 8 ms, sd 5 ms
 % mean(rtPresLogs - rtLever) % offset by mean 30 ms, sd 3 ms
 
+%% process error events
+trialResponseState = cellfun(@(x) x.response.trialState, trialStructs);
+isEarlyReleaseHoldAll = strcmp(trialResults, 'array-on-early-release');
+assert(sum(isEarlyReleaseHoldAll) == sum(isEarlyReleaseHoldAll & trialResponseState == -108)); % ARRAY_ON state
+
+isLateReleaseAll = strcmp(trialResults, 'late-response');
+assert(sum(isLateReleaseAll) == sum((isLateReleaseAll & trialResponseState == -113) | ... % PAST_RESPONSE_PERIOD state
+        (isLateReleaseAll & trialResponseState == -118) | ... % PAST_RESPONSE_PERIOD_RELEASE_SHAPE state
+        (isLateReleaseAll & trialResponseState == -114))); % RELEASE_SHAPE_DIMMED
+isLateReleaseRelAll = isLateReleaseAll & (trialResponseState == -118 | trialResponseState == -114);
+
+isEyeErrorRel = strcmp(trialResults, 'release-shape-on-eye-error');
+assert(sum(isEyeErrorRel) == sum((isEyeErrorRel & trialResponseState == -109) | ... % ARRAY_ON_RELEASE_SHAPE state
+        (isEyeErrorRel & trialResponseState == -117) | ... % WAITING_FOR_RESPONSE_RELEASE_SHAPE state
+        (isEyeErrorRel & trialResponseState == -118) | ... % PAST_RESPONSE_PERIOD_RELEASE_SHAPE state
+        (isEyeErrorRel & trialResponseState == -114))); % RELEASE_SHAPE_DIMMED
+isLateSaccadeRelAll = isEyeErrorRel & (trialResponseState == -118 | trialResponseState == -114);
+
+isEyeErrorHold = strcmp(trialResults, 'hold-shape-on-eye-error');
+assert(sum(isEyeErrorHold) == sum((isEyeErrorHold & trialResponseState == -108) | ... % ARRAY_ON state
+        (isEyeErrorHold & trialResponseState == -110) | ... % TARGET_DIMMED state
+        (isEyeErrorHold & trialResponseState == -112) | ... % WAITING_FOR_RESPONSE state
+        (isEyeErrorHold & trialResponseState == -113))); % PAST_RESPONSE_PERIOD
+isEarlySaccadeHoldAll = isEyeErrorHold & trialResponseState == -104;
+
+% only process these errors for now
+isProcessedError = isEarlyReleaseHoldAll | isLateReleaseRelAll | isLateSaccadeRelAll | isEarlySaccadeHoldAll;
+
+% get new indices
+temp = zeros(size(isProcessedError));
+temp(isEarlyReleaseHoldAll | isEarlySaccadeHoldAll) = 1;
+temp(isLateReleaseRelAll | isLateSaccadeRelAll) = 2;
+temp(temp == 0) = [];
+isErrorEarlyResponseHold = temp == 1;
+isErrorLateResponseRel = temp == 2;
+clear temp;
+fprintf('Found %d early response errors (release and eye) on hold trials.\n', sum(isErrorEarlyResponseHold));
+fprintf('Found %d late response errors (release and eye) on release trials.\n', sum(isErrorLateResponseRel));
+
+% int EYE_ERROR = 1; # event 9 to port 1
+% int RELEASE_ERROR_PRE_ARRAY_ON = 2; # event 10 to port 1
+% int RELEASE_ERROR_ARRAY_ON = 3; # event 9,10 to port 1
+% int RELEASE_ERROR_ARRAY_ON_AFTER_DCHANGE = 4; # event 11 to port 1
+% int RELEASE_ERROR_JUST_EARLY = 5; # event 9,11 to port 1
+% int RELEASE_ERROR_LATE = 6; # event 10,11 to port 1
+eventTol = 0.001;
+errorTimesAll = sort([D.events{9}; D.events{10}; D.events{11}; D.events{12}]);
+toRemove = diff(errorTimesAll) < eventTol;
+toRemove = [false; toRemove];
+errorTimesAll(toRemove) = [];
+eventCode = zeros(size(errorTimesAll));
+for i = 1:numel(errorTimesAll)
+    if any(abs(D.events{9} - errorTimesAll(i)) < eventTol)
+        eventCode(i) = eventCode(i) + 1;
+    end
+    if any(abs(D.events{10} - errorTimesAll(i)) < eventTol)
+        eventCode(i) = eventCode(i) + 2;
+    end
+    if any(abs(D.events{11} - errorTimesAll(i)) < eventTol)
+        eventCode(i) = eventCode(i) + 4;
+    end
+    if any(abs(D.events{12} - errorTimesAll(i)) < eventTol)
+        eventCode(i) = eventCode(i) + 8;
+    end
+end
+assert(all(eventCode > 0))
+errorTimesAll(eventCode >= 8) = [];
+eventCode(eventCode >= 8) = [];
+assert(sum(~isCorrect) == numel(errorTimesAll));
+assert(sum(isEarlyReleaseHoldAll) == sum(eventCode == 3));
+assert(sum(isLateReleaseAll) == sum(eventCode == 6));
+errorTimesProcessed = errorTimesAll(isProcessedError(~isCorrect));
+
+trialStructsError = trialStructs(isProcessedError);
+arrayShapesError = arrayShapes(isProcessedError);
+cueLocError = cellfun(@(x) x.cueLoc, trialStructsError);
+cueTargetDelayDurError = cellfun(@(x) x.cueArrayDelayDuration, trialStructsError);
+
+%% get cue onsets corresponding to error trials only
+maxCueOnsetToErrorTime = 5; % seconds
+cueOnsetError = nan(numel(errorTimesProcessed), 1);
+for i = 1:numel(errorTimesProcessed)  
+    prevCueOnsetInd = find((errorTimesProcessed(i) - cueOnsetEvent < maxCueOnsetToErrorTime) & ...
+            (errorTimesProcessed(i) - cueOnsetEvent > 0), 1, 'last');
+    if ~isempty(prevCueOnsetInd)
+        cueOnsetError(i) = cueOnsetEvent(prevCueOnsetInd);
+    else
+        warning('Error event without a corresponding cue onset event: %d, %f', i, errorTimesProcessed(i));
+    end
+end
+
+%% remove trials that do not have an earlier lever press
+% [cueOnset,trialsToKeep] = removeHandStartedTrials(D, cueOnset, firstJuiceEvent);
+% firstJuiceEvent = firstJuiceEvent(trialsToKeep);
+% trialParamsAllCorrect = trialParamsAllCorrect(trialsToKeep,:);
+% fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), numel(trialsToKeep));
+% 
+% trialStructsCorrect = trialStructsCorrect(trialsToKeep);
+% arrayShapesCorrect = arrayShapesCorrect(trialsToKeep);
+
+%%
+isRelBalError = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesError);
+isHoldBalError = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesError);
+
+% isErrorRelTrialLog = cellfun(@(x,y) y(1) == 'R', trialStructsError, arrayShapesError);
+isErrorHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsError, arrayShapesError);
+assert(all(isErrorHoldTrialLog == isErrorEarlyResponseHold));
+
+%% get cue onset events corresponding to correct trials only
+cueOnsetErrorByLoc = cell(nLoc, 1);
+for i = 1:nLoc
+    cueOnsetErrorByLoc{i} = cueOnsetError(cueLocError == i);
+end    
+
+%% get array onsets corresponding to correct trials only
+maxArrayOnsetToJuiceTime = 2.5; % seconds
+arrayOnsetError = nan(numel(errorTimesProcessed), 1);
+allArrayOnsetEvents = [arrayOnsetHoldEvent; arrayOnsetReleaseEvent];
+for i = 1:numel(errorTimesProcessed) 
+    prevArrayOnsetInd = find((errorTimesProcessed(i) - allArrayOnsetEvents < maxArrayOnsetToJuiceTime) & ...
+            (errorTimesProcessed(i) - allArrayOnsetEvents > 0), 1, 'last');
+    if ~isempty(prevArrayOnsetInd)
+        arrayOnsetError(i) = allArrayOnsetEvents(prevArrayOnsetInd);
+    else
+        warning('Error event without a corresponding array onset event: %d, %f', i, errorTimesProcessed(i));
+    end
+end
+isHoldTrialError = isErrorHoldTrialLog;
+
+% arrayOnsetRel = arrayOnset(~isHoldTrial);
+% arrayOnsetHold = arrayOnset(isHoldTrial);
+
+arrayOnsetRelBalError = arrayOnsetError(~isHoldTrialError & isRelBalError);
+arrayOnsetHoldBalError = arrayOnsetError(isHoldTrialError & isHoldBalError);
+
+arrayOnsetErrorByLoc = cell(nLoc, 1);
+% arrayOnsetRelByLoc = cell(nLoc, 1);
+% arrayOnsetHoldByLoc = cell(nLoc, 1);
+% arrayOnsetBalByLoc = cell(nLoc, 1);
+arrayOnsetRelBalErrorByLoc = cell(nLoc, 1);
+arrayOnsetHoldBalErrorByLoc = cell(nLoc, 1);
+% arrayOnsetHoldShortHoldBalByLoc = cell(nLoc, 1);
+% arrayOnsetHoldLongHoldBalByLoc = cell(nLoc, 1);
+
+for i = 1:nLoc
+    arrayOnsetErrorByLoc{i} = arrayOnsetError(cueLocError == i);
+%     arrayOnsetRelByLoc{i} = arrayOnset(~isHoldTrial & cueLoc == i);
+%     arrayOnsetHoldByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i);
+%     arrayOnsetBalByLoc{i} = arrayOnset(cueLoc == i & (isArrayRelBalanced | isArrayHoldBalanced));
+    arrayOnsetRelBalErrorByLoc{i} = arrayOnsetError(~isHoldTrialError & cueLocError == i & isRelBalError);
+    arrayOnsetHoldBalErrorByLoc{i} = arrayOnsetError(isHoldTrialError & cueLocError == i & isHoldBalError);
+%     arrayOnsetHoldShortHoldBalByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & targetDimDelayDur < holdDurMid & isArrayHoldBalanced);
+%     arrayOnsetHoldLongHoldBalByLoc{i} = arrayOnset(isHoldTrial & cueLoc == i & targetDimDelayDur >= holdDurMid & isArrayHoldBalanced);
+end
+
+%% split cue events and info by whether the trial is a hold trial or not
+cueLocRelBalError = cueLocError(~isHoldTrialError & isRelBalError);
+cueLocHoldBalError = cueLocError(isHoldTrialError & isHoldBalError);
+
+cueOnsetRelBalError = cueOnsetError(~isHoldTrialError & isRelBalError);
+cueOnsetHoldBalError = cueOnsetError(isHoldTrialError & isHoldBalError);
+
+cueOnsetRelBalErrorByLoc = cell(nLoc, 1);
+cueOnsetHoldBalErrorByLoc = cell(nLoc, 1);
+for i = 1:nLoc
+    cueOnsetRelBalErrorByLoc{i} = cueOnsetError(~isHoldTrialError & cueLocError == i & isRelBalError);
+    cueOnsetHoldBalErrorByLoc{i} = cueOnsetError(~isHoldTrialError & cueLocError == i & isHoldBalError);
+end 
+
+%% TODO fixation and lever times and RT for errors
+
+
 %%
 usefulEvents = var2struct(...
         cueOnset, ...
@@ -250,6 +429,18 @@ usefulEvents = var2struct(...
         cueLoc, cueLocHoldBal, cueLocRelBal, ...
         cueTargetDelayDur, targetDimDelayDur, rt, ...
         fixationAndLeverTimes, firstJuiceEvent, targetDimMatch, ...
-        isHoldTrial, isRelBal, isHoldBal);
+        isHoldTrial, isRelBal, isHoldBal, ...
+        cueOnsetError, ...
+        cueOnsetErrorByLoc, ...
+        cueOnsetRelBalError, cueOnsetHoldBalError, ...
+        cueOnsetRelBalErrorByLoc, cueOnsetHoldBalErrorByLoc, ...
+        arrayOnsetError, ...
+        arrayOnsetErrorByLoc, ...
+        arrayOnsetRelBalError, arrayOnsetHoldBalError, ...
+        arrayOnsetRelBalErrorByLoc, arrayOnsetHoldBalErrorByLoc, ...
+        cueLocError, cueLocHoldBalError, cueLocRelBalError, ...
+        cueTargetDelayDurError, ...
+        isHoldTrialError, isRelBalError, isHoldBalError, ...
+        isErrorEarlyResponseHold, isErrorLateResponseRel);
 
 
