@@ -1,4 +1,4 @@
-function [avgRateInWin,sdRateInWin,spikeRateTrial] = computeAvgRateInWin(spikeTimes, win)
+function [avgRateInWin,sdRateInWin,spikeRateTrial,spikeCountTrial] = computeAvgRateInWin(spikeTimes, win)
 % compute the average firing rate in the window
 
 % compute the average firing rate in the window specified by computing the
@@ -19,15 +19,15 @@ if win(2) <= win(1)
 end
 
 nTrials = numel(spikeTimes);
-nSpikesInWinTrial = nan(nTrials,1);
+spikeCountTrial = nan(nTrials,1);
 for j = 1:nTrials
     %if ~isempty(spikeTimes(j).times)
         nSpikesInWin = sum(win(1) <= spikeTimes(j).times & ...
                 spikeTimes(j).times <= win(2));
-        nSpikesInWinTrial(j) = nSpikesInWin;
+        spikeCountTrial(j) = nSpikesInWin;
     %end
 end
 
-spikeRateTrial = nSpikesInWinTrial / (win(2)-win(1));
+spikeRateTrial = spikeCountTrial / (win(2)-win(1));
 avgRateInWin = mean(spikeRateTrial);
 sdRateInWin = std(spikeRateTrial);

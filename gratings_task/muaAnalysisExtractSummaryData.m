@@ -30,6 +30,7 @@ diffTargetDimLatencySplitThirdsRT = nan(nUnitsApprox, 1);
 rtFiringRateStruct = struct();
 
 nLoc = 4;
+isLocUsed = nan(nLoc, 1);
 arrayOnsetRelBalSpikeTimesByLoc = cell(nLoc, 1);
 arrayOnsetHoldBalSpikeTimesByLoc = cell(nLoc, 1);
 targetDimBalSpikeTimesByLoc = cell(nLoc, 1);
@@ -137,6 +138,11 @@ for j = 1:nUnits
             end
 
             nLocUsed = sum(ES.isLocUsed);
+            if unitCount == 1
+                isLocUsed = ES.isLocUsed;
+            else
+                assert(all(isLocUsed == ES.isLocUsed));
+            end
 
             % significance test using rank sum test. correct for multiple
             % comparisons by comparing p < statAlpha / nLocUsed
@@ -705,17 +711,37 @@ export_fig(plotFileName, '-nocrop');
 
 %% compute single trial population latency by combining spikes across recordings on a probe
 % correlate population latency with RT
-rtRelBalByLoc = cell(nLoc, 1);
-rtHoldBalByLoc = cell(nLoc, 1);
-for k = 1:nLoc
-    rtRelBalByLoc{k} = ES.UE.rt(ES.UE.cueLoc == k & ES.UE.isRelBal);
-    rtHoldBalByLoc{k} = ES.UE.rt(ES.UE.cueLoc == k & ES.UE.isHoldBal);
-end
-plotFileName = sprintf('%s/%s-sessionInd%d-rtVsArrayOnsetRelLatency-v%d.png', outputDir, sessionName, sessionInd, v);
-plotRTLatencyCorrelation(ES.arrayOnsetRelBal, ES.isLocUsed, rtRelBalByLoc, arrayOnsetRelBalSpikeTimesByLoc, inRFLocs, plotFileName);
-plotFileName = sprintf('%s/%s-sessionInd%d-rtVsTargetDimLatency-v%d.png', outputDir, sessionName, sessionInd, v);
-plotRTLatencyCorrelation(ES.targetDimBal, ES.isLocUsed, rtHoldBalByLoc, targetDimBalSpikeTimesByLoc, inRFLocs, plotFileName);
+% rtRelBalByLoc = cell(nLoc, 1);
+% rtHoldBalByLoc = cell(nLoc, 1);
+% for k = 1:nLoc
+%     rtRelBalByLoc{k} = ES.UE.rt(ES.UE.cueLoc == k & ES.UE.isRelBal);
+%     rtHoldBalByLoc{k} = ES.UE.rt(ES.UE.cueLoc == k & ES.UE.isHoldBal);
+% end
+% plotFileName = sprintf('%s/%s-sessionInd%d-rtVsArrayOnsetRelLatency-v%d.png', outputDir, sessionName, sessionInd, v);
+% plotRTLatencyCorrelation(ES.arrayOnsetRelBal, ES.isLocUsed, rtRelBalByLoc, arrayOnsetRelBalSpikeTimesByLoc, inRFLocs, plotFileName);
+% plotFileName = sprintf('%s/%s-sessionInd%d-rtVsTargetDimLatency-v%d.png', outputDir, sessionName, sessionInd, v);
+% plotRTLatencyCorrelation(ES.targetDimBal, ES.isLocUsed, rtHoldBalByLoc, targetDimBalSpikeTimesByLoc, inRFLocs, plotFileName);
 
+%% compute spike count correlations between pairs ("noise correlations")
+% TODO control for rate differences
+cueTargetDelayNoiseCorr = nan(unitCount, unitCount, nLoc);
+arrayResponseHoldLateNoiseCorr = nan(unitCount, unitCount, nLoc);
+targetDimDelayNoiseCorr = nan(unitCount, unitCount, nLoc);
+for i = 1:unitCount
+    for j = (i+1):unitCount
+        for k = 1:nLoc
+            if isLocUsed(k)
+                cueTargetDelayNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.cueTargetDelay(i).trialCountByLoc{k}, ...
+                        averageFiringRatesByCount.cueTargetDelay(j).trialCountByLoc{k});
+                arrayResponseHoldLateNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.arrayResponseHoldLateBal(i).trialCountByLoc{k}, ...
+                        averageFiringRatesByCount.arrayResponseHoldLateBal(j).trialCountByLoc{k});
+                targetDimDelayNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.targetDimDelayBal(i).trialCountByLoc{k}, ...
+                        averageFiringRatesByCount.targetDimDelayBal(j).trialCountByLoc{k});
+            end
+        end
+    end
+end
+    
 %% correlate target dim delay activity (rank trial within unit) with rt (rank trial)
 % not enough variance within target dim delay activity across trials
 % targetDimDelayHoldInRFRankAll = [];
@@ -767,4 +793,7 @@ save(saveFileName, ...
         'averageFiringRatesBySpdf', ...
         'averageFiringRatesByCount', ...
         'inRFLocs', ...
-        'exRFLocs');
+        'exRFLocs', ...
+        'cueTargetDelayNoiseCorr', ...
+        'arrayResponseHoldLateNoiseCorr', ...
+        'targetDimDelayNoiseCorr');

@@ -52,6 +52,12 @@ averageFiringRatesByCount = struct();
 inRFLocs = nan(nUnitsApprox, 1);
 exRFLocs = nan(nUnitsApprox, 1);
 
+% consider sparse matrix instead
+nLoc = 4;
+cueTargetDelayNoiseCorr = nan(nUnitsApprox, nUnitsApprox, nLoc);
+arrayResponseHoldLateNoiseCorr = nan(nUnitsApprox, nUnitsApprox, nLoc);
+targetDimDelayNoiseCorr = nan(nUnitsApprox, nUnitsApprox, nLoc);
+
 unitCount = 0;
 % should also be running a lot of shuffle tests given the number of trials
 
@@ -143,7 +149,9 @@ for i = 1:nSessions
     inRFLocs(currentUnitInds) = S.inRFLocs;
     exRFLocs(currentUnitInds) = S.exRFLocs;
     
-    
+    cueTargetDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = S.cueTargetDelayNoiseCorr;
+    arrayResponseHoldLateNoiseCorr(currentUnitInds,currentUnitInds,:) = S.arrayResponseHoldLateNoiseCorr;
+    targetDimDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = S.targetDimDelayNoiseCorr;
 end
 clear S;
 
@@ -609,7 +617,7 @@ export_fig(plotFileName, '-nocrop');
 % delay and TD delay, using partial determination analysis, which removes
 % the correlation between the two. 
 
-%% 
+%% population correlation of RT vs firing rates in delay periods
 % median/third split may be more appropriate than a regression since 
 % firing rates and the correlation of firing rate and RT may be more
 % stepwise? there may also be a natural split, e.g. zero vs nonzero firing
@@ -835,8 +843,6 @@ plotFileName = sprintf('%s/allSessions-targeDimResponseFanoFactorDiff-v%d.png', 
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-
-
 %% compare InRF vs ExRF array response latency
 maxLatency = 0.125;
 minLatency = 0.025;
@@ -943,7 +949,7 @@ ylabel('Array Hold Response Latency InRF-ExRF (s)');
 plotFileName = sprintf('%s/allSessions-cueTargetDelayFiringDiffVsArrayResponseHoldLatencyDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
-    
+
 %% does attention-related difference in delay firing correlate with attention-related difference in mean array response
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
 nGoodUnits = sum(goodUnits);
@@ -977,7 +983,7 @@ axis equal;
 plotFileName = sprintf('%s/allSessions-cueTargetDelayFiringDiffVsArrayResponseHoldFiringDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
-    
+
 %% does attention-related reduction in latency of array response correlate with attention-related difference in array response
 maxLatency = 0.125;
 goodUnits = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
