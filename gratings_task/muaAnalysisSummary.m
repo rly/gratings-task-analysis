@@ -681,144 +681,147 @@ plotFileName = sprintf('%s/allSessions-rtVsFiringRateCorr-v%d.png', summaryDataD
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% mean cue target delay InRF > ExRF
+%% cue response mean firing rate InRF vs ExRF -- sanity check
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
-nGoodUnits = sum(goodUnits);
-% unboxing
-cueTargetDelay = averageFiringRatesBySpdf.cueTargetDelay(goodUnits);
-inRFLocsGoodUnits = inRFLocs(goodUnits);
-exRFLocsGoodUnits = exRFLocs(goodUnits);
-cueTargetDelayFiringInRF = nan(nGoodUnits, 1);
-cueTargetDelayFiringExRF = nan(nGoodUnits, 1);
-for i = 1:nGoodUnits
-    cueTargetDelayFiringInRF(i) = cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
-    cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
-end
-cueTargetDelayFiringDiff = cueTargetDelayFiringInRF - cueTargetDelayFiringExRF;
+[~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.cueResponse(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Firing Rate InRF (Hz)');
+ylabel(ax1, 'Firing Rate ExRF (Hz)');
+xlabel(ax2, 'Firing Rate InRF - ExRF (Hz)');
+xlabel(ax3, 'Firing Rate InRF - ExRF (Hz)');
 
-fprintf('Mean cue-target delay activity InRF: %0.3f Hz\n', mean(cueTargetDelayFiringInRF));
-fprintf('Mean cue-target delay activity ExRF: %0.3f Hz\n', mean(cueTargetDelayFiringExRF));
-
-goodUnitsDPul = isInDPulvinar(goodUnits);
-goodUnitsVPul = isInVPulvinar(goodUnits);
-
-frBounds = [0 max([max(cueTargetDelayFiringInRF) max(cueTargetDelayFiringExRF)])];
-maxAbsDiffFR = max(abs(cueTargetDelayFiringDiff));
-
-binStep = 1;
-histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
-histBinEdges = histXBounds(1):binStep:histXBounds(2);
-
-figure_tr_inch(10, 5);
-subaxis(1, 2, 1);
-hold on;
-plot(cueTargetDelayFiringInRF, cueTargetDelayFiringExRF, '.', 'MarkerSize', 20);
-h1 = plot(cueTargetDelayFiringInRF(goodUnitsDPul), cueTargetDelayFiringExRF(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(cueTargetDelayFiringInRF(goodUnitsVPul), cueTargetDelayFiringExRF(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
-plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
-axis equal;
-xlim(frBounds); 
-ylim(frBounds);
-xlabel('Mean Cue-Target Delay Firing InRF (Hz)');
-ylabel('Mean Cue-Target Delay Firing ExRF (Hz)');
-box off;
-
-subaxis(1, 2, 2); 
-hold on;
-histH = histogram(cueTargetDelayFiringDiff, histBinEdges);
-histH.FaceColor = cols(4,:);
-origYLim = ylim();
-plot([0 0], origYLim, 'k', 'LineWidth', 2); 
-xlim(histXBounds);
-ylim(origYLim);
-xlabel('Cue-Target Delay Firing InRF - ExRF (Hz)');
-ylabel('Number of Units');
-box off;
-
-meanCueTargetDelayFiringDiff = mean(cueTargetDelayFiringDiff);
-medianCueTargetDelayFiringDiff = median(cueTargetDelayFiringDiff);
-p = signrank(cueTargetDelayFiringDiff);
-fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
-        meanCueTargetDelayFiringDiff, medianCueTargetDelayFiringDiff, p, nGoodUnits);
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayDiff-v%d.png', summaryDataDir, v);
+plotFileName = sprintf('%s/allSessions-cueResponseMeanFRDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% Fano Factor cue target delay InRF ? ExRF
-% note that this uses spike counts not spdf rates
-% TODO match firing rates (see Mitchell et al 2007)
+%% cue target delay mean firing rate InRF vs ExRF
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
-nGoodUnits = sum(goodUnits);
-% unboxing
-cueTargetDelay = averageFiringRatesByCount.cueTargetDelay(goodUnits);
-inRFLocsGoodUnits = inRFLocs(goodUnits);
-exRFLocsGoodUnits = exRFLocs(goodUnits);
-cueTargetDelayFanoFactorInRF = nan(nGoodUnits, 1);
-cueTargetDelayFanoFactorExRF = nan(nGoodUnits, 1);
-for i = 1:nGoodUnits
-    cueTargetDelayFanoFactorInRF(i) = computeFanoFactor(cueTargetDelay(i), inRFLocsGoodUnits(i));
-    cueTargetDelayFanoFactorExRF(i) = computeFanoFactor(cueTargetDelay(i), exRFLocsGoodUnits(i));
-end
+[~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Firing Rate InRF (Hz)');
+ylabel(ax1, 'Firing Rate ExRF (Hz)');
+xlabel(ax2, 'Firing Rate InRF - ExRF (Hz)');
+xlabel(ax3, 'Firing Rate InRF - ExRF (Hz)');
 
-maxFanoFactor = 5;
-toRemove = cueTargetDelayFanoFactorInRF > maxFanoFactor | cueTargetDelayFanoFactorExRF > maxFanoFactor;
-cueTargetDelayFanoFactorInRF(toRemove) = [];
-cueTargetDelayFanoFactorExRF(toRemove) = [];
-goodUnits(toRemove) = false;
-fprintf('Removed %d units because of outlier Fano factor (> %0.1f)\n', sum(toRemove), maxFanoFactor);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayMeanFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
-cueTargetDelayFanoFactorDiff = cueTargetDelayFanoFactorInRF - cueTargetDelayFanoFactorExRF;
-
-fprintf('Mean cue-target delay Fano Factor InRF: %0.3f Hz\n', mean(cueTargetDelayFanoFactorInRF));
-fprintf('Mean cue-target delay Fano Factor ExRF: %0.3f Hz\n', mean(cueTargetDelayFanoFactorExRF));
-
-goodUnitsDPul = isInDPulvinar(goodUnits);
-goodUnitsVPul = isInVPulvinar(goodUnits);
-
-frBounds = [0 max([max(cueTargetDelayFanoFactorInRF) max(cueTargetDelayFanoFactorExRF)])];
-maxAbsDiffFR = max(abs(cueTargetDelayFanoFactorDiff));
-
-binStep = 0.25;
-histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
-histBinEdges = histXBounds(1):binStep:histXBounds(2);
-
-figure_tr_inch(10, 5);
-subaxis(1, 2, 1);
-hold on;
-plot(cueTargetDelayFanoFactorInRF, cueTargetDelayFanoFactorExRF, '.', 'MarkerSize', 20);
-h1 = plot(cueTargetDelayFanoFactorInRF(goodUnitsDPul), cueTargetDelayFanoFactorExRF(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(cueTargetDelayFanoFactorInRF(goodUnitsVPul), cueTargetDelayFanoFactorExRF(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
-plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
-axis equal;
-xlim(frBounds); 
-ylim(frBounds);
-xlabel('Cue-Target Delay Fano Factor InRF (Hz)');
-ylabel('Cue-Target Delay Fano Factor ExRF (Hz)');
-box off;
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
-
-subaxis(1, 2, 2); 
-hold on;
-histH = histogram(cueTargetDelayFanoFactorDiff, histBinEdges);
-histH.FaceColor = cols(4,:);
-origYLim = ylim();
-plot([0 0], origYLim, 'k', 'LineWidth', 2); 
-xlim(histXBounds);
-ylim(origYLim);
-xlabel('Cue-Target Delay Fano Factor InRF - ExRF (Hz)');
-ylabel('Number of Units');
-box off;
-
-meanCueTargetDelayFanoFactorDiff = mean(cueTargetDelayFanoFactorDiff);
-medianCueTargetDelayFanoFactorDiff = median(cueTargetDelayFanoFactorDiff);
-p = signrank(cueTargetDelayFanoFactorDiff);
-fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
-        meanCueTargetDelayFanoFactorDiff, medianCueTargetDelayFanoFactorDiff, p, nGoodUnits);
+%% cue target delay fano factor InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Fano Factor InRF');
+ylabel(ax1, 'Fano Factor ExRF');
+xlabel(ax2, 'Fano Factor InRF - ExRF');
+xlabel(ax3, 'Fano Factor InRF - ExRF');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayFanoFactorDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%% array release response mean firing rate InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.arrayResponseRelBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Firing Rate InRF (Hz)');
+ylabel(ax1, 'Firing Rate ExRF (Hz)');
+xlabel(ax2, 'Firing Rate InRF - ExRF (Hz)');
+xlabel(ax3, 'Firing Rate InRF - ExRF (Hz)');
+
+plotFileName = sprintf('%s/allSessions-arrayResponseRelMeanFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% array hold response mean firing rate InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Firing Rate InRF (Hz)');
+ylabel(ax1, 'Firing Rate ExRF (Hz)');
+xlabel(ax2, 'Firing Rate InRF - ExRF (Hz)');
+xlabel(ax3, 'Firing Rate InRF - ExRF (Hz)');
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldMeanFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% array hold response fano factor InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Fano Factor InRF');
+ylabel(ax1, 'Fano Factor ExRF');
+xlabel(ax2, 'Fano Factor InRF - ExRF');
+xlabel(ax3, 'Fano Factor InRF - ExRF');
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldFanoFactorDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% target-dim delay mean firing rate InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.targetDimDelayBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Firing Rate InRF (Hz)');
+ylabel(ax1, 'Firing Rate ExRF (Hz)');
+xlabel(ax2, 'Firing Rate InRF - ExRF (Hz)');
+xlabel(ax3, 'Firing Rate InRF - ExRF (Hz)');
+
+plotFileName = sprintf('%s/allSessions-targetDimDelayMeanFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% target-dim delay fano factor InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.targetDimDelayBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Fano Factor InRF');
+ylabel(ax1, 'Fano Factor ExRF');
+xlabel(ax2, 'Fano Factor InRF - ExRF');
+xlabel(ax3, 'Fano Factor InRF - ExRF');
+
+plotFileName = sprintf('%s/allSessions-targeDimDelayFanoFactorDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% target-dim response mean firing rate InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.targetDimResponseBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Firing Rate InRF (Hz)');
+ylabel(ax1, 'Firing Rate ExRF (Hz)');
+xlabel(ax2, 'Firing Rate InRF - ExRF (Hz)');
+xlabel(ax3, 'Firing Rate InRF - ExRF (Hz)');
+
+plotFileName = sprintf('%s/allSessions-targetDimResponseMeanFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% target-dim response fano factor InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.targetDimResponseBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Fano Factor InRF');
+ylabel(ax1, 'Fano Factor ExRF');
+xlabel(ax2, 'Fano Factor InRF - ExRF');
+xlabel(ax3, 'Fano Factor InRF - ExRF');
+
+plotFileName = sprintf('%s/allSessions-targeDimResponseFanoFactorDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
 
 %% compare InRF vs ExRF array response latency
 maxLatency = 0.125;
@@ -891,146 +894,6 @@ fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %
         meanArrayOnsetHoldLatencyDiff, medianArrayOnsetHoldLatencyDiff, p, sum(goodUnits));
 
 plotFileName = sprintf('%s/allSessions-arrayResponseHoldLatencyDiff-v%d.png', summaryDataDir, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% mean array hold response InRF > ExRF
-goodUnits = isInPulvinar & isSignificantCueResponseInc;
-nGoodUnits = sum(goodUnits);
-% unboxing
-arrayResponseHold = averageFiringRatesBySpdf.arrayResponseHoldBal(goodUnits);
-inRFLocsGoodUnits = inRFLocs(goodUnits);
-exRFLocsGoodUnits = exRFLocs(goodUnits);
-arrayResponseHoldMeanFiringInRF = nan(nGoodUnits, 1);
-arrayResponseHoldMeanFiringExRF = nan(nGoodUnits, 1);
-for i = 1:nGoodUnits
-    arrayResponseHoldMeanFiringInRF(i) = arrayResponseHold(i).byLoc(inRFLocsGoodUnits(i));
-    arrayResponseHoldMeanFiringExRF(i) = arrayResponseHold(i).byLoc(exRFLocsGoodUnits(i));
-end
-arrayResponseHoldMeanFiringDiff = arrayResponseHoldMeanFiringInRF - arrayResponseHoldMeanFiringExRF;
-
-fprintf('Mean array response InRF: %0.3f Hz\n', mean(arrayResponseHoldMeanFiringInRF));
-fprintf('Mean array response ExRF: %0.3f Hz\n', mean(arrayResponseHoldMeanFiringExRF));
-
-goodUnitsDPul = isInDPulvinar(goodUnits);
-goodUnitsVPul = isInVPulvinar(goodUnits);
-
-frBounds = [0 max([max(arrayResponseHoldMeanFiringInRF) max(arrayResponseHoldMeanFiringExRF)])];
-maxAbsDiffFR = max(abs(arrayResponseHoldMeanFiringDiff));
-
-binStep = 1;
-histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
-histBinEdges = histXBounds(1):binStep:histXBounds(2);
-
-figure_tr_inch(10, 5);
-subaxis(1, 2, 1);
-hold on;
-plot(arrayResponseHoldMeanFiringInRF, arrayResponseHoldMeanFiringExRF, '.', 'MarkerSize', 20);
-h1 = plot(arrayResponseHoldMeanFiringInRF(goodUnitsDPul), arrayResponseHoldMeanFiringExRF(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(arrayResponseHoldMeanFiringInRF(goodUnitsVPul), arrayResponseHoldMeanFiringExRF(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
-plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
-axis equal;
-xlim(frBounds); 
-ylim(frBounds);
-xlabel('Mean Array Hold Response InRF (Hz)');
-ylabel('Mean Array Hold Response ExRF (Hz)');
-box off;
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
-
-subaxis(1, 2, 2); 
-hold on;
-histH = histogram(arrayResponseHoldMeanFiringDiff, histBinEdges);
-histH.FaceColor = cols(4,:);
-origYLim = ylim();
-plot([0 0], origYLim, 'k', 'LineWidth', 2); 
-xlim(histXBounds);
-ylim(origYLim);
-xlabel('Array Hold Response InRF - ExRF (Hz)');
-ylabel('Number of Units');
-box off;
-
-meanArrayResponseHoldMeanFiringDiff = mean(arrayResponseHoldMeanFiringDiff);
-medianArrayResponseHoldMeanFiringDiff = median(arrayResponseHoldMeanFiringDiff);
-p = signrank(arrayResponseHoldMeanFiringDiff);
-fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
-        meanArrayResponseHoldMeanFiringDiff, medianArrayResponseHoldMeanFiringDiff, p, nGoodUnits);
-
-plotFileName = sprintf('%s/allSessions-arrayResponseHoldDiff-v%d.png', summaryDataDir, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% Fano factor array response InRF < ExRF
-% note that this uses spike counts not spdf rates
-% TODO match firing rates (see Mitchell et al 2007)
-goodUnits = isInPulvinar & isSignificantCueResponseInc;
-nGoodUnits = sum(goodUnits);
-% unboxing
-arrayResponseHold = averageFiringRatesByCount.arrayResponseHoldBal(goodUnits);
-inRFLocsGoodUnits = inRFLocs(goodUnits);
-exRFLocsGoodUnits = exRFLocs(goodUnits);
-arrayResponseHoldFanoFactorInRF = nan(nGoodUnits, 1);
-arrayResponseHoldFanoFactorExRF = nan(nGoodUnits, 1);
-for i = 1:nGoodUnits
-    arrayResponseHoldFanoFactorInRF(i) = computeFanoFactor(arrayResponseHold(i), inRFLocsGoodUnits(i));
-    arrayResponseHoldFanoFactorExRF(i) = computeFanoFactor(arrayResponseHold(i), exRFLocsGoodUnits(i));
-end
-
-maxFanoFactor = 5;
-toRemove = arrayResponseHoldFanoFactorInRF > maxFanoFactor | arrayResponseHoldFanoFactorExRF > maxFanoFactor;
-arrayResponseHoldFanoFactorInRF(toRemove) = [];
-arrayResponseHoldFanoFactorExRF(toRemove) = [];
-goodUnits(toRemove) = 0;
-fprintf('Removed %d units because of outlier Fano factor (> %0.1f)\n', sum(toRemove), maxFanoFactor);
-
-arrayResponseHoldFanoFactorDiff = arrayResponseHoldFanoFactorInRF - arrayResponseHoldFanoFactorExRF;
-
-fprintf('Fano Factor array response InRF: %0.3f Hz\n', mean(arrayResponseHoldFanoFactorInRF));
-fprintf('Fano Factor array response ExRF: %0.3f Hz\n', mean(arrayResponseHoldFanoFactorExRF));
-
-goodUnitsDPul = isInDPulvinar(goodUnits);
-goodUnitsVPul = isInVPulvinar(goodUnits);
-
-frBounds = [0 max([max(arrayResponseHoldFanoFactorInRF) max(arrayResponseHoldFanoFactorExRF)])];
-maxAbsDiffFR = max(abs(arrayResponseHoldFanoFactorDiff));
-
-binStep = 0.25;
-histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
-histBinEdges = histXBounds(1):binStep:histXBounds(2);
-
-figure_tr_inch(10, 5);
-subaxis(1, 2, 1);
-hold on;
-plot(arrayResponseHoldFanoFactorInRF, arrayResponseHoldFanoFactorExRF, '.', 'MarkerSize', 20);
-h1 = plot(arrayResponseHoldFanoFactorInRF(goodUnitsDPul), arrayResponseHoldFanoFactorExRF(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(arrayResponseHoldFanoFactorInRF(goodUnitsVPul), arrayResponseHoldFanoFactorExRF(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
-plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
-axis equal;
-xlim(frBounds); 
-ylim(frBounds);
-xlabel('Array Hold Fano Factor InRF (Hz)');
-ylabel('Array Hold Fano Factor ExRF (Hz)');
-box off;
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
-
-subaxis(1, 2, 2); 
-hold on;
-histH = histogram(arrayResponseHoldFanoFactorDiff, histBinEdges);
-histH.FaceColor = cols(4,:);
-origYLim = ylim();
-plot([0 0], origYLim, 'k', 'LineWidth', 2); 
-xlim(histXBounds);
-ylim(origYLim);
-xlabel('Array Hold Fano Factor InRF - ExRF (Hz)');
-ylabel('Number of Units');
-box off;
-
-meanArrayResponseHoldFanoFactorDiff = mean(arrayResponseHoldFanoFactorDiff);
-medianArrayResponseHoldFanoFactorDiff = median(arrayResponseHoldFanoFactorDiff);
-p = signrank(arrayResponseHoldFanoFactorDiff);
-fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
-        meanArrayResponseHoldFanoFactorDiff, medianArrayResponseHoldFanoFactorDiff, p, nGoodUnits);
-
-plotFileName = sprintf('%s/allSessions-arrayResponseHoldFanoFactorDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
