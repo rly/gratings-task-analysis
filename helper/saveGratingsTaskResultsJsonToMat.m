@@ -28,33 +28,33 @@ end
 clear i fileName trialStructsBlock; 
 
 % flow:
-% pre-array-on-early-release: trial_state == PRE_CUE || 
-%               trial_state == CUE_ON || 
-% 				trial_state == CUE_ARRAY_INTERVAL
+% pre-array-on-early-release: trial_state == PRE_CUE (-105) || 
+%               trial_state == CUE_ON (-106) || 
+% 				trial_state == CUE_ARRAY_INTERVAL (-107)
 %
-% array-on-early-release: trial_state == ARRAY_ON
+% array-on-early-release: trial_state == ARRAY_ON (-108)
 % 
-% just-early-release: trial_state == TARGET_DIMMED || 
-% 				trial_state == ARRAY_ON_RELEASE_SHAPE
+% just-early-release: trial_state == TARGET_DIMMED (-110) || 
+% 				trial_state == ARRAY_ON_RELEASE_SHAPE (-109)
 %
-% correct-response: trial_state == WAITING_FOR_RESPONSE || 
-% 				trial_state == WAITING_FOR_RESPONSE_RELEASE_SHAPE
+% correct-response: trial_state == WAITING_FOR_RESPONSE (-112) || 
+% 				trial_state == WAITING_FOR_RESPONSE_RELEASE_SHAPE (-117)
 % 
-% late-response: trial_state == PAST_RESPONSE_PERIOD || 
-% 				trial_state == PAST_RESPONSE_PERIOD_RELEASE_SHAPE ||
-% 				trial_state == RELEASE_SHAPE_DIMMED
+% late-response: trial_state == PAST_RESPONSE_PERIOD (-113) || 
+% 				trial_state == PAST_RESPONSE_PERIOD_RELEASE_SHAPE (-118) ||
+% 				trial_state == RELEASE_SHAPE_DIMMED (-114)
 %
 % pre-array-eye-error: other eye error
 %
-% release-shape-on-eye-error: trial_state == ARRAY_ON_RELEASE_SHAPE ||
-% 					trial_state == WAITING_FOR_RESPONSE_RELEASE_SHAPE ||
-% 					trial_state == PAST_RESPONSE_PERIOD_RELEASE_SHAPE ||
-% 					trial_state == RELEASE_SHAPE_DIMMED
+% release-shape-on-eye-error: trial_state == ARRAY_ON_RELEASE_SHAPE (-109) ||
+% 					trial_state == WAITING_FOR_RESPONSE_RELEASE_SHAPE (-117) ||
+% 					trial_state == PAST_RESPONSE_PERIOD_RELEASE_SHAPE (-118) ||
+% 					trial_state == RELEASE_SHAPE_DIMMED (-114)
 %
-% hold-shape-on-eye-error: trial_state == ARRAY_ON || 
-% 					trial_state == TARGET_DIMMED ||
-% 					trial_state == WAITING_FOR_RESPONSE ||
-% 					trial_state == PAST_RESPONSE_PERIOD
+% hold-shape-on-eye-error: trial_state == ARRAY_ON (-108) || 
+% 					trial_state == TARGET_DIMMED (-110) ||
+% 					trial_state == WAITING_FOR_RESPONSE (-112) ||
+% 					trial_state == PAST_RESPONSE_PERIOD (-113)
 
 trialResults = cellfun(@(x) x.response.type, trialStructs, 'UniformOutput', false);
 nTrials = numel(trialResults);
