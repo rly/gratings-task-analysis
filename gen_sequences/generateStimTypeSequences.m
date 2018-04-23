@@ -41,7 +41,7 @@ for runIndex = 1:numRuns
     allSeqsFileName = sprintf('stimTypes_mode%d_nSeq%d_run%d.txt', mode, numSequencesPerRun, runIndex);
     fIDAllSeqs = fopen(allSeqsFileName, 'w');
     fprintf('Combining in file: %s\n', allSeqsFileName);
-    for seqIndex = 1:numSequencesPerRun
+    for seqIndex = startSeqIndex:endSeqIndex
         fileName = sprintf('stimTypes_mode%d_seq%d.txt', mode, seqIndex);
         fID = fopen(fileName, 'r');
         fwrite(fIDAllSeqs, fread(fID));
@@ -89,7 +89,7 @@ for runIndex = 1:numRuns
     allSeqsFileName = sprintf('stimTypes_mode%d_nSeq%d_run%d.txt', mode, numSequencesPerRun, runIndex);
     fIDAllSeqs = fopen(allSeqsFileName, 'w');
     fprintf('Combining in file: %s\n', allSeqsFileName);
-    for seqIndex = 1:numSequencesPerRun
+    for seqIndex = startSeqIndex:endSeqIndex
         fileName = sprintf('stimTypes_mode%d_seq%d.txt', mode, seqIndex);
         fID = fopen(fileName, 'r');
         fwrite(fIDAllSeqs, fread(fID));
