@@ -17,7 +17,7 @@ function muaAnalysisPlots(processedDataRootDir, dataDirRoot, muaDataDirRoot, rec
 % evt7 = target dim
 % evt8 = juice
 
-v = 11;
+v = 12;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');

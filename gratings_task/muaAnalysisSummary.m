@@ -1,6 +1,6 @@
 % function muaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
-v = 11;
+v = 12;
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
@@ -54,10 +54,11 @@ exRFLocs = nan(nUnitsApprox, 1);
 
 % consider sparse matrix instead
 nLoc = 4;
-cueTargetDelayNoiseCorr = nan(nUnitsApprox, nUnitsApprox, nLoc);
-arrayResponseHoldLateNoiseCorr = nan(nUnitsApprox, nUnitsApprox, nLoc);
-targetDimDelayNoiseCorr = nan(nUnitsApprox, nUnitsApprox, nLoc);
+cueTargetDelayNoiseCorrAll = cell(nSessions, 1);
+arrayResponseHoldLateNoiseCorrAll = cell(nSessions, 1);
+targetDimDelayNoiseCorrAll = cell(nSessions, 1);
 
+currentUnitIndsAll = cell(nSessions, 1);
 unitCount = 0;
 % should also be running a lot of shuffle tests given the number of trials
 
@@ -75,6 +76,7 @@ for i = 1:nSessions
     fprintf('Found %d units...\n', numel(S.unitNames));
     % no pre-allocation here
     currentUnitInds = (unitCount + 1):(unitCount + numel(S.unitNames));
+    currentUnitIndsAll{i} = currentUnitInds;
     unitCount = unitCount + numel(S.unitNames);
     
     unitNames(currentUnitInds) = S.unitNames;
@@ -149,11 +151,25 @@ for i = 1:nSessions
     inRFLocs(currentUnitInds) = S.inRFLocs;
     exRFLocs(currentUnitInds) = S.exRFLocs;
     
-    cueTargetDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = S.cueTargetDelayNoiseCorr;
-    arrayResponseHoldLateNoiseCorr(currentUnitInds,currentUnitInds,:) = S.arrayResponseHoldLateNoiseCorr;
-    targetDimDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = S.targetDimDelayNoiseCorr;
+    % consider sparse matrix
+    cueTargetDelayNoiseCorrAll{i} = S.cueTargetDelayNoiseCorr;
+    arrayResponseHoldLateNoiseCorrAll{i} = S.arrayResponseHoldLateNoiseCorr;
+    targetDimDelayNoiseCorrAll{i} = S.targetDimDelayNoiseCorr;
 end
 clear S;
+
+% initialize using exact unit count. otherwise lots of 0s
+cueTargetDelayNoiseCorr = nan(unitCount, unitCount, nLoc);
+arrayResponseHoldLateNoiseCorr = nan(unitCount, unitCount, nLoc);
+targetDimDelayNoiseCorr = nan(unitCount, unitCount, nLoc);
+
+for i = 1:nSessions
+    currentUnitInds = currentUnitIndsAll{i};
+    % consider sparse matrix
+    cueTargetDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = cueTargetDelayNoiseCorrAll{i};
+    arrayResponseHoldLateNoiseCorr(currentUnitInds,currentUnitInds,:) = arrayResponseHoldLateNoiseCorrAll{i};
+    targetDimDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = targetDimDelayNoiseCorrAll{i};
+end
 
 %% print session-wise presence of delay selectivity in MUA firing
 fprintf('--------------\n');
@@ -1119,6 +1135,23 @@ axis equal;
 plotFileName = sprintf('%s/allSessions-arrayResponseHoldFiringDiffVsTargetDimResponseFiringDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%% noise correlations
+goodUnits = isInDPulvinar & isSignificantCueResponseInc & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+c1 = squeeze(cueTargetDelayNoiseCorr(goodUnits,goodUnits,3));
+c2 = squeeze(cueTargetDelayNoiseCorr(goodUnits,goodUnits,1));
+c1 = c1(:);
+c2 = c2(:);
+c1(isnan(c1)) = [];
+c2(isnan(c2)) = [];
+mean(c1)
+mean(c2)
+std(c1)
+std(c2)
+[h,p] = ttest(c1-c2);
+fprintf('Mean diff = %0.03f, p = %0.05f, N pairs = %d\n', mean(c1-c2), p, numel(c1));
+figure;
+histogram(c1-c2); % like a perfect gaussian
 
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');

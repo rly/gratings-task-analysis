@@ -1,6 +1,6 @@
 function muaAnalysisExtractSummaryData(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
 
-v = 11;
+v = 12;
 tic;
 
 % for preallocation. make sure this is an underestimate or equal to actual
