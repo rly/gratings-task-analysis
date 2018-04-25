@@ -76,6 +76,7 @@ totalTimeOverall = sum(D.blockStopTimes(R.blockIndices) - D.blockStartTimes(R.bl
 minFiringRateOverall = 0.2;
 
 nUnits = numel(muaChannelsToLoad);
+isUnitOnChannel = false(nUnits, 1);
 fprintf('-------------------------------------------------------------\n');
 fprintf('Processing Session %s %s, Channels %d-%d\n', sessionName, areaName, muaChannelsToLoad([1 end]));
 fprintf('Processing %d units...\n', nUnits);
@@ -93,8 +94,6 @@ for j = 1:nUnits
 
         ES = load(saveFileName);
 
-        unitCount = unitCount + 1;
-
         if (any(ES.averageFiringRatesBySpdf.postEnterFixation.byLoc >= minFiringRate) || ...
                 any(ES.averageFiringRatesBySpdf.postEnterFixationLate.byLoc >= minFiringRate) || ...
                 any(ES.averageFiringRatesBySpdf.preCueBaseline.byLoc >= minFiringRate) || ...
@@ -106,7 +105,9 @@ for j = 1:nUnits
                 any(ES.averageFiringRatesBySpdf.targetDimResponseBal.byLoc >= minFiringRate) || ...
                 any(ES.averageFiringRatesBySpdf.preExitFixation.byLoc >= minFiringRate))
 
+            unitCount = unitCount + 1;
             unitNames{unitCount} = unitName;
+            isUnitOnChannel(j) = 1;
 
 %             if ismember(spikeStruct.channelID, R.pldChannels)
 %                 localization{unitCount} = 'PLd';
@@ -679,7 +680,8 @@ for j = 1:nUnits
                     averageFiringRatesByCount.(fn{k}) = [ES.averageFiringRatesByCount.(fn{k})]'; % no pre-allocation
                 end
             end
-
+        else
+            fprintf('Skipping %s due to min task-related firing rate requirement...\n', unitName);
         end
     else
         fprintf('Skipping %s due to min firing rate requirement...\n', unitName);
@@ -694,12 +696,12 @@ xlabel('Early pre-saccade slope');
 ylabel('Late pre-saccade slope');
 
 subaxis(1, 3, 2);
-bar(muaChannelsToLoad, earlyPreExitFixationSlope);
+bar(muaChannelsToLoad(isUnitOnChannel), earlyPreExitFixationSlope);
 xlabel('Early pre-saccade slope');
 ylim([-300 300]);
 
 subaxis(1, 3, 3);
-bar(muaChannelsToLoad, latePreExitFixationSlope);
+bar(muaChannelsToLoad(isUnitOnChannel), latePreExitFixationSlope);
 xlabel('Late pre-saccade slope');
 ylim([-300 300]);
 
@@ -794,4 +796,5 @@ save(saveFileName, ...
         'exRFLocs', ...
         'cueTargetDelayNoiseCorr', ...
         'arrayResponseHoldLateNoiseCorr', ...
-        'targetDimDelayNoiseCorr');
+        'targetDimDelayNoiseCorr', ...
+        'isUnitOnChannel');
