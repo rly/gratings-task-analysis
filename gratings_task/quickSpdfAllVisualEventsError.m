@@ -251,7 +251,7 @@ for i = 1:nLoc
     end
     legendCount = legendCount + 1;
     legendEntry{legendCount} = sprintf('{\\color[rgb]{%f,%f,%f}Correct N = %d}', ...
-            cols(i,:), numel(ES.arrayOnsetRelBalError.spikeTimesByLoc{i}));
+            cols(i,:), numel(ES.arrayOnsetRelBal.spikeTimesByLoc{i}));
     legendCount = legendCount + 1;
     legendEntry{legendCount} = sprintf('{\\color[rgb]{%f,%f,%f}Error N = %d}', ...
             cols(i,:), numel(ES.arrayOnsetRelBalError.spikeTimesByLoc{i}));
@@ -296,7 +296,7 @@ for i = 1:nLoc
     end
     legendCount = legendCount + 1;
     legendEntry{legendCount} = sprintf('{\\color[rgb]{%f,%f,%f}Correct N = %d}', ...
-            cols(i,:), numel(ES.arrayOnsetHoldBalError.spikeTimesByLoc{i}));
+            cols(i,:), numel(ES.arrayOnsetHoldBal.spikeTimesByLoc{i}));
     legendCount = legendCount + 1;
     legendEntry{legendCount} = sprintf('{\\color[rgb]{%f,%f,%f}Error N = %d}', ...
             cols(i,:), numel(ES.arrayOnsetHoldBalError.spikeTimesByLoc{i}));
