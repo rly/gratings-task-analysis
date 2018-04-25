@@ -1156,7 +1156,7 @@ histogram(c1-c2); % like a perfect gaussian
 %% per-condition baseline-corrected normalized mean
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
-subdivisions = {'suppCTDelay'}; %{'PULCueInc', 'PULCueDec', 'vPul', 'dPul'};
+subdivisions = {'dPul'};%{'PULCueInc', 'PULCueDec', 'vPul', 'dPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     yBounds = [-0.25 0.5];
@@ -1203,11 +1203,11 @@ for j = 1:numel(subdivisions)
     end
     
     quickSpdfAllEvents5InARowPopMeanRunner(subdivision, isInSubdivision, spdfInfo, ...
-            enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
+            cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
             yBounds, isShowLabels, summaryDataDir, v);
     
     quickImagePlotAllEvents5InARowRunner(subdivision, isInSubdivision, spdfInfo, ...
-            enterFixationT, cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
+            cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
             summaryDataDir, v);
 end
 

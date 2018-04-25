@@ -18,7 +18,7 @@ titleParams = {'Interpreter', 'None', 'FontWeight', 'bold'};
 title(titleText, 'FontSize', 14, titleParams{:});
 
 set(gca, 'box', 'off');
-set(gca, 'FontSize', 14);
+set(gca, 'FontSize', 16);
 set(gca, 'FontName', 'Calibri');
 set(gca, 'LineWidth', 2);
 
