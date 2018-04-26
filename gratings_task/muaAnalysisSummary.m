@@ -44,8 +44,8 @@ rtFiringRateStruct = struct();
 
 arrayHoldBalLatencyInRF = nan(nUnitsApprox, 1);
 arrayHoldBalLatencyExRF = nan(nUnitsApprox, 1);
-arrayResponseLatencyInRF = nan(nUnitsApprox, 1);
-arrayResponseLatencyExRF = nan(nUnitsApprox, 1);
+arrayRelBalLatencyInRF = nan(nUnitsApprox, 1);
+arrayRelBalLatencyExRF = nan(nUnitsApprox, 1);
 targetDimBalLatencyInRF = nan(nUnitsApprox, 1);
 targetDimBalLatencyExRF = nan(nUnitsApprox, 1);
 
@@ -131,6 +131,8 @@ for i = 1:nSessions
     
     arrayHoldBalLatencyInRF(currentUnitInds) = S.arrayHoldBalLatencyInRF;
     arrayHoldBalLatencyExRF(currentUnitInds) = S.arrayHoldBalLatencyExRF;
+    arrayRelBalLatencyInRF(currentUnitInds) = S.arrayRelBalLatencyInRF;
+    arrayRelBalLatencyExRF(currentUnitInds) = S.arrayRelBalLatencyExRF;
     targetDimBalLatencyInRF(currentUnitInds) = S.targetDimBalLatencyInRF;
     targetDimBalLatencyExRF(currentUnitInds) = S.targetDimBalLatencyExRF;
     
@@ -164,6 +166,7 @@ clear S;
 
 % initialize using exact unit count. otherwise lots of 0s
 cueTargetDelayNoiseCorr = nan(unitCount, unitCount, nLoc);
+arrayResponseHoldMidNoiseCorr = nan(unitCount, unitCount, nLoc);
 arrayResponseHoldLateNoiseCorr = nan(unitCount, unitCount, nLoc);
 targetDimDelayNoiseCorr = nan(unitCount, unitCount, nLoc);
 
@@ -171,6 +174,7 @@ for i = 1:nSessions
     currentUnitInds = currentUnitIndsAll{i};
     % consider sparse matrix
     cueTargetDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = cueTargetDelayNoiseCorrAll{i};
+    arrayResponseHoldMidNoiseCorr(currentUnitInds,currentUnitInds,:) = arrayResponseHoldMidNoiseCorrAll{i};
     arrayResponseHoldLateNoiseCorr(currentUnitInds,currentUnitInds,:) = arrayResponseHoldLateNoiseCorrAll{i};
     targetDimDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = targetDimDelayNoiseCorrAll{i};
 end
@@ -785,6 +789,20 @@ plotFileName = sprintf('%s/allSessions-arrayResponseHoldMeanFRDiff-v%d.png', sum
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% array hold response mid mean firing rate InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.arrayResponseHoldMidBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
+ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
+xlabel(ax2, 'Firing Rate Difference (Hz)');
+xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldMidMeanFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 %% array hold response fano factor InRF vs ExRF
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
@@ -796,6 +814,20 @@ xlabel(ax2, 'Fano Factor Difference');
 xlabel(ax3, 'Fano Factor Difference');
 
 plotFileName = sprintf('%s/allSessions-arrayResponseHoldFanoFactorDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% array hold response mid fano factor InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.arrayResponseHoldMidBal(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Fano Factor Attend-RF');
+ylabel(ax1, 'Fano Factor Attend-Away');
+xlabel(ax2, 'Fano Factor Difference');
+xlabel(ax3, 'Fano Factor Difference');
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldMidFanoFactorDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -855,83 +887,33 @@ plotFileName = sprintf('%s/allSessions-targetDimResponseFanoFactorDiff-v%d.png',
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% array hold response latency InRF vs ExRF 
-maxLatency = 0.125;
-minLatency = 0.025;
-goodUnits = ~isnan(arrayHoldBalLatencyInRF) & ~isnan(arrayHoldBalLatencyExRF) & ...
-        arrayHoldBalLatencyInRF <= maxLatency & arrayHoldBalLatencyExRF <= maxLatency & ...
-        (arrayHoldBalLatencyInRF >= minLatency | arrayHoldBalLatencyExRF >= minLatency) & ...
-        isInPulvinar & isSignificantCueResponseInc;
-arrayOnsetHoldLatencyDiff = arrayHoldBalLatencyInRF(goodUnits) - arrayHoldBalLatencyExRF(goodUnits);
-fprintf('Mean array onset latency Attend-RF: %0.3f s (median: %0.3f s)\n', mean(arrayHoldBalLatencyInRF(goodUnits)), median(arrayHoldBalLatencyInRF(goodUnits)));
-fprintf('Mean array onset latency Attend-Away: %0.3f s (median: %0.3f s)\n', mean(arrayHoldBalLatencyExRF(goodUnits)), median(arrayHoldBalLatencyExRF(goodUnits)));
-fprintf('Number of units with latency reduction >= 10 ms: %d (%d%%)\n', ...
-        sum(arrayOnsetHoldLatencyDiff <= -0.01), round(sum(arrayOnsetHoldLatencyDiff <= -0.01)/numel(arrayOnsetHoldLatencyDiff) * 100));
-fprintf('Number of units with latency increase >= 10 ms: %d (%d%%)\n', ...
-        sum(arrayOnsetHoldLatencyDiff >= 0.01), round(sum(arrayOnsetHoldLatencyDiff >= 0.01)/numel(arrayOnsetHoldLatencyDiff) * 100));
+%% array hold response latency InRF vs ExRF
+goodUnits = isInDPulvinar & isSignificantCueResponseInc;
+plotLatencyDiff(arrayHoldBalLatencyInRF, arrayHoldBalLatencyExRF, goodUnits, isInDPulvinar, zeros(size(goodUnits)));
 
-goodUnitsDPul = isInDPulvinar & goodUnits;
-goodUnitsVPul = isInVPulvinar & goodUnits;
-    
-latBounds = [0 0.13];
-maxAbsDiffFR = max(abs(arrayOnsetHoldLatencyDiff));
+plotFileName = sprintf('%s/allSessions-dPul-arrayResponseHoldLatencyDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
-binStep = 0.005;
-histXBounds = [-ceil(maxAbsDiffFR / binStep) ceil(maxAbsDiffFR / binStep)] * binStep;
-histBinEdges = histXBounds(1):binStep:histXBounds(2);
+goodUnits = isInVPulvinar & isSignificantCueResponseInc;
+plotLatencyDiff(arrayHoldBalLatencyInRF, arrayHoldBalLatencyExRF, goodUnits, zeros(size(goodUnits)), isInVPulvinar);
 
-figure_tr_inch(16, 5);
-subaxis(1, 3, 1);
-hold on;
-plot(arrayHoldBalLatencyInRF(goodUnits), arrayHoldBalLatencyExRF(goodUnits), '.', 'MarkerSize', 20);
-h1 = plot(arrayHoldBalLatencyInRF(goodUnitsDPul), arrayHoldBalLatencyExRF(goodUnitsDPul), '.', 'MarkerSize', 20, 'Color', cols(3,:));
-h2 = plot(arrayHoldBalLatencyInRF(goodUnitsVPul), arrayHoldBalLatencyExRF(goodUnitsVPul), '.', 'MarkerSize', 20, 'Color', cols(5,:));
-plot([0 1], [0 1], 'Color', 0.3*ones(3, 1)); 
-axis equal;
-xlim(latBounds); 
-ylim(latBounds);
-xlabel('Array Onset Latency Attend-RF (s)');
-ylabel('Array Onset Latency Attend-Away (s)');
-box off;
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
-set(gca, 'FontSize', 14);
-set(gca, 'LineWidth', 1);
+plotFileName = sprintf('%s/allSessions-vPul-arrayResponseHoldLatencyDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
-subaxis(1, 3, 2); 
-hold on;
-histH = histogram(arrayOnsetHoldLatencyDiff, histBinEdges);
-histH.FaceColor = cols(4,:);
-origYLim = ylim();
-plot([0 0], origYLim, 'k', 'LineWidth', 2); 
-xlim(histXBounds);
-ylim(origYLim);
-xlabel('Array Onset Latency Difference (s)');
-ylabel('Number of Units');
-box off;
-set(gca, 'FontSize', 14);
-set(gca, 'LineWidth', 1);
+%% array release response latency InRF vs ExRF
+goodUnits = isInDPulvinar & isSignificantCueResponseInc;
+plotLatencyDiff(arrayRelBalLatencyInRF, arrayRelBalLatencyExRF, goodUnits, isInDPulvinar, zeros(size(goodUnits)));
 
-subaxis(1, 3, 3);
-hold on;
-corrP3DPul = cdfplot(arrayHoldBalLatencyInRF(goodUnits));
-corrP1DPul = cdfplot(arrayHoldBalLatencyExRF(goodUnits));
-set(corrP3DPul, 'LineWidth', 2);
-set(corrP1DPul, 'LineWidth', 2);
-xlim(latBounds); 
-xlabel('Array Onset Latency (s)');
-ylabel('Proportion of Units');
-legend({'InRF', 'ExRF'}, 'Location', 'SouthEast');
-set(gca, 'FontSize', 14);
-set(gca, 'LineWidth', 1);
+plotFileName = sprintf('%s/allSessions-dPul-arrayResponseRelLatencyDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
+goodUnits = isInVPulvinar & isSignificantCueResponseInc;
+plotLatencyDiff(arrayRelBalLatencyInRF, arrayRelBalLatencyExRF, goodUnits, zeros(size(goodUnits)), isInVPulvinar);
 
-meanArrayOnsetHoldLatencyDiff = mean(arrayOnsetHoldLatencyDiff);
-medianArrayOnsetHoldLatencyDiff = median(arrayOnsetHoldLatencyDiff);
-p = signrank(arrayOnsetHoldLatencyDiff);
-fprintf('mean diff = %0.3f, median diff = %0.3f, sign rank test p = %0.5f, N = %d\n', ...
-        meanArrayOnsetHoldLatencyDiff, medianArrayOnsetHoldLatencyDiff, p, sum(goodUnits));
-
-plotFileName = sprintf('%s/allSessions-arrayResponseHoldLatencyDiff-v%d.png', summaryDataDir, v);
+plotFileName = sprintf('%s/allSessions-vPul-arrayResponseRelLatencyDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -1149,6 +1131,24 @@ plotFileName = sprintf('%s/allSessions-cueTargetDelayNoiseCorrDiff-v%d.png', sum
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% array hold response mid noise correlations P3 vs P1
+% mid window is 100-200 ms from array onset
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+
+[~,ax1,ax2,ax3] = plotNoiseCorrDiff(arrayResponseHoldMidNoiseCorr, goodUnitsDPul, goodUnitsVPul);
+xlabel(ax1, 'Noise Correlation Attend-RF');
+ylabel(ax1, 'Noise Correlation Attend-Away');
+title(ax1, 'All Within-Subdivision Pairs');
+xlabel(ax2, 'Noise Correlation Difference');
+xlabel(ax3, 'Noise Correlation Difference');
+ylabel(ax2, 'Number of Pairs');
+ylabel(ax3, 'Number of Pairs');
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldMidNoiseCorrDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 %% array hold response late noise correlations P3 vs P1
 goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
 goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
@@ -1162,7 +1162,7 @@ xlabel(ax3, 'Noise Correlation Difference');
 ylabel(ax2, 'Number of Pairs');
 ylabel(ax3, 'Number of Pairs');
 
-plotFileName = sprintf('%s/allSessions-arrayResponseHoldNoiseCorrDiff-v%d.png', summaryDataDir, v);
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldLateNoiseCorrDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
