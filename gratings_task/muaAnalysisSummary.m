@@ -214,6 +214,8 @@ isSignificantAnyTaskMod = isCell & any(isSignificantResponseVsBaseline, 2);
 isSignificantCueResponse = isCell & isSignificantResponseVsPreviousPeriod(:,1);
 isSignificantArrayResponse = isCell & isSignificantResponseVsPreviousPeriod(:,2);
 isSignificantTargetDimResponse = isCell & isSignificantResponseVsPreviousPeriod(:,3);
+isSignificantVisualResponse = isCell & (isSignificantResponseVsPreviousPeriod(:,1) | ...
+        isSignificantResponseVsPreviousPeriod(:,2) | isSignificantResponseVsPreviousPeriod(:,3));
 isSignificantPreExitFixation = isCell & isSignificantResponseVsPreviousPeriod(:,4);
 
 isSignificantCueResponseInc = isCell & isSignificantCueResponse & cueResponseVsBaselineDirection == 1;
@@ -289,6 +291,9 @@ fprintf('%d/%d = %d%% pulvinar units show significant array response compared to
 fprintf('%d/%d = %d%% pulvinar units show significant target dim response compared to target-dim delay.\n', ...
         sum(isSignificantTargetDimResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantTargetDimResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
+fprintf('%d/%d = %d%% pulvinar units show significant visual response in any period compared to the previous baseline period.\n', ...
+        sum(isSignificantVisualResponse & isInPulvinar), sum(isCell & isInPulvinar), ...
+        round(sum(isSignificantVisualResponse & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
 fprintf('%d/%d = %d%% pulvinar units show significant pre-saccadic activity compared to previous period.\n', ...
         sum(isSignificantPreExitFixation & isInPulvinar), sum(isCell & isInPulvinar), ...
         round(sum(isSignificantPreExitFixation & isInPulvinar)/sum(isCell & isInPulvinar) * 100));
@@ -1183,10 +1188,10 @@ plotFileName = sprintf('%s/allSessions-targetDimDelayNoiseCorrDiff-v%d.png', sum
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% per-condition baseline-corrected normalized mean and image plots
+%% mean and image plots per-condition baseline-corrected normalized
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
-subdivisions = {'arrayDiffDec'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
+subdivisions = {'vPulCueInc'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     yBounds = [-0.25 0.5];
