@@ -23,9 +23,9 @@ set(gca, 'FontName', 'Calibri');
 set(gca, 'LineWidth', 2);
 
 if isDiff
-    clabel = 'InRF - ExRF Norm. Firing Rate';
+    clabel = 'Diff. Norm. Firing Rate';
 else
-    clabel = 'InRF Norm. Firing Rate';
+    clabel = 'Attend-RF Norm. Firing Rate';
 end
 ylabel(hColorBar, clabel, 'Rotation', 270, 'FontSize', 14, ...
         'Units', 'Normalized', 'Position', [3.4 0.5 0]); % colorbar label

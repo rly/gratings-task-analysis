@@ -36,7 +36,7 @@ dPulCol = cols(3,:);
 vPulCol = cols(5,:);
 
 %% plot
-f1 = figure_tr_inch(11, 4);
+f1 = figure_tr_inch(13, 4.5);
 
 %% scatter plot
 ax1 = subaxis(1, 3, 1);
