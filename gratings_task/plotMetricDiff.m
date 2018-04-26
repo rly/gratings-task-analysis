@@ -9,20 +9,24 @@ medianMDiff = median(mDiff);
 p = signrank(mDiff);
 fprintf('\tAll: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d\n', ...
         meanMDiff, medianMDiff, p, numel(mDiff));
-    
-mDiffDPul = mDiff(isDPul);
-meanMDiff = mean(mDiffDPul);
-medianMDiff = median(mDiffDPul);
-p = signrank(mDiffDPul);
-fprintf('\tDPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d\n', ...
-        meanMDiff, medianMDiff, p, numel(mDiffDPul));
 
-mDiffVPul = mDiff(isVPul);
-meanMDiff = mean(mDiffVPul);
-medianMDiff = median(mDiffVPul);
-p = signrank(mDiffVPul);
-fprintf('\tVPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d\n', ...
-        meanMDiff, medianMDiff, p, numel(mDiffVPul));
+if any(isDPul)
+    mDiffDPul = mDiff(isDPul);
+    meanMDiff = mean(mDiffDPul);
+    medianMDiff = median(mDiffDPul);
+    p = signrank(mDiffDPul);
+    fprintf('\tDPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d\n', ...
+            meanMDiff, medianMDiff, p, numel(mDiffDPul));
+end
+
+if any(isVPul)
+    mDiffVPul = mDiff(isVPul);
+    meanMDiff = mean(mDiffVPul);
+    medianMDiff = median(mDiffVPul);
+    p = signrank(mDiffVPul);
+    fprintf('\tVPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d\n', ...
+            meanMDiff, medianMDiff, p, numel(mDiffVPul));
+end
 
 %% plot parameters
 mBounds = [min([min(mInRF) min(mExRF)]) max([max(mInRF) max(mExRF)])];
@@ -54,15 +58,19 @@ xlim(mBounds);
 ylim(mBounds);
 box off;
 title('All Units');
-legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
+if any(isDPul) && any(isVPul)
+    legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
+end
 set(gca, 'FontSize', 14);
 set(gca, 'LineWidth', 1);
 
 %% histogram of differences dorsal pulvinar
 ax2 = subaxis(1, 3, 2); 
 hold on;
-histH = histogram(mDiffDPul, histBinEdges);
-histH.FaceColor = dPulCol;
+if any(isDPul)
+    histH = histogram(mDiffDPul, histBinEdges);
+    histH.FaceColor = dPulCol;
+end
 origYLim = ylim();
 plot([0 0], origYLim, 'k', 'LineWidth', 2); 
 xlim(histXBounds);
@@ -76,8 +84,10 @@ set(gca, 'LineWidth', 1);
 %% histogram of differences ventral pulvinar
 ax3 = subaxis(1, 3, 3); 
 hold on;
-histH = histogram(mDiffVPul, histBinEdges);
-histH.FaceColor = vPulCol;
+if any(isVPul)
+    histH = histogram(mDiffVPul, histBinEdges);
+    histH.FaceColor = vPulCol;
+end
 origYLim = ylim();
 plot([0 0], origYLim, 'k', 'LineWidth', 2); 
 xlim(histXBounds);
