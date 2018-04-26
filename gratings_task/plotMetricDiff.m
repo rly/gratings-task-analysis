@@ -25,7 +25,10 @@ fprintf('\tVPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5
         meanMDiff, medianMDiff, p, numel(mDiffVPul));
 
 %% plot parameters
-frBounds = [0 max([max(mInRF) max(mExRF)])];
+mBounds = [min([min(mInRF) min(mExRF)]) max([max(mInRF) max(mExRF)])];
+if mBounds(1) > 0
+    mBounds(1) = 0;
+end
 maxAbsDiffFR = max(abs(mDiff));
 
 histXBounds = [-ceil(maxAbsDiffFR / histBinStep) ceil(maxAbsDiffFR / histBinStep)] * histBinStep;
@@ -41,14 +44,14 @@ f1 = figure_tr_inch(13, 4.5);
 %% scatter plot
 ax1 = subaxis(1, 3, 1);
 hold on;
-plot(frBounds, frBounds, 'Color', 0.3*ones(3, 1)); 
+plot(mBounds, mBounds, 'Color', 0.3*ones(3, 1)); 
 plotParams = {'MarkerSize', 20};
 plot(mInRF, mExRF, '.', plotParams{:}); % plot under as indexing sanity check
 h1 = plot(mInRF(isDPul), mExRF(isDPul), '.', 'Color', dPulCol, plotParams{:});
 h2 = plot(mInRF(isVPul), mExRF(isVPul), '.', 'Color', vPulCol, plotParams{:});
 axis equal;
-xlim(frBounds);
-ylim(frBounds);
+xlim(mBounds);
+ylim(mBounds);
 box off;
 title('All Units');
 legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');

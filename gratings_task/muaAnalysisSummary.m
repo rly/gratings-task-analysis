@@ -1,5 +1,6 @@
 % function muaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
+clear;
 readDataLocally;
 sessionInds = 1:23;
 v = 12;
@@ -53,6 +54,8 @@ averageFiringRatesBySpdf = struct();
 averageFiringRatesByCount = struct();
 inRFLocs = nan(nUnitsApprox, 1);
 exRFLocs = nan(nUnitsApprox, 1);
+inRFCountNormFactor = nan(nUnitsApprox, 1);
+exRFCountNormFactor = nan(nUnitsApprox, 1);
 
 % consider sparse matrix instead
 nLoc = 4;
@@ -155,6 +158,9 @@ for i = 1:nSessions
     end
     inRFLocs(currentUnitInds) = S.inRFLocs;
     exRFLocs(currentUnitInds) = S.exRFLocs;
+    
+    inRFCountNormFactor(currentUnitInds) = S.inRFCountNormFactor;
+    exRFCountNormFactor(currentUnitInds) = S.exRFCountNormFactor;    
     
     % consider sparse matrix
     cueTargetDelayNoiseCorrAll{i} = S.cueTargetDelayNoiseCorr;
@@ -724,6 +730,25 @@ plotFileName = sprintf('%s/allSessions-rtVsFiringRateCorr-v%d.png', summaryDataD
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% mean firing rates in baseline
+goodUnits = isInDPulvinar & isSignificantCueResponseInc;
+firingRates = averageFiringRatesByCount.preCueBaseline(goodUnits);
+nUnits = numel(firingRates);
+firing = nan(nUnits, 1);
+for i = 1:nUnits
+    firing(i) = firingRates(i).all;
+end
+fprintf('Mean dPul baseline pre-cue firing: %0.2f Hz\n', mean(firing));
+
+goodUnits = isInVPulvinar & isSignificantCueResponseInc;
+firingRates = averageFiringRatesByCount.preCueBaseline(goodUnits);
+nUnits = numel(firingRates);
+firing = nan(nUnits, 1);
+for i = 1:nUnits
+    firing(i) = firingRates(i).all;
+end
+fprintf('Mean vPul baseline pre-cue firing: %0.2f Hz\n', mean(firing));
+
 %% cue response mean firing rate InRF vs ExRF -- sanity check
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.cueResponse(goodUnits), ...
@@ -738,6 +763,22 @@ plotFileName = sprintf('%s/allSessions-cueResponseMeanFRDiff-v%d.png', summaryDa
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% cue response mean norm firing rate InRF vs ExRF -- sanity check
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueResponse(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Norm. Firing Rate Attend-RF');
+ylabel(ax1, 'Norm. Firing Rate Attend-Away');
+xlabel(ax2, 'Norm. Firing Rate Difference');
+xlabel(ax3, 'Norm. Firing Rate Difference');
+
+plotFileName = sprintf('%s/allSessions-cueResponseMeanNormFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 %% cue target delay mean firing rate InRF vs ExRF
 goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
@@ -749,6 +790,22 @@ xlabel(ax2, 'Firing Rate Difference (Hz)');
 xlabel(ax3, 'Firing Rate Difference (Hz)');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayMeanFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% cue target delay mean norm firing rate InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Norm. Firing Rate Attend-RF');
+ylabel(ax1, 'Norm. Firing Rate Attend-Away');
+xlabel(ax2, 'Norm. Firing Rate Difference');
+xlabel(ax3, 'Norm. Firing Rate Difference');
+
+plotFileName = sprintf('%s/allSessions-cueTargetDelayMeanNormFRDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -805,6 +862,22 @@ xlabel(ax2, 'Firing Rate Difference (Hz)');
 xlabel(ax3, 'Firing Rate Difference (Hz)');
 
 plotFileName = sprintf('%s/allSessions-arrayResponseHoldMidMeanFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% array hold response mid mean norm firing rate InRF vs ExRF
+goodUnits = isInPulvinar & isSignificantCueResponseInc;
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.arrayResponseHoldMidBal(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+xlabel(ax1, 'Norm. Firing Rate Attend-RF');
+ylabel(ax1, 'Norm. Firing Rate Attend-Away');
+xlabel(ax2, 'Norm. Firing Rate Difference');
+xlabel(ax3, 'Norm. Firing Rate Difference');
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldMidMeanNormFRDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
