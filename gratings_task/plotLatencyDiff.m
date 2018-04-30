@@ -65,12 +65,12 @@ subaxis(1, 3, 3);
 hold on;
 corrP3DPul = cdfplot(arrayHoldBalLatencyInRF(goodUnits));
 corrP1DPul = cdfplot(arrayHoldBalLatencyExRF(goodUnits));
-set(corrP3DPul, 'LineWidth', 2);
-set(corrP1DPul, 'LineWidth', 2);
+set(corrP3DPul, 'LineWidth', 3);
+set(corrP1DPul, 'LineWidth', 3);
 xlim(latBounds); 
 xlabel('Array Onset Latency (s)');
 ylabel('Proportion of Units');
-legend({'InRF', 'ExRF'}, 'Location', 'SouthEast');
+legend({'Attend-RF', 'Attend-Away'}, 'Location', 'SouthEast');
 set(gca, 'FontSize', 14);
 set(gca, 'LineWidth', 1);
 
