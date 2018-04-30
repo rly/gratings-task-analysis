@@ -121,27 +121,8 @@ for j = 1:nChannels+1
 end
 
 figure_tr_inch(20, 10);
-subaxis(1, 5, 1, 'SH', 0.02, 'MT', 0.06);
-hold on;
-plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-for j = 1:nChannels
-    for m = 1:nLoc          
-        plot(EL.enterFixationLfp.t, (squeeze(mean(EL.enterFixationLfp.lfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j,m))*yScale + j*ySep, 'Color', cols(m,:), 'LineWidth', 1);
-    end
-end
-for m = 1:nLoc          
-    plot(EL.enterFixationLfp.t, (squeeze(mean(EL.enterFixationLfp.lfp(meanInd,UE.cueLoc == m,:), 2)) - preCueBaseline(meanInd,m))*yScale + (meanInd+1)*ySep, 'Color', cols(m,:), 'LineWidth', 2);
-end
-xlim(xBounds);
-ylim(yBounds);
-set(gca, 'YTick', [-34 -32:-1]);
-set(gca, 'YTickLabel', ['Common Avg' strsplit(num2str(flip(1:32)))]);
-set(gca, 'box', 'off');
-xlabel('Time from Start Fixation (s)');
-ylabel('Channel Number');
-title('Start Fixation');
 
-subaxis(1, 5, 2);
+subaxis(1, 4, 1);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
@@ -160,7 +141,7 @@ set(gca, 'box', 'off');
 xlabel('Time from Cue Onset (s)');
 title('Cue Onset');
 
-subaxis(1, 5, 3);
+subaxis(1, 4, 2);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
@@ -179,7 +160,7 @@ set(gca, 'box', 'off');
 xlabel('Time from Array Onset (s)');
 title('Array Onset');
 
-subaxis(1, 5, 4);
+subaxis(1, 4, 3);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
@@ -198,7 +179,7 @@ set(gca, 'box', 'off');
 xlabel('Time from Target Dimming (s)');
 title('Target Dimming');
 
-subaxis(1, 5, 5);
+subaxis(1, 4, 4);
 hold on;
 plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
 for j = 1:nChannels    
@@ -244,26 +225,7 @@ for m = 1:nLoc
     
     preCueBaseline = squeeze(mean(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,baselineInd), 2), 3));
     
-    subaxis(nLoc, 5, (m-1)*5 + 1, 'SH', 0.02, 'MT', 0.06);
-    hold on;
-    plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-    for j = 1:nChannels
-        plot(EL.enterFixationLfp.t, (squeeze(mean(EL.enterFixationLfp.lfp(j,UE.cueLoc == m,:), 2)) - preCueBaseline(j))*yScale + j*ySep, 'Color', cols(m,:));
-    end
-    xlim(xBounds);
-    ylim(yBounds);
-    set(gca, 'box', 'off');
-    if m == 1
-        title('Start Fixation');
-    end
-    if m == nLoc
-        xlabel('Time from Start Fixation (s)');
-    end
-    ylabel('Channel Number');
-    set(gca, 'YTick', -30:5:0);
-    set(gca, 'YTickLabel', strsplit(num2str(flip(0:5:30))));
-    
-    subaxis(nLoc, 5, (m-1)*5 + 2);
+    subaxis(nLoc, 4, (m-1)*4 + 1, 'SH', 0.02, 'MT', 0.06);
     hold on;
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     for j = 1:nChannels
@@ -281,7 +243,7 @@ for m = 1:nLoc
     set(gca, 'YTick', -30:5:0);
     set(gca, 'YTickLabel', strsplit(num2str(flip(0:5:30))));
     
-    subaxis(nLoc, 5, (m-1)*5 + 3);
+    subaxis(nLoc, 4, (m-1)*4 + 2);
     hold on;
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     for j = 1:nChannels
@@ -299,7 +261,7 @@ for m = 1:nLoc
     set(gca, 'YTick', -30:5:0);
     set(gca, 'YTickLabel', strsplit(num2str(flip(0:5:30))));
     
-    subaxis(nLoc, 5, (m-1)*5 + 4);
+    subaxis(nLoc, 4, (m-1)*4 + 3);
     hold on;
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     for j = 1:nChannels
@@ -317,7 +279,7 @@ for m = 1:nLoc
     set(gca, 'YTick', -30:5:0);
     set(gca, 'YTickLabel', strsplit(num2str(flip(0:5:30))));
     
-    subaxis(nLoc, 5, (m-1)*5 + 5);
+    subaxis(nLoc, 4, (m-1)*4 + 4);
     hold on;
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     for j = 1:nChannels
@@ -361,24 +323,7 @@ set(gcf, 'renderer', 'painters');
 for m = 1:nLoc
     preCueBaseline = squeeze(mean(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,baselineInd), 2), 3));
 
-    subaxis(nLoc, 5, (m-1)*5 + 1, 'SH', 0.02, 'MT', 0.06);
-    hold on;
-    imagesc(EL.enterFixationLfp.t, 1:nChannels, squeeze(mean(EL.enterFixationLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
-    plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-    set(gca, 'YDir', 'reverse');
-    xlim(xBounds);
-    ylim(yBounds);
-    caxis(cBounds);
-    set(gca, 'box', 'off');
-    if m == 1
-        title('Start Fixation');
-    end
-    if m == nLoc
-        xlabel('Time from Start Fixation (s)');
-    end
-    ylabel('Channel Number');
-
-    subaxis(nLoc, 5, (m-1)*5 + 2);
+    subaxis(nLoc, 4, (m-1)*4 + 1, 'SH', 0.02, 'MT', 0.06);
     hold on;
     imagesc(EL.cueOnsetLfp.t, 1:nChannels, squeeze(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
@@ -394,7 +339,7 @@ for m = 1:nLoc
         xlabel('Time from Cue Onset (s)');
     end
 
-    subaxis(nLoc, 5, (m-1)*5 + 3);
+    subaxis(nLoc, 4, (m-1)*4 + 2);
     hold on;
     imagesc(EL.arrayOnsetHoldBalLfp.t, 1:nChannels, squeeze(mean(EL.arrayOnsetHoldBalLfp.lfp(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
@@ -410,7 +355,7 @@ for m = 1:nLoc
         xlabel('Time from Array Onset (s)');
     end
 
-    subaxis(nLoc, 5, (m-1)*5 + 4);
+    subaxis(nLoc, 4, (m-1)*4 + 3);
     hold on;
     imagesc(EL.targetDimBalLfp.t, 1:nChannels, squeeze(mean(EL.targetDimBalLfp.lfp(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
@@ -426,7 +371,7 @@ for m = 1:nLoc
         xlabel('Time from Target Dimming (s)');
     end
 
-    subaxis(nLoc, 5, (m-1)*5 + 5);
+    subaxis(nLoc, 4, (m-1)*4 + 4);
     hold on;
     imagesc(EL.exitFixationLfp.t, 1:nChannels, squeeze(mean(EL.exitFixationLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
@@ -451,6 +396,43 @@ plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepColorPlot-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
 fprintf('Saving figure to file %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%% CSD around cue onset
+
+meanCueOnsetLfpByLoc = cell(nLoc, 1);
+preCueBaselineIndices = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, EL.preCueBaselineWindowOffset);
+
+figure_tr_inch(20, 10); 
+clf;
+set(gcf, 'renderer', 'painters');
+
+yVals = 2:nChannels-1;
+yBounds = yVals([1 end]) + [-0.5 0.5];
+cBounds = [-1 1];
+for m = 1:nLoc
+    meanCueOnsetLfpByLoc{m} = squeeze(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,:), 2));
+    cueOnsetCSD = nan(numel(yVals), size(meanCueOnsetLfpByLoc{m}, 2));
+    for j = 1:numel(yVals)
+        ji = yVals(j);
+        cueOnsetCSD(j,:) = meanCueOnsetLfpByLoc{m}(ji+1,:) - 2 * meanCueOnsetLfpByLoc{m}(ji,:) + meanCueOnsetLfpByLoc{m}(ji-1,:);
+        cueOnsetCSD(j,:) = cueOnsetCSD(j,:) - mean(cueOnsetCSD(j,preCueBaselineIndices));
+    end
+    
+    subaxis(nLoc, 4, (m-1)*4 + 1, 'SH', 0.02, 'MT', 0.06);
+    hold on;
+    imagesc(EL.cueOnsetLfp.t, yVals, cueOnsetCSD);
+    plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
+    set(gca, 'YDir', 'reverse');
+    xlim(xBounds);
+    ylim(yBounds);
+    caxis(cBounds);
+    if m == 1
+        title('Cue Onset');
+    end
+    if m == nLoc
+        xlabel('Time from Cue Onset (s)');
+    end
+end
 
 %% pick a channel x cue location, plot all trials
 baselineWindowOffset = [-0.3 0];
@@ -484,12 +466,13 @@ ylim(yBounds);
 % color plot
 figure;
 imagesc(EL.cueOnsetLfp.t, 1:nTrials, data);
+set(gca, 'YDir', 'normal');
 colorbar;
 xlim(xBounds);
 ylim(yBounds);
 
 %%
-params.fpass = [6 8];
+params.fpass = [8 30];
 movingWin = [0.2 0.025];
 [~,t,~] = mtspecgramc(data(1,:), movingWin, params);
 nTimeSpecgram = numel(t);
@@ -506,10 +489,15 @@ t = t + EL.cueOnsetLfp.windowOffset(1);
 % color plot
 figure;
 imagesc(t, 1:nTrials, dataSpecgram);
+set(gca, 'YDir', 'normal');
 colorbar;
 xlim(xBounds);
 ylim(yBounds);
 
+% mean over frequencies in range
+figure;
+plot(t, mean(dataSpecgram));
+xlim(xBounds);
 
 %% power all channels
 cols = lines(6);
@@ -1060,10 +1048,10 @@ cfg.toi = -0.35:0.05:0.6;
 cfg.keeptrials = 'yes'; % keep trials for statistics
 tfrByLoc = cell(nLoc, 1);
 tic;
-for m = 3%1:nLoc
+for m = 1:nLoc
     cfg.trials = find(UE.cueLoc == m);
-    fprintf('\nP%d: %d trials:\n', m, sum(cfg.trials));
-    if any(cfg.trials)
+    fprintf('\nP%d: %d trials:\n', m, numel(cfg.trials));
+    if ~isempty(cfg.trials)
         tfrByLoc{m} = ft_freqanalysis(cfg, cueOnsetLfpPP);
     end
 end
@@ -1074,8 +1062,8 @@ fprintf('\nTook %0.1f minutes.\n', toc/60);
 % save(saveFileName, 'tfrByLoc');
 
 %%
+m = 3;
 
-%%
 cfg = [];
 cfg.parameter = 'powspctrm';
 cfg.xlim = [-0.4 0.6];
@@ -1087,23 +1075,29 @@ cfg.layout = layout;
 figure;
 ft_multiplotTFR(cfg, tfrByLoc{m});
 
-%%
+%% plot each channel TFR
 cfg = [];
 cfg.parameter = 'powspctrm';
 cfg.xlim = [-0.4 0.6];
-cfg.zlim = [-1 4];
+cfg.zlim = [-1 2];
 cfg.baseline = [-0.3 0];
 cfg.baselinetype = 'relchange';
 
 for i = 1:2:numel(cueOnsetLfpPP.label)
     cfg.channel = cueOnsetLfpPP.label{i};
-    for m = 3%1:nLoc
+    figure_tr_inch(14, 5);
+    hold on;
+    plotCount = 0;
+    for m = 1:nLoc
         fprintf('\nP%d:\n', m);
         if ~isempty(tfrByLoc{m})
-            figure;
+            plotCount = plotCount + 1;
+            subplot(1, 2, plotCount); % TODO
             ft_singleplotTFR(cfg, tfrByLoc{m});
+            title(sprintf('P%d', m));
         end
     end
+    suptitle(cfg.channel);
 end
 
 %% inter-trial phase coherence
@@ -1117,8 +1111,8 @@ cfg.toi = -0.35:0.05:0.6;
 freqByLoc = cell(nLoc, 1);
 for m = 1:nLoc
     cfg.trials = find(UE.cueLoc == m);
-    fprintf('\nP%d: %d trials:\n', m, sum(cfg.trials));
-    if any(cfg.trials)
+    fprintf('\nP%d: %d trials:\n', m, numel(cfg.trials));
+    if ~isempty(cfg.trials)
         freqByLoc{m} = ft_freqanalysis(cfg, cueOnsetLfpPP);
     end
 end
@@ -1203,144 +1197,7 @@ caxis([0 0.5]);
 
 
 
-%% image plot, bipolar reference
 
-xBounds = [-0.4 0.4];
-yBounds = [1 nChannels-1];
-cBounds = [-0.02 0.02];
-
-baselineWindowOffset = [-0.3 0];
-baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetT, baselineWindowOffset);
-
-figure_tr_inch(20, 10); 
-clf;
-set(gcf, 'renderer', 'painters');
-
-for m = 1:nLoc
-    
-preCueBaseline = diff(squeeze(mean(mean(EL.cueOnsetLfp(:,UE.cueLoc == m,baselineInd), 2), 3)));
-    
-subaxis(nLoc, 5, (m-1)*5 + 1, 'SH', 0.02, 'MT', 0.06);
-hold on;
-imagesc(EL.enterFixationT, 1:nChannels-1, diff(squeeze(mean(EL.enterFixationLfp(:,UE.cueLoc == m,:), 2))) - preCueBaseline);
-plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-set(gca, 'YDir', 'reverse');
-xlim(xBounds);
-ylim(yBounds);
-caxis(cBounds);
-set(gca, 'box', 'off');
-if m == 1
-    title('Start Fixation');
-end
-if m == nLoc
-    xlabel('Time from Start Fixation (s)');
-end
-ylabel('Channel Number');
-
-subaxis(nLoc, 5, (m-1)*5 + 2);
-hold on;
-imagesc(EL.cueOnsetT, 1:nChannels-1, diff(squeeze(mean(EL.cueOnsetLfp(:,UE.cueLoc == m,:), 2))) - preCueBaseline);
-plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-set(gca, 'YDir', 'reverse');
-xlim(xBounds);
-ylim(yBounds);
-caxis(cBounds);
-set(gca, 'box', 'off');
-if m == 1
-    title('Cue Onset');
-end
-if m == nLoc
-    xlabel('Time from Cue Onset (s)');
-end
-
-subaxis(nLoc, 5, (m-1)*5 + 3);
-hold on;
-imagesc(EL.arrayOnsetT, 1:nChannels-1, diff(squeeze(mean(EL.arrayOnsetHoldLfp(:,UE.cueLocHold == m,:), 2))) - preCueBaseline);
-plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-set(gca, 'YDir', 'reverse');
-xlim(xBounds);
-ylim(yBounds);
-caxis(cBounds);
-set(gca, 'box', 'off');
-if m == 1
-    title('Array Onset');
-end
-if m == nLoc
-    xlabel('Time from Array Onset (s)');
-end
-
-subaxis(nLoc, 5, (m-1)*5 + 4);
-hold on;
-imagesc(EL.targetDimT, 1:nChannels-1, diff(squeeze(mean(EL.targetDimLfp(:,UE.cueLocHold == m,:), 2))) - preCueBaseline);
-plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-set(gca, 'YDir', 'reverse');
-xlim(xBounds);
-caxis(cBounds);
-ylim(yBounds);
-set(gca, 'box', 'off');
-if m == 1
-    title('Target Dimming');
-end
-if m == nLoc
-    xlabel('Time from Target Dimming (s)');
-end
-
-subaxis(nLoc, 5, (m-1)*5 + 5);
-hold on;
-imagesc(EL.exitFixationT, 1:nChannels-1, diff(squeeze(mean(EL.exitFixationLfp(:,UE.cueLoc == m,:), 2))) - preCueBaseline);
-plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-set(gca, 'YDir', 'reverse');
-xlim(xBounds);
-ylim(yBounds);
-caxis(cBounds);
-set(gca, 'box', 'off');
-if m == 1
-    title('Exit Fixation');
-end
-if m == nLoc
-    xlabel('Time from Exit Fixation (s)');
-end
-
-end % end for each location
-
-axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
-set(get(axBig, 'Title'), 'Visible', 'on');
-title(axBig, sprintf('Session %s', sessionName), 'FontSize', 14);
-
-plotFileName = sprintf('%s/%s-allFP-evokedLfps-%s-sepBipolarColorPlot-v%d.png', ...
-        processedDataDir, blockName, ref, v);
-export_fig(plotFileName, '-nocrop');
-
-%% CSD
-meanCueOnsetLfpByLoc = cell(nLoc, 1);
-preCueBaselineIndices = getTimeLogicalWithTolerance(EL.cueOnsetT, EL.preCueBaselineWindowOffset);
-
-yVals = 2:nChannels-1;
-yBounds = yVals([1 end]) + [-0.5 0.5];
-cBounds = [-0.02 0.02];
-for m = 1:nLoc
-    if all(isnan(meanCueOnsetLfpByLoc{m}(:)))
-        continue;
-    end
-    meanCueOnsetLfpByLoc{m} = squeeze(mean(EL.cueOnsetLfp(:,UE.cueLoc == m,:), 2));
-    cueOnsetCSD = nan(numel(yVals), size(meanCueOnsetLfpByLoc{m}, 2));
-    figure;
-    hold on;
-    for j = 1:numel(yVals)
-        ji = yVals(j);
-        cueOnsetCSD(j,:) = meanCueOnsetLfpByLoc{m}(ji+1,:) - 2 * meanCueOnsetLfpByLoc{m}(ji,:) + meanCueOnsetLfpByLoc{m}(ji-1,:);
-        cueOnsetCSD(j,:) = cueOnsetCSD(j,:) - mean(cueOnsetCSD(j,preCueBaselineIndices));
-    end
-    imagesc(EL.cueOnsetT, yVals, cueOnsetCSD);
-    plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
-    set(gca, 'YDir', 'reverse');
-    xlim(xBounds);
-    ylim(yBounds);
-    caxis(cBounds);
-    title(sprintf('P%d', m));
-end
-
-stop
 
 %% restructure EL.cueOnsetLfpByLoc -> cueOnsetLfpByLoc2
 cueOnsetLfpByLoc2 = cell(nLoc, 1);
