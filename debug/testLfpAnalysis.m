@@ -8,4 +8,5 @@ recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/r
 isZeroDistractors = 0;
 lfpChannelsToLoad = 1:32;
 
-lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, isZeroDistractors)
+lfpAnalysis;
+% lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, isZeroDistractors)
