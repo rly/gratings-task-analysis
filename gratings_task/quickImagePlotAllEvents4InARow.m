@@ -59,7 +59,7 @@ set(gca, 'YTick', []);
 axExitFixationSpdf = axes('Position', [spdfExitFixationLeft btm spdfW spdfH]); 
 
 xBounds = [-0.4 0.4];
-[hImage,hColorbar] = makeImagePlotOfPopulation(exitFixationR, exitFixationT, 'Exit Fixation', isDiff);
+[hImage,hColorbar] = makeImagePlotOfPopulation(exitFixationR, exitFixationT, 'Break Fixation', isDiff);
 
 xlim(xBounds);
 set(gca, 'XTick', -0.5:0.25:0.5);

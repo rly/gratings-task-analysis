@@ -168,7 +168,7 @@ plot(exitFixationT, meanExitFixationSpdfInRFNorm, 'Color', inRFCol, 'LineWidth',
 
 xlim(xBounds);
 if isShowLabels
-    xlabel('Time from End Fixation (s)');
+    xlabel('Time from Break Fixation (s)');
 end
 set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
