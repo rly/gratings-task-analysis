@@ -7,17 +7,17 @@ otherUnitLineWidth = 1;
 unitSDShadingOpacity = 0.4;
 otherUnitSDShadingOpacity = 0.1;
 numSDsShading = 1;
+thresholdCol = [0.5 0.2 0.5]; % purple
 
 %% setup for single unit
 if ~isMUA
     spikeStruct = D.allSpikeStructs{unitInd};
     nWfTime = numel(spikeStruct.meanWf);
     spikeFs = D.timestampFrequency;
-    waveformT = (1:nWfTime)/(spikeFs/1000);
+    waveformT = (0:nWfTime-1)/(spikeFs/1000); % start at 0
 
     %% plot threshold and axes
     hold on;
-    thresholdCol = [0.5 0.2 0.5]; % purple
     plot([waveformT(1) waveformT(end)], [0 0], 'Color', 0.5*ones(3, 1));
     plot([waveformT(1) waveformT(end)], [spikeStruct.threshold spikeStruct.threshold], '--', ...
             'Color', thresholdCol);
@@ -59,19 +59,24 @@ else % MUA
     muaStruct = D.allMUAStructs{unitInd};
     nWfTime = numel(muaStruct.meanWf);
     spikeFs = D.timestampFrequency;
-    waveformT = (1:nWfTime)/(spikeFs/1000);
+    waveformT = (0:nWfTime-1)/(spikeFs/1000); % start at 0
+    threshold = nanmean(muaStruct.thresholdParams.thresholds);
 
     %% plot threshold and axes
     hold on;
     plot([waveformT(1) waveformT(end)], [0 0], 'Color', 0.5*ones(3, 1));
+    plot([waveformT(1) waveformT(end)], [threshold threshold], '--', ...
+            'Color', thresholdCol);
+    plot([muaStruct.thresholdTime muaStruct.thresholdTime]*1000, yBounds, '--', ...
+            'Color', thresholdCol); % TODO this is actually the alignment time
     
     %% plot this waveform on top of everything else
-    plot(waveformT, muaStruct.meanWf, 'LineWidth', unitLineWidth);
+    plot(waveformT, muaStruct.meanWf, 'LineWidth', unitLineWidth, 'Color', lines(1));
 end
 
 %% formatting and labels
 xlabel('Time (ms)');
 xlim([0 waveformT(end)]);
-set(gca, 'XTick', [0 waveformT(end)/2 waveformT(end)]);
+set(gca, 'XTick', [0 waveformT(end)/4 waveformT(end)/2 3*waveformT(end)/4 waveformT(end)]);
 ylim(yBounds);
 title('Waveform');
