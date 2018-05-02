@@ -797,6 +797,23 @@ set(gca, 'box', 'off');
 xlabel('Sample Index');
 ylabel('Channel Index');
 
+plotFileName = sprintf('%s/%s-sessionInd%d-unitWfsVertical-v%d.png', outputDir, sessionName, sessionInd, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+figure_tr_inch(18, 9);
+for i = 1:numel(muaChannelsToLoad)
+    subaxis(4, 8, i, 'SV', 0.07, 'SH', 0.02, 'ML', 0.02);
+    hold on;
+    plot(zeros(size(meanWfs{i})), '-', 'Color', 0.3*ones(3, 1));
+    plot(meanWfs{i}, 'LineWidth', 3, 'Color', lines(1));
+    xlim([0 numel(meanWfs{i})]);
+    ylim([-0.07 0.07]);
+    title(sprintf('Channel %d', muaChannelsToLoad(i)));
+    set(gca, 'XTickLabel', []);
+    set(gca, 'YTickLabel', []);
+    set(gca, 'box', 'off');
+end
 plotFileName = sprintf('%s/%s-sessionInd%d-unitWfs-v%d.png', outputDir, sessionName, sessionInd, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
