@@ -87,7 +87,7 @@ fprintf('Extracting event-locked LFPs...\n');
 tic;
 saveFileName = sprintf('%s/%s-evokedLfps-v%d.mat', ...
         processedDataDir, fileNamePrefix, v);
-computeEvokedLfps(saveFileName, channelDataNorm, Fs, nLoc, UE);
+computeEvokedLfps(saveFileName, channelDataNorm, Fs, nLoc, UE, lfpChannelsToLoad);
 fprintf('Took %0.1f minutes.\n', toc/60);
 
 %% load evoked file

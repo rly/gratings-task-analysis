@@ -1,4 +1,4 @@
-function saveFileName = computeEvokedLfps(saveFileName, lfp, Fs, nLoc, UE)
+function saveFileName = computeEvokedLfps(saveFileName, lfp, Fs, nLoc, UE, channelInds)
 % lfp = 1-D vector
 % UE = useful events struct
 % assert(iscolumn(lfp));
