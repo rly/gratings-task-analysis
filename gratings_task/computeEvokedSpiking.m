@@ -29,6 +29,7 @@ function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE
 
 spikeTs = spikeStruct.ts;
 kernelSigma = 0.01;
+kernelSigmaShort = 0.0015;
 
 clear spikeStruct;
 
@@ -66,6 +67,7 @@ arrayOnsetRelBalError = arrayOnset; % copy
 arrayOnsetHoldBalError = arrayOnset; % copy
 
 arrayOnset = createTimeLockedSpdf(spikeTs, UE.arrayOnset, UE.arrayOnsetByLoc, arrayOnset, kernelSigma);
+arrayOnsetShortKernel = createTimeLockedSpdf(spikeTs, UE.arrayOnset, UE.arrayOnsetByLoc, arrayOnset, kernelSigmaShort);
 % arrayOnsetRel = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRel, UE.arrayOnsetRelByLoc, arrayOnsetRel, kernelSigma);
 % arrayOnsetHold = createTimeLockedSpdf(spikeTs, UE.arrayOnsetHold, UE.arrayOnsetHoldByLoc, arrayOnsetHold, kernelSigma);
 arrayOnsetRelBal = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRelBal, UE.arrayOnsetRelBalByLoc, arrayOnsetRelBal, kernelSigma);
