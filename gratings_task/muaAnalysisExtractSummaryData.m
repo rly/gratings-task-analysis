@@ -8,6 +8,7 @@ tic;
 nUnitsApprox = 1; 
 
 unitNames = cell(nUnitsApprox, 1);
+meanWfs = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 isSignificantResponseVsPreviousPeriod = false(nUnitsApprox, 4);
 isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
@@ -93,6 +94,7 @@ for j = 1:nUnits
     unitName = spikeStruct.name;
     spikeTimes = spikeStruct.ts;
     firingRateOverall = numel(spikeTimes) / totalTimeOverall;
+    meanWfs{j} = spikeStruct.meanWf;
 
     if firingRateOverall >= minFiringRateOverall
         saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
@@ -778,6 +780,26 @@ end
 %         plot(tiedrank(targetDimDelayHoldInRFRateAll{i}) / nTrialInRF, rtHoldInRFAll{i}, '.');
 %     end
 % end
+
+%% plot all waveforms
+yScale = 50;
+ySep = -1;
+
+figure_tr_inch(4, 10);
+hold on;
+for i = 1:numel(muaChannelsToLoad)
+    plot(zeros(size(meanWfs{i})) + i*ySep, '-', 'Color', 0.3*ones(3, 1));
+    plot(meanWfs{i} * yScale + i*ySep, 'LineWidth', 2);
+end
+set(gca, 'YTick', -numel(muaChannelsToLoad):-1);
+set(gca, 'YTickLabel', flip(muaChannelsToLoad));
+set(gca, 'box', 'off');
+xlabel('Sample Index');
+ylabel('Channel Index');
+
+plotFileName = sprintf('%s/%s-sessionInd%d-unitWfs-v%d.png', outputDir, sessionName, sessionInd, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
 
 %% save
 saveFileName = sprintf('%s/%s-sessionInd%d-muaAnalysisSummaryData-v%d.mat', outputDir, sessionName, sessionInd, v);

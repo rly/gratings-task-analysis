@@ -1,8 +1,9 @@
-function muaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
+% function muaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
-%clear;
-%readDataLocally;
-%sessionInds = 1:23;
+clear;
+readDataLocally;
+sessionInds = 1:23;
+
 v = 12;
 
 %% load recording information
@@ -491,16 +492,16 @@ cols = lines(6);
 preSaccadeWindowOffset = [-0.2 0];
 preSaccadeWindowIndices = getTimeLogicalWithTolerance(exitFixationT, preSaccadeWindowOffset);
 
-saccadeTimeIndex = find(preSaccadeWindowIndices, 1, 'last');
-figure_tr_inch(12, 10);
-subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
-hold on;
-% re-align y-axis to have 0 be the time of saccade
-plot(exitFixationT(preSaccadeWindowIndices), ...
-        spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices) - spdfInfo.exitFixationSpdfInRFNorm(:,saccadeTimeIndex));
+% saccadeTimeIndex = find(preSaccadeWindowIndices, 1, 'last');
+% figure_tr_inch(12, 10);
+% subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
+% hold on;
+% % re-align y-axis to have 0 be the time of saccade
+% plot(exitFixationT(preSaccadeWindowIndices), ...
+%         spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices) - spdfInfo.exitFixationSpdfInRFNorm(:,saccadeTimeIndex));
 
 %% t-sne representation
-tsneVals = tsne(spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices));
+tsneVals = tsne(spdfInfo.exitFixationSpdfInRFNorm(isInPulvinar,preSaccadeWindowIndices));
 
 figure_tr_inch(7.5, 7.5);
 subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
@@ -518,7 +519,7 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% PC1 vs PC2 on pre-saccadic activity
-data = spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices);
+data = spdfInfo.exitFixationSpdfInRFNorm(isInPulvinar,preSaccadeWindowIndices); % all units
 [pcaCoeff,pcaPreSaccadeScore,~,~,pcaPctExplained] = pca(data);
 fprintf('\n');
 fprintf('PCA: %d variables, %d observations\n', size(data, 2), size(data, 1));
@@ -533,14 +534,15 @@ subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
 hold on;
 sh = scatter(pcaPreSaccadeScore(:,1), pcaPreSaccadeScore(:,2), 100, 'k');
 sh.MarkerFaceAlpha = 0.8;
-sh = scatter(pcaPreSaccadeScore(isInDPulvinar,1), pcaPreSaccadeScore(isInDPulvinar,2), 100, cols(1,:));
+sh = scatter(pcaPreSaccadeScore(isInDPulvinar(isInPulvinar),1), pcaPreSaccadeScore(isInDPulvinar(isInPulvinar),2), 100, cols(1,:));
 sh.MarkerFaceAlpha = 0.8;
 sh.LineWidth = 2;
-sh = scatter(pcaPreSaccadeScore(isInVPulvinar,1), pcaPreSaccadeScore(isInVPulvinar,2), 100, cols(2,:));
+sh = scatter(pcaPreSaccadeScore(isInVPulvinar(isInPulvinar),1), pcaPreSaccadeScore(isInVPulvinar(isInPulvinar),2), 100, cols(2,:));
 sh.MarkerFaceAlpha = 0.8;
 sh.LineWidth = 2;
 xlabel('PC1');
 ylabel('PC2');
+
 
 %% plot first 3 principal component basis vectors
 figure_tr_inch(7.5, 7.5);
@@ -555,6 +557,23 @@ plot(exitFixationT(preSaccadeWindowIndices), pcaCoeff(:,3), 'LineWidth', 1);
 plotFileName = sprintf('%s/allSessions-PCA-exitFixationSpdfInRFNorm-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%%
+figure;
+hold on;
+subaxis(1, 2, 1);
+plot(data(abs(pcaPreSaccadeScore(:,2)) >= 0.5,:)', 'LineWidth', 2);
+ylim([-1 1]);
+subaxis(1, 2, 2);
+plot(data(abs(pcaPreSaccadeScore(:,2)) < 0.5,:)');
+ylim([-1 1]);
+
+%%
+figure_tr_inch(10, 10);
+hold on;
+for i = 1:size(data, 1)
+    plot(data(i,:));
+end
 
 %% test diff RT for top third vs bottom third firing rates in delay periods
 meanRTRelInRFDiffThirdFiringRateCTDelay = rtFiringRateStruct.meanRTRelInRFTopThirdFiringRateCTDelay - rtFiringRateStruct.meanRTRelInRFBottomThirdFiringRateCTDelay;
@@ -750,11 +769,13 @@ fprintf('Mean vPul baseline pre-cue firing: %0.2f Hz\n', mean(firing));
 %%
 subdivisions = {'dPul', 'vPul'};
 for i = 1:numel(subdivisions)
-if strcmp(subdivisions{i}, 'dPul')
-    goodUnits = isInDPulvinar & isSignificantCueResponseInc;
-elseif strcmp(subdivisions{i}, 'vPul')
-    goodUnits = isInVPulvinar & isSignificantCueResponseInc;
-end
+    
+    if strcmp(subdivisions{i}, 'dPul')
+        goodUnits = isInDPulvinar & isSignificantCueResponseInc;
+    elseif strcmp(subdivisions{i}, 'vPul')
+        goodUnits = isInVPulvinar & isSignificantCueResponseInc;
+    end
+    
 %% cue response mean firing rate InRF vs ExRF -- sanity check
 %goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.cueResponse(goodUnits), ...
@@ -873,6 +894,7 @@ export_fig(plotFileName, '-nocrop');
 
 %% array hold response mid mean norm firing rate InRF vs ExRF
 %goodUnits = isInPulvinar & isSignificantCueResponseInc;
+goodUnits = isInPulvinar & isSignificantSelectivityTargetDimResponse;
 [~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.arrayResponseHoldMidBal(goodUnits), ...
         averageFiringRatesByCount.preCueBaseline(goodUnits), ...
         inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
@@ -1372,7 +1394,7 @@ stop
 %% mean and image plots per-condition baseline-corrected normalized
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
-subdivisions = {'vPulCueInc'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
+subdivisions = {'targetDimResp'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     yBounds = [-0.25 0.5];
@@ -1418,6 +1440,20 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInPulvinar & ~isSignificantCueResponse;
     elseif strcmp(subdivision, 'arrayDiffDec')
         isInSubdivision = isInPulvinar & isSignificantSelectivityArrayHoldResponseDec;
+    elseif strcmp(subdivision, 'motorPos')
+        isInSubdivision = isInPulvinar & spdfInfo.exitFixationSpdfInRFNorm(:,getTimeLogicalWithTolerance(exitFixationT, [0 0])) > 0.2;
+    elseif strcmp(subdivision, 'motorNeg')
+        isInSubdivision = isInPulvinar & spdfInfo.exitFixationSpdfInRFNorm(:,getTimeLogicalWithTolerance(exitFixationT, [0 0])) < -0.2;
+    elseif strcmp(subdivision, 'visualPos')
+        isInSubdivision = isInPulvinar & isSignificantCueResponseInc & abs(spdfInfo.exitFixationSpdfInRFNorm(:,getTimeLogicalWithTolerance(exitFixationT, [0 0]))) < 0.2;
+    elseif strcmp(subdivision, 'nonvisual')
+        isInSubdivision = isInPulvinar & ~isSignificantCueResponse;
+    elseif strcmp(subdivision, 'ctDelayInc')
+        isInSubdivision = isInPulvinar & isSignificantSelectivityCueTargetDelayInc;
+    elseif strcmp(subdivision, 'ctDelayDec')
+        isInSubdivision = isInPulvinar & isSignificantSelectivityCueTargetDelayDec;
+    elseif strcmp(subdivision, 'targetDimResp')
+        isInSubdivision = isInPulvinar & isSignificantSelectivityTargetDimResponse;
     else
         isInSubdivision = strcmp(localization, subdivision);
     end
@@ -1464,7 +1500,7 @@ makeTinyPlotsOfPopulation(arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfInRFN
 %% mega figure of tiny bc normalized plots per unit by subdivision
 fprintf('\n');
 fprintf('Plotting mega figure of tiny baseline-corrected, normalized mean SPDFs...\n');
-subdivisions = {'arrayDiffDec'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
+subdivisions = {'targetDimResp'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
@@ -1489,6 +1525,8 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInVPulvinar & isSignificantCueResponseDec;
     elseif strcmp(subdivision, 'arrayDiffDec')
         isInSubdivision = isInPulvinar & isSignificantSelectivityArrayHoldResponseDec;
+    elseif strcmp(subdivision, 'targetDimResp')
+        isInSubdivision = isInPulvinar & isSignificantSelectivityTargetDimResponse;
     else
         isInSubdivision = strcmp(localization, subdivision);
     end
