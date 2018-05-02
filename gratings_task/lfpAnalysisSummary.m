@@ -1,7 +1,8 @@
+function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
-clear;
-readDataLocally;
-sessionInds = 1:23;
+% clear;
+% readDataLocally;
+% sessionInds = 1:23;
 
 v = 12;
 
