@@ -77,6 +77,6 @@ end
 %% formatting and labels
 xlabel('Time (ms)');
 xlim([0 waveformT(end)]);
-set(gca, 'XTick', [0 waveformT(end)/4 waveformT(end)/2 3*waveformT(end)/4 waveformT(end)]);
+set(gca, 'XTick', 0:muaStruct.thresholdTime*1000:waveformT(end));
 ylim(yBounds);
 title('Waveform');
