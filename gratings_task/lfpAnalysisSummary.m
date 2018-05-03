@@ -96,13 +96,12 @@ end
 saveFileName = sprintf('%s/allSessions-lfpAnalysisSummary-v%d.mat', outputDir, v);
 save(saveFileName);
 
-%%
-
+%% plot baseline power
 baselinePowerDPul = 10*log10(baselinePower(isInDPulvinar,:));
 baselinePowerVPul = 10*log10(baselinePower(isInVPulvinar,:));
 
-meanBaselinePowerDPul = mean(baselinePowerDPul);
-meanBaselinePowerVPul = mean(baselinePowerVPul);
+meanBaselinePowerDPul = median(baselinePowerDPul);
+meanBaselinePowerVPul = median(baselinePowerVPul);
 seBaselinePowerDPul = std(baselinePowerDPul) / sqrt(sum(isInDPulvinar));
 seBaselinePowerVPul = std(baselinePowerVPul) / sqrt(sum(isInVPulvinar));
 
@@ -121,17 +120,19 @@ uistack(fillH, 'bottom');
 hold on;
 plot(fAxis, meanBaselinePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
 plot(fAxis, meanBaselinePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
+xlim([5 80]);
 
 plotFileName = sprintf('%s/allSessions-baselinePower-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%%
+%% plot power in cue-target delay relative to baseline
+% regardless of cue location
 cueTargetDelayRelativePowerDPul = (10*log10(cueTargetDelayPower(isInDPulvinar,:))) ./ (10*log10(baselinePower(isInDPulvinar,:)));
 cueTargetDelayRelativePowerVPul = (10*log10(cueTargetDelayPower(isInVPulvinar,:))) ./ (10*log10(baselinePower(isInVPulvinar,:)));
 
-meanCueTargetDelayRelativePowerDPul = mean(cueTargetDelayRelativePowerDPul);
-meanCueTargetDelayRelativePowerVPul = mean(cueTargetDelayRelativePowerVPul);
+meanCueTargetDelayRelativePowerDPul = median(cueTargetDelayRelativePowerDPul);
+meanCueTargetDelayRelativePowerVPul = median(cueTargetDelayRelativePowerVPul);
 seCueTargetDelayRelativePowerDPul = std(cueTargetDelayRelativePowerDPul) / sqrt(sum(isInDPulvinar));
 seCueTargetDelayRelativePowerVPul = std(cueTargetDelayRelativePowerVPul) / sqrt(sum(isInVPulvinar));
 
@@ -146,6 +147,8 @@ uistack(fillH, 'bottom');
 hold on;
 plot(fAxis, meanCueTargetDelayRelativePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
 plot(fAxis, meanCueTargetDelayRelativePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
+xlim([5 80]);
+ylim([1 1.04]);
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
