@@ -93,7 +93,7 @@ for i = 1:nSessions
 end
 
 %%
-saveFileName = sprintf('%s/lfpAnalysisSummar-v%d.png', outputDir, v);
+saveFileName = sprintf('%s/allSessions-lfpAnalysisSummary-v%d.mat', outputDir, v);
 save(saveFileName);
 
 %%
@@ -122,7 +122,7 @@ hold on;
 plot(fAxis, meanBaselinePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
 plot(fAxis, meanBaselinePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
 
-plotFileName = sprintf('%s/%s-baselinePower-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-baselinePower-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -147,6 +147,6 @@ hold on;
 plot(fAxis, meanCueTargetDelayRelativePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
 plot(fAxis, meanCueTargetDelayRelativePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
 
-plotFileName = sprintf('%s/%s-cueTargetDelayPower-v%d.png', outputDir, sessionName, sessionInd, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
