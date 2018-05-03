@@ -113,8 +113,8 @@ load(saveFileName);
 outputDir = outputDirOrig;
 
 %% plot baseline power
-baselinePowerDPul = 10*log10(baselinePower(isInDPulvinar,:));
-baselinePowerVPul = 10*log10(baselinePower(isInVPulvinar,:));
+baselinePowerDPul = (baselinePower(isInDPulvinar,:));
+baselinePowerVPul = (baselinePower(isInVPulvinar,:));
 
 meanBaselinePowerDPul = median(baselinePowerDPul);
 meanBaselinePowerVPul = median(baselinePowerVPul);
@@ -137,6 +137,7 @@ hold on;
 plot(fAxis, meanBaselinePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
 plot(fAxis, meanBaselinePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
 xlim([5 80]);
+% ylim([-34 -14]);
 
 plotFileName = sprintf('%s/allSessions-baselinePower-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -144,11 +145,16 @@ export_fig(plotFileName, '-nocrop');
 
 %% plot power in cue-target delay relative to baseline
 % regardless of cue location
-cueTargetDelayRelativePowerDPul = (10*log10(cueTargetDelayPowerAllLocs(isInDPulvinar,:))) ./ (10*log10(baselinePower(isInDPulvinar,:)));
-cueTargetDelayRelativePowerVPul = (10*log10(cueTargetDelayPowerAllLocs(isInVPulvinar,:))) ./ (10*log10(baselinePower(isInVPulvinar,:)));
+cueTargetDelayRelativePowerDPul = ((cueTargetDelayPowerAllLocs(isInDPulvinar,:))) ./ ((baselinePower(isInDPulvinar,:)));
+cueTargetDelayRelativePowerVPul = ((cueTargetDelayPowerAllLocs(isInVPulvinar,:))) ./ ((baselinePower(isInVPulvinar,:)));
 
-meanCueTargetDelayRelativePowerDPul = median(cueTargetDelayRelativePowerDPul);
-meanCueTargetDelayRelativePowerVPul = median(cueTargetDelayRelativePowerVPul);
+% HACK outlier removal
+fInd = fAxis >= 10 & fAxis <= 80;
+cueTargetDelayRelativePowerDPul(any(cueTargetDelayRelativePowerDPul(:,fInd) > 1.4 | cueTargetDelayRelativePowerDPul(:,fInd) < 0.6, 2),:) = [];
+cueTargetDelayRelativePowerVPul(any(cueTargetDelayRelativePowerVPul(:,fInd) > 1.4 | cueTargetDelayRelativePowerVPul(:,fInd) < 0.6, 2),:) = [];
+
+meanCueTargetDelayRelativePowerDPul = mean(cueTargetDelayRelativePowerDPul);
+meanCueTargetDelayRelativePowerVPul = mean(cueTargetDelayRelativePowerVPul);
 seCueTargetDelayRelativePowerDPul = std(cueTargetDelayRelativePowerDPul) / sqrt(sum(isInDPulvinar));
 seCueTargetDelayRelativePowerVPul = std(cueTargetDelayRelativePowerVPul) / sqrt(sum(isInVPulvinar));
 
@@ -164,7 +170,7 @@ hold on;
 plot(fAxis, meanCueTargetDelayRelativePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
 plot(fAxis, meanCueTargetDelayRelativePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
 xlim([5 80]);
-ylim([1 1.04]);
+% ylim([1 1.03]);
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-allLocs-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -173,15 +179,21 @@ export_fig(plotFileName, '-nocrop');
 %% plot power in cue-target delay relative to baseline
 % regardless of cue location
 % TODO refactor
-cueTargetDelayRelativePowerDPul = (10*log10(cueTargetDelayPowerP3(isInDPulvinar,:))) ./ (10*log10(baselinePower(isInDPulvinar,:)));
-cueTargetDelayRelativePowerVPul = (10*log10(cueTargetDelayPowerP3(isInVPulvinar,:))) ./ (10*log10(baselinePower(isInVPulvinar,:)));
+cueTargetDelayRelativePowerDPul = (((cueTargetDelayPowerP3(isInDPulvinar,:))) ./ ((baselinePower(isInDPulvinar,:))) - 1) * 100;
+cueTargetDelayRelativePowerVPul = (((cueTargetDelayPowerP3(isInVPulvinar,:))) ./ ((baselinePower(isInVPulvinar,:))) - 1) * 100;
 
-meanCueTargetDelayRelativePowerDPul = median(cueTargetDelayRelativePowerDPul);
-meanCueTargetDelayRelativePowerVPul = median(cueTargetDelayRelativePowerVPul);
+% HACK outlier removal
+fInd = fAxis >= 10 & fAxis <= 80;
+cueTargetDelayRelativePowerDPul(any(cueTargetDelayRelativePowerDPul(:,fInd) > 40 | cueTargetDelayRelativePowerDPul(:,fInd) < -40, 2),:) = [];
+cueTargetDelayRelativePowerVPul(any(cueTargetDelayRelativePowerVPul(:,fInd) > 40 | cueTargetDelayRelativePowerVPul(:,fInd) < -40, 2),:) = [];
+
+meanCueTargetDelayRelativePowerDPul = mean(cueTargetDelayRelativePowerDPul);
+meanCueTargetDelayRelativePowerVPul = mean(cueTargetDelayRelativePowerVPul);
 seCueTargetDelayRelativePowerDPul = std(cueTargetDelayRelativePowerDPul) / sqrt(sum(isInDPulvinar));
 seCueTargetDelayRelativePowerVPul = std(cueTargetDelayRelativePowerVPul) / sqrt(sum(isInVPulvinar));
 
-figure; 
+figure_tr_inch(7, 5); 
+subaxis(1, 1, 1, 'MB', 0.14);
 hold on;
 fillH = jbfill(fAxis, meanCueTargetDelayRelativePowerVPul - seCueTargetDelayRelativePowerVPul, meanCueTargetDelayRelativePowerVPul + seCueTargetDelayRelativePowerVPul, ...
         vPulCol, ones(3, 1), 0.3);
@@ -190,10 +202,16 @@ fillH = jbfill(fAxis, meanCueTargetDelayRelativePowerDPul - seCueTargetDelayRela
         dPulCol, ones(3, 1), 0.3);
 uistack(fillH, 'bottom');
 hold on;
-plot(fAxis, meanCueTargetDelayRelativePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
-plot(fAxis, meanCueTargetDelayRelativePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
+h1 = plot(fAxis, meanCueTargetDelayRelativePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
+h2 = plot(fAxis, meanCueTargetDelayRelativePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
+legend([h1 h2], {' dPul', ' vPul'}, 'box', 'off', 'Location', 'SouthEast');
 xlim([5 80]);
-ylim([1 1.04]);
+ylim([-20 0]);
+xlabel('Frequency (Hz)');
+ylabel('Percent Change in Power Rel. to Baseline');
+set(gca, 'box', 'off');
+set(gca, 'FontSize', 16);
+set(gca, 'LineWidth', 2);
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-P3-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -201,11 +219,16 @@ export_fig(plotFileName, '-nocrop');
 
 %% plot power in cue-target delay relative to baseline
 % regardless of cue location
-cueTargetDelayRelativePowerDPul = (10*log10(cueTargetDelayPowerP1(isInDPulvinar,:))) ./ (10*log10(baselinePower(isInDPulvinar,:)));
-cueTargetDelayRelativePowerVPul = (10*log10(cueTargetDelayPowerP1(isInVPulvinar,:))) ./ (10*log10(baselinePower(isInVPulvinar,:)));
+cueTargetDelayRelativePowerDPul = ((cueTargetDelayPowerP1(isInDPulvinar,:))) ./ ((baselinePower(isInDPulvinar,:)));
+cueTargetDelayRelativePowerVPul = ((cueTargetDelayPowerP1(isInVPulvinar,:))) ./ ((baselinePower(isInVPulvinar,:)));
 
-meanCueTargetDelayRelativePowerDPul = median(cueTargetDelayRelativePowerDPul);
-meanCueTargetDelayRelativePowerVPul = median(cueTargetDelayRelativePowerVPul);
+% HACK outlier removal
+fInd = fAxis >= 10 & fAxis <= 80;
+cueTargetDelayRelativePowerDPul(any(cueTargetDelayRelativePowerDPul(:,fInd) > 1.4 | cueTargetDelayRelativePowerDPul(:,fInd) < 0.6, 2),:) = [];
+cueTargetDelayRelativePowerVPul(any(cueTargetDelayRelativePowerVPul(:,fInd) > 1.4 | cueTargetDelayRelativePowerVPul(:,fInd) < 0.6, 2),:) = [];
+
+meanCueTargetDelayRelativePowerDPul = mean(cueTargetDelayRelativePowerDPul);
+meanCueTargetDelayRelativePowerVPul = mean(cueTargetDelayRelativePowerVPul);
 seCueTargetDelayRelativePowerDPul = std(cueTargetDelayRelativePowerDPul) / sqrt(sum(isInDPulvinar));
 seCueTargetDelayRelativePowerVPul = std(cueTargetDelayRelativePowerVPul) / sqrt(sum(isInVPulvinar));
 
@@ -221,8 +244,86 @@ hold on;
 plot(fAxis, meanCueTargetDelayRelativePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
 plot(fAxis, meanCueTargetDelayRelativePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
 xlim([5 80]);
-ylim([1 1.04]);
+ylim([0.8 1]);
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-P1-v%d.png', outputDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+%% plot power in cue-target delay relative to baseline
+% regardless of cue location
+cueTargetDelayRelativePowerP3 = ((cueTargetDelayPowerP3(isInDPulvinar,:))) ./ ((baselinePower(isInDPulvinar,:)));
+cueTargetDelayRelativePowerP1 = ((cueTargetDelayPowerP1(isInDPulvinar,:))) ./ ((baselinePower(isInDPulvinar,:)));
+
+% HACK outlier removal
+fInd = fAxis >= 10 & fAxis <= 80;
+goodSessions = any(cueTargetDelayRelativePowerP3(:,fInd) > 1.4 | cueTargetDelayRelativePowerP3(:,fInd) < 0.6, 2) & ...
+        any(cueTargetDelayRelativePowerP1(:,fInd) > 1.4 | cueTargetDelayRelativePowerP1(:,fInd) < 0.6, 2);
+cueTargetDelayRelativePowerP3(goodSessions,:) = [];
+cueTargetDelayRelativePowerP1(goodSessions,:) = [];
+
+meanCueTargetDelayRelativePowerP3 = median(cueTargetDelayRelativePowerP3);
+meanCueTargetDelayRelativePowerP1 = median(cueTargetDelayRelativePowerP1);
+seCueTargetDelayRelativePowerP3 = std(cueTargetDelayRelativePowerP3) / sqrt(sum(isInDPulvinar));
+seCueTargetDelayRelativePowerP1 = std(cueTargetDelayRelativePowerP1) / sqrt(sum(isInDPulvinar));
+
+p3Col = [0.9 0 0];
+p1Col = [0 0 0.9];
+
+figure; 
+hold on;
+fillH = jbfill(fAxis, meanCueTargetDelayRelativePowerP1 - seCueTargetDelayRelativePowerP1, meanCueTargetDelayRelativePowerP1 + seCueTargetDelayRelativePowerP1, ...
+        p1Col, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+fillH = jbfill(fAxis, meanCueTargetDelayRelativePowerP3 - seCueTargetDelayRelativePowerP3, meanCueTargetDelayRelativePowerP3 + seCueTargetDelayRelativePowerP3, ...
+        p3Col, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+hold on;
+plot(fAxis, meanCueTargetDelayRelativePowerP3, 'LineWidth', 2, 'Color', p3Col);
+plot(fAxis, meanCueTargetDelayRelativePowerP1, 'LineWidth', 2, 'Color', p1Col);
+xlim([5 80]);
+ylim([0.8 1]);
+
+plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-dPul-P3vsP1-v%d.png', outputDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+%% plot power in cue-target delay relative to baseline
+% regardless of cue location
+cueTargetDelayRelativePowerP3 = ((cueTargetDelayPowerP3(isInVPulvinar,:))) ./ ((baselinePower(isInVPulvinar,:)));
+cueTargetDelayRelativePowerP1 = ((cueTargetDelayPowerP1(isInVPulvinar,:))) ./ ((baselinePower(isInVPulvinar,:)));
+
+% HACK outlier removal
+fInd = fAxis >= 10 & fAxis <= 80;
+goodSessions = any(cueTargetDelayRelativePowerP3(:,fInd) > 1.4 | cueTargetDelayRelativePowerP3(:,fInd) < 0.6, 2) & ...
+        any(cueTargetDelayRelativePowerP1(:,fInd) > 1.4 | cueTargetDelayRelativePowerP1(:,fInd) < 0.6, 2);
+cueTargetDelayRelativePowerP3(goodSessions,:) = [];
+cueTargetDelayRelativePowerP1(goodSessions,:) = [];
+
+meanCueTargetDelayRelativePowerP3 = mean(cueTargetDelayRelativePowerP3);
+meanCueTargetDelayRelativePowerP1 = mean(cueTargetDelayRelativePowerP1);
+seCueTargetDelayRelativePowerP3 = std(cueTargetDelayRelativePowerP3) / sqrt(sum(isInVPulvinar));
+seCueTargetDelayRelativePowerP1 = std(cueTargetDelayRelativePowerP1) / sqrt(sum(isInVPulvinar));
+
+p3Col = [0.9 0 0];
+p1Col = [0 0 0.9];
+
+figure; 
+hold on;
+fillH = jbfill(fAxis, meanCueTargetDelayRelativePowerP1 - seCueTargetDelayRelativePowerP1, meanCueTargetDelayRelativePowerP1 + seCueTargetDelayRelativePowerP1, ...
+        p1Col, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+fillH = jbfill(fAxis, meanCueTargetDelayRelativePowerP3 - seCueTargetDelayRelativePowerP3, meanCueTargetDelayRelativePowerP3 + seCueTargetDelayRelativePowerP3, ...
+        p3Col, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+hold on;
+plot(fAxis, meanCueTargetDelayRelativePowerP3, 'LineWidth', 2, 'Color', p3Col);
+plot(fAxis, meanCueTargetDelayRelativePowerP1, 'LineWidth', 2, 'Color', p1Col);
+xlim([5 80]);
+ylim([0.8 1]);
+
+plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-vPul-P3vsP1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
