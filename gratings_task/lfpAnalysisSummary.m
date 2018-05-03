@@ -47,7 +47,7 @@ fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 
 %% session loop
-for i = 1:nSessions
+for i = 1%1:nSessions
     sessionInd = sessionInds(i);
     R = recordingInfo(sessionInd);
     sessionName = R.sessionName;
@@ -80,8 +80,8 @@ for i = 1:nSessions
         % all locations together
         cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(j,:,:))';
         arrayOnsetLfpCurrent = squeeze(EL.arrayOnsetLfp.lfp(j,:,:))';
-        arrayOnsetLfpP3Current = squeeze(EL.arrayOnsetLfp.lfp(j,cueLoc == 3,:))';
-        arrayOnsetLfpP1Current = squeeze(EL.arrayOnsetLfp.lfp(j,cueLoc == 1,:))';
+        arrayOnsetLfpP3Current = squeeze(EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 3,:))';
+        arrayOnsetLfpP1Current = squeeze(EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 1,:))';
         
         preCueBaselineLfps = cueOnsetLfpCurrent(baselineInd,:);
         [baselinePower(lfpCount,:),fAxis] = mtspectrumc(preCueBaselineLfps, params);
