@@ -47,7 +47,7 @@ fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 
 %% session loop
-for i = 1%1:nSessions
+for i = 1:nSessions
     sessionInd = sessionInds(i);
     R = recordingInfo(sessionInd);
     sessionName = R.sessionName;
