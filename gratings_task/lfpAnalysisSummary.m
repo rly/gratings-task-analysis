@@ -88,24 +88,64 @@ for i = 1:nSessions
         cueTargetDelayLfps = arrayOnsetLfpCurrent(cueTargetDelayInd,:);
         [cueTargetDelayPower(lfpCount,:),fAxis] = mtspectrumc(cueTargetDelayLfps, params);
     end
+    
+    clear EL;
 end
 
 %%
+saveFileName = sprintf('%s/lfpAnalysisSummar-v%d.png', outputDir, v);
+save(saveFileName);
+
+%%
+
+baselinePowerDPul = 10*log10(baselinePower(isInDPulvinar,:));
+baselinePowerVPul = 10*log10(baselinePower(isInVPulvinar,:));
+
+meanBaselinePowerDPul = mean(baselinePowerDPul);
+meanBaselinePowerVPul = mean(baselinePowerVPul);
+seBaselinePowerDPul = std(baselinePowerDPul) / sqrt(sum(isInDPulvinar));
+seBaselinePowerVPul = std(baselinePowerVPul) / sqrt(sum(isInVPulvinar));
+
+cols = lines(6);
+dPulCol = cols(3,:);
+vPulCol = cols(5,:);
+
 figure; 
 hold on;
-plot(fAxis, baselinePower(isInDPulvinar,:), 'LineWidth', 2);
-plot(fAxis, baselinePower(isInVPulvinar,:), 'LineWidth', 2);
-plot(fAxis, baselinePower, '--', 'LineWidth', 2);
+fillH = jbfill(fAxis, meanBaselinePowerVPul - seBaselinePowerVPul, meanBaselinePowerVPul + seBaselinePowerVPul, ...
+        vPulCol, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+fillH = jbfill(fAxis, meanBaselinePowerDPul - seBaselinePowerDPul, meanBaselinePowerDPul + seBaselinePowerDPul, ...
+        dPulCol, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+hold on;
+plot(fAxis, meanBaselinePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
+plot(fAxis, meanBaselinePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
 
 plotFileName = sprintf('%s/%s-baselinePower-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%%
+cueTargetDelayRelativePowerDPul = (10*log10(cueTargetDelayPower(isInDPulvinar,:))) ./ (10*log10(baselinePower(isInDPulvinar,:)));
+cueTargetDelayRelativePowerVPul = (10*log10(cueTargetDelayPower(isInVPulvinar,:))) ./ (10*log10(baselinePower(isInVPulvinar,:)));
+
+meanCueTargetDelayRelativePowerDPul = mean(cueTargetDelayRelativePowerDPul);
+meanCueTargetDelayRelativePowerVPul = mean(cueTargetDelayRelativePowerVPul);
+seCueTargetDelayRelativePowerDPul = std(cueTargetDelayRelativePowerDPul) / sqrt(sum(isInDPulvinar));
+seCueTargetDelayRelativePowerVPul = std(cueTargetDelayRelativePowerVPul) / sqrt(sum(isInVPulvinar));
+
 figure; 
 hold on;
-plot(fAxis, nanmean(cueTargetDelayPower(isInDPulvinar,:) ./ baselinePower(isInDPulvinar,:)), 'LineWidth', 2);
-plot(fAxis, nanmean(cueTargetDelayPower(isInVPulvinar,:) ./ baselinePower(isInVPulvinar,:)), 'LineWidth', 2);
-plot(fAxis, nanmean(cueTargetDelayPower ./ baselinePower), '--', 'LineWidth', 2);
+fillH = jbfill(fAxis, meanCueTargetDelayRelativePowerVPul - seCueTargetDelayRelativePowerVPul, meanCueTargetDelayRelativePowerVPul + seCueTargetDelayRelativePowerVPul, ...
+        vPulCol, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+fillH = jbfill(fAxis, meanCueTargetDelayRelativePowerDPul - seCueTargetDelayRelativePowerDPul, meanCueTargetDelayRelativePowerDPul + seCueTargetDelayRelativePowerDPul, ...
+        dPulCol, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+hold on;
+plot(fAxis, meanCueTargetDelayRelativePowerDPul, 'LineWidth', 2, 'Color', dPulCol);
+plot(fAxis, meanCueTargetDelayRelativePowerVPul, 'LineWidth', 2, 'Color', vPulCol);
 
 plotFileName = sprintf('%s/%s-cueTargetDelayPower-v%d.png', outputDir, sessionName, sessionInd, v);
 fprintf('Saving to %s...\n', plotFileName);
