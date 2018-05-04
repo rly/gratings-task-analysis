@@ -58,7 +58,7 @@ rtHoldInRFAll = cell(nUnitsApprox, 1);
 
 unitCount = 0;
 minFiringRate = 2; % use only cells with a time-locked response > 1 Hz in any window
-statAlpha = 0.05; % account for multiple comparisons later
+statAlpha = 0.01; % account for multiple comparisons later
 % should also be running a lot of shuffle tests given the number of trials
 
 fprintf('\n-------------------------------------------------------\n');

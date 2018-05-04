@@ -501,25 +501,25 @@ preSaccadeWindowIndices = getTimeLogicalWithTolerance(exitFixationT, preSaccadeW
 %         spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices) - spdfInfo.exitFixationSpdfInRFNorm(:,saccadeTimeIndex));
 
 %% t-sne representation
-tsneVals = tsne(spdfInfo.exitFixationSpdfInRFNorm(isInPulvinar,preSaccadeWindowIndices));
-
-figure_tr_inch(7.5, 7.5);
-subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
-hold on;
-sh = scatter(tsneVals(:,1), tsneVals(:,2), 100);
-sh.MarkerFaceAlpha = 0.9;
-
-set(gca, 'box', 'off');
-set(gca, 'LineWidth', 2);
-set(gca, 'FontSize', 26);
-set(gca, 'FontName', 'Calibri');
-
-plotFileName = sprintf('%s/allSessions-tSNE-exitFixationSpdfInRFNorm-v%d.png', summaryDataDir, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
+% tsneVals = tsne(spdfInfo.exitFixationSpdfInRFNorm(isInPulvinar,preSaccadeWindowIndices));
+% 
+% figure_tr_inch(7.5, 7.5);
+% subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
+% hold on;
+% sh = scatter(tsneVals(:,1), tsneVals(:,2), 100);
+% sh.MarkerFaceAlpha = 0.9;
+% 
+% set(gca, 'box', 'off');
+% set(gca, 'LineWidth', 2);
+% set(gca, 'FontSize', 26);
+% set(gca, 'FontName', 'Calibri');
+% 
+% plotFileName = sprintf('%s/allSessions-tSNE-exitFixationSpdfInRFNorm-v%d.png', summaryDataDir, v);
+% fprintf('Saving to %s...\n', plotFileName);
+% export_fig(plotFileName, '-nocrop');
 
 %% PC1 vs PC2 on pre-saccadic activity
-data = spdfInfo.exitFixationSpdfInRFNorm(isInPulvinar,preSaccadeWindowIndices); % all units
+data = spdfInfo.exitFixationSpdfInRFNorm(:,preSaccadeWindowIndices); % all units
 [pcaCoeff,pcaPreSaccadeScore,~,~,pcaPctExplained] = pca(data);
 fprintf('\n');
 fprintf('PCA: %d variables, %d observations\n', size(data, 2), size(data, 1));
@@ -543,8 +543,7 @@ sh.LineWidth = 2;
 xlabel('PC1');
 ylabel('PC2');
 
-
-%% plot first 3 principal component basis vectors
+%% plot first 3 PC basis vectors on pre-saccadic activity
 figure_tr_inch(7.5, 7.5);
 subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
 hold on;
@@ -558,7 +557,7 @@ plotFileName = sprintf('%s/allSessions-PCA-exitFixationSpdfInRFNorm-v%d.png', su
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%%
+%% plot pre-saccadic activity aligned to y=0 based on PCA score
 figure;
 hold on;
 subaxis(1, 2, 1);
@@ -567,13 +566,6 @@ ylim([-1 1]);
 subaxis(1, 2, 2);
 plot(data(abs(pcaPreSaccadeScore(:,2)) < 0.5,:)');
 ylim([-1 1]);
-
-%%
-figure_tr_inch(10, 10);
-hold on;
-for i = 1:size(data, 1)
-    plot(data(i,:));
-end
 
 %% test diff RT for top third vs bottom third firing rates in delay periods
 meanRTRelInRFDiffThirdFiringRateCTDelay = rtFiringRateStruct.meanRTRelInRFTopThirdFiringRateCTDelay - rtFiringRateStruct.meanRTRelInRFBottomThirdFiringRateCTDelay;
@@ -1402,7 +1394,7 @@ plotFileName = sprintf('%s/allSessions-targetDimDelayNoiseCorrDiff-v%d.png', sum
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%%
+%% stop
 stop
 
 
@@ -1733,8 +1725,10 @@ b = a(pcaConcatAllScore(:,2) <= 0);
 c = a(pcaConcatAllScore(:,2) > 0);
 pulLoc(b,8) = 5;
 pulLoc(c,8) = 3;
-pulLoc(isInDPulvinar,9) = 2;
-pulLoc(isInVPulvinar,9) = 1;
+pulLoc(isSignificantSelectivityTargetDimDelay,9) = 2;
+pulLoc(isSignificantSelectivityTargetDimResponse,10) = 2;
+pulLoc(isInDPulvinar,11) = 2;
+pulLoc(isInVPulvinar,11) = 1;
 imagesc(pulLoc);
 colormap([0.3 0.3 0.3; lines(6)]);
 
