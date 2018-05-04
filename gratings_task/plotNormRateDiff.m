@@ -1,4 +1,5 @@
-function [f1, ax1, ax2, ax3] = plotNormRateDiff(firingRates, baselineFiringRates, inRFNormFactor, exRFNormFactor, inRFLocs, exRFLocs, isDPul, isVPul)
+function [f1, ax1, ax2, ax3] = plotNormRateDiff(firingRates, baselineFiringRates, ...
+        inRFNormFactor, exRFNormFactor, inRFLocs, exRFLocs, isDPul, isVPul, isSigUnit)
 
 nUnits = numel(firingRates);
 firingInRF = nan(nUnits, 1);
@@ -10,4 +11,4 @@ end
 
 fprintf('\tMean normalized firing rate InRF: %0.1f, ExRF: %0.1f\n', mean(firingInRF), mean(firingExRF));
 
-[f1, ax1, ax2, ax3] = plotMetricDiff(firingInRF, firingExRF, isDPul, isVPul, 0.1);
+[f1, ax1, ax2, ax3] = plotMetricDiff(firingInRF, firingExRF, isDPul, isVPul, isSigUnit, 0.1);

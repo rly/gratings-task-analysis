@@ -33,4 +33,4 @@ corrP1 = [corrP1DPul; corrP1VPul; corrP1Cross];
 isDPul = [true(size(corrP3DPul)); false(size(corrP3VPul)); false(size(corrP3Cross))];
 isVPul = [false(size(corrP3DPul)); true(size(corrP3VPul)); false(size(corrP3Cross))];
 
-[f1,ax1,ax2,ax3] = plotMetricDiff(corrP3, corrP1, isDPul, isVPul, 0.05);
+[f1,ax1,ax2,ax3] = plotMetricDiff(corrP3, corrP1, isDPul, isVPul, false(size(isDPul)), 0.05);

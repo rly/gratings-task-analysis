@@ -1,4 +1,4 @@
-function [f1, ax1, ax2, ax3] = plotFanoFactorDiff(firingRates, inRFLocs, exRFLocs, isDPul, isVPul)
+function [f1, ax1, ax2, ax3] = plotFanoFactorDiff(firingRates, inRFLocs, exRFLocs, isDPul, isVPul, isSigUnit)
 
 nUnits = numel(firingRates);
 fanoFactorInRF = nan(nUnits, 1);
@@ -16,6 +16,7 @@ fanoFactorInRF(toRemove) = [];
 fanoFactorExRF(toRemove) = [];
 isDPul(toRemove) = [];
 isVPul(toRemove) = [];
+isSigUnit(toRemove) = [];
 fprintf('\tRemoved %d units because of outlier Fano factor (> %0.1f)\n', sum(toRemove), maxFanoFactor);
 
-[f1, ax1, ax2, ax3] = plotMetricDiff(fanoFactorInRF, fanoFactorExRF, isDPul, isVPul, 0.2);
+[f1, ax1, ax2, ax3] = plotMetricDiff(fanoFactorInRF, fanoFactorExRF, isDPul, isVPul, isSigUnit, 0.2);

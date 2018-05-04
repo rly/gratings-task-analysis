@@ -766,7 +766,7 @@ for i = 1:nUnits
 end
 fprintf('Mean vPul baseline pre-cue firing: %0.2f Hz\n', mean(firing));
 
-%%
+%% loop across subdivisions
 subdivisions = {'dPul', 'vPul'};
 for i = 1:numel(subdivisions)
     
@@ -777,10 +777,10 @@ for i = 1:numel(subdivisions)
     end
     
 %% cue response mean firing rate InRF vs ExRF -- sanity check
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.cueResponse(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -791,12 +791,12 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% cue response mean norm firing rate InRF vs ExRF -- sanity check
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueResponse(goodUnits), ...
         averageFiringRatesByCount.preCueBaseline(goodUnits), ...
         inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Norm. Firing Rate Attend-RF');
 ylabel(ax1, 'Norm. Firing Rate Attend-Away');
 xlabel(ax2, 'Norm. Firing Rate Difference');
@@ -807,10 +807,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% cue target delay mean firing rate InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -821,12 +821,12 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% cue target delay mean norm firing rate InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
         averageFiringRatesByCount.preCueBaseline(goodUnits), ...
         inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        isSignificantSelectivityCueTargetDelay(goodUnits));
 xlabel(ax1, 'Norm. Firing Rate Attend-RF');
 ylabel(ax1, 'Norm. Firing Rate Attend-Away');
 xlabel(ax2, 'Norm. Firing Rate Difference');
@@ -837,10 +837,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% cue target delay fano factor InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Fano Factor Attend-RF');
 ylabel(ax1, 'Fano Factor Attend-Away');
 xlabel(ax2, 'Fano Factor Difference');
@@ -851,10 +851,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% array release response mean firing rate InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.arrayResponseRelBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -865,10 +865,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% array hold response mean firing rate InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        isSignificantSelectivityArrayHoldResponse(goodUnits));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -879,10 +879,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% array hold response mid mean firing rate InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.arrayResponseHoldMidBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -893,13 +893,12 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% array hold response mid mean norm firing rate InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
-goodUnits = isInPulvinar & isSignificantSelectivityTargetDimResponse;
 [~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.arrayResponseHoldMidBal(goodUnits), ...
         averageFiringRatesByCount.preCueBaseline(goodUnits), ...
         inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Norm. Firing Rate Attend-RF');
 ylabel(ax1, 'Norm. Firing Rate Attend-Away');
 xlabel(ax2, 'Norm. Firing Rate Difference');
@@ -910,10 +909,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% array hold response fano factor InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Fano Factor Attend-RF');
 ylabel(ax1, 'Fano Factor Attend-Away');
 xlabel(ax2, 'Fano Factor Difference');
@@ -924,10 +923,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% array hold response mid fano factor InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.arrayResponseHoldMidBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Fano Factor Attend-RF');
 ylabel(ax1, 'Fano Factor Attend-Away');
 xlabel(ax2, 'Fano Factor Difference');
@@ -938,10 +937,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% target-dim delay mean firing rate InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.targetDimDelayBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        isSignificantSelectivityTargetDimDelay(goodUnits));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -952,10 +951,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% target-dim delay fano factor InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.targetDimDelayBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Fano Factor Attend-RF');
 ylabel(ax1, 'Fano Factor Attend-Away');
 xlabel(ax2, 'Fano Factor Difference');
@@ -966,10 +965,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% target-dim response mean firing rate InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.targetDimResponseBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -980,10 +979,10 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% target-dim response fano factor InRF vs ExRF
-%goodUnits = isInPulvinar & isSignificantCueResponseInc;
 [~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.targetDimResponseBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
-        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        false(sum(goodUnits), 1));
 xlabel(ax1, 'Fano Factor Attend-RF');
 ylabel(ax1, 'Fano Factor Attend-Away');
 xlabel(ax2, 'Fano Factor Difference');

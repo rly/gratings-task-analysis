@@ -1,4 +1,4 @@
-function [f1, ax1, ax2, ax3] = plotMetricDiff(mInRF, mExRF, isDPul, isVPul, histBinStep)
+function [f1, ax1, ax2, ax3] = plotMetricDiff(mInRF, mExRF, isDPul, isVPul, isSigUnit, histBinStep)
 % works for firing rate and fano factor and whatever else
 
 %% stat test
@@ -46,13 +46,15 @@ vPulCol = cols(5,:);
 f1 = figure_tr_inch(13, 4.5);
 
 %% scatter plot
-ax1 = subaxis(1, 3, 1);
+ax1 = subaxis(1, 3, 1, 'MB', 0.15);
 hold on;
 plot(mBounds, mBounds, 'Color', 0.3*ones(3, 1)); 
-plotParams = {'MarkerSize', 20};
+plotParams = {'MarkerSize', 6, 'LineWidth', 1};
 plot(mInRF, mExRF, '.', plotParams{:}); % plot under as indexing sanity check
-h1 = plot(mInRF(isDPul), mExRF(isDPul), '.', 'Color', dPulCol, plotParams{:});
-h2 = plot(mInRF(isVPul), mExRF(isVPul), '.', 'Color', vPulCol, plotParams{:});
+h1 = plot(mInRF(isDPul), mExRF(isDPul), 'o', 'MarkerFaceColor', 0.8*ones(3, 1), 'MarkerEdgeColor', dPulCol, plotParams{:});
+h2 = plot(mInRF(isVPul), mExRF(isVPul), 'o', 'MarkerFaceColor', 0.8*ones(3, 1), 'MarkerEdgeColor', vPulCol, plotParams{:});
+plot(mInRF(isDPul & isSigUnit), mExRF(isDPul & isSigUnit), 'o', 'MarkerFaceColor', zeros(3, 1), 'MarkerEdgeColor', dPulCol, plotParams{:});
+plot(mInRF(isVPul & isSigUnit), mExRF(isVPul & isSigUnit), 'o', 'MarkerFaceColor', zeros(3, 1), 'MarkerEdgeColor', vPulCol, plotParams{:});
 axis equal;
 xlim(mBounds);
 ylim(mBounds);
@@ -70,6 +72,8 @@ hold on;
 if any(isDPul)
     histH = histogram(mDiffDPul, histBinEdges);
     histH.FaceColor = dPulCol;
+    histH = histogram(mDiff(isDPul & isSigUnit), histBinEdges);
+    histH.FaceColor = zeros(3, 1);
 end
 origYLim = ylim();
 plot([0 0], origYLim, 'k', 'LineWidth', 2); 
@@ -87,6 +91,8 @@ hold on;
 if any(isVPul)
     histH = histogram(mDiffVPul, histBinEdges);
     histH.FaceColor = vPulCol;
+    histH = histogram(mDiff(isVPul & isSigUnit), histBinEdges);
+    histH.FaceColor = zeros(3, 1);
 end
 origYLim = ylim();
 plot([0 0], origYLim, 'k', 'LineWidth', 2); 
