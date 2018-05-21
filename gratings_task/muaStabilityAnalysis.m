@@ -1,6 +1,6 @@
 function muaStabilityAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad)
 
-v = 10;
+v = 12;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');
@@ -15,8 +15,11 @@ fprintf('Version: %d\n', v);
 fprintf('------------------------\n');
 
 %% load recording information
+taskName = 'GRATINGS';
+scriptName = 'MUA_GRATINGS';
 [R, D] = loadRecordingData(processedDataRootDir, dataDirRoot, muaDataDirRoot, ...
-        recordingInfoFileName, sessionInd, muaChannelsToLoad, 'Gratings', 'Gratings', 1, 0);
+        recordingInfoFileName, sessionInd, muaChannelsToLoad, ...
+        taskName, scriptName, 1, 0);
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 
 nUnits = numel(D.allMUAStructs);
