@@ -170,7 +170,7 @@ for i = 1:numel(firstJuiceEvent)
     end
 end
 
-% targetDim = targetDimMatch(~isnan(targetDimMatch));
+targetDim = targetDimMatch(~isnan(targetDimMatch));
 targetDimBal = targetDimMatch(~isnan(targetDimMatch) & isHoldBal);
 targetDimShortHoldBal = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid & isHoldBal);
 targetDimLongHoldBal = targetDimMatch(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid & isHoldBal);
@@ -178,12 +178,12 @@ nTrialShortHold = sum(~isnan(targetDimMatch) & targetDimDelayDur < holdDurMid & 
 nTrialLongHold = sum(~isnan(targetDimMatch) & targetDimDelayDur >= holdDurMid & isHoldBal);
 assert(numel(unique(targetDimBal)) == numel(targetDimBal));
 
-% targetDimByLoc = cell(nLoc, 1);
+targetDimByLoc = cell(nLoc, 1);
 targetDimBalByLoc = cell(nLoc, 1);
 targetDimShortHoldBalByLoc = cell(nLoc, 1);
 targetDimLongHoldBalByLoc = cell(nLoc, 1);
 for i = 1:nLoc
-%     targetDimByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & cueLoc == i);
+    targetDimByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & cueLoc == i);
     targetDimBalByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & cueLoc == i & isHoldBal);
     targetDimShortHoldBalByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
             cueLoc == i & targetDimDelayDur < holdDurMid & isHoldBal);
@@ -421,6 +421,7 @@ usefulEvents = var2struct(...
         arrayOnsetRelBal, arrayOnsetHoldBal, ...
         arrayOnsetRelBalByLoc, arrayOnsetHoldBalByLoc, ...
         ...arrayOnsetHoldShortHoldBalByLoc, arrayOnsetHoldLongHoldBalByLoc, ...
+        targetDim, targetDimByLoc, ...
         targetDimBal, ...
         targetDimBalByLoc, ...
         targetDimShortHoldBal, targetDimLongHoldBal, ...
