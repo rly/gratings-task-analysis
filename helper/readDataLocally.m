@@ -10,3 +10,16 @@ muaChannelsToLoad = 1:32;
 lfpChannelsToLoad = 1:32;
 isZeroDistractors = 0;
 numRandomizations = 2;
+
+% clear;
+% sessionName = 'M20170311';
+% sessionInd = 8;
+% processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
+% dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\';
+% muaDataDirRoot = ['C:\Users\Ryan\Documents\MATLAB\gratings-task-data\' sessionName];
+% recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+% channelsToLoad = 33:64;
+% muaChannelsToLoad = 33:64;
+% lfpChannelsToLoad = 33:64;
+% isZeroDistractors = 0;
+% numRandomizations = 2;

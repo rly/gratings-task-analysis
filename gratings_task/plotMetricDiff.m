@@ -7,16 +7,16 @@ mDiff = mInRF - mExRF;
 meanMDiff = mean(mDiff);
 medianMDiff = median(mDiff);
 p = signrank(mDiff);
-fprintf('\tAll: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d\n', ...
-        meanMDiff, medianMDiff, p, numel(mDiff));
+fprintf('\tAll: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d (%d%% units selective)\n', ...
+        meanMDiff, medianMDiff, p, numel(mDiff), round(sum(isSigUnit) / numel(isSigUnit) * 100));
 
 if any(isDPul)
     mDiffDPul = mDiff(isDPul);
     meanMDiff = mean(mDiffDPul);
     medianMDiff = median(mDiffDPul);
     p = signrank(mDiffDPul);
-    fprintf('\tDPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d\n', ...
-            meanMDiff, medianMDiff, p, numel(mDiffDPul));
+    fprintf('\tDPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d (%d%% units selective)\n', ...
+            meanMDiff, medianMDiff, p, numel(mDiffDPul), round(sum(isSigUnit(isDPul)) / numel(isDPul) * 100));
 end
 
 if any(isVPul)
@@ -24,8 +24,8 @@ if any(isVPul)
     meanMDiff = mean(mDiffVPul);
     medianMDiff = median(mDiffVPul);
     p = signrank(mDiffVPul);
-    fprintf('\tVPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d\n', ...
-            meanMDiff, medianMDiff, p, numel(mDiffVPul));
+    fprintf('\tVPul: Mean diff = %0.1f, median diff = %0.1f, sign rank test p = %0.5f, N = %d (%d%% units selective)\n', ...
+            meanMDiff, medianMDiff, p, numel(mDiffVPul), round(sum(isSigUnit(isVPul)) / numel(isVPul) * 100));
 end
 
 %% plot parameters

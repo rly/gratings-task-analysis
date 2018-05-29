@@ -761,7 +761,6 @@ fprintf('Mean vPul baseline pre-cue firing: %0.2f Hz\n', mean(firing));
 %% loop across subdivisions
 subdivisions = {'dPul', 'vPul'};
 for i = 1:numel(subdivisions)
-    
     if strcmp(subdivisions{i}, 'dPul')
         goodUnits = isInDPulvinar & isSignificantCueResponseInc;
     elseif strcmp(subdivisions{i}, 'vPul')
@@ -1398,10 +1397,13 @@ export_fig(plotFileName, '-nocrop');
 stop
 
 
+
+
+
 %% mean and image plots per-condition baseline-corrected normalized
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
-subdivisions = {'targetDimResp'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
+subdivisions = {'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     yBounds = [-0.25 0.5];
@@ -1582,7 +1584,7 @@ for j = 1:numel(subdivisions)
             exitFixationSpdfExRFNormSub, exitFixationSpdfExRFNormErrSub, exitFixationT, unitNamesSub, titleBase, plotFileBaseName);
 end
 
-%% PCA on activity space by unit
+%% PCA on activity space on concatenated time courses by unit
 superdivision = isCell & isInPulvinar;
 data = spdfInfo.meanSpdfInRFConcatAll(superdivision,:);
 [pcaCoeff,pcaConcatAllScore,~,~,pcaPctExplained] = pca(data);
@@ -1591,8 +1593,10 @@ fprintf('PCA: %d variables, %d observations\n', size(data, 2), size(data, 1));
 fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
 fprintf('\tPC2 explains %0.1f%% of the variance.\n', pcaPctExplained(2));
 fprintf('\tPC3 explains %0.1f%% of the variance.\n', pcaPctExplained(3));
+fprintf('\tPC4 explains %0.1f%% of the variance.\n', pcaPctExplained(3));
 fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:2)));
 fprintf('\tPC1 + PC2 + PC3 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:3)));
+fprintf('\tPC1 + PC2 + PC3 + PC4 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:4)));
 
 figure_tr_inch(10, 6);
 subaxis(1, 1, 1, 'MB', 0.12, 'ML', 0.1);
@@ -1600,20 +1604,21 @@ hold on;
 plot(pcaCoeff(:,1), 'LineWidth', 5);
 plot(pcaCoeff(:,2), 'LineWidth', 5);
 plot(pcaCoeff(:,3), 'LineWidth', 5);
+plot(pcaCoeff(:,4), 'LineWidth', 5);
 xlim([0 size(data, 2)]);
-xlabel('Concatenated Event-Locked Time (s)');
+xlabel('Time-Locked Event');
 ylabel('');
 set(gca, 'FontSize', 14);
 set(gca, 'FontWeight', 'bold');
 set(gca, 'box', 'off');
 set(gca, 'LineWidth', 2);
-legend({'PC1', 'PC2', 'PC3'}, 'LineWidth', 0.5);
+legend({'PC1', 'PC2', 'PC3', 'PC4'}, 'LineWidth', 0.5);
 
 plotFileName = sprintf('%s/allSessions-concatDataPCAComponents-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% PCA score plot by subdivision
+%% PCA score plot on concatenated time courses by subdivision
 figure_tr_inch(6, 6);
 subaxis(1, 1, 1, 'MB', 0.1, 'MT', 0.03, 'ML', 0.14, 'MR', 0.06)
 hold on;
@@ -1646,7 +1651,7 @@ plotFileName = sprintf('%s/allSessions-pcaConcat-splitBySubdivision-v%d.png', su
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% t-sne plot by subdivision
+%% t-sne plot on concatenated time courses by subdivision
 superdivision = isCell & isInPulvinar;
 tsneValsConcatAll = tsne(spdfInfo.meanSpdfInRFConcatAll(superdivision,:));
 
@@ -1682,6 +1687,110 @@ plotFileName = sprintf('%s/allSessions-tsneConcat-splitBySubdivision-v%d.png', s
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% PCA on activity space on means by unit
+superdivision = isCell & isInPulvinar;
+data = spdfInfo.meanNormSpdfInRFAllWindowsAll(superdivision,:);
+[pcaCoeff,pcaMeansAllScore,~,~,pcaPctExplained] = pca(data);
+fprintf('\n');
+fprintf('PCA: %d variables, %d observations\n', size(data, 2), size(data, 1));
+fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
+fprintf('\tPC2 explains %0.1f%% of the variance.\n', pcaPctExplained(2));
+fprintf('\tPC3 explains %0.1f%% of the variance.\n', pcaPctExplained(3));
+fprintf('\tPC4 explains %0.1f%% of the variance.\n', pcaPctExplained(3));
+fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:2)));
+fprintf('\tPC1 + PC2 + PC3 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:3)));
+fprintf('\tPC1 + PC2 + PC3 + PC4 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:4)));
+
+figure_tr_inch(10, 6);
+subaxis(1, 1, 1, 'MB', 0.12, 'ML', 0.1);
+hold on;
+plot(pcaCoeff(:,1), 'LineWidth', 5);
+plot(pcaCoeff(:,2), 'LineWidth', 5);
+plot(pcaCoeff(:,3), 'LineWidth', 5);
+plot(pcaCoeff(:,4), 'LineWidth', 5);
+xlim([0 size(data, 2)]);
+xlabel('Time-Locked Event');
+ylabel('');
+set(gca, 'FontSize', 14);
+set(gca, 'FontWeight', 'bold');
+set(gca, 'box', 'off');
+set(gca, 'LineWidth', 2);
+legend({'PC1', 'PC2', 'PC3', 'PC4'}, 'LineWidth', 0.5);
+
+plotFileName = sprintf('%s/allSessions-meansDataPCAComponents-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% PCA score plot on concatenated time courses by subdivision
+figure_tr_inch(6, 6);
+subaxis(1, 1, 1, 'MB', 0.1, 'MT', 0.03, 'ML', 0.14, 'MR', 0.06)
+hold on;
+
+cols = lines(6);
+cols = [cols(3,:); cols(5,:); cols(1,:); cols(2,:)];
+
+subdivisions = {'dPul', 'vPul'};
+localizationSuper = localization(superdivision);
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
+    isInSubdivision = strcmp(localizationSuper, subdivision);
+    fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
+
+    sh = scatter(pcaMeansAllScore(isInSubdivision,1), pcaMeansAllScore(isInSubdivision,2), 50, cols(j,:), 'MarkerFaceColor', cols(j,:));
+    sh.MarkerFaceAlpha = 0.6;
+end
+
+xlabel('First Principal Component');
+ylabel('Second Principal Component');
+% xlim([-25 120]);
+% ylim([-30 60]);
+set(gca, 'box', 'off');
+set(gca, 'LineWidth', 2);
+set(gca, 'FontSize', 16);
+set(gca, 'FontName', 'Calibri');
+set(gca, 'FontWeight', 'bold');
+
+plotFileName = sprintf('%s/allSessions-pcaMeans-splitBySubdivision-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% t-sne plot on concatenated time courses by subdivision
+superdivision = isCell & isInPulvinar;
+tsneValsMeansAll = tsne(spdfInfo.meanNormSpdfInRFAllWindowsAll(superdivision,:));
+
+figure_tr_inch(6, 6);
+subaxis(1, 1, 1, 'MB', 0.1, 'MT', 0.03, 'ML', 0.14, 'MR', 0.06)
+hold on;
+
+cols = lines(6);
+cols = [cols(3,:); cols(5,:); cols(1,:); cols(2,:)];
+
+subdivisions = {'dPul', 'vPul'};
+localizationSuper = localization(superdivision);
+for j = 1:numel(subdivisions)
+    subdivision = subdivisions{j};
+    isInSubdivision = strcmp(localizationSuper, subdivision);
+    fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
+
+    sh = scatter(tsneValsMeansAll(isInSubdivision,1), tsneValsMeansAll(isInSubdivision,2), 50, cols(j,:), 'MarkerFaceColor', cols(j,:));
+    sh.MarkerFaceAlpha = 0.6;
+end
+
+% xlabel('First Principal Component');
+% ylabel('Second Principal Component');
+% xlim([-25 120]);
+% ylim([-30 60]);
+set(gca, 'box', 'off');
+set(gca, 'LineWidth', 2);
+set(gca, 'FontSize', 16);
+set(gca, 'FontName', 'Calibri');
+set(gca, 'FontWeight', 'bold');
+
+plotFileName = sprintf('%s/allSessions-tsneMeans-splitBySubdivision-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
 %% electrophoresis plot
 figure_tr_inch(10, 10);
 pulLoc = zeros(nUnitsAll, 8);
@@ -1703,7 +1812,7 @@ pulLoc(latencyInc,2) = 3;
 pulLoc(isSignificantCueResponseInc,3) = 2;
 pulLoc(isSignificantCueResponseDec,3) = 1;
 pulLoc(isSignificantArrayResponse,4) = 3;
-pulLoc(isSignificantDelaySelectivity,5) = 2;
+pulLoc(isSignificantSelectivityCueTargetDelay,5) = 2;
 pulLoc(pcaPreSaccadeScore(:,2) > 0 & isSignificantArrayResponse & isSignificantCueResponseInc,6) = 5;
 pulLoc(pcaPreSaccadeScore(:,2) < 0 & isSignificantArrayResponse & isSignificantCueResponseInc,6) = 3;
 maxLatency = 0.125;
@@ -1734,8 +1843,14 @@ colormap([0.3 0.3 0.3; lines(6)]);
 
 
 
-%%
+%% stop
 stop
+
+
+
+
+
+
 %% Pie Chart localizing attentional modulation in the pulvinar
 % We found x pulvinar cells that show significant attentional modulation. 
 % In which subdivision of the pulvinar are they located?
@@ -1927,7 +2042,6 @@ set(gca, 'FontSize', 12);
 plotFileName = sprintf('%s/allSessions-cueResponseArrayResponse-PLdvsPMvsPI-zoom-v%d.png', summaryDataDir, v);
 export_fig(plotFileName, '-nocrop');
 
-
 %% Cue-Target Delay Info vs Target-Dim Delay AI, Color by PLd vs PLv vs PM vs PI
 figure_tr_inch(4, 4);
 subaxis(1, 1, 1, 'ML', 0.25, 'MB', 0.22, 'MT', 0.05);
@@ -2058,114 +2172,3 @@ set(gca, 'FontSize', 12);
 
 plotFileName = sprintf('%s/allSessions-AI1vsAI2-BSvsNS-%d.png', summaryDataDir, v);
 export_fig(plotFileName, '-nocrop');
-
-
-
-
-
-
-%% PCA on activity space by cell
-superdivision = isCell & isInPulvinar;
-[pcaCoeff,pcaConcatAllScore,~,~,pcaPctExplained] = pca([meanNormSpdfInRFAllWindowsAll(superdivision,[1:2 4:end])]);
-fprintf('\n');
-fprintf('PCA: %d variables, %d observations\n', size(pcaConcatAllScore, 2), size(pcaConcatAllScore, 1));
-fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
-fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', pcaPctExplained(1) + pcaPctExplained(2));
-
-figure_tr_inch(7.5, 7.5);
-subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
-hold on;
-
-cols = lines(5);
-cols = [cols(1,:); cols(3,:); cols(5,:); cols(2,:)];
-
-subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
-localizationSuper = localization(superdivision);
-for j = 1:numel(subdivisions)
-    subdivision = subdivisions{j};
-    isInSubdivision = strcmp(localizationSuper, subdivision);
-    fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
-
-    sh = scatter(pcaConcatAllScore(isInSubdivision,1), pcaConcatAllScore(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
-    sh.MarkerFaceAlpha = 0.9;
-end
-
-% xlabel('First Principal Component');
-% ylabel('Second Principal Component');
-% xlim([-25 120]);
-% ylim([-30 60]);
-set(gca, 'box', 'off');
-set(gca, 'LineWidth', 2);
-set(gca, 'FontSize', 26);
-set(gca, 'FontName', 'Calibri');
-% set(gca, 'FontWeight', 'bold');
-
-plotFileName = sprintf('%s/allSessions-pcaByActivity-splitBySubdivision-v%d.png', summaryDataDir, v);
-export_fig(plotFileName, '-nocrop');
-
-%% PCA on activity space by cell
-superdivision = isCell & isInPulvinar;
-[pcaCoeff,pcaConcatAllScore,~,~,pcaPctExplained] = pca([meanNormSpdfInRFAllWindowsAll(superdivision,[1:2 4:end])]);
-fprintf('\n');
-fprintf('PCA: %d variables, %d observations\n', size(pcaConcatAllScore, 2), size(pcaConcatAllScore, 1));
-fprintf('\tPC1 explains %0.1f%% of the variance.\n', pcaPctExplained(1));
-fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', pcaPctExplained(1) + pcaPctExplained(2));
-
-figure_tr_inch(7.5, 7.5);
-subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
-hold on;
-
-cols = lines(5);
-cols = [cols(1,:); cols(3,:); cols(5,:); cols(2,:)];
-
-subdivisions = {'PM', 'PLd', 'PLv', 'PI'};
-localizationSuper = localization(superdivision);
-isSignificantDelaySelectivitySuper = isSignificantDelaySelectivity(superdivision);
-for j = 1:numel(subdivisions)
-    subdivision = subdivisions{j};
-    isInSubdivision = strcmp(localizationSuper, subdivision);
-    fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
-
-    sh = scatter(pcaConcatAllScore(isInSubdivision,1), pcaConcatAllScore(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
-    sh.MarkerFaceAlpha = 0.9;
-end
-
-% xlabel('First Principal Component');
-% ylabel('Second Principal Component');
-% xlim([-25 120]);
-% ylim([-30 60]);
-set(gca, 'box', 'off');
-set(gca, 'LineWidth', 2);
-set(gca, 'FontSize', 26);
-set(gca, 'FontName', 'Calibri');
-% set(gca, 'FontWeight', 'bold');
-
-plotFileName = sprintf('%s/allSessions-pcaByActivity-splitBySubdivision-delaySigHighlight-v%d.png', summaryDataDir, v);
-export_fig(plotFileName, '-nocrop');
-
-%% use t-sne (random position each run)
-
-tsneVals = tsne([meanNormSpdfInRFAllWindowsAll(superdivision,[1:2 4:end])]);
-
-figure_tr_inch(7.5, 7.5);
-subaxis(1, 1, 1, 'MB', 0.14, 'MT', 0.03, 'ML', 0.16)
-hold on;
-for j = 1:numel(subdivisions)
-    subdivision = subdivisions{j};
-    isInSubdivision = strcmp(localizationSuper, subdivision);
-    fprintf('\t%s: %d cells\n', subdivision, sum(isInSubdivision));
-
-    sh = scatter(tsneVals(isInSubdivision,1), tsneVals(isInSubdivision,2), 100, cols(j,:), 'MarkerFaceColor', cols(j,:));
-    sh.MarkerFaceAlpha = 0.9;
-end
-
-
-% xlabel('First Principal Component');
-% ylabel('Second Principal Component');
-% xlim([-25 120]);
-% ylim([-30 60]);
-set(gca, 'box', 'off');
-set(gca, 'LineWidth', 2);
-set(gca, 'FontSize', 26);
-set(gca, 'FontName', 'Calibri');
-% set(gca, 'FontWeight', 'bold');
