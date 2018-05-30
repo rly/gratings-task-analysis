@@ -1,8 +1,8 @@
 function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds, ref)
 
-% clear;
-% readDataLocally;
-% sessionInds = 8;%1:23;
+clear;
+readDataLocally;
+sessionInds = 8;%1:23;
 
 v = 12;
 
@@ -27,7 +27,7 @@ isInDPulvinar = false(nLfpsApprox, 1);
 isInVPulvinar = false(nLfpsApprox, 1);
 
 fAxisLF = NaN;
-nFAxisLF = 20;
+nFAxisLF = 17;
 baselinePowerLF = nan(nLfpsApprox, nFAxisLF);
 cueResponsePowerLF = nan(nLfpsApprox, nFAxisLF);
 cueTargetDelayPowerAllLocsLF = nan(nLfpsApprox, nFAxisLF);
@@ -161,21 +161,21 @@ for i = 1:nSessions
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
         [C,~,~,~,~,fAxisLF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsLF);
-        baselineSFCLF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrials)-2)); % adjust for num trials
+        baselineSFCLF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrials)-2)); % adjust for num trials
         [C,~,~,~,~,fAxisHF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsHF);
-        baselineSFCHF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrials)-2)); % adjust for num trials
+        baselineSFCHF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrials)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
         [C,~,~,~,~,fAxisLF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsLF);
-        cueTargetDelaySFCP3LF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+        cueTargetDelaySFCP3LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
         [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsHF);
-        cueTargetDelaySFCP3HF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+        cueTargetDelaySFCP3HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{1}, cueTargetDelayOffset .* [-1 1]);
         [C,~,~,~,~,fAxisLF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsLF);
-        cueTargetDelaySFCP1LF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+        cueTargetDelaySFCP1LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
         [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF);
-        cueTargetDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+        cueTargetDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
     end
     
     clear EL;
