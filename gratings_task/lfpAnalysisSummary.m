@@ -176,6 +176,12 @@ for i = 1:nSessions
         cueTargetDelaySFCP1LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
         [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF);
         cueTargetDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+        
+        
+        
+        
+        
+        
     end
     
     clear EL;
@@ -287,7 +293,7 @@ cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativeP
 
 plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
 
-title('Cue-Target Delay Power P3 dPul vs vPul');
+title('Cue-Target Delay Power P1 dPul vs vPul');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-LF-P1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -306,7 +312,7 @@ cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativeP
 
 plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
 
-title('Cue-Target Delay Power P3 dPul vs vPul');
+title('Cue-Target Delay Power P1 dPul vs vPul');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-HF-P1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);

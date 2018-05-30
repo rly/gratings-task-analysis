@@ -1,4 +1,4 @@
-function lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, isZeroDistractors)
+function lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannels, isZeroDistractors)
 % 325ms fixation before pre-cue marker
 % 25-125ms fixation between pre-cue marker and cue onset
 % 100ms cue onset to cue offset
@@ -21,7 +21,7 @@ tic;
 fprintf('\n-------------------------------------------------------\n');
 fprintf('Gratings Task LFP Analysis\n');
 fprintf('Session index: %d\n', sessionInd);
-fprintf('LFP Channel to Load: %d\n', lfpChannelsToLoad);
+fprintf('LFP Channel to Load: %d\n', lfpChannels);
 fprintf('Recording info file name: %s\n', recordingInfoFileName);
 fprintf('Processed data root dir: %s\n', processedDataRootDir);
 fprintf('Data root dir: %s\n', dataDirRoot);
@@ -34,8 +34,8 @@ nLoc = 4;
 
 %% input check
 % assert(numel(lfpChannelsToLoad) == 1);
-assert(numel(lfpChannelsToLoad) > 1);
-assert(numel(lfpChannelsToLoad) <= 32);
+assert(numel(lfpChannels) > 1);
+assert(numel(lfpChannels) <= 32);
 
 %% load recording information
 if isZeroDistractors
@@ -47,7 +47,7 @@ else
 end
 
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
-        dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannelsToLoad, ...
+        dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannels, ...
         taskName, scriptName, 1, 1);
 sessionName = R.sessionName;
 areaName = R.areaName;
@@ -60,14 +60,14 @@ gratingsTaskLogDir = sprintf('%s/%s', dataDir, sessionName(2:end));
 % process events and sort them into different conditions
 UE = getUsefulEvents2(gratingsTaskLogDir, R.gratingsTaskLogIndices, 4, D, blockName);
 
-fileNamePrefix = sprintf('%s-ch%d-ch%d-%s', sessionName, lfpChannelsToLoad([1 end]), blockName);
+fileNamePrefix = sprintf('%s-ch%d-ch%d-%s', sessionName, lfpChannels([1 end]), blockName);
 
 %% preprocess LFPs
 tic;
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
 
-D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, lfpChannelsToLoad, Fs, D.allMUAStructs);
+D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, lfpChannels, Fs, D.allMUAStructs);
 
 hiCutoffFreq = 200;
 [channelDataNorm,isTrialOutlier,isNoisyChannel,meanBeforeCAR] = preprocessLfpsGratingsTask(D.adjLfpsClean, Fs, D.lfpNames, UE, ...
@@ -81,7 +81,7 @@ channelDataNorm(size(channelDataNorm, 1)+1,:) = meanBeforeCAR;
 
 channelNames = cell(nChannels + 1, 1);
 for i = 1:nChannels
-    channelNames{i} = sprintf('FP%03d', lfpChannelsToLoad(i));
+    channelNames{i} = sprintf('FP%03d', lfpChannels(i));
 end
 channelNames{nChannels + 1} = 'Common Average';
 
@@ -92,7 +92,7 @@ fprintf('Extracting event-locked LFPs...\n');
 tic;
 saveFileName = sprintf('%s/%s-evokedLfps-v%d.mat', ...
         processedDataDir, fileNamePrefix, v);
-computeEvokedLfps(saveFileName, channelDataNorm, Fs, nLoc, UE, lfpChannelsToLoad, D.allMUAStructs);
+computeEvokedLfps(saveFileName, channelDataNorm, Fs, nLoc, UE, lfpChannels, D.allMUAStructs);
 fprintf('Took %0.1f minutes.\n', toc/60);
 
 %% load evoked file
@@ -105,15 +105,16 @@ EL = load(saveFileName);
 fprintf('Took %0.1f minutes.\n', toc/60);
 
 %%
-% save('temp_workspace2.mat');
+% save('temp_workspace2.mat', '-v7.3');
 % clear;
-% load('temp_workspace.mat');
+% load('temp_workspace2.mat');
 
 %% compute BIPOLAR referenced LFPs
 cueOnsetLfpBip = diff(EL.cueOnsetLfp.lfp(1:nChannels,:,:), 1, 1);
 arrayOnsetHoldBalLfpBip = diff(EL.arrayOnsetHoldBalLfp.lfp(1:nChannels,:,:), 1, 1);
 targetDimBalLfpBip = diff(EL.targetDimBalLfp.lfp(1:nChannels,:,:), 1, 1);
 exitFixationLfpBip = diff(EL.exitFixationLfp.lfp(1:nChannels,:,:), 1, 1);
+lfpChannelsBip = lfpChannels(1:end-1);
 
 %% CAR combined line plot
 cols = lines(nLoc);
@@ -148,7 +149,7 @@ end
 xlim(xBounds);
 ylim(yBounds);
 set(gca, 'YTick', [-nChannels-2 -nChannels:-1]);
-set(gca, 'YTickLabel', ['Comm Avg' strsplit(num2str(flip(1:nChannels)))]);
+set(gca, 'YTickLabel', ['Comm Avg' strsplit(num2str(flip(lfpChannels)))]);
 set(gca, 'box', 'off');
 xlabel('Time from Cue Onset (s)');
 title('Cue Onset');
@@ -167,7 +168,7 @@ end
 xlim(xBounds);
 ylim(yBounds);
 set(gca, 'YTick', [-nChannels-2 -nChannels:-1]);
-set(gca, 'YTickLabel', ['Comm Avg' strsplit(num2str(flip(1:nChannels)))]);
+set(gca, 'YTickLabel', ['Comm Avg' strsplit(num2str(flip(lfpChannels)))]);
 set(gca, 'box', 'off');
 xlabel('Time from Array Onset (s)');
 title('Array Onset');
@@ -186,7 +187,7 @@ end
 xlim(xBounds);
 ylim(yBounds);
 set(gca, 'YTick', [-nChannels-2 -nChannels:-1]);
-set(gca, 'YTickLabel', ['Comm Avg' strsplit(num2str(flip(1:nChannels)))]);
+set(gca, 'YTickLabel', ['Comm Avg' strsplit(num2str(flip(lfpChannels)))]);
 set(gca, 'box', 'off');
 xlabel('Time from Target Dimming (s)');
 title('Target Dimming');
@@ -205,14 +206,14 @@ end
 xlim(xBounds);
 ylim(yBounds);
 set(gca, 'YTick', [-nChannels-2 -nChannels:-1]);
-set(gca, 'YTickLabel', ['Comm Avg' strsplit(num2str(flip(1:nChannels)))]);
+set(gca, 'YTickLabel', ['Comm Avg' strsplit(num2str(flip(lfpChannels)))]);
 set(gca, 'box', 'off');
 xlabel('Time from Exit Fixation (s)');
 title('Exit Fixation');
 
 axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on');
-title(axBig, sprintf('Session %s (Ch %d-%d, CAR)', sessionName, lfpChannelsToLoad([1 end])), 'FontSize', 14);
+title(axBig, sprintf('Session %s (Ch %d-%d, CAR)', sessionName, lfpChannels([1 end])), 'FontSize', 14);
 
 plotFileName = sprintf('%s/%s-allFP-evokedLfps-combLinePlot-CAR-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
@@ -248,7 +249,7 @@ end
 xlim(xBounds);
 ylim(yBounds);
 set(gca, 'YTick', -nChannels+1:-1);
-set(gca, 'YTickLabel', strsplit(num2str(flip(1:nChannels-1))));
+set(gca, 'YTickLabel', strsplit(num2str(flip(lfpChannelsBip))));
 set(gca, 'box', 'off');
 xlabel('Time from Cue Onset (s)');
 title('Cue Onset');
@@ -264,7 +265,7 @@ end
 xlim(xBounds);
 ylim(yBounds);
 set(gca, 'YTick', -nChannels+1:-1);
-set(gca, 'YTickLabel', strsplit(num2str(flip(1:nChannels-1))));
+set(gca, 'YTickLabel', strsplit(num2str(flip(lfpChannelsBip))));
 set(gca, 'box', 'off');
 xlabel('Time from Array Onset (s)');
 title('Array Onset');
@@ -280,7 +281,7 @@ end
 xlim(xBounds);
 ylim(yBounds);
 set(gca, 'YTick', -nChannels+1:-1);
-set(gca, 'YTickLabel', strsplit(num2str(flip(1:nChannels-1))));
+set(gca, 'YTickLabel', strsplit(num2str(flip(lfpChannelsBip))));
 set(gca, 'box', 'off');
 xlabel('Time from Target Dimming (s)');
 title('Target Dimming');
@@ -296,14 +297,14 @@ end
 xlim(xBounds);
 ylim(yBounds);
 set(gca, 'YTick', -nChannels+1:-1);
-set(gca, 'YTickLabel', strsplit(num2str(flip(1:nChannels-1))));
+set(gca, 'YTickLabel', strsplit(num2str(flip(lfpChannelsBip))));
 set(gca, 'box', 'off');
 xlabel('Time from Exit Fixation (s)');
 title('Exit Fixation');
 
 axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on');
-title(axBig, sprintf('Session %s (Ch %d-%d, BIP)', sessionName, lfpChannelsToLoad([1 end])), 'FontSize', 14);
+title(axBig, sprintf('Session %s (Ch %d-%d, BIP)', sessionName, lfpChannels([1 end])), 'FontSize', 14);
 
 plotFileName = sprintf('%s/%s-allFP-evokedLfps-combLinePlot-BIP-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
@@ -343,8 +344,8 @@ for m = 1:nLoc
     if m == nLoc
         xlabel('Time from Cue Onset (s)');
     end
-    set(gca, 'YTick', -30:5:0);
-    set(gca, 'YTickLabel', strsplit(num2str(flip(0:5:30))));
+    set(gca, 'YTick', -30:5:-5);
+    set(gca, 'YTickLabel', strsplit(num2str(flip(lfpChannels(5:5:30)))));
     
     subaxis(nLoc, 4, (m-1)*4 + 2);
     hold on;
@@ -361,8 +362,8 @@ for m = 1:nLoc
     if m == nLoc
         xlabel('Time from Array Onset (s)');
     end
-    set(gca, 'YTick', -30:5:0);
-    set(gca, 'YTickLabel', strsplit(num2str(flip(0:5:30))));
+    set(gca, 'YTick', -30:5:-5);
+    set(gca, 'YTickLabel', strsplit(num2str(flip(lfpChannels(5:5:30)))));
     
     subaxis(nLoc, 4, (m-1)*4 + 3);
     hold on;
@@ -379,8 +380,8 @@ for m = 1:nLoc
     if m == nLoc
         xlabel('Time from Target Dimming (s)');
     end
-    set(gca, 'YTick', -30:5:0);
-    set(gca, 'YTickLabel', strsplit(num2str(flip(0:5:30))));
+    set(gca, 'YTick', -30:5:-5);
+    set(gca, 'YTickLabel', strsplit(num2str(flip(lfpChannels(5:5:30)))));
     
     subaxis(nLoc, 4, (m-1)*4 + 4);
     hold on;
@@ -397,14 +398,14 @@ for m = 1:nLoc
     if m == nLoc
         xlabel('Time from Exit Fixation (s)');
     end
-    set(gca, 'YTick', -30:5:0);
-    set(gca, 'YTickLabel', strsplit(num2str(flip(0:5:30))));
+    set(gca, 'YTick', -30:5:-5);
+    set(gca, 'YTickLabel', strsplit(num2str(flip(lfpChannels(5:5:30)))));
     
 end % end for each location
 
 axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on');
-title(axBig, sprintf('Session %s (Ch %d-%d, CAR)', sessionName, lfpChannelsToLoad([1 end])), 'FontSize', 14);
+title(axBig, sprintf('Session %s (Ch %d-%d, CAR)', sessionName, lfpChannels([1 end])), 'FontSize', 14);
 
 plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepLinePlot-CAR-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
@@ -413,7 +414,7 @@ export_fig(plotFileName, '-nocrop');
 
 %% CAR image plot
 xBounds = [-0.4 0.4];
-yBounds = [1 nChannels];
+yBounds = lfpChannels([1 end]);
 cBounds = [-1 1];
 
 baselineWindowOffset = [-0.3 0];
@@ -428,7 +429,7 @@ for m = 1:nLoc
 
     subaxis(nLoc, 4, (m-1)*4 + 1, 'SH', 0.02, 'MT', 0.06);
     hold on;
-    imagesc(EL.cueOnsetLfp.t, 1:nChannels, squeeze(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
+    imagesc(EL.cueOnsetLfp.t, lfpChannels, squeeze(mean(EL.cueOnsetLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     set(gca, 'YDir', 'reverse');
     xlim(xBounds);
@@ -444,7 +445,7 @@ for m = 1:nLoc
 
     subaxis(nLoc, 4, (m-1)*4 + 2);
     hold on;
-    imagesc(EL.arrayOnsetHoldBalLfp.t, 1:nChannels, squeeze(mean(EL.arrayOnsetHoldBalLfp.lfp(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
+    imagesc(EL.arrayOnsetHoldBalLfp.t, lfpChannels, squeeze(mean(EL.arrayOnsetHoldBalLfp.lfp(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     set(gca, 'YDir', 'reverse');
     xlim(xBounds);
@@ -460,7 +461,7 @@ for m = 1:nLoc
 
     subaxis(nLoc, 4, (m-1)*4 + 3);
     hold on;
-    imagesc(EL.targetDimBalLfp.t, 1:nChannels, squeeze(mean(EL.targetDimBalLfp.lfp(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
+    imagesc(EL.targetDimBalLfp.t, lfpChannels, squeeze(mean(EL.targetDimBalLfp.lfp(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     set(gca, 'YDir', 'reverse');
     xlim(xBounds);
@@ -476,7 +477,7 @@ for m = 1:nLoc
 
     subaxis(nLoc, 4, (m-1)*4 + 4);
     hold on;
-    imagesc(EL.exitFixationLfp.t, 1:nChannels, squeeze(mean(EL.exitFixationLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
+    imagesc(EL.exitFixationLfp.t, lfpChannels, squeeze(mean(EL.exitFixationLfp.lfp(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     set(gca, 'YDir', 'reverse');
     xlim(xBounds);
@@ -493,7 +494,7 @@ end % end for each location
 
 axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on');
-title(axBig, sprintf('Session %s (Ch %d-%d, CAR)', sessionName, lfpChannelsToLoad([1 end])), 'FontSize', 14);
+title(axBig, sprintf('Session %s (Ch %d-%d, CAR)', sessionName, lfpChannels([1 end])), 'FontSize', 14);
 
 plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepColorPlot-CAR-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
@@ -502,7 +503,7 @@ export_fig(plotFileName, '-nocrop');
 
 %% BIPOLAR image plot
 xBounds = [-0.4 0.4];
-yBounds = [1 nChannels-1];
+yBounds = lfpChannelsBip([1 end]);
 cBounds = [-0.5 0.5];
 
 baselineWindowOffset = [-0.3 0];
@@ -517,7 +518,7 @@ for m = 1:nLoc
 
     subaxis(nLoc, 4, (m-1)*4 + 1, 'SH', 0.02, 'MT', 0.06);
     hold on;
-    imagesc(EL.cueOnsetLfp.t, 1:nChannels-1, squeeze(mean(cueOnsetLfpBip(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
+    imagesc(EL.cueOnsetLfp.t, lfpChannelsBip, squeeze(mean(cueOnsetLfpBip(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     set(gca, 'YDir', 'reverse');
     xlim(xBounds);
@@ -533,7 +534,7 @@ for m = 1:nLoc
 
     subaxis(nLoc, 4, (m-1)*4 + 2);
     hold on;
-    imagesc(EL.arrayOnsetHoldBalLfp.t, 1:nChannels-1, squeeze(mean(arrayOnsetHoldBalLfpBip(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
+    imagesc(EL.arrayOnsetHoldBalLfp.t, lfpChannelsBip, squeeze(mean(arrayOnsetHoldBalLfpBip(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     set(gca, 'YDir', 'reverse');
     xlim(xBounds);
@@ -549,7 +550,7 @@ for m = 1:nLoc
 
     subaxis(nLoc, 4, (m-1)*4 + 3);
     hold on;
-    imagesc(EL.targetDimBalLfp.t, 1:nChannels-1, squeeze(mean(targetDimBalLfpBip(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
+    imagesc(EL.targetDimBalLfp.t, lfpChannelsBip, squeeze(mean(targetDimBalLfpBip(:,UE.cueLocHoldBal == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     set(gca, 'YDir', 'reverse');
     xlim(xBounds);
@@ -565,7 +566,7 @@ for m = 1:nLoc
 
     subaxis(nLoc, 4, (m-1)*4 + 4);
     hold on;
-    imagesc(EL.exitFixationLfp.t, 1:nChannels-1, squeeze(mean(exitFixationLfpBip(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
+    imagesc(EL.exitFixationLfp.t, lfpChannelsBip, squeeze(mean(exitFixationLfpBip(:,UE.cueLoc == m,:), 2)) - preCueBaseline);
     plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
     set(gca, 'YDir', 'reverse');
     xlim(xBounds);
@@ -582,12 +583,29 @@ end % end for each location
 
 axBig = axes('Position', [0.04 0.035 0.92 0.93], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on');
-title(axBig, sprintf('Session %s (Ch %d-%d, BIP)', sessionName, lfpChannelsToLoad([1 end])), 'FontSize', 14);
+title(axBig, sprintf('Session %s (Ch %d-%d, BIP)', sessionName, lfpChannels([1 end])), 'FontSize', 14);
 
 plotFileName = sprintf('%s/%s-allFP-evokedLfps-sepColorPlot-BIP-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
 fprintf('Saving figure to file %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%%
+return;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 %% CSD around cue onset
 yVals = 2:nChannels-1;
@@ -631,7 +649,7 @@ end
 baselineWindowOffset = [-0.3 0];
 baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
 
-channelInd = 17;
+channelInd = 33;
 cueLoc = 3;
 
 preCueBaseline = squeeze(mean(mean(EL.cueOnsetLfp.lfp(channelInd,UE.cueLoc == cueLoc,baselineInd), 2), 3)); % scalar
@@ -655,15 +673,84 @@ colorbar;
 xlim(xBounds);
 ylim(yBounds);
 caxis(cBounds);
-title(sprintf('Cue Onset - Channel %d, P%d', lfpChannelsToLoad(channelInd), cueLoc));
+if channelInd <= numel(lfpChannels)
+    title(sprintf('Cue Onset - Channel %d, P%d', lfpChannels(channelInd), cueLoc));
+else
+    title(sprintf('Cue Onset - Common Average, P%d', cueLoc));
+end
 xlabel('Time from Cue Onset (s)');
 ylabel('Trial Number');
 
+% line plot - mean across trials
+meanData = mean(data);
+seData = std(data) / sqrt(size(data, 1));
+
+xBounds = [-0.4 0.6];
+yBounds = [-0.6 0.6];
+plotCol = cols(cueLoc,:);
+
+figure_tr_inch(10, 10);
+hold on;
+plot(xBounds, [0 0], 'Color', 0.3*ones(3, 1));
+plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
+fillH = jbfill(EL.cueOnsetLfp.t, meanData - seData, meanData + seData, ...
+        plotCol, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+hold on;
+plot(EL.cueOnsetLfp.t, meanData, 'Color', plotCol, 'LineWidth', 2);
+xlim(xBounds);
+ylim(yBounds);
+
+% line plot - a few trials
+nTrialsPlot = 10;
+trialInd = randperm(size(data, 1), nTrialsPlot);
+xBounds = [-0.4 0.6];
+yBounds = [0 nTrialsPlot + 1];
+yScale = 0.5;
+
+figure_tr_inch(10, 10);
+hold on;
+plot(xBounds, [0 0], 'Color', 0.3*ones(3, 1));
+plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
+uistack(fillH, 'bottom');
+hold on;
+for i = 1:nTrialsPlot
+    plot(EL.cueOnsetLfp.t, data(trialInd(i),:)*yScale + i, 'Color', plotCol, 'LineWidth', 2);
+end
+xlim(xBounds);
+ylim(yBounds);
+
+% plot a few different channels and trials on top of one another
+data1 = squeeze(EL.cueOnsetLfp.lfp(5,UE.cueLoc == cueLoc,:)) - preCueBaseline;
+data2 = squeeze(EL.cueOnsetLfp.lfp(6,UE.cueLoc == cueLoc,:)) - preCueBaseline;
+data3 = squeeze(EL.cueOnsetLfp.lfp(1,UE.cueLoc == cueLoc,:)) - preCueBaseline;
+
+xBounds = [-0.4 0.6];
+yBounds = [0 nTrialsPlot + 1];
+yScale = 0.25;
+
+figure_tr_inch(10, 10);
+hold on;
+plot(xBounds, [0 0], 'Color', 0.3*ones(3, 1));
+plot([0 0], yBounds, 'Color', 0.3*ones(3, 1));
+uistack(fillH, 'bottom');
+hold on;
+for i = 1:nTrialsPlot
+    plot(EL.cueOnsetLfp.t, data1(trialInd(i),:)*yScale + i, 'Color', cols(1,:), 'LineWidth', 2);
+    plot(EL.cueOnsetLfp.t, data2(trialInd(i),:)*yScale + i, 'Color', cols(2,:), 'LineWidth', 2);
+    plot(EL.cueOnsetLfp.t, data3(trialInd(i),:)*yScale + i, 'Color', cols(3,:), 'LineWidth', 2);
+    plot(EL.cueOnsetLfp.t, -data(trialInd(i),:)*yScale + i, 'k', 'LineWidth', 2);
+end
+xlim(xBounds);
+ylim(yBounds);
+
 %% average power in freq band by time, across trials
 params.tapers = [1 1];
-params.fpass = [5 30];
+params.fpass = [20 30];
 % params.tapers = [2 3];
 % params.fpass = [30 60];
+% params.tapers = [3 5];
+% params.fpass = [60 100];
 params.pad = 2;
 params.Fs = D.lfpFs;
 params.trialave = 1;
