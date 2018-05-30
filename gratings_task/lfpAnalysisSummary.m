@@ -95,7 +95,7 @@ for i = 1:nSessions
         fprintf('Processing channel %d...\n', EL.channelInds(j));
         
         lfpCount = lfpCount + 1;
-        lfpNames{lfpCount,:} = sprintf('%s_FP%03d', sessionName, EL.channelInds(j));
+        lfpNames{lfpCount} = sprintf('%s_FP%03d', sessionName, EL.channelInds(j));
         isInVPulvinar(lfpCount) = 0;
         isInDPulvinar(lfpCount) = 0;
         % TODO decide how to split up end channels for bipolar reference
