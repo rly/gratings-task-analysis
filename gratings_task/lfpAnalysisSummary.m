@@ -1,4 +1,4 @@
-function lfpAnalysisSummary(processedDataRootDir, muaDataDirRoot, recordingInfoFileName, sessionInds)
+function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
 % clear;
 % readDataLocally;
@@ -79,7 +79,7 @@ for i = 1:nSessions
     saveFileName = sprintf('%s/%s-evokedLfps-v%d.mat', processedDataDir, fileNamePrefix, v);
     fprintf('Loading file %s...\n', saveFileName);
     EL = load(saveFileName);
-        
+    
     for j = 1:numel(EL.channelInds)
         fprintf('Processing channel %d...\n', EL.channelInds(j));
         lfpCount = lfpCount + 1;
@@ -92,7 +92,13 @@ for i = 1:nSessions
             isInDPulvinar(lfpCount) = 1;
         end
         
-        muaTs = EL.allMUAStructs{j}.ts; % read MUA
+        % read MUA from a neighboring channel to account for MUA possibly
+        % contributing to LFP on the same channel
+        if j < numel(EL.channelInds)
+            muaNeighborChannelTs = EL.allMUAStructs{j+1}.ts;
+        else
+            muaNeighborChannelTs = EL.allMUAStructs{j-1}.ts;
+        end
                 
         baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
         cueResponseInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, cueResponseOffset);
@@ -127,15 +133,15 @@ for i = 1:nSessions
         [cueTargetDelayPowerP1LF(lfpCount,:),fAxisLF] = mtspectrumc(cueTargetDelayLfpsP1, paramsLF);
         [cueTargetDelayPowerP1HF(lfpCount,:),fAxisHF] = mtspectrumc(cueTargetDelayLfpsP1, paramsHF);
         
-        alignedSpikeTs = createnonemptydatamatpt(muaTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
+        alignedSpikeTs = createnonemptydatamatpt(muaNeighborChannelTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
         [baselineSFCLF(lfpCount,:),phi,S12,S1,S2,fAxisLF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsLF);
         [baselineSFCHF(lfpCount,:),phi,S12,S1,S2,fAxisHF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsHF);
         
-        alignedSpikeTs = createnonemptydatamatpt(muaTs, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
+        alignedSpikeTs = createnonemptydatamatpt(muaNeighborChannelTs, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
         [cueTargetDelaySFCP3LF(lfpCount,:),phi,S12,S1,S2,fAxisLF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsLF);
         [cueTargetDelaySFCP3HF(lfpCount,:),phi,S12,S1,S2,fAxisHF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsHF);
         
-        alignedSpikeTs = createnonemptydatamatpt(muaTs, EL.UE.arrayOnsetByLoc{1}, cueTargetDelayOffset .* [-1 1]);
+        alignedSpikeTs = createnonemptydatamatpt(muaNeighborChannelTs, EL.UE.arrayOnsetByLoc{1}, cueTargetDelayOffset .* [-1 1]);
         [cueTargetDelaySFCP1LF(lfpCount,:),phi,S12,S1,S2,fAxisLF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsLF);
         [cueTargetDelaySFCP1HF(lfpCount,:),phi,S12,S1,S2,fAxisHF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF);
     end
