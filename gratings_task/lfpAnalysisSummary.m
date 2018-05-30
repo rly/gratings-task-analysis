@@ -54,7 +54,7 @@ cueTargetDelayOffset = [-0.25 0];
 
 % chronux parameters
 paramsLF.tapers = [1 1];
-paramsLF.fpass = [5 25];
+paramsLF.fpass = [8 25];
 paramsLF.pad = 2;
 paramsLF.Fs = 1000;
 paramsLF.trialave = 1;
@@ -135,6 +135,10 @@ for i = 1:nSessions
         % ignore array shapes because we are looking at pre-array delay
         % period
         
+        numTrials = size(cueOnsetLfpCurrent, 1);
+        numTrialsP3 = size(arrayOnsetLfpP3Current, 1);
+        numTrialsP1 = size(arrayOnsetLfpP1Current, 1);
+        
         preCueBaselineLfps = cueOnsetLfpCurrent(baselineInd,:);
         [baselinePowerLF(lfpCount,:),fAxisLF] = mtspectrumc(preCueBaselineLfps, paramsLF);
         [baselinePowerHF(lfpCount,:),fAxisHF] = mtspectrumc(preCueBaselineLfps, paramsHF);
@@ -156,16 +160,22 @@ for i = 1:nSessions
         [cueTargetDelayPowerP1HF(lfpCount,:),fAxisHF] = mtspectrumc(cueTargetDelayLfpsP1, paramsHF);
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
-        [baselineSFCLF(lfpCount,:),phi,S12,S1,S2,fAxisLF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsLF);
-        [baselineSFCHF(lfpCount,:),phi,S12,S1,S2,fAxisHF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsHF);
+        [C,~,~,~,~,fAxisLF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsLF);
+        baselineSFCLF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrials)-2)); % adjust for num trials
+        [C,~,~,~,~,fAxisHF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsHF);
+        baselineSFCHF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrials)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
-        [cueTargetDelaySFCP3LF(lfpCount,:),phi,S12,S1,S2,fAxisLF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsLF);
-        [cueTargetDelaySFCP3HF(lfpCount,:),phi,S12,S1,S2,fAxisHF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsHF);
+        [C,~,~,~,~,fAxisLF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsLF);
+        cueTargetDelaySFCP3LF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+        [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsHF);
+        cueTargetDelaySFCP3HF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrialsP3)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{1}, cueTargetDelayOffset .* [-1 1]);
-        [cueTargetDelaySFCP1LF(lfpCount,:),phi,S12,S1,S2,fAxisLF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsLF);
-        [cueTargetDelaySFCP1HF(lfpCount,:),phi,S12,S1,S2,fAxisHF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF);
+        [C,~,~,~,~,fAxisLF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsLF);
+        cueTargetDelaySFCP1LF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+        [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF);
+        cueTargetDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*params.tapers(2)*numTrialsP1)-2)); % adjust for num trials
     end
     
     clear EL;
@@ -231,7 +241,7 @@ fAxis = fAxisLF;
 cueTargetDelayRelativePowerDPul = (((cueTargetDelayPowerP3LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
 cueTargetDelayRelativePowerVPul = (((cueTargetDelayPowerP3LF(isInVPulvinar,:))) ./ ((baselinePowerLF(isInVPulvinar,:))) - 1) * 100;
 xBounds = paramsLF.fpass;
-yBounds = [-25 0];
+yBounds = [-10 5];
 
 % outlier removal
 cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
@@ -269,7 +279,7 @@ fAxis = fAxisLF;
 cueTargetDelayRelativePowerDPul = (((cueTargetDelayPowerP1LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
 cueTargetDelayRelativePowerVPul = (((cueTargetDelayPowerP1LF(isInVPulvinar,:))) ./ ((baselinePowerLF(isInVPulvinar,:))) - 1) * 100;
 xBounds = paramsLF.fpass;
-yBounds = [-25 0];
+yBounds = [-10 5];
 
 % outlier removal
 cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
@@ -307,7 +317,7 @@ fAxis = fAxisLF;
 cueTargetDelayRelativePowerP3 = (((cueTargetDelayPowerP3LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
 cueTargetDelayRelativePowerP1 = (((cueTargetDelayPowerP1LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
 xBounds = paramsLF.fpass;
-yBounds = [-25 0];
+yBounds = [-10 5];
 
 % outlier removal
 cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
@@ -343,7 +353,7 @@ fAxis = fAxisLF;
 cueTargetDelayRelativePowerP3 = (((cueTargetDelayPowerP3LF(isInVPulvinar,:))) ./ ((baselinePowerLF(isInVPulvinar,:))) - 1) * 100;
 cueTargetDelayRelativePowerP1 = (((cueTargetDelayPowerP1LF(isInVPulvinar,:))) ./ ((baselinePowerLF(isInVPulvinar,:))) - 1) * 100;
 xBounds = paramsLF.fpass;
-yBounds = [-25 0];
+yBounds = [-10 5];
 
 % outlier removal
 cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
@@ -379,12 +389,12 @@ fAxis = fAxisLF;
 baselineSFCDPul = (baselineSFCLF(isInDPulvinar,:));
 baselineSFCVPul = (baselineSFCLF(isInVPulvinar,:));
 xBounds = paramsLF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(baselineSFCDPul, baselineSFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
 
 ylabel('Local Spike-Field Coherence');
-title('Pre-Cue Baseline SFC (No Ref)');
+title('Pre-Cue Baseline SFC');
 
 plotFileName = sprintf('%s/allSessions-baselineSFC-LF-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -395,12 +405,12 @@ fAxis = fAxisHF;
 baselineSFCDPul = (baselineSFCHF(isInDPulvinar,:));
 baselineSFCVPul = (baselineSFCHF(isInVPulvinar,:));
 xBounds = paramsHF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(baselineSFCDPul, baselineSFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
 
 ylabel('Local Spike-Field Coherence');
-title('Pre-Cue Baseline SFC (No Ref)');
+title('Pre-Cue Baseline SFC');
 
 plotFileName = sprintf('%s/allSessions-baselineSFC-HF-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -411,12 +421,12 @@ fAxis = fAxisLF;
 cueTargetDelaySFCDPul = cueTargetDelaySFCP3LF(isInDPulvinar,:);
 cueTargetDelaySFCVPul = cueTargetDelaySFCP3LF(isInVPulvinar,:);
 xBounds = paramsLF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
 
 ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC P3 (No Ref)');
+title('Cue-Target Delay SFC P3');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-P3-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -427,12 +437,12 @@ fAxis = fAxisHF;
 cueTargetDelaySFCDPul = cueTargetDelaySFCP3HF(isInDPulvinar,:);
 cueTargetDelaySFCVPul = cueTargetDelaySFCP3HF(isInVPulvinar,:);
 xBounds = paramsHF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
 
 ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC P3 (No Ref)');
+title('Cue-Target Delay SFC P3');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-P3-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -443,12 +453,12 @@ fAxis = fAxisLF;
 cueTargetDelaySFCDPul = cueTargetDelaySFCP1LF(isInDPulvinar,:);
 cueTargetDelaySFCVPul = cueTargetDelaySFCP1LF(isInVPulvinar,:);
 xBounds = paramsLF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
 
 ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC P1 (No Ref)');
+title('Cue-Target Delay SFC P1');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-P1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -459,12 +469,12 @@ fAxis = fAxisHF;
 cueTargetDelaySFCDPul = cueTargetDelaySFCP1HF(isInDPulvinar,:);
 cueTargetDelaySFCVPul = cueTargetDelaySFCP1HF(isInVPulvinar,:);
 xBounds = paramsHF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
 
 ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC P1 (No Ref)');
+title('Cue-Target Delay SFC P1');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-P1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -475,12 +485,12 @@ fAxis = fAxisLF;
 cueTargetDelaySFCP3 = cueTargetDelaySFCP3LF(isInDPulvinar,:);
 cueTargetDelaySFCP1 = cueTargetDelaySFCP1LF(isInDPulvinar,:);
 xBounds = paramsLF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 
 ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC dPul (No Ref)');
+title('Cue-Target Delay SFC dPul');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-dPul-P3vsP1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -491,12 +501,12 @@ fAxis = fAxisHF;
 cueTargetDelaySFCP3 = cueTargetDelaySFCP3HF(isInDPulvinar,:);
 cueTargetDelaySFCP1 = cueTargetDelaySFCP1HF(isInDPulvinar,:);
 xBounds = paramsHF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 
 ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC dPul (No Ref)');
+title('Cue-Target Delay SFC dPul');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-dPul-P3vsP1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -507,12 +517,12 @@ fAxis = fAxisLF;
 cueTargetDelaySFCP3 = cueTargetDelaySFCP3LF(isInVPulvinar,:);
 cueTargetDelaySFCP1 = cueTargetDelaySFCP1LF(isInVPulvinar,:);
 xBounds = paramsLF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 
 ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC vPul (No Ref)');
+title('Cue-Target Delay SFC vPul');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-vPul-P3vsP1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -523,12 +533,12 @@ fAxis = fAxisHF;
 cueTargetDelaySFCP3 = cueTargetDelaySFCP3HF(isInVPulvinar,:);
 cueTargetDelaySFCP1 = cueTargetDelaySFCP1HF(isInVPulvinar,:);
 xBounds = paramsHF.fpass;
-yBounds = [0 0.1];
+yBounds = [0 0.08];
 
 plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 
 ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC vPul (No Ref)');
+title('Cue-Target Delay SFC vPul');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-vPul-P3vsP1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
