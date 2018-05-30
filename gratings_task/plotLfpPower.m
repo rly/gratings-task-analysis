@@ -20,7 +20,8 @@ uistack(fillH, 'bottom');
 hold on;
 h1 = plot(fAxis, meanPower1, 'LineWidth', 2, 'Color', col1);
 h2 = plot(fAxis, meanPower2, 'LineWidth', 2, 'Color', col2);
-legend([h1 h2], {sprintf(' %s (N=%d)', label1, nChannels1), sprintf(' %s (N=%d)', label2, nChannels2)}, 'box', 'off', 'Location', 'SouthEast');
+legend([h1 h2], {sprintf(' %s (N=%d)', label1, nChannels1), sprintf(' %s (N=%d)', label2, nChannels2)}, ...
+        'box', 'off', 'Location', 'SouthEast');
 xlim(xBounds);
 ylim(yBounds);
 xlabel('Frequency (Hz)');
