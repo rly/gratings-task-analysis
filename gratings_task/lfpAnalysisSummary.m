@@ -1,8 +1,9 @@
 function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds, ref)
 
-% clear;
-% readDataLocally;
-% sessionInds = 8;%1:23;
+clear;
+readDataLocally;
+sessionInds = 8;%1:23;
+ref = 'BIP';
 
 v = 12;
 
@@ -242,6 +243,44 @@ plotFileName = sprintf('%s/allSessions-baselinePower-HF-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% plot power in cue-target delay LF
+fAxis = fAxisLF;
+cueTargetDelayRelativePowerDPul = cueTargetDelayPowerP3LF(isInDPulvinar,:);
+cueTargetDelayRelativePowerVPul = cueTargetDelayPowerP3LF(isInVPulvinar,:);
+xBounds = paramsLF.fpass;
+yBounds = [0 0.01];
+
+% outlier removal
+cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
+cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerVPul, maxSDsPower);
+
+plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
+
+title('Cue-Target Delay Power P3 dPul vs vPul');
+
+plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-LF-P3-v%d.png', outputDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% plot power in cue-target delay HF
+fAxis = fAxisHF;
+cueTargetDelayRelativePowerDPul = cueTargetDelayPowerP3HF(isInDPulvinar,:);
+cueTargetDelayRelativePowerVPul = cueTargetDelayPowerP3HF(isInVPulvinar,:);
+xBounds = paramsHF.fpass;
+yBounds = [0 0.003];
+
+% outlier removal
+cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
+cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerVPul, maxSDsPower);
+
+plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
+
+title('Cue-Target Delay Power P3 dPul vs vPul');
+
+plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-HF-P3-v%d.png', outputDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 %% plot power in cue-target delay relative to baseline LF
 fAxis = fAxisLF;
 cueTargetDelayRelativePowerDPul = (((cueTargetDelayPowerP3LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
@@ -257,7 +296,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P3 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-LF-P3-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-LF-P3-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -276,7 +315,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P3 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-HF-P3-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-HF-P3-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -295,7 +334,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P1 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-LF-P1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-LF-P1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -314,7 +353,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P1 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-HF-P1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-HF-P1-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -332,7 +371,7 @@ cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePow
 plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 title('Cue-Target Delay Power dPul P3 vs P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-dPul-P3vsP1-LF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-dPul-P3vsP1-LF-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -350,7 +389,7 @@ cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePow
 plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 title('Cue-Target Delay Power dPul P3 vs P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-dPul-P3vsP1-HF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-dPul-P3vsP1-HF-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -368,7 +407,7 @@ cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePow
 plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 title('Cue-Target Delay Power vPul P3 vs P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-vPul-P3vsP1-LF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-vPul-P3vsP1-LF-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -386,7 +425,7 @@ cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePow
 plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 title('Cue-Target Delay Power vPul P3 vs P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-vPul-P3vsP1-HF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-vPul-P3vsP1-HF-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
