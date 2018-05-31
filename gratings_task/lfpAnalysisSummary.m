@@ -3,7 +3,7 @@ function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, session
 % clear;
 % readDataLocally;
 % sessionInds = 7:8;%1:23;
-% ref = 'BIP';
+% ref = 'CAR';
 
 v = 12;
 
@@ -80,6 +80,7 @@ paramsHF.trialave = 1;
 
 fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
+fprintf('Reference: %s\n', ref);
 
 %% session loop
 for i = 1:nSessions
@@ -88,6 +89,7 @@ for i = 1:nSessions
     % session 17, 'M20170329', 1-32
     % have abnormally high power around 40 Hz
     if i == 15 || i == 17
+        fprintf('Excluding session %d...\n', i);
         continue;
     end
     sessionInd = sessionInds(i);
@@ -144,6 +146,12 @@ for i = 1:nSessions
             arrayOnsetLfpCurrent = squeeze(EL.arrayOnsetLfp.lfp(j+1,:,:) - EL.arrayOnsetLfp.lfp(j,:,:))';
             arrayOnsetLfpP3Current = squeeze(EL.arrayOnsetLfp.lfp(j+1,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 3,:))';
             arrayOnsetLfpP1Current = squeeze(EL.arrayOnsetLfp.lfp(j+1,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 1,:))';
+        elseif strcmp(ref, 'CAR')
+            caCh = numel(EL.channelInds) + 1;
+            cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(j,:,:) - EL.cueOnsetLfp.lfp(caCh,:,:))';
+            arrayOnsetLfpCurrent = squeeze(EL.arrayOnsetLfp.lfp(j,:,:) - EL.arrayOnsetLfp.lfp(caCh,:,:))';
+            arrayOnsetLfpP3Current = squeeze(EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(caCh,EL.UE.cueLoc == 3,:))';
+            arrayOnsetLfpP1Current = squeeze(EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(caCh,EL.UE.cueLoc == 1,:))';
         end
         % ignore array shapes because we are looking at pre-array delay
         % period
@@ -190,8 +198,6 @@ for i = 1:nSessions
         [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF);
         cueTargetDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
         
-        
-        
         % compute coherence across subdivisions, one pair per session
         if any(R.dPulChannels) && any(R.vPulChannels)
             if EL.channelInds(j) == floor(mean(R.dPulChannels))
@@ -220,6 +226,15 @@ for i = 1:nSessions
                         arrayOnsetLfpCurrent2 = squeeze(EL.arrayOnsetLfp.lfp(j2+1,:,:) - EL.arrayOnsetLfp.lfp(j2,:,:))';
                         arrayOnsetLfpP3Current2 = squeeze(EL.arrayOnsetLfp.lfp(j2+1,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(j2,EL.UE.cueLoc == 3,:))';
                         arrayOnsetLfpP1Current2 = squeeze(EL.arrayOnsetLfp.lfp(j2+1,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(j2,EL.UE.cueLoc == 1,:))';
+                    elseif strcmp(ref, 'CAR')
+                        cueOnsetLfpCurrent1 = squeeze(EL.cueOnsetLfp.lfp(j1,:,:) - EL.cueOnsetLfp.lfp(caCh,:,:))';
+                        arrayOnsetLfpCurrent1 = squeeze(EL.arrayOnsetLfp.lfp(j1,:,:) - EL.arrayOnsetLfp.lfp(caCh,:,:))';
+                        arrayOnsetLfpP3Current1 = squeeze(EL.arrayOnsetLfp.lfp(j1,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(caCh,EL.UE.cueLoc == 3,:))';
+                        arrayOnsetLfpP1Current1 = squeeze(EL.arrayOnsetLfp.lfp(j1,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(caCh,EL.UE.cueLoc == 1,:))';
+                        cueOnsetLfpCurrent2 = squeeze(EL.cueOnsetLfp.lfp(j2,:,:) - EL.cueOnsetLfp.lfp(caCh,:,:))';
+                        arrayOnsetLfpCurrent2 = squeeze(EL.arrayOnsetLfp.lfp(j2,:,:) - EL.arrayOnsetLfp.lfp(caCh,:,:))';
+                        arrayOnsetLfpP3Current2 = squeeze(EL.arrayOnsetLfp.lfp(j2,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(caCh,EL.UE.cueLoc == 3,:))';
+                        arrayOnsetLfpP1Current2 = squeeze(EL.arrayOnsetLfp.lfp(j2,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(caCh,EL.UE.cueLoc == 1,:))';
                     end
 
                     preCueBaselineLfps1 = cueOnsetLfpCurrent1(baselineInd,:);
@@ -245,12 +260,12 @@ end
 
 
 %%
-saveFileName = sprintf('%s/allSessions-lfpAnalysisSummary-v%d.mat', outputDir, v);
+saveFileName = sprintf('%s/allSessions-lfpAnalysisSummary-%s-v%d.mat', outputDir, ref, v);
 save(saveFileName);
 
 %%
 outputDirOrig = outputDir;
-saveFileName = sprintf('%s/allSessions-lfpAnalysisSummary-v%d.mat', outputDir, v);
+saveFileName = sprintf('%s/allSessions-lfpAnalysisSummary-%s-v%d.mat', outputDir, ref, v);
 load(saveFileName);
 outputDir = outputDirOrig;
 
@@ -276,7 +291,7 @@ plotLfpPower(baselinePowerDPul, baselinePowerVPul, fAxis, xBounds, yBounds, dPul
 ylabel('Power');
 title('Pre-Cue Baseline Power');
 
-plotFileName = sprintf('%s/allSessions-baselinePower-LF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-baselinePower-LF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -295,7 +310,7 @@ plotLfpPower(baselinePowerDPul, baselinePowerVPul, fAxis, xBounds, yBounds, dPul
 
 title('Pre-Cue Baseline Power');
 
-plotFileName = sprintf('%s/allSessions-baselinePower-HF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-baselinePower-HF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -314,7 +329,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P3 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-LF-P3-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-LF-P3-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -333,7 +348,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P3 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-HF-P3-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-HF-P3-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -352,7 +367,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P3 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-LF-P3-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-LF-P3-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -371,7 +386,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P3 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-HF-P3-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-HF-P3-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -390,7 +405,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P1 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-LF-P1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-LF-P1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -409,7 +424,7 @@ plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, f
 
 title('Cue-Target Delay Power P1 dPul vs vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-HF-P1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-HF-P1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -427,7 +442,7 @@ cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePow
 plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 title('Cue-Target Delay Power dPul P3 vs P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-dPul-P3vsP1-LF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-dPul-P3vsP1-LF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -445,7 +460,7 @@ cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePow
 plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 title('Cue-Target Delay Power dPul P3 vs P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-dPul-P3vsP1-HF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-dPul-P3vsP1-HF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -463,7 +478,7 @@ cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePow
 plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 title('Cue-Target Delay Power vPul P3 vs P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-vPul-P3vsP1-LF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-vPul-P3vsP1-LF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -481,7 +496,7 @@ cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePow
 plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
 title('Cue-Target Delay Power vPul P3 vs P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-vPul-P3vsP1-HF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-vPul-P3vsP1-HF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -497,7 +512,7 @@ plotLfpPower(baselineSFCDPul, baselineSFCVPul, fAxis, xBounds, yBounds, dPulCol,
 ylabel('Local Spike-Field Coherence');
 title('Pre-Cue Baseline SFC');
 
-plotFileName = sprintf('%s/allSessions-baselineSFC-LF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-baselineSFC-LF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -513,7 +528,7 @@ plotLfpPower(baselineSFCDPul, baselineSFCVPul, fAxis, xBounds, yBounds, dPulCol,
 ylabel('Local Spike-Field Coherence');
 title('Pre-Cue Baseline SFC');
 
-plotFileName = sprintf('%s/allSessions-baselineSFC-HF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-baselineSFC-HF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -529,7 +544,7 @@ plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBoun
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC P3');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-P3-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-P3-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -545,7 +560,7 @@ plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBoun
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC P3');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-P3-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-P3-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -561,7 +576,7 @@ plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBoun
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-P1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-P1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -577,7 +592,7 @@ plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBoun
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC P1');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-P1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-P1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -593,7 +608,7 @@ plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, 
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC dPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-dPul-P3vsP1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -609,7 +624,7 @@ plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, 
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC dPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-dPul-P3vsP1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -625,7 +640,7 @@ plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, 
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-vPul-P3vsP1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -641,7 +656,7 @@ plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, 
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-vPul-P3vsP1-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -695,7 +710,7 @@ set(gca, 'LineWidth', 2);
 
 title(sprintf('Across Subdivision Coherence (N=%d)', nSubPairs));
 
-plotFileName = sprintf('%s/allSessions-subPairCoh-LF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-subPairCoh-LF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -749,6 +764,6 @@ set(gca, 'LineWidth', 2);
 
 title(sprintf('Across Subdivision Coherence (N=%d)', nSubPairs));
 
-plotFileName = sprintf('%s/allSessions-subPairCoh-HF-v%d.png', outputDir, v);
+plotFileName = sprintf('%s/allSessions-subPairCoh-HF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
