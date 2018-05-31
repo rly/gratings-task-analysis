@@ -2,7 +2,7 @@ function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, session
 
 clear;
 readDataLocally;
-sessionInds = 8;%1:23;
+sessionInds = 7:8;%1:23;
 ref = 'BIP';
 
 v = 12;
@@ -27,6 +27,9 @@ lfpNames = cell(nLfpsApprox, 1);
 isInDPulvinar = false(nLfpsApprox, 1);
 isInVPulvinar = false(nLfpsApprox, 1);
 
+subPair = nan(nSessions, 2);
+subPairCount = 0;
+
 fAxisLF = NaN;
 nFAxisLF = 17;
 baselinePowerLF = nan(nLfpsApprox, nFAxisLF);
@@ -48,6 +51,15 @@ cueTargetDelayPowerP1HF = nan(nLfpsApprox, nFAxisHF);
 baselineSFCHF = nan(nLfpsApprox, nFAxisHF);
 cueTargetDelaySFCP3HF = nan(nLfpsApprox, nFAxisHF);
 cueTargetDelaySFCP1HF = nan(nLfpsApprox, nFAxisHF);
+
+nSubPairsApprox = round(nSessions / 3);
+baselineSubPairCohLF = nan(nSubPairsApprox, nFAxisLF);
+cueTargetDelaySubPairCohP3LF = nan(nSubPairsApprox, nFAxisLF);
+cueTargetDelaySubPairCohP1LF = nan(nSubPairsApprox, nFAxisLF);
+
+baselineSubPairCohHF = nan(nSubPairsApprox, nFAxisHF);
+cueTargetDelaySubPairCohP3HF = nan(nSubPairsApprox, nFAxisHF);
+cueTargetDelaySubPairCohP1HF = nan(nSubPairsApprox, nFAxisHF);
 
 baselineWindowOffset = [-0.25 0];
 cueResponseOffset = [0 0.25];
@@ -88,7 +100,7 @@ for i = 1:nSessions
     saveFileName = sprintf('%s/%s-evokedLfps-v%d.mat', processedDataDir, fileNamePrefix, v);
     fprintf('Loading file %s...\n', saveFileName);
     EL = load(saveFileName);
-    
+        
     for j = 1:numel(EL.channelInds)
         if strcmp(ref, 'BIP') && j == numel(EL.channelInds)
             continue;
@@ -180,13 +192,57 @@ for i = 1:nSessions
         
         
         
-        
-        
-        
+        % compute coherence across subdivisions, one pair per session
+        if any(R.dPulChannels) && any(R.vPulChannels)
+            if EL.channelInds(j) == floor(mean(R.dPulChannels))
+                subPair(i,1) = j;
+            elseif EL.channelInds(j) == floor(mean(R.vPulChannels))
+                subPair(i,2) = j;
+                if all(~isnan(subPair(i,:)))
+                    subPairCount = subPairCount + 1;
+                    j1 = subPair(i,1);
+                    j2 = subPair(i,2);
+                    if strcmp(ref, 'RAW')
+                        cueOnsetLfpCurrent1 = squeeze(EL.cueOnsetLfp.lfp(j1,:,:))';
+                        arrayOnsetLfpCurrent1 = squeeze(EL.arrayOnsetLfp.lfp(j1,:,:))';
+                        arrayOnsetLfpP3Current1 = squeeze(EL.arrayOnsetLfp.lfp(j1,EL.UE.cueLoc == 3,:))';
+                        arrayOnsetLfpP1Current1 = squeeze(EL.arrayOnsetLfp.lfp(j1,EL.UE.cueLoc == 1,:))';
+                        cueOnsetLfpCurrent2 = squeeze(EL.cueOnsetLfp.lfp(j2,:,:))';
+                        arrayOnsetLfpCurrent2 = squeeze(EL.arrayOnsetLfp.lfp(j2,:,:))';
+                        arrayOnsetLfpP3Current2 = squeeze(EL.arrayOnsetLfp.lfp(j2,EL.UE.cueLoc == 3,:))';
+                        arrayOnsetLfpP1Current2 = squeeze(EL.arrayOnsetLfp.lfp(j2,EL.UE.cueLoc == 1,:))';
+                    elseif strcmp(ref, 'BIP')
+                        cueOnsetLfpCurrent1 = squeeze(EL.cueOnsetLfp.lfp(j1+1,:,:) - EL.cueOnsetLfp.lfp(j1,:,:))';
+                        arrayOnsetLfpCurrent1 = squeeze(EL.arrayOnsetLfp.lfp(j1+1,:,:) - EL.arrayOnsetLfp.lfp(j1,:,:))';
+                        arrayOnsetLfpP3Current1 = squeeze(EL.arrayOnsetLfp.lfp(j1+1,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(j1,EL.UE.cueLoc == 3,:))';
+                        arrayOnsetLfpP1Current1 = squeeze(EL.arrayOnsetLfp.lfp(j1+1,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(j1,EL.UE.cueLoc == 1,:))';
+                        cueOnsetLfpCurrent2 = squeeze(EL.cueOnsetLfp.lfp(j2+1,:,:) - EL.cueOnsetLfp.lfp(j2,:,:))';
+                        arrayOnsetLfpCurrent2 = squeeze(EL.arrayOnsetLfp.lfp(j2+1,:,:) - EL.arrayOnsetLfp.lfp(j2,:,:))';
+                        arrayOnsetLfpP3Current2 = squeeze(EL.arrayOnsetLfp.lfp(j2+1,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(j2,EL.UE.cueLoc == 3,:))';
+                        arrayOnsetLfpP1Current2 = squeeze(EL.arrayOnsetLfp.lfp(j2+1,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(j2,EL.UE.cueLoc == 1,:))';
+                    end
+
+                    preCueBaselineLfps1 = cueOnsetLfpCurrent1(baselineInd,:);
+                    preCueBaselineLfps2 = cueOnsetLfpCurrent2(baselineInd,:);
+                    cueTargetDelayLfps1P3 = arrayOnsetLfpP3Current1(cueTargetDelayInd,:); 
+                    cueTargetDelayLfps2P3 = arrayOnsetLfpP3Current2(cueTargetDelayInd,:); 
+                    cueTargetDelayLfps1P1 = arrayOnsetLfpP1Current1(cueTargetDelayInd,:);
+                    cueTargetDelayLfps2P1 = arrayOnsetLfpP1Current2(cueTargetDelayInd,:);
+
+                    baselineSubPairCohLF(subPairCount,:) = coherencyc(preCueBaselineLfps1, preCueBaselineLfps2, paramsLF);
+                    baselineSubPairCohHF(subPairCount,:) = coherencyc(preCueBaselineLfps1, preCueBaselineLfps2, paramsHF);
+                    cueTargetDelaySubPairCohP3LF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P3, cueTargetDelayLfps2P3, paramsLF);
+                    cueTargetDelaySubPairCohP3HF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P3, cueTargetDelayLfps2P3, paramsHF);
+                    cueTargetDelaySubPairCohP1LF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P1, cueTargetDelayLfps2P1, paramsLF);
+                    cueTargetDelaySubPairCohP1HF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P1, cueTargetDelayLfps2P1, paramsHF);
+                end
+            end                
+        end
     end
     
     clear EL;
 end
+
 
 %%
 saveFileName = sprintf('%s/allSessions-lfpAnalysisSummary-v%d.mat', outputDir, v);
@@ -586,5 +642,113 @@ ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC vPul');
 
 plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-vPul-P3vsP1-v%d.png', outputDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% plot subdivision pair coherence in baseline LF
+fAxis = fAxisLF;
+baselineSubPairCoh = baselineSubPairCohLF;
+cueTargetDelaySubPairCohP3 = cueTargetDelaySubPairCohP3LF;
+cueTargetDelaySubPairCohP1 = cueTargetDelaySubPairCohP1LF;
+xBounds = paramsLF.fpass;
+yBounds = [0 0.2];
+
+nSubPairs = size(baselineSubPairCoh, 1);
+
+meanCoh1 = mean(baselineSubPairCoh);
+meanCoh2 = mean(cueTargetDelaySubPairCohP3);
+meanCoh3 = mean(cueTargetDelaySubPairCohP1);
+seCoh1 = std(baselineSubPairCoh) / sqrt(nSubPairs);
+seCoh2 = std(cueTargetDelaySubPairCohP3) / sqrt(nSubPairs);
+seCoh3 = std(cueTargetDelaySubPairCohP1) / sqrt(nSubPairs);
+
+col1 = [0 0.9 0];
+col2 = p3Col;
+col3 = p1Col;
+
+figure_tr_inch(7, 5); 
+subaxis(1, 1, 1, 'MB', 0.14, 'ML', 0.15);
+hold on;
+fillH = jbfill(fAxis, meanCoh3 - seCoh3, meanCoh3 + seCoh3, ...
+        col3, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+fillH = jbfill(fAxis, meanCoh2 - seCoh2, meanCoh2 + seCoh2, ...
+        col2, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+fillH = jbfill(fAxis, meanCoh1 - seCoh1, meanCoh1 + seCoh1, ...
+        col1, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+
+hold on;
+h1 = plot(fAxis, meanCoh1, 'LineWidth', 2, 'Color', col1);
+h2 = plot(fAxis, meanCoh2, 'LineWidth', 2, 'Color', col2);
+h3 = plot(fAxis, meanCoh3, 'LineWidth', 2, 'Color', col3);
+legend([h1 h2 h3], {'Baseline', 'Cue-Target Delay P3', 'Cue-Target Delay P1'}, ...
+        'box', 'off', 'Location', 'SouthEast');
+xlim(xBounds);
+ylim(yBounds);
+xlabel('Frequency (Hz)');
+ylabel('Field-Field Coherence');
+set(gca, 'box', 'off');
+set(gca, 'FontSize', 16);
+set(gca, 'LineWidth', 2);
+
+title(sprintf('Across Subdivision Coherence (N=%d)', nSubPairs));
+
+plotFileName = sprintf('%s/allSessions-subPairCoh-LF-v%d.png', outputDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% plot subdivision pair coherence in baseline HF
+fAxis = fAxisHF;
+baselineSubPairCoh = baselineSubPairCohHF;
+cueTargetDelaySubPairCohP3 = cueTargetDelaySubPairCohP3HF;
+cueTargetDelaySubPairCohP1 = cueTargetDelaySubPairCohP1HF;
+xBounds = paramsHF.fpass;
+yBounds = [0 0.1];
+
+nSubPairs = size(baselineSubPairCoh, 1);
+
+meanCoh1 = mean(baselineSubPairCoh);
+meanCoh2 = mean(cueTargetDelaySubPairCohP3);
+meanCoh3 = mean(cueTargetDelaySubPairCohP1);
+seCoh1 = std(baselineSubPairCoh) / sqrt(nSubPairs);
+seCoh2 = std(cueTargetDelaySubPairCohP3) / sqrt(nSubPairs);
+seCoh3 = std(cueTargetDelaySubPairCohP1) / sqrt(nSubPairs);
+
+col1 = [0 0.9 0];
+col2 = p3Col;
+col3 = p1Col;
+
+figure_tr_inch(7, 5); 
+subaxis(1, 1, 1, 'MB', 0.14, 'ML', 0.15);
+hold on;
+fillH = jbfill(fAxis, meanCoh3 - seCoh3, meanCoh3 + seCoh3, ...
+        col3, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+fillH = jbfill(fAxis, meanCoh2 - seCoh2, meanCoh2 + seCoh2, ...
+        col2, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+fillH = jbfill(fAxis, meanCoh1 - seCoh1, meanCoh1 + seCoh1, ...
+        col1, ones(3, 1), 0.3);
+uistack(fillH, 'bottom');
+
+hold on;
+h1 = plot(fAxis, meanCoh1, 'LineWidth', 2, 'Color', col1);
+h2 = plot(fAxis, meanCoh2, 'LineWidth', 2, 'Color', col2);
+h3 = plot(fAxis, meanCoh3, 'LineWidth', 2, 'Color', col3);
+legend([h1 h2 h3], {'Baseline', 'Cue-Target Delay P3', 'Cue-Target Delay P1'}, ...
+        'box', 'off', 'Location', 'SouthEast');
+xlim(xBounds);
+ylim(yBounds);
+xlabel('Frequency (Hz)');
+ylabel('Field-Field Coherence');
+set(gca, 'box', 'off');
+set(gca, 'FontSize', 16);
+set(gca, 'LineWidth', 2);
+
+title(sprintf('Across Subdivision Coherence (N=%d)', nSubPairs));
+
+plotFileName = sprintf('%s/allSessions-subPairCoh-HF-v%d.png', outputDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
