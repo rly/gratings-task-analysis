@@ -18,6 +18,7 @@ fillH = jbfill(fAxis, meanPower1 - sePower1, meanPower1 + sePower1, ...
         col1, ones(3, 1), 0.3);
 uistack(fillH, 'bottom');
 hold on;
+plot([-100 100], [0 0], 'k');
 h1 = plot(fAxis, meanPower1, 'LineWidth', 2, 'Color', col1);
 h2 = plot(fAxis, meanPower2, 'LineWidth', 2, 'Color', col2);
 legend([h1 h2], {sprintf(' %s (N=%d)', label1, nChannels1), sprintf(' %s (N=%d)', label2, nChannels2)}, ...
