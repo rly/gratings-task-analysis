@@ -2,7 +2,7 @@ function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, session
 
 clear;
 readDataLocally;
-sessionInds = 7:8;%1:23;
+sessionInds = 7;%1:23;
 ref = 'CAR';
 
 v = 12;
@@ -64,6 +64,7 @@ cueTargetDelaySubPairCohP1HF = nan(nSubPairsApprox, nFAxisHF);
 baselineWindowOffset = [-0.25 0];
 cueResponseOffset = [0 0.25];
 cueTargetDelayOffset = [-0.25 0];
+targetDimDelayOffset = [-0.25 0];
 
 % chronux parameters
 paramsLF.tapers = [1 1];
@@ -133,6 +134,7 @@ for i = 1:nSessions
         baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
         cueResponseInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, cueResponseOffset);
         cueTargetDelayInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, cueTargetDelayOffset);
+        targetDimDelayInd = getTimeLogicalWithTolerance(EL.targetDimBalLfp.t, targetDimDelayOffset);
 
         % compute power in baseline - should probably be bipolar reference
         % all locations together
@@ -141,17 +143,23 @@ for i = 1:nSessions
             arrayOnsetLfpCurrent = squeeze(EL.arrayOnsetLfp.lfp(j,:,:))';
             arrayOnsetLfpP3Current = squeeze(EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 3,:))';
             arrayOnsetLfpP1Current = squeeze(EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 1,:))';
+            targetDimLfpP3Current = squeeze(EL.targetDimBalLfp.lfp(j,EL.UE.cueLocHoldBal == 3,:))';
+            targetDimLfpP1Current = squeeze(EL.targetDimBalLfp.lfp(j,EL.UE.cueLocHoldBal == 1,:))';
         elseif strcmp(ref, 'BIP')
             cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(j+1,:,:) - EL.cueOnsetLfp.lfp(j,:,:))';
             arrayOnsetLfpCurrent = squeeze(EL.arrayOnsetLfp.lfp(j+1,:,:) - EL.arrayOnsetLfp.lfp(j,:,:))';
             arrayOnsetLfpP3Current = squeeze(EL.arrayOnsetLfp.lfp(j+1,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 3,:))';
             arrayOnsetLfpP1Current = squeeze(EL.arrayOnsetLfp.lfp(j+1,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 1,:))';
+            targetDimLfpP3Current = squeeze(EL.targetDimBalLfp.lfp(j+1,EL.UE.cueLocHoldBal == 3,:) - EL.targetDimBalLfp.lfp(j,EL.UE.cueLocHoldBal == 3,:))';
+            targetDimLfpP1Current = squeeze(EL.targetDimBalLfp.lfp(j+1,EL.UE.cueLocHoldBal == 1,:) - EL.targetDimBalLfp.lfp(j,EL.UE.cueLocHoldBal == 1,:))';
         elseif strcmp(ref, 'CAR')
             caCh = numel(EL.channelInds) + 1;
             cueOnsetLfpCurrent = squeeze(EL.cueOnsetLfp.lfp(j,:,:) - EL.cueOnsetLfp.lfp(caCh,:,:))';
             arrayOnsetLfpCurrent = squeeze(EL.arrayOnsetLfp.lfp(j,:,:) - EL.arrayOnsetLfp.lfp(caCh,:,:))';
             arrayOnsetLfpP3Current = squeeze(EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 3,:) - EL.arrayOnsetLfp.lfp(caCh,EL.UE.cueLoc == 3,:))';
             arrayOnsetLfpP1Current = squeeze(EL.arrayOnsetLfp.lfp(j,EL.UE.cueLoc == 1,:) - EL.arrayOnsetLfp.lfp(caCh,EL.UE.cueLoc == 1,:))';
+            targetDimLfpP3Current = squeeze(EL.targetDimBalLfp.lfp(j,EL.UE.cueLocHoldBal == 3,:) - EL.targetDimBalLfp.lfp(caCh,EL.UE.cueLocHoldBal == 3,:))';
+            targetDimLfpP1Current = squeeze(EL.targetDimBalLfp.lfp(j,EL.UE.cueLocHoldBal == 1,:) - EL.targetDimBalLfp.lfp(caCh,EL.UE.cueLocHoldBal == 1,:))';
         end
         % ignore array shapes because we are looking at pre-array delay
         % period
@@ -159,6 +167,8 @@ for i = 1:nSessions
         numTrials = size(cueOnsetLfpCurrent, 1);
         numTrialsP3 = size(arrayOnsetLfpP3Current, 1);
         numTrialsP1 = size(arrayOnsetLfpP1Current, 1);
+        numTrialsBalP3 = size(targetDimLfpP3Current, 1);
+        numTrialsBalP1 = size(targetDimLfpP1Current, 1);
         
         preCueBaselineLfps = cueOnsetLfpCurrent(baselineInd,:);
         [baselinePowerLF(lfpCount,:),fAxisLF] = mtspectrumc(preCueBaselineLfps, paramsLF);
@@ -180,6 +190,14 @@ for i = 1:nSessions
         [cueTargetDelayPowerP1LF(lfpCount,:),fAxisLF] = mtspectrumc(cueTargetDelayLfpsP1, paramsLF);
         [cueTargetDelayPowerP1HF(lfpCount,:),fAxisHF] = mtspectrumc(cueTargetDelayLfpsP1, paramsHF);
         
+        targetDimDelayLfpsP3 = targetDimLfpP3Current(targetDimDelayInd,:);
+        [targetDimDelayPowerP3LF(lfpCount,:),fAxisLF] = mtspectrumc(targetDimDelayLfpsP3, paramsLF);
+        [targetDimDelayPowerP3HF(lfpCount,:),fAxisHF] = mtspectrumc(targetDimDelayLfpsP3, paramsHF);
+        
+        targetDimDelayLfpsP1 = targetDimLfpP1Current(targetDimDelayInd,:);
+        [targetDimDelayPowerP1LF(lfpCount,:),fAxisLF] = mtspectrumc(targetDimDelayLfpsP1, paramsLF);
+        [targetDimDelayPowerP1HF(lfpCount,:),fAxisHF] = mtspectrumc(targetDimDelayLfpsP1, paramsHF);
+        
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
         [C,~,~,~,~,fAxisLF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsLF);
         baselineSFCLF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrials)-2)); % adjust for num trials
@@ -197,6 +215,18 @@ for i = 1:nSessions
         cueTargetDelaySFCP1LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
         [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF);
         cueTargetDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+        
+        alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.targetDimBalByLoc{3}, targetDimDelayOffset .* [-1 1]);
+        [C,~,~,~,~,fAxisLF] = coherencycpt(targetDimDelayLfpsP3, alignedSpikeTs, paramsLF);
+        targetDimDelaySFCP3LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsBalP3)-2)); % adjust for num trials
+        [C,~,~,~,~,fAxisHF] = coherencycpt(targetDimDelayLfpsP3, alignedSpikeTs, paramsHF);
+        targetDimDelaySFCP3HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsBalP3)-2)); % adjust for num trials
+        
+        alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.targetDimBalByLoc{1}, targetDimDelayOffset .* [-1 1]);
+        [C,~,~,~,~,fAxisLF] = coherencycpt(targetDimDelayLfpsP1, alignedSpikeTs, paramsLF);
+        targetDimDelaySFCP1LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsBalP1)-2)); % adjust for num trials
+        [C,~,~,~,~,fAxisHF] = coherencycpt(targetDimDelayLfpsP1, alignedSpikeTs, paramsHF);
+        targetDimDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsBalP1)-2)); % adjust for num trials
         
         % compute coherence across subdivisions, one pair per session
         % TODO use all pairs per session unless this double dips too much
@@ -280,437 +310,218 @@ vPulCol = cols(5,:);
 p3Col = [0.9 0 0];
 p1Col = [0 0 0.9];
 
-maxSDsPower = 5;
-
-%% plot baseline power LF
-fAxis = fAxisLF;
-baselinePowerDPul = (baselinePowerLF(isInDPulvinar,:));
-baselinePowerVPul = (baselinePowerLF(isInVPulvinar,:));
-xBounds = paramsLF.fpass;
-if strcmp(ref, 'BIP')
-    yBounds = [0 0.01];
-elseif strcmp(ref, 'CAR')
-    yBounds = [0 0.02];
-end
-
-plotLfpPower(baselinePowerDPul, baselinePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-ylabel('Power');
-title('Pre-Cue Baseline Power');
-
-plotFileName = sprintf('%s/allSessions-baselinePower-LF-%s-v%d.png', outputDir, ref, v);
+%% plot power in pre-cue baseline dPul vs vPul
+plotLfpPower2(baselinePowerLF, baselinePowerHF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-35 -17; -35 -17], ...
+        'cols', [dPulCol; vPulCol], ...
+        'lineLabels', {'dPul', 'vPul'}, ...
+        'ylabelText', 'Power (dB/Hz)', ...
+        'titleText', sprintf('Pre-Cue Baseline Power (%s)', ref), ...
+        'doDB', 1);
+    
+plotFileName = sprintf('%s/allSessions-baselinePowerDB-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot baseline power HF
-fAxis = fAxisHF;
-baselinePowerDPul = (baselinePowerHF(isInDPulvinar,:));
-baselinePowerVPul = (baselinePowerHF(isInVPulvinar,:));
-xBounds = paramsHF.fpass;
-yBounds = [0 0.004];
+%% plot power in cue-target delay dPul vs vPul
+plotLfpPower2(cueTargetDelayPowerP3LF, cueTargetDelayPowerP3HF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-35 -17; -35 -17], ...
+        'cols', [dPulCol; vPulCol], ...
+        'lineLabels', {'dPul', 'vPul'}, ...
+        'ylabelText', 'Power (dB/Hz)', ...
+        'titleText', sprintf('Cue-Target Delay Power (%s)', ref), ...
+        'doDB', 1);
 
-% outlier removal
-baselinePowerDPul = cleanRowsBySDsFromMean(baselinePowerDPul, maxSDsPower);
-baselinePowerVPul = cleanRowsBySDsFromMean(baselinePowerVPul, maxSDsPower);
-
-plotLfpPower(baselinePowerDPul, baselinePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-ylabel('Power');
-title('Pre-Cue Baseline Power');
-
-plotFileName = sprintf('%s/allSessions-baselinePower-HF-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelayPowerDB-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay LF
-fAxis = fAxisLF;
-baselinePowerDPul = (baselinePowerLF(isInDPulvinar,:));
-baselinePowerVPul = (baselinePowerLF(isInVPulvinar,:));
-cueTargetDelayRelativePowerDPul = cueTargetDelayPowerP3LF(isInDPulvinar,:);
-cueTargetDelayRelativePowerVPul = cueTargetDelayPowerP3LF(isInVPulvinar,:);
-xBounds = paramsLF.fpass;
-if strcmp(ref, 'BIP')
-    yBounds = [0 0.01];
-elseif strcmp(ref, 'CAR')
-    yBounds = [0 0.02];
-end
+%% plot power in cue-target delay relative to baseline dPul vs vPul
+cueTargetDelayRelPowerP3LF = cueTargetDelayPowerP3LF ./ baselinePowerLF;
+cueTargetDelayRelPowerP3HF = cueTargetDelayPowerP3HF ./ baselinePowerHF;
 
-% outlier removal
-baselinePowerDPul = cleanRowsBySDsFromMean(baselinePowerDPul, maxSDsPower);
-baselinePowerVPul = cleanRowsBySDsFromMean(baselinePowerVPul, maxSDsPower);
-cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
-cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerVPul, maxSDsPower);
+plotLfpPower2(cueTargetDelayRelPowerP3LF, cueTargetDelayRelPowerP3HF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-1 0.25; -1 0.25], ...
+        'cols', [dPulCol; vPulCol], ...
+        'lineLabels', {'dPul', 'vPul'}, ...
+        'ylabelText', 'Power Rel. to Baseline (dB/Hz)', ...
+        'titleText', sprintf('Cue-Target Delay Relative Power (%s)', ref), ...
+        'doDB', 1);
 
-plotLfpPower4(baselinePowerDPul, cueTargetDelayRelativePowerDPul, baselinePowerVPul, cueTargetDelayRelativePowerVPul, ...
-        fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul Baseline', 'dPul Cue-Target Delay', 'vPul Baseline', 'vPul Cue-Target Delay')
-
-title('Power P3 dPul vs vPul');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-LF-P3-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelayRelPowerDB-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay HF
-fAxis = fAxisHF;
-baselinePowerDPul = (baselinePowerHF(isInDPulvinar,:));
-baselinePowerVPul = (baselinePowerHF(isInVPulvinar,:));
-cueTargetDelayRelativePowerDPul = cueTargetDelayPowerP3HF(isInDPulvinar,:);
-cueTargetDelayRelativePowerVPul = cueTargetDelayPowerP3HF(isInVPulvinar,:);
-xBounds = paramsHF.fpass;
-yBounds = [0 0.004];
+%% plot power in cue-target delay dPul P3 vs P1
+channelCond = isInDPulvinar;
+nChannel = sum(channelCond);
+cueTargetDelayRelPowerLF = [cueTargetDelayPowerP3LF(channelCond,:); cueTargetDelayPowerP1LF(channelCond,:)] ./ ...
+        [baselinePowerLF(channelCond,:); baselinePowerLF(channelCond,:)];
+cueTargetDelayRelPowerHF = [cueTargetDelayPowerP3HF(channelCond,:); cueTargetDelayPowerP1HF(channelCond,:)] ./ ...
+        [baselinePowerHF(channelCond,:); baselinePowerHF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
 
-% outlier removal
-baselinePowerDPul = cleanRowsBySDsFromMean(baselinePowerDPul, maxSDsPower);
-baselinePowerVPul = cleanRowsBySDsFromMean(baselinePowerVPul, maxSDsPower);
-cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
-cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerVPul, maxSDsPower);
+plotLfpPower2(cueTargetDelayRelPowerLF, cueTargetDelayRelPowerHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-1 0.25; -1 0.25], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Power Rel. to Baseline (dB/Hz)', ...
+        'titleText', sprintf('Cue-Target Delay Relative Power - Dorsal Pulvinar (%s)', ref), ...
+        'doDB', 1);
 
-plotLfpPower4(baselinePowerDPul, cueTargetDelayRelativePowerDPul, baselinePowerVPul, cueTargetDelayRelativePowerVPul, ...
-        fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul Baseline', 'dPul Cue-Target Delay', 'vPul Baseline', 'vPul Cue-Target Delay')
-
-title('Power P3 dPul vs vPul');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-HF-P3-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelayRelPowerDB-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay relative to baseline LF
-fAxis = fAxisLF;
-cueTargetDelayRelativePowerDPul = (((cueTargetDelayPowerP3LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
-cueTargetDelayRelativePowerVPul = (((cueTargetDelayPowerP3LF(isInVPulvinar,:))) ./ ((baselinePowerLF(isInVPulvinar,:))) - 1) * 100;
-xBounds = paramsLF.fpass;
-if strcmp(ref, 'BIP')
-    yBounds = [-10 5];
-elseif strcmp(ref, 'CAR')
-    yBounds = [-20 5];
-end
+%% plot power in cue-target delay vPul P3 vs P1
+channelCond = isInVPulvinar;
+nChannel = sum(channelCond);
+cueTargetDelayRelPowerLF = [cueTargetDelayPowerP3LF(channelCond,:); cueTargetDelayPowerP1LF(channelCond,:)] ./ ...
+        [baselinePowerLF(channelCond,:); baselinePowerLF(channelCond,:)];
+cueTargetDelayRelPowerHF = [cueTargetDelayPowerP3HF(channelCond,:); cueTargetDelayPowerP1HF(channelCond,:)] ./ ...
+        [baselinePowerHF(channelCond,:); baselinePowerHF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
 
-% outlier removal
-cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
-cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerVPul, maxSDsPower);
+plotLfpPower2(cueTargetDelayRelPowerLF, cueTargetDelayRelPowerHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-1 0.25; -1 0.25], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Power Rel. to Baseline (dB/Hz)', ...
+        'titleText', sprintf('Cue-Target Delay Relative Power - Ventral Pulvinar (%s)', ref), ...
+        'doDB', 1);
 
-plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-title('Cue-Target Delay Power P3 dPul vs vPul');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-LF-P3-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelayRelPowerDB-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay relative to baseline HF
-fAxis = fAxisHF;
-cueTargetDelayRelativePowerDPul = (((cueTargetDelayPowerP3HF(isInDPulvinar,:))) ./ ((baselinePowerHF(isInDPulvinar,:))) - 1) * 100;
-cueTargetDelayRelativePowerVPul = (((cueTargetDelayPowerP3HF(isInVPulvinar,:))) ./ ((baselinePowerHF(isInVPulvinar,:))) - 1) * 100;
-xBounds = paramsHF.fpass;
-yBounds = [-10 5];
+%% plot power in target-dim delay dPul vs vPul
+plotLfpPower2(targetDimDelayPowerP3LF, targetDimDelayPowerP3HF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-35 -17; -35 -17], ...
+        'cols', [dPulCol; vPulCol], ...
+        'lineLabels', {'dPul', 'vPul'}, ...
+        'ylabelText', 'Power (dB/Hz)', ...
+        'titleText', sprintf('Target-Dim Delay Power (%s)', ref), ...
+        'doDB', 1);
 
-% outlier removal
-cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
-cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerVPul, maxSDsPower);
-
-plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-title('Cue-Target Delay Power P3 dPul vs vPul');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-HF-P3-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-tdDelayPowerDB-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay relative to baseline LF
-fAxis = fAxisLF;
-cueTargetDelayRelativePowerDPul = (((cueTargetDelayPowerP1LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
-cueTargetDelayRelativePowerVPul = (((cueTargetDelayPowerP1LF(isInVPulvinar,:))) ./ ((baselinePowerLF(isInVPulvinar,:))) - 1) * 100;
-xBounds = paramsLF.fpass;
-if strcmp(ref, 'BIP')
-    yBounds = [-10 5];
-elseif strcmp(ref, 'CAR')
-    yBounds = [-20 5];
-end
+%% plot power in target-dim delay relative to baseline dPul vs vPul
+targetDimDelayRelPowerP3LF = targetDimDelayPowerP3LF ./ baselinePowerLF;
+targetDimDelayRelPowerP3HF = targetDimDelayPowerP3HF ./ baselinePowerHF;
 
-% outlier removal
-cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
-cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerVPul, maxSDsPower);
+plotLfpPower2(targetDimDelayRelPowerP3LF, targetDimDelayRelPowerP3HF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-1 0.25; -1 0.25], ...
+        'cols', [dPulCol; vPulCol], ...
+        'lineLabels', {'dPul', 'vPul'}, ...
+        'ylabelText', 'Power Rel. to Baseline (dB/Hz)', ...
+        'titleText', sprintf('Target-Dim Delay Relative Power (%s)', ref), ...
+        'doDB', 1);
 
-plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-title('Cue-Target Delay Power P1 dPul vs vPul');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-LF-P1-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-tdDelayRelPowerDB-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay relative to baseline HF
-fAxis = fAxisHF;
-cueTargetDelayRelativePowerDPul = (((cueTargetDelayPowerP1HF(isInDPulvinar,:))) ./ ((baselinePowerHF(isInDPulvinar,:))) - 1) * 100;
-cueTargetDelayRelativePowerVPul = (((cueTargetDelayPowerP1HF(isInVPulvinar,:))) ./ ((baselinePowerHF(isInVPulvinar,:))) - 1) * 100;
-xBounds = paramsHF.fpass;
-yBounds = [-10 5];
+%% plot power in target-dim delay dPul P3 vs P1
+channelCond = isInDPulvinar;
+nChannel = sum(channelCond);
+targetDimDelayRelPowerLF = [targetDimDelayPowerP3LF(channelCond,:); targetDimDelayPowerP1LF(channelCond,:)] ./ ...
+        [baselinePowerLF(channelCond,:); baselinePowerLF(channelCond,:)];
+targetDimDelayRelPowerHF = [targetDimDelayPowerP3HF(channelCond,:); targetDimDelayPowerP1HF(channelCond,:)] ./ ...
+        [baselinePowerHF(channelCond,:); baselinePowerHF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
 
-% outlier removal
-cueTargetDelayRelativePowerDPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerDPul, maxSDsPower);
-cueTargetDelayRelativePowerVPul = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerVPul, maxSDsPower);
+plotLfpPower2(targetDimDelayRelPowerLF, targetDimDelayRelPowerHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-1 0.25; -1 0.25], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Power Rel. to Baseline (dB/Hz)', ...
+        'titleText', sprintf('Target-Dim Delay Relative Power - Dorsal Pulvinar (%s)', ref), ...
+        'doDB', 1);
 
-plotLfpPower(cueTargetDelayRelativePowerDPul, cueTargetDelayRelativePowerVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-title('Cue-Target Delay Power P1 dPul vs vPul');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-HF-P1-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-tdDelayRelPowerDB-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay
-fAxis = fAxisLF;
-cueTargetDelayRelativePowerP3 = cueTargetDelayPowerP3LF(isInDPulvinar,:);
-cueTargetDelayRelativePowerP1 = cueTargetDelayPowerP1LF(isInDPulvinar,:);
-xBounds = paramsLF.fpass;
-if strcmp(ref, 'BIP')
-    yBounds = [0 0.01];
-elseif strcmp(ref, 'CAR')
-    yBounds = [0 0.02];
-end
+%% plot power in target-dim delay vPul P3 vs P1
+channelCond = isInVPulvinar;
+nChannel = sum(channelCond);
+targetDimDelayRelPowerLF = [targetDimDelayPowerP3LF(channelCond,:); targetDimDelayPowerP1LF(channelCond,:)] ./ ...
+        [baselinePowerLF(channelCond,:); baselinePowerLF(channelCond,:)];
+targetDimDelayRelPowerHF = [targetDimDelayPowerP3HF(channelCond,:); targetDimDelayPowerP1HF(channelCond,:)] ./ ...
+        [baselinePowerHF(channelCond,:); baselinePowerHF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
 
-% outlier removal
-cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
-cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP1, maxSDsPower);
+plotLfpPower2(targetDimDelayRelPowerLF, targetDimDelayRelPowerHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [-1 0.25; -1 0.25], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Power Rel. to Baseline (dB/Hz)', ...
+        'titleText', sprintf('Target-Dim Delay Relative Power - Ventral Pulvinar (%s)', ref), ...
+        'doDB', 1);
 
-plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-title('Cue-Target Delay Power dPul P3 vs P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-dPul-P3vsP1-LF-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-tdDelayRelPowerDB-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay
-fAxis = fAxisHF;
-cueTargetDelayRelativePowerP3 = cueTargetDelayPowerP3HF(isInDPulvinar,:);
-cueTargetDelayRelativePowerP1 = cueTargetDelayPowerP1HF(isInDPulvinar,:);
-xBounds = paramsHF.fpass;
-yBounds = [0 0.004];
 
-% outlier removal
-cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
-cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP1, maxSDsPower);
-
-plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-title('Cue-Target Delay Power dPul P3 vs P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-dPul-P3vsP1-HF-%s-v%d.png', outputDir, ref, v);
+%% plot baseline SFC
+plotLfpPower2(baselineSFCLF, baselineSFCHF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [0 0.08; 0 0.08], ...
+        'cols', [dPulCol; vPulCol], ...
+        'lineLabels', {'dPul', 'vPul'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Pre-Cue Baseline Local SFC (%s)', ref), ...
+        'doDB', 0);
+    
+plotFileName = sprintf('%s/allSessions-baselineSFC-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay
-fAxis = fAxisLF;
-cueTargetDelayRelativePowerP3 = cueTargetDelayPowerP3LF(isInVPulvinar,:);
-cueTargetDelayRelativePowerP1 = cueTargetDelayPowerP1LF(isInVPulvinar,:);
-xBounds = paramsLF.fpass;
-if strcmp(ref, 'BIP')
-    yBounds = [0 0.01];
-elseif strcmp(ref, 'CAR')
-    yBounds = [0 0.02];
-end
-
-% outlier removal
-cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
-cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP1, maxSDsPower);
-
-plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-title('Cue-Target Delay Power vPul P3 vs P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-vPul-P3vsP1-LF-%s-v%d.png', outputDir, ref, v);
+%% plot cue-target delay SFC
+plotLfpPower2(cueTargetDelaySFCP3LF, cueTargetDelaySFCP3HF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [0 0.08; 0 0.08], ...
+        'cols', [dPulCol; vPulCol], ...
+        'lineLabels', {'dPul', 'vPul'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Cue-Target Delay Local SFC (%s)', ref), ...
+        'doDB', 0);
+    
+plotFileName = sprintf('%s/allSessions-ctDelaySFC-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot power in cue-target delay
-fAxis = fAxisHF;
-cueTargetDelayRelativePowerP3 = cueTargetDelayPowerP3HF(isInVPulvinar,:);
-cueTargetDelayRelativePowerP1 = cueTargetDelayPowerP1HF(isInVPulvinar,:);
-xBounds = paramsHF.fpass;
-yBounds = [0 0.004];
+%% plot cue-target delay SFC relative to baseline - NOISY
+channelCond = isInDPulvinar;
+nChannel = sum(channelCond);
+cueTargetDelayRelSFCLF = [cueTargetDelaySFCP3LF(channelCond,:); cueTargetDelaySFCP1LF(channelCond,:)] ./ ...
+        [baselineSFCLF(channelCond,:); baselineSFCLF(channelCond,:)];
+cueTargetDelayRelSFCHF = [cueTargetDelaySFCP3HF(channelCond,:); cueTargetDelaySFCP1HF(channelCond,:)] ./ ...
+        [baselineSFCHF(channelCond,:); baselineSFCHF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
 
-% outlier removal
-cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
-cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP1, maxSDsPower);
+plotLfpPower2(cueTargetDelayRelSFCLF, cueTargetDelayRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [0 20; 0 20], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Cue-Target Delay Relative SFC - Dorsal Pulvinar (%s)', ref), ...
+        'doDB', 1);
 
-plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-title('Cue-Target Delay Power vPul P3 vs P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayPower-vPul-P3vsP1-HF-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot power in cue-target delay relative to baseline
-fAxis = fAxisLF;
-cueTargetDelayRelativePowerP3 = (((cueTargetDelayPowerP3LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
-cueTargetDelayRelativePowerP1 = (((cueTargetDelayPowerP1LF(isInDPulvinar,:))) ./ ((baselinePowerLF(isInDPulvinar,:))) - 1) * 100;
-xBounds = paramsLF.fpass;
-if strcmp(ref, 'BIP')
-    yBounds = [-10 5];
-elseif strcmp(ref, 'CAR')
-    yBounds = [-20 5];
-end
-
-% outlier removal
-cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
-cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP1, maxSDsPower);
-
-plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-title('Cue-Target Delay Power dPul P3 vs P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-dPul-P3vsP1-LF-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot power in cue-target delay relative to baseline
-fAxis = fAxisHF;
-cueTargetDelayRelativePowerP3 = (((cueTargetDelayPowerP3HF(isInDPulvinar,:))) ./ ((baselinePowerHF(isInDPulvinar,:))) - 1) * 100;
-cueTargetDelayRelativePowerP1 = (((cueTargetDelayPowerP1HF(isInDPulvinar,:))) ./ ((baselinePowerHF(isInDPulvinar,:))) - 1) * 100;
-xBounds = paramsHF.fpass;
-yBounds = [-10 5];
-
-% outlier removal
-cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
-cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP1, maxSDsPower);
-
-plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-title('Cue-Target Delay Power dPul P3 vs P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-dPul-P3vsP1-HF-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot power in cue-target delay relative to baseline
-fAxis = fAxisLF;
-cueTargetDelayRelativePowerP3 = (((cueTargetDelayPowerP3LF(isInVPulvinar,:))) ./ ((baselinePowerLF(isInVPulvinar,:))) - 1) * 100;
-cueTargetDelayRelativePowerP1 = (((cueTargetDelayPowerP1LF(isInVPulvinar,:))) ./ ((baselinePowerLF(isInVPulvinar,:))) - 1) * 100;
-xBounds = paramsLF.fpass;
-if strcmp(ref, 'BIP')
-    yBounds = [-10 5];
-elseif strcmp(ref, 'CAR')
-    yBounds = [-20 5];
-end
-
-% outlier removal
-cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
-cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP1, maxSDsPower);
-
-plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-title('Cue-Target Delay Power vPul P3 vs P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-vPul-P3vsP1-LF-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot power in cue-target delay relative to baseline
-fAxis = fAxisHF;
-cueTargetDelayRelativePowerP3 = (((cueTargetDelayPowerP3HF(isInVPulvinar,:))) ./ ((baselinePowerHF(isInVPulvinar,:))) - 1) * 100;
-cueTargetDelayRelativePowerP1 = (((cueTargetDelayPowerP1HF(isInVPulvinar,:))) ./ ((baselinePowerHF(isInVPulvinar,:))) - 1) * 100;
-xBounds = paramsHF.fpass;
-yBounds = [-10 5];
-
-% outlier removal
-cueTargetDelayRelativePowerP3 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP3, maxSDsPower);
-cueTargetDelayRelativePowerP1 = cleanRowsBySDsFromMean(cueTargetDelayRelativePowerP1, maxSDsPower);
-
-plotLfpPower(cueTargetDelayRelativePowerP3, cueTargetDelayRelativePowerP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-title('Cue-Target Delay Power vPul P3 vs P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelayRelPower-vPul-P3vsP1-HF-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot baseline SFC LF
-fAxis = fAxisLF;
-baselineSFCDPul = (baselineSFCLF(isInDPulvinar,:));
-baselineSFCVPul = (baselineSFCLF(isInVPulvinar,:));
-xBounds = paramsLF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(baselineSFCDPul, baselineSFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-ylabel('Local Spike-Field Coherence');
-title('Pre-Cue Baseline SFC');
-
-plotFileName = sprintf('%s/allSessions-baselineSFC-LF-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot baseline SFC LF
-fAxis = fAxisHF;
-baselineSFCDPul = (baselineSFCHF(isInDPulvinar,:));
-baselineSFCVPul = (baselineSFCHF(isInVPulvinar,:));
-xBounds = paramsHF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(baselineSFCDPul, baselineSFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-ylabel('Local Spike-Field Coherence');
-title('Pre-Cue Baseline SFC');
-
-plotFileName = sprintf('%s/allSessions-baselineSFC-HF-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot SFC in cue-target delay relative to baseline LF
-fAxis = fAxisLF;
-cueTargetDelaySFCDPul = cueTargetDelaySFCP3LF(isInDPulvinar,:);
-cueTargetDelaySFCVPul = cueTargetDelaySFCP3LF(isInVPulvinar,:);
-xBounds = paramsLF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC P3');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-P3-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot SFC in cue-target delay relative to baseline HF
-fAxis = fAxisHF;
-cueTargetDelaySFCDPul = cueTargetDelaySFCP3HF(isInDPulvinar,:);
-cueTargetDelaySFCVPul = cueTargetDelaySFCP3HF(isInVPulvinar,:);
-xBounds = paramsHF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC P3');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-P3-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot SFC in cue-target delay LF
-fAxis = fAxisLF;
-cueTargetDelaySFCDPul = cueTargetDelaySFCP1LF(isInDPulvinar,:);
-cueTargetDelaySFCVPul = cueTargetDelaySFCP1LF(isInVPulvinar,:);
-xBounds = paramsLF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-P1-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot SFC in cue-target delay HF
-fAxis = fAxisHF;
-cueTargetDelaySFCDPul = cueTargetDelaySFCP1HF(isInDPulvinar,:);
-cueTargetDelaySFCVPul = cueTargetDelaySFCP1HF(isInVPulvinar,:);
-xBounds = paramsHF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(cueTargetDelaySFCDPul, cueTargetDelaySFCVPul, fAxis, xBounds, yBounds, dPulCol, vPulCol, 'dPul', 'vPul')
-
-ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC P1');
-
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-P1-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelayRelSFC-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -726,7 +537,7 @@ plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, 
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC dPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelaySFC-LF-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -742,7 +553,7 @@ plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, 
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC dPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelaySFC-HF-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -758,7 +569,7 @@ plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, 
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-LF-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelaySFC-LF-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -774,7 +585,7 @@ plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, 
 ylabel('Spike-Field Coherence');
 title('Cue-Target Delay SFC vPul');
 
-plotFileName = sprintf('%s/allSessions-cueTargetDelaySFC-HF-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+plotFileName = sprintf('%s/allSessions-ctDelaySFC-HF-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
