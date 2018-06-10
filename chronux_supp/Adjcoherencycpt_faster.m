@@ -105,7 +105,7 @@ if any(C(:) > 0.8) || any(imag(C(:)) ~= 0)
     p = C(:);
     p = p(p > 0.8 | imag(p) ~= 0);
     for i = 1:numel(p)
-        fprintf('C = %0.2f, normrate = %0.2f, rate = %0.2f, S2 = %0.2f\n', p(i), normrate, rate, S2);
+        fprintf('C = %0.2f, normrate = %0.2f, rate = %0.2f\n', p(i), normrate, rate);
     end
 end
 
