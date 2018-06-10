@@ -264,8 +264,8 @@ for i = 1:nSessions
         [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(targetDimDelayLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
         targetDimDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsBalP1)-2)); % adjust for num trials
         
-        if any(imag(targetDimDelaySFCP3LF) ~= 0)
-            fprintf('imaginary data in session %s, channel %d', sessionName, EL.channelInds(j));
+        if any(imag(targetDimDelaySFCP3LF(:)) ~= 0)
+            fprintf('imaginary data in session %s, channel %d\n', sessionName, EL.channelInds(j));
         end
         
         % compute coherence across subdivisions, one pair per session

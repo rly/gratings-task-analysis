@@ -102,7 +102,11 @@ c0 = normrate/rate; % adjusted
 C12=S12./sqrt(S1.*S2)./sqrt((1-c0)*rate./S2./c0+1); % adjusted
 C=abs(C12);
 if any(C(:) > 0.8) || any(imag(C(:)) ~= 0)
-    fprintf('C = %0.2f, normrate = %0.2f, rate = %0.2f, S2 = %0.2f\n', C, normrate, rate, S2);
+    p = C(:);
+    p = p(p > 0.8 | imag(p) ~= 0);
+    for i = 1:numel(p)
+        fprintf('C = %0.2f, normrate = %0.2f, rate = %0.2f, S2 = %0.2f\n', p, normrate, rate, S2);
+    end
 end
 
 phi=angle(C12);
