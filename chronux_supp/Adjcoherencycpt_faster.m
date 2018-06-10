@@ -95,10 +95,15 @@ S1=squeeze(mean(conj(J1).*J1,2)); % spectrum data 1
 S2=squeeze(mean(conj(J2).*J2,2)); % spectrum data 2
 if trialave; S12=squeeze(mean(S12,2)); S1=squeeze(mean(S1,2)); S2=squeeze(mean(S2,2)); end;
 
+% RL: if normrate >> rate, then C > 1, which poses problems with Fisher
+% z-transform
 % C12=S12./sqrt(S1.*S2); % original
 c0 = normrate/rate; % adjusted
 C12=S12./sqrt(S1.*S2)./sqrt((1-c0)*rate./S2./c0+1); % adjusted
 C=abs(C12);
+if C > 0.9
+    fprintf('C = %0.2f, normrate = %0.2f, rate = %0.2f, S2 = %0.2f\n', C, normrate, rate, S2);
+end
 
 phi=angle(C12);
 if nargout==10; 
