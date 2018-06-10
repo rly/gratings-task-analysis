@@ -543,70 +543,6 @@ plotFileName = sprintf('%s/allSessions-ctDelaySFC-vPul-P3vsP1-%s-v%d.png', outpu
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot SFC in cue-target delay relative to baseline LF
-fAxis = fAxisLF;
-cueTargetDelaySFCP3 = cueTargetDelaySFCP3LF(isInDPulvinar,:);
-cueTargetDelaySFCP1 = cueTargetDelaySFCP1LF(isInDPulvinar,:);
-xBounds = paramsLF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-
-ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC dPul');
-
-plotFileName = sprintf('%s/allSessions-ctDelaySFC-LF-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot SFC in cue-target delay relative to baseline LF
-fAxis = fAxisHF;
-cueTargetDelaySFCP3 = cueTargetDelaySFCP3HF(isInDPulvinar,:);
-cueTargetDelaySFCP1 = cueTargetDelaySFCP1HF(isInDPulvinar,:);
-xBounds = paramsHF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-
-ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC dPul');
-
-plotFileName = sprintf('%s/allSessions-ctDelaySFC-HF-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot SFC in cue-target delay relative to baseline LF
-fAxis = fAxisLF;
-cueTargetDelaySFCP3 = cueTargetDelaySFCP3LF(isInVPulvinar,:);
-cueTargetDelaySFCP1 = cueTargetDelaySFCP1LF(isInVPulvinar,:);
-xBounds = paramsLF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-
-ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC vPul');
-
-plotFileName = sprintf('%s/allSessions-ctDelaySFC-LF-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
-%% plot SFC in cue-target delay relative to baseline LF
-fAxis = fAxisHF;
-cueTargetDelaySFCP3 = cueTargetDelaySFCP3HF(isInVPulvinar,:);
-cueTargetDelaySFCP1 = cueTargetDelaySFCP1HF(isInVPulvinar,:);
-xBounds = paramsHF.fpass;
-yBounds = [0 0.08];
-
-plotLfpPower(cueTargetDelaySFCP3, cueTargetDelaySFCP1, fAxis, xBounds, yBounds, p3Col, p1Col, 'P3', 'P1')
-
-ylabel('Spike-Field Coherence');
-title('Cue-Target Delay SFC vPul');
-
-plotFileName = sprintf('%s/allSessions-ctDelaySFC-HF-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
-
 %% plot target-dim delay SFC
 plotLfpPower2(targetDimDelaySFCP3LF, targetDimDelaySFCP3HF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
         'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
@@ -618,6 +554,46 @@ plotLfpPower2(targetDimDelaySFCP3LF, targetDimDelaySFCP3HF, fAxisLF, fAxisHF, [i
         'doDB', 0);
     
 plotFileName = sprintf('%s/allSessions-tdDelaySFC-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% plot target-dim delay SFC dPul P3 vs P1 (relative to baseline is NOISY)
+channelCond = isInDPulvinar;
+nChannel = sum(channelCond);
+targetDimDelayRelSFCLF = [targetDimDelaySFCP3LF(channelCond,:); targetDimDelaySFCP1LF(channelCond,:)];
+targetDimDelayRelSFCHF = [targetDimDelaySFCP3HF(channelCond,:); targetDimDelaySFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+plotLfpPower2(targetDimDelayRelSFCLF, targetDimDelayRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [0 0.12; 0 0.12], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Target-Dim Delay SFC - Dorsal Pulvinar (%s)', ref), ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-tdDelaySFC-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% plot target-dim delay SFC vPul P3 vs P1 (relative to baseline is NOISY)
+channelCond = isInVPulvinar;
+nChannel = sum(channelCond);
+targetDimDelayRelSFCLF = [targetDimDelaySFCP3LF(channelCond,:); targetDimDelaySFCP1LF(channelCond,:)];
+targetDimDelayRelSFCHF = [targetDimDelaySFCP3HF(channelCond,:); targetDimDelaySFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+plotLfpPower2(targetDimDelayRelSFCLF, targetDimDelayRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [0 0.12; 0 0.12], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Target-Dim Delay SFC - Ventral Pulvinar (%s)', ref), ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-tdDelaySFC-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -736,3 +712,126 @@ title(sprintf('Across Subdivision Coherence (N=%d)', nSubPairs));
 plotFileName = sprintf('%s/allSessions-subPairCoh-HF-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%%
+return; % end plots, rest is live testing
+
+%% inspect cue-target power in dPul and vPul at 8-12 Hz
+fBounds = [8 12];
+fInd = fAxisLF >= fBounds(1) & fAxisLF <= fBounds(2); 
+
+powP3 = mean(cueTargetDelayPowerP3LF(isInDPulvinar | isInVPulvinar, fInd), 2); % mean over f
+powP1 = mean(cueTargetDelayPowerP1LF(isInDPulvinar | isInVPulvinar, fInd), 2); % mean over f
+powDiff = powP3 - powP1;
+
+histBins = 0:0.002:0.05;
+
+figure_tr_inch(5, 10);
+subaxis(2, 1, 1);
+histogram(powP3, histBins);
+subaxis(2, 1, 2);
+histogram(powP1, histBins);
+
+histDiffBins = -0.02:0.001:0.02;
+figure_tr_inch(6, 6);
+histogram(powDiff, histDiffBins);
+
+figure;
+hold on;
+plot([0 0.1], [0 0.1], 'Color', 0.3*ones(3, 1));
+plot(powP3, powP1, '.', 'Color', lines(1), 'MarkerSize', 10);
+xlim([0 0.03]);
+ylim([0 0.03]);
+
+[h,p,stats] = ttest(powDiff);
+fprintf('Median diff power = %0.3f (N = %d), p = %0.3f\n', median(powDiff), size(powDiff, 1), p);
+
+%% inspect cue-target power in dPul at 75-85 Hz
+fBounds = [75 85];
+fInd = fAxisHF >= fBounds(1) & fAxisHF <= fBounds(2); 
+
+powP3 = mean(cueTargetDelayPowerP3HF(isInDPulvinar, fInd), 2); % mean over f
+powP1 = mean(cueTargetDelayPowerP1HF(isInDPulvinar, fInd), 2); % mean over f
+powDiff = powP3 - powP1;
+
+histBins = 0:0.0002:0.005;
+
+figure_tr_inch(5, 10);
+subaxis(2, 1, 1);
+histogram(powP3, histBins);
+subaxis(2, 1, 2);
+histogram(powP1, histBins);
+
+histDiffBins = -0.002:0.0001:0.002;
+figure_tr_inch(6, 6);
+histogram(powDiff, histDiffBins);
+
+figure;
+hold on;
+plot([0 0.1], [0 0.1], 'Color', 0.3*ones(3, 1));
+plot(powP3, powP1, '.', 'Color', lines(1), 'MarkerSize', 10);
+xlim([0 0.003]);
+ylim([0 0.003]);
+
+[h,p,stats] = ttest(powDiff);
+fprintf('Median diff power = %0.3f (N = %d), p = %0.3f\n', median(powDiff), size(powDiff, 1), p);
+
+%% inspect cue-target SFC in dPul at 75-85 Hz
+fBounds = [75 85];
+fInd = fAxisHF >= fBounds(1) & fAxisHF <= fBounds(2); 
+
+sfcP3 = mean(cueTargetDelaySFCP3HF(isInDPulvinar, fInd), 2); % mean over f
+sfcP1 = mean(cueTargetDelaySFCP1HF(isInDPulvinar, fInd), 2); % mean over f
+sfcDiff = sfcP3 - sfcP1;
+
+histBins = 0:0.01:0.2;
+
+figure_tr_inch(5, 10);
+subaxis(2, 1, 1);
+histogram(sfcP3, histBins);
+subaxis(2, 1, 2);
+histogram(sfcP1, histBins);
+
+histDiffBins = -0.15:0.01:0.15;
+figure_tr_inch(6, 6);
+histogram(sfcDiff, histDiffBins);
+
+figure;
+hold on;
+plot([0 0.1], [0 0.1], 'Color', 0.3*ones(3, 1));
+plot(sfcP3, sfcP1, '.', 'Color', lines(1), 'MarkerSize', 10);
+xlim([0 0.1]);
+ylim([0 0.1]);
+
+[h,p,stats] = ttest(sfcDiff);
+fprintf('Median diff SFC = %0.3f (N = %d), p = %0.3f\n', median(sfcDiff), size(sfcDiff, 1), p);
+
+%% inspect cue-target SFC in vPul at 18-22 Hz
+fBounds = [18 22];
+fInd = fAxisLF >= fBounds(1) & fAxisLF <= fBounds(2); 
+
+sfcP3 = mean(cueTargetDelaySFCP3LF(isInVPulvinar, fInd), 2); % mean over f
+sfcP1 = mean(cueTargetDelaySFCP1LF(isInVPulvinar, fInd), 2); % mean over f
+sfcDiff = sfcP3 - sfcP1;
+
+histBins = 0:0.01:0.2;
+
+figure_tr_inch(5, 10);
+subaxis(2, 1, 1);
+histogram(sfcP3, histBins);
+subaxis(2, 1, 2);
+histogram(sfcP1, histBins);
+
+histDiffBins = -0.15:0.01:0.15;
+figure_tr_inch(6, 6);
+histogram(sfcDiff, histDiffBins);
+
+figure;
+hold on;
+plot([0 0.1], [0 0.1], 'Color', 0.3*ones(3, 1));
+plot(sfcP3, sfcP1, '.', 'Color', lines(1), 'MarkerSize', 10);
+xlim([0 0.1]);
+ylim([0 0.1]);
+
+[h,p,stats] = ttest(sfcDiff);
+fprintf('Median diff SFC = %0.3f (N = %d), p = %0.3f\n', median(sfcDiff), size(sfcDiff, 1), p);
