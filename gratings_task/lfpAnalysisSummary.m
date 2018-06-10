@@ -79,21 +79,23 @@ paramsHF.pad = 2;
 paramsHF.Fs = 1000;
 paramsHF.trialave = 1;
 
+adjCohNormRate = 20; % rate in Hz to normalize spike rates to
+
 fprintf('\n-------------------------------------------------------\n');
 fprintf('Across Session Analysis\n');
 fprintf('Reference: %s\n', ref);
 
 %% session loop
 for i = 1:nSessions
+    sessionInd = sessionInds(i);
     % TODO
     % session 15, 'M20170329', 1-32
     % session 17, 'M20170329', 1-32
     % have abnormally high power around 40 Hz
-    if i == 15 || i == 17
-        fprintf('Excluding session %d...\n', i);
+    if sessionInd == 15 || sessionInd == 17
+        fprintf('Excluding session %d...\n', sessionInd);
         continue;
     end
-    sessionInd = sessionInds(i);
     R = recordingInfo(sessionInd);
     sessionName = R.sessionName;
     lfpChannelsToLoad = R.lfpChannelsToLoad;
@@ -199,33 +201,38 @@ for i = 1:nSessions
         [targetDimDelayPowerP1HF(lfpCount,:),fAxisHF] = mtspectrumc(targetDimDelayLfpsP1, paramsHF);
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
-        [C,~,~,~,~,fAxisLF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsLF);
+        meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, baselineWindowOffset);
+        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
         baselineSFCLF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrials)-2)); % adjust for num trials
-        [C,~,~,~,~,fAxisHF] = coherencycpt(preCueBaselineLfps, alignedSpikeTs, paramsHF);
+        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
         baselineSFCHF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrials)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
-        [C,~,~,~,~,fAxisLF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsLF);
+        meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, cueTargetDelayOffset);
+        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(cueTargetDelayLfpsP3, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
         cueTargetDelaySFCP3LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
-        [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP3, alignedSpikeTs, paramsHF);
+        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(cueTargetDelayLfpsP3, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
         cueTargetDelaySFCP3HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{1}, cueTargetDelayOffset .* [-1 1]);
-        [C,~,~,~,~,fAxisLF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsLF);
+        meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, cueTargetDelayOffset);
+        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(cueTargetDelayLfpsP1, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
         cueTargetDelaySFCP1LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
-        [C,~,~,~,~,fAxisHF] = coherencycpt(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF);
+        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
         cueTargetDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.targetDimBalByLoc{3}, targetDimDelayOffset .* [-1 1]);
-        [C,~,~,~,~,fAxisLF] = coherencycpt(targetDimDelayLfpsP3, alignedSpikeTs, paramsLF);
+        meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, targetDimDelayOffset);
+        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(targetDimDelayLfpsP3, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
         targetDimDelaySFCP3LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsBalP3)-2)); % adjust for num trials
-        [C,~,~,~,~,fAxisHF] = coherencycpt(targetDimDelayLfpsP3, alignedSpikeTs, paramsHF);
+        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(targetDimDelayLfpsP3, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
         targetDimDelaySFCP3HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsBalP3)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.targetDimBalByLoc{1}, targetDimDelayOffset .* [-1 1]);
-        [C,~,~,~,~,fAxisLF] = coherencycpt(targetDimDelayLfpsP1, alignedSpikeTs, paramsLF);
+        meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, targetDimDelayOffset);
+        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(targetDimDelayLfpsP1, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
         targetDimDelaySFCP1LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsBalP1)-2)); % adjust for num trials
-        [C,~,~,~,~,fAxisHF] = coherencycpt(targetDimDelayLfpsP1, alignedSpikeTs, paramsHF);
+        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(targetDimDelayLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
         targetDimDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsBalP1)-2)); % adjust for num trials
         
         % compute coherence across subdivisions, one pair per session
