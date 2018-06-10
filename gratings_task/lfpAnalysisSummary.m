@@ -494,7 +494,7 @@ for i = 1:nSessions
             targetDimLfpP3Current = squeeze(mean(EL.targetDimBalLfp.lfp(js,EL.UE.cueLocHoldBal == 3,:), 1))';
             targetDimLfpP1Current = squeeze(mean(EL.targetDimBalLfp.lfp(js,EL.UE.cueLocHoldBal == 1,:), 1))';
         elseif strcmp(ref, 'BIP')
-            if numel(j) == 1
+            if numel(js) == 1
                 continue;
             end
             % mean of bipolar signals: ((a_2-a_1) + (a_3-a_2) + (a_n-a_{n-1})) + ...)/n 
@@ -591,7 +591,7 @@ for i = 1:nSessions
             targetDimLfpP3Current = squeeze(mean(EL.targetDimBalLfp.lfp(js,EL.UE.cueLocHoldBal == 3,:), 1))';
             targetDimLfpP1Current = squeeze(mean(EL.targetDimBalLfp.lfp(js,EL.UE.cueLocHoldBal == 1,:), 1))';
         elseif strcmp(ref, 'BIP')
-            if numel(j) == 1
+            if numel(js) == 1
                 continue;
             end
             % mean of bipolar signals: ((a_2-a_1) + (a_3-a_2) + (a_n-a_{n-1})) + ...)/n 
