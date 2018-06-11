@@ -182,7 +182,7 @@ for i = 1:nSessions
         if strcmp(ref, 'BIP') && j == numel(EL.channelInds)
             continue;
         end
-        fprintf('Processing channel %d...\n', EL.channelInds(j));
+        
         
         lfpCount = lfpCount + 1;
         lfpNames{lfpCount} = sprintf('%s_FP%03d', sessionName, EL.channelInds(j));
@@ -195,6 +195,11 @@ for i = 1:nSessions
         if ismember(EL.channelInds(j), R.dPulChannels)
             isInDPulvinar(lfpCount) = 1;
         end
+        if ~isInDPulvinar(lfpCount) && ~isInVPulvinar(lfpCount)
+            fprintf('Skipping channel %d - not in pulvinar...\n', EL.channelInds(j));
+            continue; % only process channels in pulvinar for now
+        end
+        fprintf('Processing channel %d...\n', EL.channelInds(j));
         
         % read MUA from a nearby channel to account for MUA possibly
         % contributing to LFP on the same channel
