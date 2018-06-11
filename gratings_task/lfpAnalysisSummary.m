@@ -3,7 +3,7 @@ function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, session
 % clear;
 % readDataLocally;
 % sessionInds = 8;%1:23;
-% ref = 'CAR';
+% ref = 'BIP';
 
 v = 12;
 
@@ -77,6 +77,9 @@ cueTargetDelaySubPairCohP1HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySubPairCohP3HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySubPairCohP1HF = nan(nSubPairsApprox, nFAxisHF);
 
+dPulSpikeVPulFieldNames = cell(nSubPairsApprox, 1);
+vPulSpikeDPulFieldNames = cell(nSubPairsApprox, 1);
+
 baselineSFCSingleDPulSpikeVPulFieldLF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCSingleDPulSpikeVPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCSingleDPulSpikeVPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
@@ -127,21 +130,25 @@ targetDimDelaySFCVPulSpikeDPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 
 baselineWindowOffset = [-0.25 0];
 cueResponseOffset = [0 0.25];
-cueTargetDelayOffset = [-0.25 0];
-targetDimDelayOffset = [-0.25 0];
+cueTargetDelayOffset = [-0.4 0];
+targetDimDelayOffset = [-0.4 0];
 
 % chronux parameters
 paramsLF.tapers = [1 1];
 paramsLF.fpass = [8 25];
-paramsLF.pad = 2;
+paramsLF.pad = 1;
 paramsLF.Fs = 1000;
 paramsLF.trialave = 1;
+paramsBaselineLF = paramsLF;
+paramsBaselineLF.pad = 2; % less padding for smaller window so that faxis the same
 
 paramsHF.tapers = [2 3];
 paramsHF.fpass = [25 100];
-paramsHF.pad = 2;
+paramsHF.pad = 1;
 paramsHF.Fs = 1000;
 paramsHF.trialave = 1;
+paramsBaselineHF = paramsHF;
+paramsBaselineHF.pad = 2; % less padding for smaller window so that faxis the same
 
 adjCohNormRate = 5; % rate in Hz to normalize spike rates to -- too high leads to C > 1 and atanh(C) = undef
 % TODO normalize to the other rate in comparison, not to general rate
@@ -228,8 +235,6 @@ for i = 1:nSessions
             targetDimLfpP3Current = squeeze(EL.targetDimBalLfp.lfp(j,EL.UE.cueLocHoldBal == 3,:) - EL.targetDimBalLfp.lfp(caCh,EL.UE.cueLocHoldBal == 3,:))';
             targetDimLfpP1Current = squeeze(EL.targetDimBalLfp.lfp(j,EL.UE.cueLocHoldBal == 1,:) - EL.targetDimBalLfp.lfp(caCh,EL.UE.cueLocHoldBal == 1,:))';
         end
-        % ignore array shapes because we are looking at pre-array delay
-        % period
         
         numTrials = size(cueOnsetLfpCurrent, 1);
         numTrialsP3 = size(arrayOnsetLfpP3Current, 1);
@@ -243,8 +248,8 @@ for i = 1:nSessions
         targetDimDelayLfpsP3 = targetDimLfpP3Current(targetDimDelayInd,:);
         targetDimDelayLfpsP1 = targetDimLfpP1Current(targetDimDelayInd,:);
 
-        [baselinePowerLF(lfpCount,:),fAxisLF] = mtspectrumc(preCueBaselineLfps, paramsLF);
-        [baselinePowerHF(lfpCount,:),fAxisHF] = mtspectrumc(preCueBaselineLfps, paramsHF);
+        [baselinePowerLF(lfpCount,:),fAxisLF] = mtspectrumc(preCueBaselineLfps, paramsBaselineLF);
+        [baselinePowerHF(lfpCount,:),fAxisHF] = mtspectrumc(preCueBaselineLfps, paramsBaselineHF);
         [cueTargetDelayPowerP3LF(lfpCount,:),fAxisLF] = mtspectrumc(cueTargetDelayLfpsP3, paramsLF);
         [cueTargetDelayPowerP3HF(lfpCount,:),fAxisHF] = mtspectrumc(cueTargetDelayLfpsP3, paramsHF);
         [cueTargetDelayPowerP1LF(lfpCount,:),fAxisLF] = mtspectrumc(cueTargetDelayLfpsP1, paramsLF);
@@ -256,12 +261,12 @@ for i = 1:nSessions
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
         meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, baselineWindowOffset);
-        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsBaselineLF, 0, [], adjCohNormRate, meanFR);
         if any(C(:) > 0.8), lfpCount = lfpCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
-        baselineSFCLF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrials)-2)); % adjust for num trials
-        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+        baselineSFCLF(lfpCount,:) = atanh(C)-(1/((2*paramsBaselineLF.tapers(2)*numTrials)-2)); % adjust for num trials
+        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsBaselineHF, 0, [], adjCohNormRate, meanFR);
         if any(C(:) > 0.8), lfpCount = lfpCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
-        baselineSFCHF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrials)-2)); % adjust for num trials
+        baselineSFCHF(lfpCount,:) = atanh(C)-(1/((2*paramsBaselineHF.tapers(2)*numTrials)-2)); % adjust for num trials
         
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
         meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, cueTargetDelayOffset);
@@ -370,8 +375,8 @@ for i = 1:nSessions
                     targetDimDelayLfps1P1 = targetDimLfpP1Current1(targetDimDelayInd,:);
                     targetDimDelayLfps2P1 = targetDimLfpP1Current2(targetDimDelayInd,:);
 
-                    baselineSubPairCohLF(subPairCount,:) = coherencyc(preCueBaselineLfps1, preCueBaselineLfps2, paramsLF);
-                    baselineSubPairCohHF(subPairCount,:) = coherencyc(preCueBaselineLfps1, preCueBaselineLfps2, paramsHF);
+                    baselineSubPairCohLF(subPairCount,:) = coherencyc(preCueBaselineLfps1, preCueBaselineLfps2, paramsBaselineLF);
+                    baselineSubPairCohHF(subPairCount,:) = coherencyc(preCueBaselineLfps1, preCueBaselineLfps2, paramsBaselineHF);
                     cueTargetDelaySubPairCohP3LF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P3, cueTargetDelayLfps2P3, paramsLF);
                     cueTargetDelaySubPairCohP3HF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P3, cueTargetDelayLfps2P3, paramsHF);
                     cueTargetDelaySubPairCohP1LF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P1, cueTargetDelayLfps2P1, paramsLF);
@@ -387,12 +392,12 @@ for i = 1:nSessions
                     % dPul spike, vPul field - one each per session
                     alignedSpikeTs = createnonemptydatamatpt(muaChannel1Ts, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
                     meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, baselineWindowOffset);
-                    [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps2, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+                    [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps2, alignedSpikeTs, paramsBaselineLF, 0, [], adjCohNormRate, meanFR);
                     if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
-                    baselineSFCSingleDPulSpikeVPulFieldLF(subPairCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrials)-2)); % adjust for num trials
-                    [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps2, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+                    baselineSFCSingleDPulSpikeVPulFieldLF(subPairCount,:) = atanh(C)-(1/((2*paramsBaselineLF.tapers(2)*numTrials)-2)); % adjust for num trials
+                    [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps2, alignedSpikeTs, paramsBaselineHF, 0, [], adjCohNormRate, meanFR);
                     if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
-                    baselineSFCSingleDPulSpikeVPulFieldHF(subPairCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrials)-2)); % adjust for num trials
+                    baselineSFCSingleDPulSpikeVPulFieldHF(subPairCount,:) = atanh(C)-(1/((2*paramsBaselineHF.tapers(2)*numTrials)-2)); % adjust for num trials
 
                     alignedSpikeTs = createnonemptydatamatpt(muaChannel1Ts, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
                     meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, cueTargetDelayOffset);
@@ -433,12 +438,12 @@ for i = 1:nSessions
                     % vPul spike, dPul field - one each per session
                     alignedSpikeTs = createnonemptydatamatpt(muaChannel2Ts, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
                     meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, baselineWindowOffset);
-                    [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps1, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+                    [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps1, alignedSpikeTs, paramsBaselineLF, 0, [], adjCohNormRate, meanFR);
                     if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
-                    baselineSFCSingleVPulSpikeDPulFieldLF(subPairCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrials)-2)); % adjust for num trials
-                    [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+                    baselineSFCSingleVPulSpikeDPulFieldLF(subPairCount,:) = atanh(C)-(1/((2*paramsBaselineLF.tapers(2)*numTrials)-2)); % adjust for num trials
+                    [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps1, alignedSpikeTs, paramsBaselineHF, 0, [], adjCohNormRate, meanFR);
                     if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
-                    baselineSFCSingleVPulSpikeDPulFieldHF(subPairCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrials)-2)); % adjust for num trials
+                    baselineSFCSingleVPulSpikeDPulFieldHF(subPairCount,:) = atanh(C)-(1/((2*paramsBaselineHF.tapers(2)*numTrials)-2)); % adjust for num trials
 
                     alignedSpikeTs = createnonemptydatamatpt(muaChannel2Ts, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
                     meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, cueTargetDelayOffset);
@@ -533,15 +538,16 @@ for i = 1:nSessions
             spikeTs = EL.allMUAStructs{j}.ts;
             
             dPulSpikeVPulFieldCount = dPulSpikeVPulFieldCount + 1;
+            dPulSpikeVPulFieldNames{dPulSpikeVPulFieldCount} = sprintf('%s_%d_%dM-vPulLfp', sessionName, sessionInd, EL.channelInds(j));
             
             alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
             meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, baselineWindowOffset);
-            [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+            [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsBaselineLF, 0, [], adjCohNormRate, meanFR);
             if any(C(:) > 0.8), dPulSpikeVPulFieldCount = dPulSpikeVPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
-            baselineSFCDPulSpikeVPulFieldLF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrials)-2)); % adjust for num trials
-            [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+            baselineSFCDPulSpikeVPulFieldLF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsBaselineLF.tapers(2)*numTrials)-2)); % adjust for num trials
+            [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsBaselineHF, 0, [], adjCohNormRate, meanFR);
             if any(C(:) > 0.8), dPulSpikeVPulFieldCount = dPulSpikeVPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
-            baselineSFCDPulSpikeVPulFieldHF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrials)-2)); % adjust for num trials
+            baselineSFCDPulSpikeVPulFieldHF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsBaselineHF.tapers(2)*numTrials)-2)); % adjust for num trials
 
             alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
             meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, cueTargetDelayOffset);
@@ -630,15 +636,16 @@ for i = 1:nSessions
             spikeTs = EL.allMUAStructs{j}.ts;
             
             vPulSpikeDPulFieldCount = vPulSpikeDPulFieldCount + 1;
+            vPulSpikeDPulFieldNames{vPulSpikeDPulFieldCount} = sprintf('%s_%d_%dM-dPulLfp', sessionName, sessionInd, EL.channelInds(j));
             
             alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.cueOnset, baselineWindowOffset .* [-1 1]);
             meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, baselineWindowOffset);
-            [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+            [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsBaselineLF, 0, [], adjCohNormRate, meanFR);
             if any(C(:) > 0.8), vPulSpikeDPulFieldCount = vPulSpikeDPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
-            baselineSFCVPulSpikeDPulFieldLF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrials)-2)); % adjust for num trials
-            [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+            baselineSFCVPulSpikeDPulFieldLF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsBaselineLF.tapers(2)*numTrials)-2)); % adjust for num trials
+            [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(preCueBaselineLfps, alignedSpikeTs, paramsBaselineHF, 0, [], adjCohNormRate, meanFR);
             if any(C(:) > 0.8), vPulSpikeDPulFieldCount = vPulSpikeDPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
-            baselineSFCVPulSpikeDPulFieldHF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrials)-2)); % adjust for num trials
+            baselineSFCVPulSpikeDPulFieldHF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsBaselineHF.tapers(2)*numTrials)-2)); % adjust for num trials
 
             alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetByLoc{3}, cueTargetDelayOffset .* [-1 1]);
             meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, cueTargetDelayOffset);
@@ -678,7 +685,6 @@ for i = 1:nSessions
         end
     end
 
-    
     clear EL;
 end
 
@@ -998,7 +1004,7 @@ plotFileName = sprintf('%s/allSessions-tdDelaySFC-vPul-P3vsP1-%s-v%d.png', outpu
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% plot subdivision pair coherence across conditions and periods
+%% plot subdivision pair lfp coherence across conditions and periods
 % using CAR is tricky here because CAR is a common signal to the dorsal and
 % ventral channels and any fluctuations in CAR will be picked up here
 nSubPairs = size(baselineSubPairCohLF, 1);
@@ -1085,7 +1091,7 @@ for i = 1:5
     condLogical(((i-1)*nSubPairs+1):(i*nSubPairs), i) = 1;
 end
 
-yBounds = [0 0.06];
+yBounds = [0 0.12];
 baselineCol = [0 0.9 0];
 plotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
         'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
@@ -1109,7 +1115,7 @@ for i = 1:5
     condLogical(((i-1)*nSubPairs+1):(i*nSubPairs), i) = 1;
 end
 
-yBounds = [0 0.06];
+yBounds = [0 0.12];
 baselineCol = [0 0.9 0];
 plotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
         'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
@@ -1128,15 +1134,15 @@ export_fig(plotFileName, '-nocrop');
 %%
 return; % end plots, rest is live testing
 
-%% inspect cue-target power in dPul and vPul at 8-12 Hz
+%% inspect cue-target power in vPul at 8-12 Hz
 fBounds = [8 12];
 fInd = fAxisLF >= fBounds(1) & fAxisLF <= fBounds(2); 
 
-powP3 = mean(cueTargetDelayPowerP3LF(isInDPulvinar | isInVPulvinar, fInd), 2); % mean over f
-powP1 = mean(cueTargetDelayPowerP1LF(isInDPulvinar | isInVPulvinar, fInd), 2); % mean over f
+powP3 = mean(cueTargetDelayPowerP3LF(isInVPulvinar,fInd), 2); % mean over f
+powP1 = mean(cueTargetDelayPowerP1LF(isInVPulvinar,fInd), 2); % mean over f
 powDiff = powP3 - powP1;
 
-histBins = 0:0.002:0.05;
+histBins = 0:0.002:0.02;
 
 figure_tr_inch(5, 10);
 subaxis(2, 1, 1);
@@ -1152,18 +1158,18 @@ figure;
 hold on;
 plot([0 0.1], [0 0.1], 'Color', 0.3*ones(3, 1));
 plot(powP3, powP1, '.', 'Color', lines(1), 'MarkerSize', 10);
-xlim([0 0.03]);
-ylim([0 0.03]);
+xlim([0 0.02]);
+ylim([0 0.02]);
 
 [h,p,stats] = ttest(powDiff);
 fprintf('Median diff power = %0.3f (N = %d), p = %0.3f\n', median(powDiff), size(powDiff, 1), p);
 
-%% inspect cue-target power in dPul at 75-85 Hz
-fBounds = [75 85];
+%% inspect cue-target power in vPul at 75-80 Hz
+fBounds = [75 80];
 fInd = fAxisHF >= fBounds(1) & fAxisHF <= fBounds(2); 
 
-powP3 = mean(cueTargetDelayPowerP3HF(isInDPulvinar, fInd), 2); % mean over f
-powP1 = mean(cueTargetDelayPowerP1HF(isInDPulvinar, fInd), 2); % mean over f
+powP3 = mean(cueTargetDelayPowerP3HF(isInVPulvinar,fInd), 2); % mean over f
+powP1 = mean(cueTargetDelayPowerP1HF(isInVPulvinar,fInd), 2); % mean over f
 powDiff = powP3 - powP1;
 
 histBins = 0:0.0002:0.005;
@@ -1192,8 +1198,8 @@ fprintf('Median diff power = %0.3f (N = %d), p = %0.3f\n', median(powDiff), size
 fBounds = [75 85];
 fInd = fAxisHF >= fBounds(1) & fAxisHF <= fBounds(2); 
 
-sfcP3 = mean(cueTargetDelaySFCP3HF(isInDPulvinar, fInd), 2); % mean over f
-sfcP1 = mean(cueTargetDelaySFCP1HF(isInDPulvinar, fInd), 2); % mean over f
+sfcP3 = mean(cueTargetDelaySFCP3HF(isInDPulvinar,fInd), 2); % mean over f
+sfcP1 = mean(cueTargetDelaySFCP1HF(isInDPulvinar,fInd), 2); % mean over f
 sfcDiff = sfcP3 - sfcP1;
 
 histBins = 0:0.01:0.2;
@@ -1222,8 +1228,39 @@ fprintf('Median diff SFC = %0.3f (N = %d), p = %0.3f\n', median(sfcDiff), size(s
 fBounds = [18 22];
 fInd = fAxisLF >= fBounds(1) & fAxisLF <= fBounds(2); 
 
-sfcP3 = mean(cueTargetDelaySFCP3LF(isInVPulvinar, fInd), 2); % mean over f
-sfcP1 = mean(cueTargetDelaySFCP1LF(isInVPulvinar, fInd), 2); % mean over f
+sfcP3 = mean(cueTargetDelaySFCP3LF(isInVPulvinar,fInd), 2); % mean over f
+sfcP1 = mean(cueTargetDelaySFCP1LF(isInVPulvinar,fInd), 2); % mean over f
+sfcDiff = sfcP3 - sfcP1;
+
+histBins = 0:0.01:0.2;
+
+figure_tr_inch(5, 10);
+subaxis(2, 1, 1);
+histogram(sfcP3, histBins);
+subaxis(2, 1, 2);
+histogram(sfcP1, histBins);
+
+histDiffBins = -0.15:0.01:0.15;
+figure_tr_inch(6, 6);
+histogram(sfcDiff, histDiffBins);
+
+figure;
+hold on;
+plot([0 0.1], [0 0.1], 'Color', 0.3*ones(3, 1));
+plot(sfcP3, sfcP1, '.', 'Color', lines(1), 'MarkerSize', 10);
+xlim([0 0.1]);
+ylim([0 0.1]);
+
+[h,p,stats] = ttest(sfcDiff);
+fprintf('Median diff SFC = %0.3f (N = %d), p = %0.3f\n', median(sfcDiff), size(sfcDiff, 1), p);
+
+
+%% inspect target-dim all pairs vPul spike - dPul field coherence at 27-35 Hz
+fBounds = [27 35];
+fInd = fAxisHF >= fBounds(1) & fAxisHF <= fBounds(2); 
+
+sfcP3 = mean(targetDimDelaySFCVPulSpikeDPulFieldP3HF(:,fInd), 2); % mean over f
+sfcP1 = mean(targetDimDelaySFCVPulSpikeDPulFieldP1HF(:,fInd), 2); % mean over f
 sfcDiff = sfcP3 - sfcP1;
 
 histBins = 0:0.01:0.2;
