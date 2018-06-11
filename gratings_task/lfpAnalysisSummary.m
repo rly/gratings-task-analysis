@@ -142,7 +142,7 @@ paramsLF.trialave = 1;
 paramsBaselineLF = paramsLF;
 paramsBaselineLF.pad = 2; % less padding for smaller window so that faxis the same
 
-paramsHF.tapers = [2 3];
+paramsHF.tapers = [3 5];
 paramsHF.fpass = [25 100];
 paramsHF.pad = 1;
 paramsHF.Fs = 1000;
@@ -182,10 +182,15 @@ for i = 1:nSessions
         if strcmp(ref, 'BIP') && j == numel(EL.channelInds)
             continue;
         end
+        if ~ismember(EL.channelInds(j), R.dPulChannels) && ~ismember(EL.channelInds(j), R.vPulChannels)
+            fprintf('Skipping channel %d - not in pulvinar...\n', EL.channelInds(j));
+            continue; % only process channels in pulvinar for now
+        end
         
+        fprintf('Processing channel %d...\n', EL.channelInds(j));
         
         lfpCount = lfpCount + 1;
-        lfpNames{lfpCount} = sprintf('%s_FP%03d', sessionName, EL.channelInds(j));
+        lfpNames{lfpCount} = sprintf('%s_%d_FP%03d', sessionName, sessionInd, EL.channelInds(j));
         isInVPulvinar(lfpCount) = 0;
         isInDPulvinar(lfpCount) = 0;
         % TODO decide how to split up end channels for bipolar reference
@@ -195,11 +200,6 @@ for i = 1:nSessions
         if ismember(EL.channelInds(j), R.dPulChannels)
             isInDPulvinar(lfpCount) = 1;
         end
-        if ~isInDPulvinar(lfpCount) && ~isInVPulvinar(lfpCount)
-            fprintf('Skipping channel %d - not in pulvinar...\n', EL.channelInds(j));
-            continue; % only process channels in pulvinar for now
-        end
-        fprintf('Processing channel %d...\n', EL.channelInds(j));
         
         % read MUA from a nearby channel to account for MUA possibly
         % contributing to LFP on the same channel
@@ -1134,6 +1134,143 @@ plotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
 plotFileName = sprintf('%s/allSessions-vPulSpike-dPulField-SFC-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%% make tiny population plots of LFP power by channel
+% TODO convert to db
+powYBounds = [0 0.02];
+
+powP3 = cueTargetDelayPowerP3LF(isInDPulvinar,:);
+powP1 = cueTargetDelayPowerP1LF(isInDPulvinar,:);
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelayPower-dPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        powYBounds, sprintf('Cue-Target Delay Power - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+    
+powP3 = cueTargetDelayPowerP3LF(isInVPulvinar,:);
+powP1 = cueTargetDelayPowerP1LF(isInVPulvinar,:);
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelayPower-vPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        powYBounds, sprintf('Cue-Target Delay Power - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+    
+powP3 = targetDimDelayPowerP3LF(isInDPulvinar,:);
+powP1 = targetDimDelayPowerP1LF(isInDPulvinar,:);
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-tdDelayPower-dPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        powYBounds, sprintf('Target-Dim Delay Power - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+    
+powP3 = targetDimDelayPowerP3LF(isInVPulvinar,:);
+powP1 = targetDimDelayPowerP1LF(isInVPulvinar,:);
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-tdDelayPower-vPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        powYBounds, sprintf('Target-Dim Delay Power - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+
+powYBounds = [0 0.01];
+
+powP3 = cueTargetDelayPowerP3HF(isInDPulvinar,:);
+powP1 = cueTargetDelayPowerP1HF(isInDPulvinar,:);
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelayPower-dPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        powYBounds, sprintf('Cue-Target Delay Power - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
+powP3 = cueTargetDelayPowerP3HF(isInVPulvinar,:);
+powP1 = cueTargetDelayPowerP1HF(isInVPulvinar,:);
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelayPower-vPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        powYBounds, sprintf('Cue-Target Delay Power - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
+powP3 = targetDimDelayPowerP3HF(isInDPulvinar,:);
+powP1 = targetDimDelayPowerP1HF(isInDPulvinar,:);
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-tdDelayPower-dPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        powYBounds, sprintf('Target-Dim Delay Power - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
+powP3 = targetDimDelayPowerP3HF(isInVPulvinar,:);
+powP1 = targetDimDelayPowerP1HF(isInVPulvinar,:);
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-tdDelayPower-vPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        powYBounds, sprintf('Target-Dim Delay Power - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
+%% make tiny population plots of SFC by channel
+sfcYBounds = [0 0.3];
+
+powP3 = cueTargetDelaySFCP3LF(isInDPulvinar,:);
+powP1 = cueTargetDelaySFCP1LF(isInDPulvinar,:);
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelaySFC-dPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+    
+powP3 = cueTargetDelaySFCP3LF(isInVPulvinar,:);
+powP1 = cueTargetDelaySFCP1LF(isInVPulvinar,:);
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelaySFC-vPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+    
+powP3 = targetDimDelaySFCP3LF(isInDPulvinar,:);
+powP1 = targetDimDelaySFCP1LF(isInDPulvinar,:);
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-tdDelaySFC-dPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Target-Dim Delay SFC - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+    
+powP3 = targetDimDelaySFCP3LF(isInVPulvinar,:);
+powP1 = targetDimDelaySFCP1LF(isInVPulvinar,:);
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-tdDelaySFC-vPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Target-Dim Delay SFC - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+
+powP3 = cueTargetDelaySFCP3HF(isInDPulvinar,:);
+powP1 = cueTargetDelaySFCP1HF(isInDPulvinar,:);
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelaySFC-dPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
+powP3 = cueTargetDelaySFCP3HF(isInVPulvinar,:);
+powP1 = cueTargetDelaySFCP1HF(isInVPulvinar,:);
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelaySFC-vPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
+powP3 = targetDimDelaySFCP3HF(isInDPulvinar,:);
+powP1 = targetDimDelaySFCP1HF(isInDPulvinar,:);
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-tdDelaySFC-dPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Target-Dim Delay SFC - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
+powP3 = targetDimDelaySFCP3HF(isInVPulvinar,:);
+powP1 = targetDimDelaySFCP1HF(isInVPulvinar,:);
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-tdDelaySFC-vPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Target-Dim Delay SFC - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
 
 
 %%

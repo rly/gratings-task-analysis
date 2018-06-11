@@ -1,4 +1,4 @@
-function makeTinyPlotsOfPopulation(RInRF, RInRFErr, RExRF, RExRFErr, t, unitNames, titleBase, plotFileBaseName)
+function makeTinyPlotsOfPopulationPower(RInRF, RInRFErr, RExRF, RExRFErr, t, unitNames, yBounds, titleBase, plotFileBaseName)
 
 cols = lines(4);
 inRFCol = [0.9 0 0];
@@ -35,7 +35,7 @@ for j = 1:nCells
 
     subaxis(6, 10, mod(numSessionsUsed - 1, 60) + 1, 'ML', 0.01, 'MB', 0.01, 'MT', 0.05, 'MR', 0.01, 'SH', 0.02, 'SV', 0.02, 'hold', 1);
 
-    xBounds = [-0.25 0.25];
+    xBounds = t([1 end]);%[-0.25 0.25];
     hold on;
 
     plot([0 0], [-1000 1000], '-', 'Color', 0.3 * ones(3, 1));
@@ -57,7 +57,7 @@ for j = 1:nCells
             'FontSize', 7, 'Interpreter', 'none', 'Units', 'normalized');
 
     xlim(xBounds);
-    ylim([-1 1z]);
+    ylim(yBounds); % [-1 1];
 %         set(gca, 'XTick', -0.2:0.2:0.2);
 %         set(gca, 'TickLength', get(gca, 'TickLength') * 3);
     set(gca, 'XTick', []);
