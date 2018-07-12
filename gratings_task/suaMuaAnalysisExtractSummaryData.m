@@ -818,7 +818,7 @@ for i = 1:numel(channelsToLoad)
     subaxis(4, 8, i, 'SV', 0.07, 'SH', 0.02, 'ML', 0.02);
     hold on;
     channelMatch = find(channelIDByUnit == i);
-    plot(zeros(size(meanWfs{i})), '-', 'Color', 0.3*ones(3, 1));
+    plot(zeros(size(meanWfs{1})), '-', 'Color', 0.3*ones(3, 1));
     for j = 1:numel(channelMatch)
         if isMUA(channelMatch(j))
             lineStyle = ':';
@@ -833,7 +833,7 @@ for i = 1:numel(channelsToLoad)
             plot(meanWfs{channelMatch(j)}, 'LineStyle', lineStyle, 'LineWidth', 3, 'Color', cols(1,:)); % blue
         end
     end
-    xlim([0 numel(meanWfs{i})]);
+    xlim([0 numel(meanWfs{1})]);
     ylim([-0.07 0.07]);
     title(sprintf('Channel %d', i));
     set(gca, 'XTickLabel', []);
