@@ -1,7 +1,7 @@
 function quickSpdfInspectLatency(ES, blockName, ...
-        D, spikeStructInd, spikeStruct, nLoc, isZeroDistractors, plotFileName)
+        D, unitStructInd, unitStruct, nLoc, isZeroDistractors, plotFileName)
 
-unitName = spikeStruct.name;
+unitName = unitStruct.name;
 nTrials = numel(ES.UE.cueOnset);
 cols = lines(6);
 
@@ -42,10 +42,10 @@ waveformBtm = 0.76;
 
 %% plot spike waveform
 axes('Position', [waveformLeft1 waveformBtm waveformW waveformH]); 
-plotSpikeWaveform(D, spikeStructInd, spikeStruct.isMUA);
+plotSpikeWaveform(D.allUnitStructs, unitStructInd);
 
 %% info
-writeUnitInfo(spikeStruct, axBig, -0.03, infoTextTop, 1);
+writeUnitInfo(unitStruct, axBig, -0.03, infoTextTop, 1);
 
 %% spdf for cue onset
 axCueOnsetSpdf = axes('Position', [spdfCueOnsetLeft spdfTopRowBtm spdfW spdfH]); 
