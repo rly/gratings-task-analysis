@@ -75,7 +75,7 @@ scriptName = 'MUA_GRATINGS';
 isZeroDistractors = 0;
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, muaChannelsToLoad, taskName, scriptName, 1, 0);
+        sessionInd, muaChannelsToLoad, taskName, scriptName, 0, 1, 0);
 sessionName = R.sessionName;
 areaName = R.areaName;
 

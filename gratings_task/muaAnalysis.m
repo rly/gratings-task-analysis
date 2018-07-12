@@ -49,7 +49,7 @@ end
 
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
         dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, muaChannelsToLoad, ...
-        taskName, scriptName, 1, 0);
+        taskName, scriptName, 0, 1, 0);
 sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);
@@ -89,7 +89,7 @@ if firingRateOverall >= minFiringRateOverall
 else
     fprintf('\tOverall firing rate = %0.2f Hz < minimum firing rate = %0.2f Hz in these blocks - skipping.\n', ...
             firingRateOverall, minFiringRateOverall);
-    if exists(saveFileName, 'file')
+    if exist(saveFileName, 'file')
         fprintf('\t%s exists... deleting.\n', saveFileName);
         delete(saveFileName);
     end 
