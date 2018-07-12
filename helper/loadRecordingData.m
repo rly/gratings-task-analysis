@@ -1,6 +1,6 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadMua, isLoadLfp, rfMappingNewInfoFileName, rfMappingNewMode)
+        processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
+        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, rfMappingNewInfoFileName, rfMappingNewMode)
 % loads MUA data and eyetracking/lever data into D struct and recording
 % metadata into R struct
 
@@ -9,6 +9,7 @@ recordingInfo = readRecordingInfo(recordingInfoFileName);
 if ~isempty(channelsToLoad)
     recordingInfo = rmfield(recordingInfo, 'lfpChannelsToLoad'); % remove b/c we're using passed value
     recordingInfo = rmfield(recordingInfo, 'muaChannelsToLoad'); % remove b/c we're using passed value
+    recordingInfo = rmfield(recordingInfo, 'spikeChannelsToLoad'); % remove b/c we're using passed value
 end
 R = recordingInfo(sessionInd);
 sessionName = R.sessionName;
@@ -16,18 +17,16 @@ pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
 fprintf('Loading %s...\n', pl2FilePath);
 
 %% load recording data
-isLoadSpikes = 0;
 isLoadSpkc = 0;
 isLoadDirect = 1;
 
-R.spikeChannelsToLoad = NaN;
 if ~isempty(channelsToLoad)
+    R.spikeChannelsToLoad = channelsToLoad;
     R.muaChannelsToLoad = channelsToLoad;
     R.lfpChannelsToLoad = channelsToLoad;
 end
-R.spkcChannelsToLoad = NaN;
 
-D = loadPL2(pl2FilePath, muaDataDirRoot, sessionName, R.areaName, isLoadSpikes, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
+D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
         R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
 
 processedDataDirPre = sprintf('%s/%s', processedDataRootDir, sessionName);

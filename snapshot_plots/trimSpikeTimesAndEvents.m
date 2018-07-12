@@ -18,6 +18,12 @@ if isfield(D, 'allMUAStructs')
         muaToKeep{i} = zeros(size(D.allMUAStructs{i}.ts));
     end
 end
+if isfield(D, 'allUnitStructs')
+    unitsToKeep = cell(size(D.allUnitStructs));
+    for i = 1:numel(D.allUnitStructs)
+        unitsToKeep{i} = zeros(size(D.allUnitStructs{i}.ts));
+    end
+end
 if isfield(D, 'adjLfps')
     lfpIndicesToKeep = false(1, size(D.adjLfps, 2));
 end
@@ -41,6 +47,11 @@ for j = 1:numel(blockInds)
     if isfield(D, 'allMUAStructs')
         for i = 1:numel(D.allMUAStructs)
             muaToKeep{i} = muaToKeep{i} | (D.allMUAStructs{i}.ts >= blockStartTime & D.allMUAStructs{i}.ts <= blockStopTime);
+        end
+    end
+    if isfield(D, 'allUnitStructs')
+        for i = 1:numel(D.allUnitStructs)
+            unitsToKeep{i} = unitsToKeep{i} | (D.allUnitStructs{i}.ts >= blockStartTime & D.allUnitStructs{i}.ts <= blockStopTime);
         end
     end
     if isfield(D, 'adjLfps')
@@ -69,6 +80,13 @@ if isfield(D, 'allMUAStructs')
     for i = 1:numel(D.allMUAStructs)
         D.allMUAStructs{i}.wf(~muaToKeep{i},:) = [];
         D.allMUAStructs{i}.ts(~muaToKeep{i}) = [];
+        % TODO recompute mean and sd?
+    end
+end
+if isfield(D, 'allUnitStructs')
+    for i = 1:numel(D.allUnitStructs)
+        D.allUnitStructs{i}.wf(~unitsToKeep{i},:) = [];
+        D.allUnitStructs{i}.ts(~unitsToKeep{i}) = [];
         % TODO recompute mean and sd?
     end
 end
