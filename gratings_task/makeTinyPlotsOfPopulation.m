@@ -57,7 +57,7 @@ for j = 1:nCells
             'FontSize', 7, 'Interpreter', 'none', 'Units', 'normalized');
 
     xlim(xBounds);
-    ylim([-1 1z]);
+    ylim([-1 1]);
 %         set(gca, 'XTick', -0.2:0.2:0.2);
 %         set(gca, 'TickLength', get(gca, 'TickLength') * 3);
     set(gca, 'XTick', []);
