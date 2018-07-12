@@ -1,6 +1,7 @@
 function [channelDataNorm,isTrialOutlier,isNoisyChannel,refMeanNorm] = preprocessLfpsGratingsTask(adjLfps, Fs, channelNames, UE, ...
         processedDataDir, fileNamePrefix, hiCutoffFreq, v)
 % remove events with outlier data and apply CAR and low-pass filtering to adjLfps
+%%%%%%%%% TODO UPDATE with preprocessLfps.m update %%%%%%%%%%%%%%%
 
 doOutlierCheckPlot = 1;
 
@@ -38,7 +39,7 @@ title('LFPs SD by Channel');
 xlim([1 nChannels] + [-0.5 0.5]);
 xlabel('Channel Number');
 ylabel('Standard Deviation of LFP (mV)');
-plotFileName = sprintf('%s/%s-allFP-CARdata-SDByChannel_v%d.png', ...
+plotFileName = sprintf('%s/%s-allFP-CARdata-SDByChannel-v%d.png', ...
         processedDataDir, fileNamePrefix, v);
 fprintf('Saving SD by channel plot to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
@@ -57,7 +58,7 @@ for j = 1:nChannels
             ylim([-0.5 0.5]);
             xlim([1 size(adjLfpsCAR, 2)]);
             
-            plotFileName = sprintf('%s/%s-%s-CARdata_v%d.png', ...
+            plotFileName = sprintf('%s/%s-%s-CARdata-v%d.png', ...
                     processedDataDir, fileNamePrefix, channelNames{j}, v);
             fprintf('\tSaving CAR data plot to %s...\n', plotFileName);
             export_fig(plotFileName, '-nocrop');
@@ -201,8 +202,8 @@ for i = 1:size(outlierCheckWindowOffsetAll, 1)
             xlim(outlierCheckWindowOffset);
             ylim([-8 8]);
 
-            plotFileName = sprintf('%s/%s-%s-event%s-outlierCheck_v%d.png', ...
-                    processedDataDir, fileNamePrefix, channelNames{j}, eventName(~isspace(eventName)), v);
+            plotFileName = sprintf('%s/%s-event%s-%s-outlierCheck-v%d.png', ...
+                    processedDataDir, fileNamePrefix, eventName(~isspace(eventName)), channelNames{j}, v);
             fprintf('\t\tSaving outlier check plot to %s...\n', plotFileName);
             export_fig(plotFileName, '-nocrop');
             close;

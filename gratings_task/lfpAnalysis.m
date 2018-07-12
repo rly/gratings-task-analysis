@@ -85,7 +85,7 @@ for i = 1:nChannels
 end
 channelNames{nChannels + 1} = 'Common Average';
 
-fprintf('Took %0.1f minutes.\n', toc/60);
+fprintf('Took %0.1f minutes.\n', toc/60);z
 
 %% save evoked file
 fprintf('Extracting event-locked LFPs...\n');

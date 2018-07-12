@@ -3,7 +3,7 @@ function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, session
 % clear;
 % readDataLocally;
 % sessionInds = 8;%1:23;
-% ref = 'BIP';
+% ref = 'CAR';
 
 v = 12;
 
@@ -20,12 +20,13 @@ if isempty(sessionInds)
 end
 
 nSessions = numel(sessionInds);
-nLfpsApprox = nSessions * 16; % should be equal or an underestimate
+nLfpsApprox = nSessions * 8; % should be equal or an underestimate
 lfpCount = 0;
 dPulSpikeVPulFieldCount = 0;
 vPulSpikeDPulFieldCount = 0;
 
 lfpNames = cell(nLfpsApprox, 1);
+sfcNames = cell(nLfpsApprox, 1);
 isInDPulvinar = false(nLfpsApprox, 1);
 isInVPulvinar = false(nLfpsApprox, 1);
 
@@ -206,8 +207,10 @@ for i = 1:nSessions
         % use +2/-2 to be compatible with bipolar reference
         if j < numel(EL.channelInds)-1
             muaNearbyChannelTs = EL.allMUAStructs{j+2}.ts;
+            sfcNames{lfpCount} = sprintf('%s_%d_%dM_FP%03d', sessionName, sessionInd, j+2, EL.channelInds(j));
         else
             muaNearbyChannelTs = EL.allMUAStructs{j-2}.ts;
+            sfcNames{lfpCount} = sprintf('%s_%d_%dM_FP%03d', sessionName, sessionInd, j-2, EL.channelInds(j));
         end
         
         baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
@@ -1272,6 +1275,16 @@ plotFileBaseName = sprintf('%s/allSessions-tdDelaySFC-vPul-P3VsP1-HF-%s-v%d', ou
 makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
         sfcYBounds, sprintf('Target-Dim Delay SFC - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
 
+%% make tiny population plots of across subdivision SFC
+sfcYBounds = [0 0.3];
+
+sfcP3 = cueTargetDelaySFCDPulSpikeVPulFieldP3LF;
+sfcP1 = cueTargetDelaySFCDPulSpikeVPulFieldP1LF;
+chanNames = dPulSpikeVPulFieldNames;
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelaySFC-dPulSpikeVPulField-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - dPul Spikes - vPul Field (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
 
 %%
 return; % end plots, rest is live testing
@@ -1426,3 +1439,135 @@ ylim([0 0.1]);
 
 [h,p,stats] = ttest(sfcDiff);
 fprintf('Median diff SFC = %0.3f (N = %d), p = %0.3f\n', median(sfcDiff), size(sfcDiff, 1), p);
+
+%% mean SFC of units with strong attentional modulation in ct delay
+lfpNamesStrongMUACTDelay = {
+        'M20170311_7_FP004' %'M20170311_PUL_6M'
+        'M20170327_13_FP009' %'M20170327_PUL_11M'
+        'M20170311_8_FP046' %'M20170311_PUL_48M'
+        'M20170311_8_FP043' %'M20170311_PUL_45M'
+        'M20170327_14_FP046' %'M20170327_PUL_48M'
+        'M20170331_22_FP039' %'M20170331_PUL_41M'
+        'M20170311_7_FP005' %'M20170311_PUL_7M'
+        'M20170327_14_FP047' %'M20170327_PUL_49M'
+        'M20170327_14_FP052' %'M20170327_PUL_54M'
+        'M20170211_4_FP018' %'M20170211_PUL_20M'
+        'M20170211_4_FP014' %'M20170211_PUL_16M'
+        'M20170327_14_FP045' %'M20170327_PUL_47M'
+        'M20170331_22_FP034' %'M20170331_PUL_36M'
+%         'M20170331_22_FP032'
+%         'M20170329_PUL_FP011'
+% vPul below
+        'M20170311_8_FP052' %'M20170311_PUL_52M'
+        'M20170308_5_FP022' %'M20170308_PUL_22M'
+        'M20170320_10_FP043' %'M20170320_PUL_43M'
+        'M20170324_12_FP048' %'M20170324_PUL_48M'
+        'M20170311_8_FP058' %'M20170311_PUL_58M'
+        'M20170311_8_FP054' %'M20170311_PUL_54M'
+        'M20170127_1_FP005' %'M20170127_PUL_5M'
+        'M20170308_6_FP050' %'M20170308_PUL_50M'
+        'M20170308_6_FP053' %'M20170308_PUL_53M'
+        'M20170407_23_FP010' %'M20170407_PUL_10M'
+        'M20170311_8_FP060' %'M20170311_PUL_60M'
+        'M20170311_8_FP055' %'M20170311_PUL_55M'
+        'M20170311_8_FP053' %'M20170311_PUL_53M'
+        'M20170331_20_FP044' %'M20170331_PUL_44M'
+        'M20170201_3_FP032' %'M20170201_PUL_32M'
+        };
+
+matchInds = nan(numel(lfpNamesStrongMUACTDelay), 1);
+for i = 1:numel(lfpNamesStrongMUACTDelay)
+    ind = find(strcmp(lfpNames, lfpNamesStrongMUACTDelay{i}));
+    if ind > 0
+        matchInds(i) = ind;
+    end
+end
+matchInds(isnan(matchInds)) = [];
+
+matchLog = false(size(lfpNames));
+matchLog(matchInds) = 1;
+
+channelCond = matchLog;
+nChannel = sum(channelCond);
+cueTargetDelaySFCLF = [cueTargetDelaySFCP3LF(channelCond,:); cueTargetDelaySFCP1LF(channelCond,:)];
+cueTargetDelaySFCHF = [cueTargetDelaySFCP3HF(channelCond,:); cueTargetDelaySFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+plotLfpPower2(cueTargetDelaySFCLF, cueTargetDelaySFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [sfcCTDelayYBounds; sfcCTDelayYBounds], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Cue-Target Delay SFC - Units with Most Attn Modulation in FR (%s)', ref), ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-ctDelaySFC-top15MUAMod-P3vsP1-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% mean SFC of units with strong attentional modulation in td delay
+lfpNamesStrongMUATDDelay = {
+        'M20170211_4_FP020' %'M20170211_PUL_20M'
+        'M20170308_5_FP011' %'M20170308_PUL_11M'
+        'M20170407_23_FP001' %'M20170407_PUL_1M'
+%         'M20170329_P_17' %'M20170329_PUL_17M'
+        'M20170211_4_FP021' %'M20170211_PUL_21M'
+        'M20170324_11_FP003' %'M20170324_PUL_3M'
+        'M20170311_8_FP045' %'M20170311_PUL_45M'
+        'M20170331_20_FP039' %'M20170331_PUL_39M' % or 22
+        'M20170308_5_FP008' %'M20170308_PUL_8M'
+        'M20170327_14_FP054' %'M20170327_PUL_54M'
+        'M20170331_20_FP033' %'M20170331_PUL_33M'
+        'M20170320_9_FP015' %'M20170320_PUL_15M'
+        'M20170308_8_FP044' %'M20170308_PUL_44M'
+%         'M20170329_PUL_13' %'M20170329_PUL_13M'
+        'M20170327_13_FP011' %'M20170327_PUL_11M'
+        % vPul below
+        'M20170320_10_FP049' %'M20170320_PUL_49M'
+        'M20170311_8_FP060' %'M20170311_PUL_60M'
+        'M20170308_6_FP053' %'M20170308_PUL_53M'
+        'M20170320_10_FP048' %'M20170320_PUL_48M'
+        'M20170311_8_FP054' %'M20170311_PUL_54M'
+%         'M20170329_PUL_26' %'M20170329_PUL_26M'
+        'M20170407_23_FP010' %'M20170407_PUL_10M'
+        'M20170311_8_FP061' %'M20170311_PUL_61M'
+        'M20170331_20_FP046' %'M20170331_PUL_46M' % or 22
+        'M20170127_1_FP005' %'M20170127_PUL_5M'
+%         'M20170329_PUL_26' %'M20170329_PUL_26M'
+        'M20170331_20_FP047' %'M20170331_PUL_47M'
+        'M20170311_8_FP053' %'M20170311_PUL_53M'
+        'M20170327_13_FP013' %'M20170327_PUL_13M'
+%         'M20170329_PUL_23' %'M20170329_PUL_23M'
+        };
+
+matchInds = nan(numel(lfpNamesStrongMUATDDelay), 1);
+for i = 1:numel(lfpNamesStrongMUATDDelay)
+    ind = find(strcmp(lfpNames, lfpNamesStrongMUATDDelay{i}));
+    if ind > 0
+        matchInds(i) = ind;
+    end
+end
+matchInds(isnan(matchInds)) = [];
+
+matchLog = false(size(lfpNames));
+matchLog(matchInds) = 1;
+
+channelCond = matchLog;
+nChannel = sum(channelCond);
+targetDimDelaySFCLF = [targetDimDelaySFCP3LF(channelCond,:); targetDimDelaySFCP1LF(channelCond,:)];
+targetDimDelaySFCHF = [targetDimDelaySFCP3HF(channelCond,:); targetDimDelaySFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+plotLfpPower2(targetDimDelaySFCLF, targetDimDelaySFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [sfcTDDelayYBounds; sfcTDDelayYBounds], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Target-Dim Delay SFC - Units with Most Attn Modulation in FR (%s)', ref), ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-tdDelaySFC-top15MUAMod-P3vsP1-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');

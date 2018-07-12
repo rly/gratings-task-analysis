@@ -173,7 +173,7 @@ for r = 1:numel(refs)
 
     %% save responses to mat file
     saveFileName = sprintf('%s/%s-%s-responses-v%d.mat', processedDataDir, plotFileNamePrefix, ref, v);
-    save(saveFileName, 'D', 'R', 'responses', 'isNoisyChannel');
+    save(saveFileName, 'D', 'R', 'responses', 't', 'periFlashWindowOffset', 'isNoisyChannel');
 
     %% subtract out baseline
     % units are standard deviations from baselined mean

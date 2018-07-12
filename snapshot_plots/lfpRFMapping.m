@@ -33,6 +33,10 @@ end
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
         sessionInd, channelsToLoad, taskName, 'LFP_RFM', 1, 1);
+sessionName = R.sessionName;
+areaName = R.areaName;
+
+plotFileNamePrefix = sprintf('%s-ind%d-%s-ch%d-ch%d-%s', sessionName, sessionInd, areaName, channelsToLoad([1 end]), blockName);
 
 %%
 % task as of 1/10/17 (or earlier)
@@ -69,7 +73,6 @@ gratingAnglesUnique = (0:3)*pi/4;
 
 [flashOnsets,flashParams] = decodeFlashParams(origFlashEvents, ...
         D.events, distsToFixUnique, polarAnglesUnique, gratingAnglesUnique);
-nFlashes = numel(flashOnsets);
 
 %% preprocess LFPs
 Fs = D.lfpFs;
@@ -77,18 +80,21 @@ nChannels = D.nLfpCh;
 
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
-hiCutoffFreq = 50;
-outlierCheckWindowOffset = [-0.25 0.3];
-[channelDataNorm,flashOnsetsClean,isEventOutlier,isNoisyChannel] = preprocessLfps(D.adjLfpsClean, ...
-        Fs, D.lfpNames, flashOnsets, processedDataDir, blockName, hiCutoffFreq, 1, v, outlierCheckWindowOffset);
-D.adjLfps = [];
+hiCutoffFreq = 10;
+[channelDataCARNorm,channelDataNorm,commonAverageNorm,isNoisyChannel] = preprocessLfps(...
+        D.adjLfpsClean, Fs, D.lfpNames, processedDataDir, plotFileNamePrefix, hiCutoffFreq, 1, v);
 D.adjLfpsClean = [];
-for j = 1:nChannels
-    fprintf('Channel %d: Mean: %0.2f, SD: %0.2f\n', j, nanmean(channelDataNorm(j,:)), nanstd(channelDataNorm(j,:)));
-end
+
+channelDataBIPNorm = channelDataCARNorm(2:end,:) - channelDataCARNorm(1:end-1,:);
+% note channelDataCARNorm, channelDataNorm, and channelDataBIPNorm are HUGE
+
+outlierCheckWindowOffset = [-0.25 0.3];
+[flashEventsClean,isEventOutlier] = detectOutlierLfpEvents(channelDataCARNorm, Fs, D.lfpNames, origFlashEvents, ...
+        outlierCheckWindowOffset, processedDataDir, plotFileNamePrefix, 1, v);
+nFlashes = numel(flashEventsClean);
 
 flashParamsClean = flashParams(~isEventOutlier,:);
-assert(numel(flashOnsetsClean) == size(flashParamsClean, 1));
+assert(numel(flashEventsClean) == size(flashParamsClean, 1));
 
 %% process RF for each channel
 for j = 1:nChannels
@@ -145,7 +151,7 @@ for k = 1:numel(distsToFixUnique)
 %         end
         
         % case: regardless of orientation 
-        theseFlashOnsets = flashOnsetsClean(flashParamsClean(:,4) == k & flashParamsClean(:,5) == l);
+        theseFlashOnsets = flashEventsClean(flashParamsClean(:,4) == k & flashParamsClean(:,5) == l);
         trialCounts(k,l,m2) = numel(theseFlashOnsets);
         if isempty(theseFlashOnsets)
             continue;
@@ -158,7 +164,7 @@ for k = 1:numel(distsToFixUnique)
         endIndices = startIndices + round(diff(periEventWindowOffset) * Fs) - 1;
         
         for n = 1:numel(theseFlashOnsets)
-            rawSignals(n,:) = channelDataNorm(j,startIndices(n):endIndices(n));
+            rawSignals(n,:) = channelDataCARNorm(j,startIndices(n):endIndices(n));
         end
         
         averageFlashResponse(k,l,m2,:) = mean(rawSignals, 1); % mean over flashes
@@ -178,14 +184,14 @@ for k = 1:numel(distsToFixUnique)
     end
 end
 
-rawSignals = nan(numel(flashOnsetsClean), numel(t));
+rawSignals = nan(numel(flashEventsClean), numel(t));
 % convert flash time to lfp variable index
 % slightly more accurate than createdatamatc b/c of rounding after offset
-startIndices = round((flashOnsetsClean + periEventWindowOffset(1)) * Fs); 
+startIndices = round((flashEventsClean + periEventWindowOffset(1)) * Fs); 
 endIndices = startIndices + round(diff(periEventWindowOffset) * Fs) - 1;
 
-for n = 1:numel(flashOnsetsClean)
-    rawSignals(n,:) = channelDataNorm(j,startIndices(n):endIndices(n));
+for n = 1:numel(flashEventsClean)
+    rawSignals(n,:) = channelDataCARNorm(j,startIndices(n):endIndices(n));
 end
 
 %%
