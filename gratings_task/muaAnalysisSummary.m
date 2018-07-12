@@ -86,7 +86,7 @@ for i = 1:nSessions
     currentUnitIndsAll{i} = currentUnitInds;
     unitCount = unitCount + numel(S.unitNames);
     
-    unitNames(currentUnitInds) = S.unitNames;
+    unitNames(currentUnitInds) = S.unitNames; % TODO include sessionInd
     isSignificantResponseVsBaseline(currentUnitInds,:) = S.isSignificantResponseVsBaseline;
     isSignificantResponseVsPreviousPeriod(currentUnitInds,:) = S.isSignificantResponseVsPreviousPeriod;
 %     isSignificantResponseVsBootstrapBaseline(currentUnitInds,:) = S.isSignificantResponseVsBootstrapBaseline;
@@ -758,7 +758,7 @@ for i = 1:nUnits
 end
 fprintf('Mean vPul baseline pre-cue firing: %0.2f Hz\n', mean(firing));
 
-%% loop across subdivisions
+%% firing rate & fano factor loop across subdivisions
 subdivisions = {'dPul', 'vPul'};
 for i = 1:numel(subdivisions)
     if strcmp(subdivisions{i}, 'dPul')
@@ -1326,7 +1326,6 @@ plotFileName = sprintf('%s/allSessions-vPul-arrayResponseHoldMidNoiseCorrDiff-v%
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-
 %% array hold response late noise correlations P3 vs P1
 goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
 goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
@@ -1392,6 +1391,65 @@ ylabel(ax3, 'Number of Pairs');
 plotFileName = sprintf('%s/allSessions-targetDimDelayNoiseCorrDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%% which units have strong cue-target delay modulation
+goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar & isSignificantSelectivityCueTargetDelayInc;
+unitNamesSub = unitNames(goodUnits)
+
+goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar;
+nGoodUnits = sum(goodUnits);
+
+firingRatesGood = averageFiringRatesByCount.cueTargetDelay(goodUnits);
+baselineFiringRatesGood = averageFiringRatesByCount.preCueBaseline(goodUnits);
+inRFNormFactorGood = inRFCountNormFactor(goodUnits);
+exRFNormFactorGood = exRFCountNormFactor(goodUnits);
+inRFLocsGood = inRFLocs(goodUnits);
+exRFLocsGood = exRFLocs(goodUnits);
+unitNamesGood = unitNames(goodUnits);
+
+firingInRF = nan(nGoodUnits, 1);
+firingExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    firingInRF(i) = (firingRatesGood(i).byLoc(inRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(inRFLocsGood(i))) / inRFNormFactorGood(i);
+    firingExRF(i) = (firingRatesGood(i).byLoc(exRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(exRFLocsGood(i))) / exRFNormFactorGood(i);
+end
+firingDiff = firingInRF - firingExRF;
+[firingDiffSort,sortInd] = sort(firingDiff, 'descend');
+
+unitNamesSortByCTDelayDiff = unitNamesGood(sortInd);
+unitNamesSortByCTDelayDiff(1:15)
+firingDiffSort(1:15)
+
+
+%% which units have strong target-dim delay modulation
+goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar & isSignificantSelectivityTargetDimDelayInc;
+unitNamesSub = unitNames(goodUnits)
+
+goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar;
+nGoodUnits = sum(goodUnits);
+
+firingRatesGood = averageFiringRatesByCount.targetDimDelayBal(goodUnits);
+baselineFiringRatesGood = averageFiringRatesByCount.preCueBaseline(goodUnits);
+inRFNormFactorGood = inRFCountNormFactor(goodUnits);
+exRFNormFactorGood = exRFCountNormFactor(goodUnits);
+inRFLocsGood = inRFLocs(goodUnits);
+exRFLocsGood = exRFLocs(goodUnits);
+unitNamesGood = unitNames(goodUnits);
+
+firingInRF = nan(nGoodUnits, 1);
+firingExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    firingInRF(i) = (firingRatesGood(i).byLoc(inRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(inRFLocsGood(i))) / inRFNormFactorGood(i);
+    firingExRF(i) = (firingRatesGood(i).byLoc(exRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(exRFLocsGood(i))) / exRFNormFactorGood(i);
+end
+firingDiff = firingInRF - firingExRF;
+[firingDiffSort,sortInd] = sort(firingDiff, 'descend');
+
+unitNamesSortByTDDelayDiff = unitNamesGood(sortInd);
+unitNamesSortByTDDelayDiff(1:15)
+firingDiffSort(1:15)
+
+
 
 %% stop
 stop
