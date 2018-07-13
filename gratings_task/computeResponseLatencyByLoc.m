@@ -21,6 +21,9 @@ for k = 1:nLoc
     psthResponse = eventStruct.spdfByLoc(k,:);
     baselineResponseByPsth = mean(psthResponse(baselineIndices));
     baselineResponseSDOverTimeByPsth = std(psthResponse(baselineIndices));
+    if baselineResponseSDOverTimeByPsth < 1e-5 % adjust for really small or zero SDs
+        baselineResponseSDOverTimeByPsth = 0.01;
+    end
     normPsthResponse = (psthResponse - baselineResponseByPsth) / baselineResponseSDOverTimeByPsth;
     % check peak
     peakLatencyInfo = computeLatencyPeakMethod(normPsthResponse, eventPsthT, ...
