@@ -19,7 +19,7 @@ taskName = 'GRATINGS';
 scriptName = 'MUA_GRATINGS';
 [R, D] = loadRecordingData(processedDataRootDir, dataDirRoot, muaDataDirRoot, ...
         recordingInfoFileName, sessionInd, muaChannelsToLoad, ...
-        taskName, scriptName, 1, 0);
+        taskName, scriptName, 0, 1, 0);
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 
 nUnits = numel(D.allMUAStructs);
