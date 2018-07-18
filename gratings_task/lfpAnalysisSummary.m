@@ -2,7 +2,7 @@ function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, session
 
 % clear;
 % readDataLocally;
-% sessionInds = 8;%1:23;
+% sessionInds = 1:23;
 % ref = 'CAR';
 
 v = 12;
@@ -40,12 +40,16 @@ cueResponsePowerLF = nan(nLfpsApprox, nFAxisLF);
 cueTargetDelayPowerAllLocsLF = nan(nLfpsApprox, nFAxisLF);
 cueTargetDelayPowerP3LF = nan(nLfpsApprox, nFAxisLF);
 cueTargetDelayPowerP1LF = nan(nLfpsApprox, nFAxisLF);
+arrayResponseHoldPowerP3LF = nan(nLfpsApprox, nFAxisLF);
+arrayResponseHoldPowerP1LF = nan(nLfpsApprox, nFAxisLF);
 targetDimDelayPowerP3LF = nan(nLfpsApprox, nFAxisLF);
 targetDimDelayPowerP1LF = nan(nLfpsApprox, nFAxisLF);
 
 baselineSFCLF = nan(nLfpsApprox, nFAxisLF);
 cueTargetDelaySFCP3LF = nan(nLfpsApprox, nFAxisLF);
 cueTargetDelaySFCP1LF = nan(nLfpsApprox, nFAxisLF);
+arrayResponseHoldSFCP3LF = nan(nLfpsApprox, nFAxisLF);
+arrayResponseHoldSFCP1LF = nan(nLfpsApprox, nFAxisLF);
 targetDimDelaySFCP3LF = nan(nLfpsApprox, nFAxisLF);
 targetDimDelaySFCP1LF = nan(nLfpsApprox, nFAxisLF);
 
@@ -56,12 +60,16 @@ cueResponsePowerHF = nan(nLfpsApprox, nFAxisHF);
 cueTargetDelayPowerAllLocsHF = nan(nLfpsApprox, nFAxisHF);
 cueTargetDelayPowerP3HF = nan(nLfpsApprox, nFAxisHF);
 cueTargetDelayPowerP1HF = nan(nLfpsApprox, nFAxisHF);
+arrayResponseHoldPowerP3HF = nan(nLfpsApprox, nFAxisHF);
+arrayResponseHoldPowerP1HF = nan(nLfpsApprox, nFAxisHF);
 targetDimDelayPowerP3HF = nan(nLfpsApprox, nFAxisHF);
 targetDimDelayPowerP1HF = nan(nLfpsApprox, nFAxisHF);
 
 baselineSFCHF = nan(nLfpsApprox, nFAxisHF);
 cueTargetDelaySFCP3HF = nan(nLfpsApprox, nFAxisHF);
 cueTargetDelaySFCP1HF = nan(nLfpsApprox, nFAxisHF);
+arrayResponseHoldSFCP3HF = nan(nLfpsApprox, nFAxisHF);
+arrayResponseHoldSFCP1HF = nan(nLfpsApprox, nFAxisHF);
 targetDimDelaySFCP3HF = nan(nLfpsApprox, nFAxisHF);
 targetDimDelaySFCP1HF = nan(nLfpsApprox, nFAxisHF);
 
@@ -132,6 +140,7 @@ targetDimDelaySFCVPulSpikeDPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 baselineWindowOffset = [-0.25 0];
 cueResponseOffset = [0 0.25];
 cueTargetDelayOffset = [-0.4 0];
+arrayResponseOffset = [0 0.3];
 targetDimDelayOffset = [-0.4 0];
 
 % chronux parameters
@@ -216,6 +225,7 @@ for i = 1:nSessions
         baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
         cueResponseInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, cueResponseOffset);
         cueTargetDelayInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, cueTargetDelayOffset);
+        arrayResponseInd = getTimeLogicalWithTolerance(EL.arrayOnsetHoldBalLfp.t, arrayResponseOffset);
         targetDimDelayInd = getTimeLogicalWithTolerance(EL.targetDimBalLfp.t, targetDimDelayOffset);
 
         % compute power in baseline - should probably be bipolar reference
@@ -253,6 +263,8 @@ for i = 1:nSessions
         preCueBaselineLfps = cueOnsetLfpCurrent(baselineInd,:);
         cueTargetDelayLfpsP3 = arrayOnsetLfpP3Current(cueTargetDelayInd,:);
         cueTargetDelayLfpsP1 = arrayOnsetLfpP1Current(cueTargetDelayInd,:);
+        arrayResponseHoldLfpsP3 = arrayOnsetLfpP3Current(arrayResponseInd,:);
+        arrayResponseHoldLfpsP1 = arrayOnsetLfpP1Current(arrayResponseInd,:);
         targetDimDelayLfpsP3 = targetDimLfpP3Current(targetDimDelayInd,:);
         targetDimDelayLfpsP1 = targetDimLfpP1Current(targetDimDelayInd,:);
 
@@ -262,6 +274,10 @@ for i = 1:nSessions
         [cueTargetDelayPowerP3HF(lfpCount,:),fAxisHF] = mtspectrumc(cueTargetDelayLfpsP3, paramsHF);
         [cueTargetDelayPowerP1LF(lfpCount,:),fAxisLF] = mtspectrumc(cueTargetDelayLfpsP1, paramsLF);
         [cueTargetDelayPowerP1HF(lfpCount,:),fAxisHF] = mtspectrumc(cueTargetDelayLfpsP1, paramsHF);
+        [arrayResponseHoldPowerP3LF(lfpCount,:),fAxisLF] = mtspectrumc(arrayResponseHoldLfpsP3, paramsLF);
+        [arrayResponseHoldPowerP3HF(lfpCount,:),fAxisHF] = mtspectrumc(arrayResponseHoldLfpsP3, paramsHF);
+        [arrayResponseHoldPowerP1LF(lfpCount,:),fAxisLF] = mtspectrumc(arrayResponseHoldLfpsP1, paramsLF);
+        [arrayResponseHoldPowerP1HF(lfpCount,:),fAxisHF] = mtspectrumc(arrayResponseHoldLfpsP1, paramsHF);
         [targetDimDelayPowerP3LF(lfpCount,:),fAxisLF] = mtspectrumc(targetDimDelayLfpsP3, paramsLF);
         [targetDimDelayPowerP3HF(lfpCount,:),fAxisHF] = mtspectrumc(targetDimDelayLfpsP3, paramsHF);
         [targetDimDelayPowerP1LF(lfpCount,:),fAxisLF] = mtspectrumc(targetDimDelayLfpsP1, paramsLF);
@@ -294,6 +310,24 @@ for i = 1:nSessions
         if any(C(:) > 0.8), lfpCount = lfpCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
         cueTargetDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
         
+        alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{3}, arrayResponseOffset .* [-1 1]);
+        meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP3, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+        if any(C(:) > 0.8), lfpCount = lfpCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+        arrayResponseHoldSFCP3LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP3, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+        if any(C(:) > 0.8), lfpCount = lfpCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+        arrayResponseHoldSFCP3HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+        
+        alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.arrayOnsetByLoc{1}, arrayResponseOffset .* [-1 1]);
+        meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+        [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP1, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+        if any(C(:) > 0.8), lfpCount = lfpCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+        arrayResponseHoldSFCP1LF(lfpCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+        [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+        if any(C(:) > 0.8), lfpCount = lfpCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+        arrayResponseHoldSFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+        
         alignedSpikeTs = createnonemptydatamatpt(muaNearbyChannelTs, EL.UE.targetDimBalByLoc{3}, targetDimDelayOffset .* [-1 1]);
         meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, targetDimDelayOffset);
         [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(targetDimDelayLfpsP3, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
@@ -311,6 +345,8 @@ for i = 1:nSessions
         [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(targetDimDelayLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
         if any(C(:) > 0.8), lfpCount = lfpCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
         targetDimDelaySFCP1HF(lfpCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsBalP1)-2)); % adjust for num trials
+        
+        % TODO across subdivision array response SFC
         
         % compute coherence across subdivisions, one pair per session
         % TODO use all pairs per session unless this double dips too much
@@ -814,6 +850,50 @@ plotFileName = sprintf('%s/allSessions-ctDelayRelPowerDB-vPul-P3vsP1-%s-v%d.png'
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% plot power in array response dPul P3 vs P1
+channelCond = isInDPulvinar;
+nChannel = sum(channelCond);
+arrayResponseHoldRelPowerLF = [arrayResponseHoldPowerP3LF(channelCond,:); arrayResponseHoldPowerP1LF(channelCond,:)] ./ ...
+        [baselinePowerLF(channelCond,:); baselinePowerLF(channelCond,:)];
+arrayResponseHoldRelPowerHF = [arrayResponseHoldPowerP3HF(channelCond,:); arrayResponseHoldPowerP1HF(channelCond,:)] ./ ...
+        [baselinePowerHF(channelCond,:); baselinePowerHF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+plotLfpPower2(arrayResponseHoldRelPowerLF, arrayResponseHoldRelPowerHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [relPowYBounds; relPowYBounds], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Power Rel. to Baseline (dB/Hz)', ...
+        'titleText', sprintf('Array Response Relative Power - Dorsal Pulvinar (%s)', ref), ...
+        'doDB', 1);
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldRelPowerDB-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% plot power in array response vPul P3 vs P1
+channelCond = isInVPulvinar;
+nChannel = sum(channelCond);
+arrayResponseHoldRelPowerLF = [arrayResponseHoldPowerP3LF(channelCond,:); arrayResponseHoldPowerP1LF(channelCond,:)] ./ ...
+        [baselinePowerLF(channelCond,:); baselinePowerLF(channelCond,:)];
+arrayResponseHoldRelPowerHF = [arrayResponseHoldPowerP3HF(channelCond,:); arrayResponseHoldPowerP1HF(channelCond,:)] ./ ...
+        [baselinePowerHF(channelCond,:); baselinePowerHF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+plotLfpPower2(arrayResponseHoldRelPowerLF, arrayResponseHoldRelPowerHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [relPowYBounds; relPowYBounds], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Power Rel. to Baseline (dB/Hz)', ...
+        'titleText', sprintf('Array Response Relative Power - Ventral Pulvinar (%s)', ref), ...
+        'doDB', 1);
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldRelPowerDB-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 %% plot power in target-dim delay dPul vs vPul
 plotLfpPower2(targetDimDelayPowerP3LF, targetDimDelayPowerP3HF, fAxisLF, fAxisHF, [isInDPulvinar isInVPulvinar], ...
         'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
@@ -955,6 +1035,46 @@ plotLfpPower2(cueTargetDelayRelSFCLF, cueTargetDelayRelSFCHF, fAxisLF, fAxisHF, 
         'doDB', 0);
 
 plotFileName = sprintf('%s/allSessions-ctDelaySFC-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% plot array response SFC dPul P3 vs P1 (relative to baseline is NOISY)
+channelCond = isInDPulvinar;
+nChannel = sum(channelCond);
+arrayResponseHoldRelSFCLF = [arrayResponseHoldSFCP3LF(channelCond,:); arrayResponseHoldSFCP1LF(channelCond,:)];
+arrayResponseHoldRelSFCHF = [arrayResponseHoldSFCP3HF(channelCond,:); arrayResponseHoldSFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+plotLfpPower2(arrayResponseHoldRelSFCLF, arrayResponseHoldRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [sfcCTDelayYBounds; sfcCTDelayYBounds], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Array Response SFC - Dorsal Pulvinar (%s)', ref), ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldSFC-dPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% plot array response SFC vPul P3 vs P1 (relative to baseline is NOISY)
+channelCond = isInVPulvinar;
+nChannel = sum(channelCond);
+arrayResponseHoldRelSFCLF = [arrayResponseHoldSFCP3LF(channelCond,:); arrayResponseHoldSFCP1LF(channelCond,:)];
+arrayResponseHoldRelSFCHF = [arrayResponseHoldSFCP3HF(channelCond,:); arrayResponseHoldSFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+plotLfpPower2(arrayResponseHoldRelSFCLF, arrayResponseHoldRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass], ...
+        'yBounds', [sfcCTDelayYBounds; sfcCTDelayYBounds], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'P3', 'P1'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', sprintf('Array Response SFC - Ventral Pulvinar (%s)', ref), ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldSFC-vPul-P3vsP1-%s-v%d.png', outputDir, ref, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
