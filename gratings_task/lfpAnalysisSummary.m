@@ -77,12 +77,16 @@ nSubPairsApprox = round(nSessions / 3);
 baselineSubPairCohLF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySubPairCohP3LF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySubPairCohP1LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSubPairCohP3LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSubPairCohP1LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySubPairCohP3LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySubPairCohP1LF = nan(nSubPairsApprox, nFAxisLF);
 
 baselineSubPairCohHF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySubPairCohP3HF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySubPairCohP1HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSubPairCohP3HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSubPairCohP1HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySubPairCohP3HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySubPairCohP1HF = nan(nSubPairsApprox, nFAxisHF);
 
@@ -92,48 +96,64 @@ vPulSpikeDPulFieldNames = cell(nSubPairsApprox, 1);
 baselineSFCSingleDPulSpikeVPulFieldLF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCSingleDPulSpikeVPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCSingleDPulSpikeVPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSFCSingleDPulSpikeVPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSFCSingleDPulSpikeVPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySFCSingleDPulSpikeVPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySFCSingleDPulSpikeVPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
 
 baselineSFCSingleDPulSpikeVPulFieldHF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySFCSingleDPulSpikeVPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySFCSingleDPulSpikeVPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSFCSingleDPulSpikeVPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSFCSingleDPulSpikeVPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySFCSingleDPulSpikeVPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySFCSingleDPulSpikeVPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 
 baselineSFCSingleVPulSpikeDPulFieldLF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCSingleVPulSpikeDPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCSingleVPulSpikeDPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSFCSingleVPulSpikeDPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSFCSingleVPulSpikeDPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySFCSingleVPulSpikeDPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySFCSingleVPulSpikeDPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
 
 baselineSFCSingleVPulSpikeDPulFieldHF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySFCSingleVPulSpikeDPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySFCSingleVPulSpikeDPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSFCSingleVPulSpikeDPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSFCSingleVPulSpikeDPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySFCSingleVPulSpikeDPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySFCSingleVPulSpikeDPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 
 baselineSFCDPulSpikeVPulFieldLF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCDPulSpikeVPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCDPulSpikeVPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSFCDPulSpikeVPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSFCDPulSpikeVPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySFCDPulSpikeVPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySFCDPulSpikeVPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
 
 baselineSFCDPulSpikeVPulFieldHF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySFCDPulSpikeVPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySFCDPulSpikeVPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSFCDPulSpikeVPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSFCDPulSpikeVPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySFCDPulSpikeVPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySFCDPulSpikeVPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 
 baselineSFCVPulSpikeDPulFieldLF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCVPulSpikeDPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 cueTargetDelaySFCVPulSpikeDPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSFCVPulSpikeDPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
+arrayResponseHoldSFCVPulSpikeDPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySFCVPulSpikeDPulFieldP3LF = nan(nSubPairsApprox, nFAxisLF);
 targetDimDelaySFCVPulSpikeDPulFieldP1LF = nan(nSubPairsApprox, nFAxisLF);
 
 baselineSFCVPulSpikeDPulFieldHF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySFCVPulSpikeDPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
 cueTargetDelaySFCVPulSpikeDPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSFCVPulSpikeDPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
+arrayResponseHoldSFCVPulSpikeDPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySFCVPulSpikeDPulFieldP3HF = nan(nSubPairsApprox, nFAxisHF);
 targetDimDelaySFCVPulSpikeDPulFieldP1HF = nan(nSubPairsApprox, nFAxisHF);
 
@@ -414,6 +434,10 @@ for i = 1:nSessions
                     cueTargetDelayLfps2P3 = arrayOnsetLfpP3Current2(cueTargetDelayInd,:); 
                     cueTargetDelayLfps1P1 = arrayOnsetLfpP1Current1(cueTargetDelayInd,:);
                     cueTargetDelayLfps2P1 = arrayOnsetLfpP1Current2(cueTargetDelayInd,:);
+                    arrayResponseHoldLfps1P3 = arrayOnsetLfpP3Current1(arrayResponseInd,:); 
+                    arrayResponseHoldLfps2P3 = arrayOnsetLfpP3Current2(arrayResponseInd,:); 
+                    arrayResponseHoldLfps1P1 = arrayOnsetLfpP1Current1(arrayResponseInd,:);
+                    arrayResponseHoldLfps2P1 = arrayOnsetLfpP1Current2(arrayResponseInd,:);
                     targetDimDelayLfps1P3 = targetDimLfpP3Current1(targetDimDelayInd,:); 
                     targetDimDelayLfps2P3 = targetDimLfpP3Current2(targetDimDelayInd,:); 
                     targetDimDelayLfps1P1 = targetDimLfpP1Current1(targetDimDelayInd,:);
@@ -425,6 +449,10 @@ for i = 1:nSessions
                     cueTargetDelaySubPairCohP3HF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P3, cueTargetDelayLfps2P3, paramsHF);
                     cueTargetDelaySubPairCohP1LF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P1, cueTargetDelayLfps2P1, paramsLF);
                     cueTargetDelaySubPairCohP1HF(subPairCount,:) = coherencyc(cueTargetDelayLfps1P1, cueTargetDelayLfps2P1, paramsHF);
+                    arrayResponseHoldSubPairCohP3LF(subPairCount,:) = coherencyc(arrayResponseHoldLfps1P3, arrayResponseHoldLfps2P3, paramsLF);
+                    arrayResponseHoldSubPairCohP3HF(subPairCount,:) = coherencyc(arrayResponseHoldLfps1P3, arrayResponseHoldLfps2P3, paramsHF);
+                    arrayResponseHoldSubPairCohP1LF(subPairCount,:) = coherencyc(arrayResponseHoldLfps1P1, arrayResponseHoldLfps2P1, paramsLF);
+                    arrayResponseHoldSubPairCohP1HF(subPairCount,:) = coherencyc(arrayResponseHoldLfps1P1, arrayResponseHoldLfps2P1, paramsHF);
                     targetDimDelaySubPairCohP3LF(subPairCount,:) = coherencyc(targetDimDelayLfps1P3, targetDimDelayLfps2P3, paramsLF);
                     targetDimDelaySubPairCohP3HF(subPairCount,:) = coherencyc(targetDimDelayLfps1P3, targetDimDelayLfps2P3, paramsHF);
                     targetDimDelaySubPairCohP1LF(subPairCount,:) = coherencyc(targetDimDelayLfps1P1, targetDimDelayLfps2P1, paramsLF);
@@ -460,6 +488,24 @@ for i = 1:nSessions
                     [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(cueTargetDelayLfps2P1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
                     if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
                     cueTargetDelaySFCSingleDPulSpikeVPulFieldP1HF(subPairCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+                    
+                    alignedSpikeTs = createnonemptydatamatpt(muaChannel1Ts, EL.UE.arrayOnsetByLoc{3}, arrayResponseOffset .* [-1 1]);
+                    meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+                    [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfps2P3, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+                    if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
+                    arrayResponseHoldSFCSingleDPulSpikeVPulFieldP3LF(subPairCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+                    [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfps2P3, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+                    if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
+                    arrayResponseHoldSFCSingleDPulSpikeVPulFieldP3HF(subPairCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+
+                    alignedSpikeTs = createnonemptydatamatpt(muaChannel1Ts, EL.UE.arrayOnsetByLoc{1}, arrayResponseOffset .* [-1 1]);
+                    meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+                    [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfps2P1, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+                    if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
+                    arrayResponseHoldSFCSingleDPulSpikeVPulFieldP1LF(subPairCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+                    [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfps2P1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+                    if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
+                    arrayResponseHoldSFCSingleDPulSpikeVPulFieldP1HF(subPairCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
 
                     alignedSpikeTs = createnonemptydatamatpt(muaChannel1Ts, EL.UE.targetDimBalByLoc{3}, targetDimDelayOffset .* [-1 1]);
                     meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, targetDimDelayOffset);
@@ -506,6 +552,24 @@ for i = 1:nSessions
                     [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(cueTargetDelayLfps1P1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
                     if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
                     cueTargetDelaySFCSingleVPulSpikeDPulFieldP1HF(subPairCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+                    
+                    alignedSpikeTs = createnonemptydatamatpt(muaChannel2Ts, EL.UE.arrayOnsetByLoc{3}, arrayResponseOffset .* [-1 1]);
+                    meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+                    [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfps1P3, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+                    if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
+                    arrayResponseHoldSFCSingleVPulSpikeDPulFieldP3LF(subPairCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+                    [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfps1P3, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+                    if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
+                    arrayResponseHoldSFCSingleVPulSpikeDPulFieldP3HF(subPairCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+
+                    alignedSpikeTs = createnonemptydatamatpt(muaChannel2Ts, EL.UE.arrayOnsetByLoc{1}, arrayResponseOffset .* [-1 1]);
+                    meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+                    [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfps1P1, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+                    if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
+                    arrayResponseHoldSFCSingleVPulSpikeDPulFieldP1LF(subPairCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+                    [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfps1P1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+                    if any(C(:) > 0.8), subPairCount = subPairCount - 1; fprintf('Abnormally high coherence; skipping channel %d - %d\n', EL.channelInds([j1 j2])); continue; end; % skip this channel
+                    arrayResponseHoldSFCSingleVPulSpikeDPulFieldP1HF(subPairCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
 
                     alignedSpikeTs = createnonemptydatamatpt(muaChannel2Ts, EL.UE.targetDimBalByLoc{3}, targetDimDelayOffset .* [-1 1]);
                     meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, targetDimDelayOffset);
@@ -573,6 +637,8 @@ for i = 1:nSessions
         preCueBaselineLfps = cueOnsetLfpCurrent(baselineInd,:);
         cueTargetDelayLfpsP3 = arrayOnsetLfpP3Current(cueTargetDelayInd,:);
         cueTargetDelayLfpsP1 = arrayOnsetLfpP1Current(cueTargetDelayInd,:);
+        arrayResponseHoldLfpsP3 = arrayOnsetLfpP3Current(arrayResponseInd,:);
+        arrayResponseHoldLfpsP1 = arrayOnsetLfpP1Current(arrayResponseInd,:);
         targetDimDelayLfpsP3 = targetDimLfpP3Current(targetDimDelayInd,:);
         targetDimDelayLfpsP1 = targetDimLfpP1Current(targetDimDelayInd,:);
         
@@ -610,6 +676,24 @@ for i = 1:nSessions
             [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
             if any(C(:) > 0.8), dPulSpikeVPulFieldCount = dPulSpikeVPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
             cueTargetDelaySFCDPulSpikeVPulFieldP1HF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+            
+            alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetByLoc{3}, arrayResponseOffset .* [-1 1]);
+            meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+            [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP3, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+            if any(C(:) > 0.8), dPulSpikeVPulFieldCount = dPulSpikeVPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+            arrayResponseHoldSFCDPulSpikeVPulFieldP3LF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+            [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP3, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+            if any(C(:) > 0.8), dPulSpikeVPulFieldCount = dPulSpikeVPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+            arrayResponseHoldSFCDPulSpikeVPulFieldP3HF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+
+            alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetByLoc{1}, arrayResponseOffset .* [-1 1]);
+            meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+            [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP1, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+            if any(C(:) > 0.8), dPulSpikeVPulFieldCount = dPulSpikeVPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+            arrayResponseHoldSFCDPulSpikeVPulFieldP1LF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+            [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+            if any(C(:) > 0.8), dPulSpikeVPulFieldCount = dPulSpikeVPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+            arrayResponseHoldSFCDPulSpikeVPulFieldP1HF(dPulSpikeVPulFieldCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
 
             alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.targetDimBalByLoc{3}, targetDimDelayOffset .* [-1 1]);
             meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, targetDimDelayOffset);
@@ -671,6 +755,8 @@ for i = 1:nSessions
         preCueBaselineLfps = cueOnsetLfpCurrent(baselineInd,:);
         cueTargetDelayLfpsP3 = arrayOnsetLfpP3Current(cueTargetDelayInd,:);
         cueTargetDelayLfpsP1 = arrayOnsetLfpP1Current(cueTargetDelayInd,:);
+        arrayResponseHoldLfpsP3 = arrayOnsetLfpP3Current(arrayResponseInd,:);
+        arrayResponseHoldLfpsP1 = arrayOnsetLfpP1Current(arrayResponseInd,:);
         targetDimDelayLfpsP3 = targetDimLfpP3Current(targetDimDelayInd,:);
         targetDimDelayLfpsP1 = targetDimLfpP1Current(targetDimDelayInd,:);
         
@@ -708,6 +794,24 @@ for i = 1:nSessions
             [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(cueTargetDelayLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
             if any(C(:) > 0.8), vPulSpikeDPulFieldCount = vPulSpikeDPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
             cueTargetDelaySFCVPulSpikeDPulFieldP1HF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+            
+            alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetByLoc{3}, arrayResponseOffset .* [-1 1]);
+            meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+            [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP3, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+            if any(C(:) > 0.8), vPulSpikeDPulFieldCount = vPulSpikeDPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+            arrayResponseHoldSFCVPulSpikeDPulFieldP3LF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+            [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP3, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+            if any(C(:) > 0.8), vPulSpikeDPulFieldCount = vPulSpikeDPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+            arrayResponseHoldSFCVPulSpikeDPulFieldP3HF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP3)-2)); % adjust for num trials
+
+            alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.arrayOnsetByLoc{1}, arrayResponseOffset .* [-1 1]);
+            meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, arrayResponseOffset);
+            [C,~,~,~,~,fAxisLF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP1, alignedSpikeTs, paramsLF, 0, [], adjCohNormRate, meanFR);
+            if any(C(:) > 0.8), vPulSpikeDPulFieldCount = vPulSpikeDPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+            arrayResponseHoldSFCVPulSpikeDPulFieldP1LF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsLF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
+            [C,~,~,~,~,fAxisHF] = Adjcoherencycpt_faster(arrayResponseHoldLfpsP1, alignedSpikeTs, paramsHF, 0, [], adjCohNormRate, meanFR);
+            if any(C(:) > 0.8), vPulSpikeDPulFieldCount = vPulSpikeDPulFieldCount - 1; fprintf('Abnormally high coherence; skipping channel %d\n', EL.channelInds(j)); continue; end; % skip this channel
+            arrayResponseHoldSFCVPulSpikeDPulFieldP1HF(vPulSpikeDPulFieldCount,:) = atanh(C)-(1/((2*paramsHF.tapers(2)*numTrialsP1)-2)); % adjust for num trials
 
             alignedSpikeTs = createnonemptydatamatpt(spikeTs, EL.UE.targetDimBalByLoc{3}, targetDimDelayOffset .* [-1 1]);
             meanFR = computeMeanFiringRateFromSpikeTimesMat(alignedSpikeTs, targetDimDelayOffset);
