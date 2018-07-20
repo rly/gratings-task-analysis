@@ -1633,7 +1633,7 @@ makeTinyPlotsOfPopulation(arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfInRFN
 %% mega figure of tiny bc normalized plots per unit by subdivision
 fprintf('\n');
 fprintf('Plotting mega figure of tiny baseline-corrected, normalized mean SPDFs...\n');
-subdivisions = {'vPulArrayDiffDec'};%{'dPulCueInc2', 'vPulCueInc2'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
+subdivisions = {'dPulCTDelayPos'};%{'dPulCueInc2', 'vPulCueInc2'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
@@ -1660,6 +1660,8 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInPulvinar & isSignificantSelectivityArrayHoldResponseDec;
     elseif strcmp(subdivision, 'vPulArrayDiffDec')
         isInSubdivision = isInVPulvinar & isSignificantCueResponseInc & isSignificantSelectivityArrayHoldResponseDec;
+    elseif strcmp(subdivision, 'dPulCTDelayPos')
+        isInSubdivision = isInDPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse & isSignificantSelectivityCueTargetDelayInc;
     elseif strcmp(subdivision, 'arrayNeg')
         isInSubdivision = isInPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse & ...
                 mean(spdfInfo.arrayOnsetHoldSpdfInRFNorm(:,getTimeLogicalWithTolerance(arrayOnsetT, [0.025 0.2])), 2) < 0;

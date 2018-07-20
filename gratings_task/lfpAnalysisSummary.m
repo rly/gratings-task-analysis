@@ -220,6 +220,57 @@ for i = 1:nSessions
             continue; % only process channels in pulvinar for now
         end
         
+        % read MUA from another channel in the same subdivision
+        if ismember(EL.channelInds(j), R.dPulChannels)
+            isFoundMUA = 0;
+            offset = -1; % -1, 1, -2, 2, -3, 3, ...
+            while ~isFoundMUA
+                if j + offset > 0 && j + offset <= numel(EL.channelInds)
+                    tempUnitName = sprintf('%s_PUL_%dM', sessionName, EL.channelInds(j + offset));
+                    if any(strcmp(unitNamesDPul, tempUnitName)) % units that have significant cue response based on saved list
+                        isFoundMUA = 1;
+                        muaNearbyChannelTs = EL.allMUAStructs{j + offset}.ts;
+                    end
+                end
+                if offset < 0
+                    offset = -1 * offset;
+                else
+                    offset = -1 * offset - 1;
+                end
+                if abs(offset) == 32 % no possible units found
+                    fprintf('No possible MUA found to match channel %d...\n', EL.channelInds(j));
+                    break;
+                end
+            end
+            if ~isFoundMUA
+                continue;
+            end
+        elseif ismember(EL.channelInds(j), R.vPulChannels)
+            isFoundMUA = 0;
+            offset = -1; % -1, 1, -2, 2, -3, 3, ...
+            while ~isFoundMUA
+                if j + offset > 0 && j + offset <= numel(EL.channelInds)
+                    tempUnitName = sprintf('%s_PUL_%dM', sessionName, EL.channelInds(j + offset));
+                    if any(strcmp(unitNamesVPul, tempUnitName)) % units that have significant cue response based on saved list
+                        isFoundMUA = 1;
+                        muaNearbyChannelTs = EL.allMUAStructs{j + offset}.ts;
+                    end
+                end
+                if offset < 0
+                    offset = -1 * offset;
+                else
+                    offset = -1 * offset - 1;
+                end
+                if abs(offset) == 32 % no possible units found
+                    fprintf('No possible MUA found to match channel %d...\n', EL.channelInds(j));
+                    break;
+                end
+            end
+            if ~isFoundMUA
+                continue;
+            end
+        end
+        
         fprintf('Processing channel %d...\n', EL.channelInds(j));
         
         lfpCount = lfpCount + 1;
@@ -237,13 +288,19 @@ for i = 1:nSessions
         % read MUA from a nearby channel to account for MUA possibly
         % contributing to LFP on the same channel
         % use +2/-2 to be compatible with bipolar reference
-        if j < numel(EL.channelInds)-1
-            muaNearbyChannelTs = EL.allMUAStructs{j+2}.ts;
-            sfcNames{lfpCount} = sprintf('%s_%d_%dM_FP%03d', sessionName, sessionInd, j+2, EL.channelInds(j));
-        else
-            muaNearbyChannelTs = EL.allMUAStructs{j-2}.ts;
-            sfcNames{lfpCount} = sprintf('%s_%d_%dM_FP%03d', sessionName, sessionInd, j-2, EL.channelInds(j));
-        end
+%         if j < numel(EL.channelInds)-1
+%             muaNearbyChannelTs = EL.allMUAStructs{j+2}.ts;
+%             sfcNames{lfpCount} = sprintf('%s_%d_%dM_FP%03d', sessionName, sessionInd, j+2, EL.channelInds(j));
+%         else
+%             muaNearbyChannelTs = EL.allMUAStructs{j-2}.ts;
+%             sfcNames{lfpCount} = sprintf('%s_%d_%dM_FP%03d', sessionName, sessionInd, j-2, EL.channelInds(j));
+%         end
+
+        
+                    
+                
+            
+            
         
         baselineInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, baselineWindowOffset);
         cueResponseInd = getTimeLogicalWithTolerance(EL.cueOnsetLfp.t, cueResponseOffset);
