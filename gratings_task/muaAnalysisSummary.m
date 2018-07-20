@@ -234,6 +234,7 @@ isSignificantCTDelayBelowBaseline = isCell & isSignificantResponseVsBaseline(:,2
 isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
 isSignificantDelaySelectivity = isCell & any(isSignificantSelectivity(:,[2 4]), 2);
+isSignificantSelectivityCueResponse = isCell & isSignificantSelectivity(:,1);
 isSignificantSelectivityCueTargetDelay = isCell & isSignificantSelectivity(:,2);
 isSignificantSelectivityArrayHoldResponse = isCell & isSignificantSelectivity(:,3);
 isSignificantSelectivityTargetDimDelay = isCell & isSignificantSelectivity(:,4);
@@ -487,6 +488,11 @@ fprintf('\t%d (%d%%) has InRF P3 (significantly suppressed response to P1 for th
         round(sum(precondition & isInRFP3)/sum(precondition) * 100));
 
 cols = lines(6);
+
+%% save names of units with significant cue responses
+unitNamesDPul = unitNames(isInDPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse);
+unitNamesVPul = unitNames(isInVPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse);
+save(sprintf('%s/unitNamesPul-v%d.mat', summaryDataDir, v), 'unitNamesDPul', 'unitNamesVPul');
 
 %% plot pre-saccadic activity aligned to y=0 at saccade
 preSaccadeWindowOffset = [-0.2 0];
@@ -759,12 +765,20 @@ end
 fprintf('Mean vPul baseline pre-cue firing: %0.2f Hz\n', mean(firing));
 
 %% firing rate & fano factor loop across subdivisions
-subdivisions = {'dPul', 'vPul'};
+subdivisions = {'dPul3', 'vPul3'};
 for i = 1:numel(subdivisions)
     if strcmp(subdivisions{i}, 'dPul')
         goodUnits = isInDPulvinar & isSignificantCueResponseInc;
     elseif strcmp(subdivisions{i}, 'vPul')
         goodUnits = isInVPulvinar & isSignificantCueResponseInc;
+    elseif strcmp(subdivisions{i}, 'dPul2')
+        goodUnits = isInDPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse;
+    elseif strcmp(subdivisions{i}, 'vPul2')
+        goodUnits = isInVPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse;
+    elseif strcmp(subdivisions{i}, 'dPul3')
+        goodUnits = isInDPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse & isInRFP3;
+    elseif strcmp(subdivisions{i}, 'vPul3')
+        goodUnits = isInVPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse & isInRFP3;
     end
     
 %% cue response mean firing rate InRF vs ExRF -- sanity check
@@ -806,6 +820,11 @@ xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
 xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+pctSig = round(sum(isSignificantSelectivityCueTargetDelay(goodUnits)) / sum(goodUnits) * 100);
+
+legend(ax1.Children(1:2), {sprintf('Sig. Modulation (%d%%)', pctSig), 'N.S. Modulation'}, ...
+        'Location', 'NorthWest', 'FontSize', 14, 'box', 'off');
 
 plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayMeanFRDiff-v%d.png', summaryDataDir, subdivisions{i}, v);
 fprintf('Saving to %s...\n', plotFileName);
@@ -881,7 +900,7 @@ ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
 xlabel(ax3, 'Firing Rate Difference (Hz)');
 
-plotFileName = sprintf('%s/allSessions-%s-arrayResponseHoldMeanFRDiff-v%d.png', summaryDataDir, subdivisions{i}, v);
+plotFileName = sprintf('%s/allSessions-%s-arrayResponseHoldMeanNormFRDiff-v%d.png', summaryDataDir, subdivisions{i}, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -1392,8 +1411,45 @@ plotFileName = sprintf('%s/allSessions-targetDimDelayNoiseCorrDiff-v%d.png', sum
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+
+%% does cue-target delay modulation predict array response modulation
+goodUnits = isInPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse;
+nGoodUnits = sum(goodUnits);
+% unboxing
+cueTargetDelay = averageFiringRatesBySpdf.cueTargetDelay(goodUnits);
+inRFLocsGoodUnits = inRFLocs(goodUnits);
+exRFLocsGoodUnits = exRFLocs(goodUnits);
+cueTargetDelayFiringInRF = nan(nGoodUnits, 1);
+cueTargetDelayFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    cueTargetDelayFiringInRF(i) = cueTargetDelay(i).byLoc(inRFLocsGoodUnits(i));
+    cueTargetDelayFiringExRF(i) = cueTargetDelay(i).byLoc(exRFLocsGoodUnits(i));
+end
+
+arrayResponseHold = averageFiringRatesBySpdf.arrayResponseHoldBal(goodUnits);
+arrayResponseHoldFiringInRF = nan(nGoodUnits, 1);
+arrayResponseHoldFiringExRF = nan(nGoodUnits, 1);
+for i = 1:nGoodUnits
+    arrayResponseHoldFiringInRF(i) = arrayResponseHold(i).byLoc(inRFLocsGoodUnits(i));
+    arrayResponseHoldFiringExRF(i) = arrayResponseHold(i).byLoc(exRFLocsGoodUnits(i));
+end
+
+plotCorr(cueTargetDelayFiringInRF, cueTargetDelayFiringExRF, ...
+        arrayResponseHoldFiringInRF, arrayResponseHoldFiringExRF, ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits));
+
+xlabel('Cue-Target Delay Firing Difference (Hz)');
+ylabel('Array Response Hold Firing Difference (Hz)');
+axis equal;
+
+plotFileName = sprintf('%s/allSessions-cueTargetDelayDiffVsArrayResponseHoldDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+
 %% which units have strong cue-target delay modulation
-goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar & isSignificantSelectivityCueTargetDelayInc;
+goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar & isSignificantSelectivityCueTargetDelayInc & isSignificantSelectivityCueResponse;
 unitNamesSub = unitNames(goodUnits)
 
 goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar;
@@ -1461,7 +1517,7 @@ stop
 %% mean and image plots per-condition baseline-corrected normalized
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
-subdivisions = {'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
+subdivisions = {'vPulArrayDiffDec'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     yBounds = [-0.25 0.5];
@@ -1490,6 +1546,12 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInVPulvinar & isSignificantCueResponseInc;
     elseif strcmp(subdivision, 'vPulCueDec')
         isInSubdivision = isInVPulvinar & isSignificantCueResponseDec;
+    elseif strcmp(subdivision, 'dPulCueInc2')
+        isInSubdivision = isInDPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse;
+        yBounds = [-0.25 0.6];
+    elseif strcmp(subdivision, 'vPulCueInc2')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse;
+        yBounds = [-0.25 0.6];
     elseif strcmp(subdivision, 'concatPC3High')
         isInSubdivision = false(size(isInPulvinar));
         isInSubdivision(isInPulvinar) = pcaConcatAllScore(:,3) > 50;
@@ -1506,7 +1568,11 @@ for j = 1:numel(subdivisions)
     elseif strcmp(subdivision, 'NotCueSig')
         isInSubdivision = isInPulvinar & ~isSignificantCueResponse;
     elseif strcmp(subdivision, 'arrayDiffDec')
-        isInSubdivision = isInPulvinar & isSignificantSelectivityArrayHoldResponseDec;
+        isInSubdivision = isInPulvinar & isSignificantCueResponseInc & isSignificantSelectivityArrayHoldResponseDec;
+    elseif strcmp(subdivision, 'arrayDiffInc')
+        isInSubdivision = isInPulvinar & isSignificantCueResponseInc & isSignificantSelectivityArrayHoldResponseInc;
+    elseif strcmp(subdivision, 'vPulArrayDiffDec')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponseInc & isSignificantSelectivityArrayHoldResponseDec;
     elseif strcmp(subdivision, 'motorPos')
         isInSubdivision = isInPulvinar & spdfInfo.exitFixationSpdfInRFNorm(:,getTimeLogicalWithTolerance(exitFixationT, [0 0])) > 0.2;
     elseif strcmp(subdivision, 'motorNeg')
@@ -1567,7 +1633,7 @@ makeTinyPlotsOfPopulation(arrayOnsetHoldSpdfInRFNormSub, arrayOnsetHoldSpdfInRFN
 %% mega figure of tiny bc normalized plots per unit by subdivision
 fprintf('\n');
 fprintf('Plotting mega figure of tiny baseline-corrected, normalized mean SPDFs...\n');
-subdivisions = {'targetDimResp'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
+subdivisions = {'vPulArrayDiffDec'};%{'dPulCueInc2', 'vPulCueInc2'};%{'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     if strcmp(subdivision, 'all')
@@ -1592,8 +1658,17 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInVPulvinar & isSignificantCueResponseDec;
     elseif strcmp(subdivision, 'arrayDiffDec')
         isInSubdivision = isInPulvinar & isSignificantSelectivityArrayHoldResponseDec;
+    elseif strcmp(subdivision, 'vPulArrayDiffDec')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponseInc & isSignificantSelectivityArrayHoldResponseDec;
+    elseif strcmp(subdivision, 'arrayNeg')
+        isInSubdivision = isInPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse & ...
+                mean(spdfInfo.arrayOnsetHoldSpdfInRFNorm(:,getTimeLogicalWithTolerance(arrayOnsetT, [0.025 0.2])), 2) < 0;
     elseif strcmp(subdivision, 'targetDimResp')
         isInSubdivision = isInPulvinar & isSignificantSelectivityTargetDimResponse;
+    elseif strcmp(subdivision, 'dPulCueInc2')
+        isInSubdivision = isInDPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse;
+    elseif strcmp(subdivision, 'vPulCueInc2')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponseInc & isSignificantSelectivityCueResponse;
     else
         isInSubdivision = strcmp(localization, subdivision);
     end

@@ -14,6 +14,9 @@ outputDir = sprintf('%s/%s/', processedDataRootDir, 'LFP_GRATINGS_SUMMARY');
 if ~exist(outputDir, 'dir')
     mkdir(outputDir);
 end
+muaOutputDir = sprintf('%s/%s/', processedDataRootDir, 'MUA_GRATINGS_SUMMARY');
+muaUnitNamesPulFileName = sprintf('%s/unitNamesPul-v%d.mat', muaOutputDir, v);
+load(muaUnitNamesPulFileName);
 
 if isempty(sessionInds)
     sessionInds = 1:numel(recordingInfo);
@@ -643,6 +646,11 @@ for i = 1:nSessions
         targetDimDelayLfpsP1 = targetDimLfpP1Current(targetDimDelayInd,:);
         
         for k = 1:numel(R.dPulChannels)
+            tempUnitName = sprintf('%s_PUL_%dM', sessionName, R.dPulChannels(k));
+            if ~any(strcmp(unitNamesDPul, tempUnitName)) % skip all units that do not have significant cue response based on saved list
+                continue;
+            end
+            
             j = find(EL.channelInds == R.dPulChannels(k));
             fprintf('Processing channel %d...\n', EL.channelInds(j));
             spikeTs = EL.allMUAStructs{j}.ts;
@@ -761,6 +769,11 @@ for i = 1:nSessions
         targetDimDelayLfpsP1 = targetDimLfpP1Current(targetDimDelayInd,:);
         
         for k = 1:numel(R.vPulChannels)
+            tempUnitName = sprintf('%s_PUL_%dM', sessionName, R.vPulChannels(k));
+            if ~any(strcmp(unitNamesVPul, tempUnitName)) % skip all units that do not have significant cue response based on saved list
+                continue;
+            end
+            
             j = find(EL.channelInds == R.vPulChannels(k));
             fprintf('Processing channel %d...\n', EL.channelInds(j));
             spikeTs = EL.allMUAStructs{j}.ts;
