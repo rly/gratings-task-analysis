@@ -1506,6 +1506,22 @@ makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP
 %% make tiny population plots of SFC by channel
 sfcYBounds = [0 0.3];
 
+powP3 = baselineSFCLF(isInDPulvinar,:);
+powP1 = nan(size(powP3));
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-baselineSFC-dPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Pre-Cue Baseline SFC - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+    
+powP3 = baselineSFCLF(isInVPulvinar,:);
+powP1 = nan(size(powP3));
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-baselineSFC-vPul-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Pre-Cue Baseline SFC - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+
 powP3 = cueTargetDelaySFCP3LF(isInDPulvinar,:);
 powP1 = cueTargetDelaySFCP1LF(isInDPulvinar,:);
 chanNames = lfpNames(isInDPulvinar);
@@ -1538,6 +1554,22 @@ plotFileBaseName = sprintf('%s/allSessions-tdDelaySFC-vPul-P3VsP1-LF-%s-v%d', ou
 makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisLF, chanNames, ...
         sfcYBounds, sprintf('Target-Dim Delay SFC - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
 
+powP3 = baselineSFCHF(isInDPulvinar,:);
+powP1 = nan(size(powP3));
+chanNames = lfpNames(isInDPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-baselineSFC-dPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Pre-Cue Baseline SFC - Dorsal Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
+powP3 = baselineSFCHF(isInVPulvinar,:);
+powP1 = nan(size(powP3));
+chanNames = lfpNames(isInVPulvinar);
+
+plotFileBaseName = sprintf('%s/allSessions-baselineSFC-vPul-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Pre-Cue Baseline SFC - Ventral Pulvinar (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+    
 powP3 = cueTargetDelaySFCP3HF(isInDPulvinar,:);
 powP1 = cueTargetDelaySFCP1HF(isInDPulvinar,:);
 chanNames = lfpNames(isInDPulvinar);
@@ -1573,6 +1605,22 @@ makeTinyPlotsOfPopulationPower(powP3, zeros(size(powP3)), powP1, zeros(size(powP
 %% make tiny population plots of across subdivision SFC
 sfcYBounds = [0 0.3];
 
+sfcP3 = baselineSFCDPulSpikeVPulFieldLF;
+sfcP1 = nan(size(sfcP3));
+chanNames = dPulSpikeVPulFieldNames;
+
+plotFileBaseName = sprintf('%s/allSessions-baselineSFC-dPulSpikeVPulField-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - dPul Spikes - vPul Field (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+
+sfcP3 = baselineSFCVPulSpikeDPulFieldLF;
+sfcP1 = nan(size(sfcP3));
+chanNames = vPulSpikeDPulFieldNames;
+
+plotFileBaseName = sprintf('%s/allSessions-baselineSFC-vPulSpikeDPulField-P3VsP1-LF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisLF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - vPul Spikes - dPul Field (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+
 sfcP3 = cueTargetDelaySFCDPulSpikeVPulFieldP3LF;
 sfcP1 = cueTargetDelaySFCDPulSpikeVPulFieldP1LF;
 chanNames = dPulSpikeVPulFieldNames;
@@ -1604,6 +1652,22 @@ chanNames = vPulSpikeDPulFieldNames;
 plotFileBaseName = sprintf('%s/allSessions-tdDelaySFC-vPulSpikeDPulField-P3VsP1-LF-%s-v%d', outputDir, ref, v);
 makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisLF, chanNames, ...
         sfcYBounds, sprintf('Target-Dim Delay SFC - vPul Spikes - dPul Field (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+
+sfcP3 = baselineSFCDPulSpikeVPulFieldHF;
+sfcP1 = nan(size(sfcP3));
+chanNames = dPulSpikeVPulFieldNames;
+
+plotFileBaseName = sprintf('%s/allSessions-baselineSFC-dPulSpikeVPulField-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - dPul Spikes - vPul Field (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+
+sfcP3 = baselineSFCVPulSpikeDPulFieldHF;
+sfcP1 = nan(size(sfcP3));
+chanNames = vPulSpikeDPulFieldNames;
+
+plotFileBaseName = sprintf('%s/allSessions-baselineSFC-vPulSpikeDPulField-P3VsP1-HF-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - vPul Spikes - dPul Field (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
     
 sfcP3 = cueTargetDelaySFCDPulSpikeVPulFieldP3HF;
 sfcP1 = cueTargetDelaySFCDPulSpikeVPulFieldP1HF;

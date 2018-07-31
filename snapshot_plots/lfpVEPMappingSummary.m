@@ -1,5 +1,11 @@
 % function lfpVEPMappingSummary(processedDataRootDir, recordingInfoFileName, sessionInds, ref)
 
+clear;
+processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
+recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+ref = 'RAW';
+sessionInds = [1:16 19:20 23];
+
 fprintf('\n-------------------------------------------------------\n');
 fprintf('VEP Mapping Summary - LFP\n');
 fprintf('Processed data root dir: %s\n', processedDataRootDir);
@@ -194,6 +200,7 @@ for s = 1:nSessions
     plot(shiftToTest, sseBest);
     xlabel('shift');
     ylabel('sse');
+    title(sprintf('Session %d vs %d', templateSessionInd, sessionInd));
 
     %% plot shift
     shift = shiftBest(templateSessionIndInd,s);
@@ -274,7 +281,7 @@ for s = 1:nSessions
     nChannelsNew = numel(newY);
     shiftResponse = nan(nChannelsNew, nTime);
     [~,newYInd] = intersect(newY, (1:nChannels)+shift);
-    shiftResponse(newYInd,:) = meanResponseAll{so};% - superCommonAverage;  
+    shiftResponse(newYInd,:) = meanResponseAll{so} - superCommonAverage;  
     
     plotHs(s) = subaxis(1, nSessions, s, 'SH', 0.001, 'ML', 0.02, 'MR', 0.02);
     hold on;

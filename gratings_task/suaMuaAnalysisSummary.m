@@ -1,8 +1,8 @@
-function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
+% function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
-% clear;
-% readDataLocally;
-% sessionInds = 1:23;
+clear;
+readDataLocally;
+sessionInds = 1:23;
 
 v = 13;
 
@@ -19,7 +19,7 @@ if isempty(sessionInds)
 end
 
 nSessions = numel(sessionInds);
-nUnitsApprox = nSessions * 16; % should be equal or an underestimate
+nUnitsApprox = nSessions * 2; % should be equal or an underestimate
 
 unitNames = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
@@ -881,7 +881,7 @@ ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
 xlabel(ax3, 'Firing Rate Difference (Hz)');
 
-plotFileName = sprintf('%s/allSessions-%s-arrayResponseHoldMeanFRDiff-v%d.png', summaryDataDir, subdivisions{i}, v);
+plotFileName = sprintf('%s/allSessions-%s-arrayResponseHoldMeanNormFRDiff-v%d.png', summaryDataDir, subdivisions{i}, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -1392,67 +1392,85 @@ plotFileName = sprintf('%s/allSessions-targetDimDelayNoiseCorrDiff-v%d.png', sum
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% which units have strong cue-target delay modulation
-goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar & isSignificantSelectivityCueTargetDelayInc;
-unitNamesSub = unitNames(goodUnits)
+%%
+for a = 1:2
+    if a == 1
+        isInSubdivision = isInDPulvinar;
+        fprintf('Dorsal Pulvinar:\n');
+    else
+        isInSubdivision = isInVPulvinar;
+        fprintf('Ventral Pulvinar:\n');
+    end
 
-goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar;
-nGoodUnits = sum(goodUnits);
+    %% which units have strong cue-target delay modulation
+    goodUnits = isCell & isSignificantCueResponseInc & isInSubdivision & isSignificantSelectivityCueTargetDelayInc;
+    unitNamesSub = unitNames(goodUnits)
 
-firingRatesGood = averageFiringRatesByCount.cueTargetDelay(goodUnits);
-baselineFiringRatesGood = averageFiringRatesByCount.preCueBaseline(goodUnits);
-inRFNormFactorGood = inRFCountNormFactor(goodUnits);
-exRFNormFactorGood = exRFCountNormFactor(goodUnits);
-inRFLocsGood = inRFLocs(goodUnits);
-exRFLocsGood = exRFLocs(goodUnits);
-unitNamesGood = unitNames(goodUnits);
+    goodUnits = isCell & isSignificantCueResponseInc & isInSubdivision;
+    nGoodUnits = sum(goodUnits);
 
-firingInRF = nan(nGoodUnits, 1);
-firingExRF = nan(nGoodUnits, 1);
-for i = 1:nGoodUnits
-    firingInRF(i) = (firingRatesGood(i).byLoc(inRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(inRFLocsGood(i))) / inRFNormFactorGood(i);
-    firingExRF(i) = (firingRatesGood(i).byLoc(exRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(exRFLocsGood(i))) / exRFNormFactorGood(i);
+    firingRatesGood = averageFiringRatesByCount.cueTargetDelay(goodUnits);
+    baselineFiringRatesGood = averageFiringRatesByCount.preCueBaseline(goodUnits);
+    inRFNormFactorGood = inRFCountNormFactor(goodUnits);
+    exRFNormFactorGood = exRFCountNormFactor(goodUnits);
+    inRFLocsGood = inRFLocs(goodUnits);
+    exRFLocsGood = exRFLocs(goodUnits);
+    unitNamesGood = unitNames(goodUnits);
+
+    firingInRF = nan(nGoodUnits, 1);
+    firingExRF = nan(nGoodUnits, 1);
+    for i = 1:nGoodUnits
+        firingInRF(i) = (firingRatesGood(i).byLoc(inRFLocsGood(i)) - baselineFiringRatesGood(i).byLoc(inRFLocsGood(i))) / inRFNormFactorGood(i);
+        firingExRF(i) = (firingRatesGood(i).byLoc(exRFLocsGood(i)) - baselineFiringRatesGood(i).byLoc(exRFLocsGood(i))) / exRFNormFactorGood(i);
+    end
+    firingDiff = firingInRF - firingExRF;
+    [firingDiffSort,sortInd] = sort(firingDiff, 'descend');
+
+    unitNamesSortByCTDelayDiff = unitNamesGood(sortInd);
+    unitNamesSortByCTDelayDiff(1:15)
+    firingDiffSort(1:15)
+
+
+    %% which units have strong target-dim delay modulation
+    goodUnits = isCell & isSignificantCueResponseInc & isInSubdivision & isSignificantSelectivityTargetDimDelayInc;
+    unitNamesSub = unitNames(goodUnits)
+
+    goodUnits = isCell & isSignificantCueResponseInc & isInSubdivision;
+    nGoodUnits = sum(goodUnits);
+
+    firingRatesGood = averageFiringRatesByCount.targetDimDelayBal(goodUnits);
+    baselineFiringRatesGood = averageFiringRatesByCount.preCueBaseline(goodUnits);
+    inRFNormFactorGood = inRFCountNormFactor(goodUnits);
+    exRFNormFactorGood = exRFCountNormFactor(goodUnits);
+    inRFLocsGood = inRFLocs(goodUnits);
+    exRFLocsGood = exRFLocs(goodUnits);
+    unitNamesGood = unitNames(goodUnits);
+
+    firingInRF = nan(nGoodUnits, 1);
+    firingExRF = nan(nGoodUnits, 1);
+    for i = 1:nGoodUnits
+        firingInRF(i) = (firingRatesGood(i).byLoc(inRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(inRFLocsGood(i))) / inRFNormFactorGood(i);
+        firingExRF(i) = (firingRatesGood(i).byLoc(exRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(exRFLocsGood(i))) / exRFNormFactorGood(i);
+    end
+    firingDiff = firingInRF - firingExRF;
+    [firingDiffSort,sortInd] = sort(firingDiff, 'descend');
+
+    unitNamesSortByTDDelayDiff = unitNamesGood(sortInd);
+    unitNamesSortByTDDelayDiff(1:15)
+    firingDiffSort(1:15)
+
 end
-firingDiff = firingInRF - firingExRF;
-[firingDiffSort,sortInd] = sort(firingDiff, 'descend');
-
-unitNamesSortByCTDelayDiff = unitNamesGood(sortInd);
-unitNamesSortByCTDelayDiff(1:15)
-firingDiffSort(1:15)
-
-
-%% which units have strong target-dim delay modulation
-goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar & isSignificantSelectivityTargetDimDelayInc;
-unitNamesSub = unitNames(goodUnits)
-
-goodUnits = isCell & isSignificantCueResponseInc & isInVPulvinar;
-nGoodUnits = sum(goodUnits);
-
-firingRatesGood = averageFiringRatesByCount.targetDimDelayBal(goodUnits);
-baselineFiringRatesGood = averageFiringRatesByCount.preCueBaseline(goodUnits);
-inRFNormFactorGood = inRFCountNormFactor(goodUnits);
-exRFNormFactorGood = exRFCountNormFactor(goodUnits);
-inRFLocsGood = inRFLocs(goodUnits);
-exRFLocsGood = exRFLocs(goodUnits);
-unitNamesGood = unitNames(goodUnits);
-
-firingInRF = nan(nGoodUnits, 1);
-firingExRF = nan(nGoodUnits, 1);
-for i = 1:nGoodUnits
-    firingInRF(i) = (firingRatesGood(i).byLoc(inRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(inRFLocsGood(i))) / inRFNormFactorGood(i);
-    firingExRF(i) = (firingRatesGood(i).byLoc(exRFLocsGood(i)));% - baselineFiringRatesGood(i).byLoc(exRFLocsGood(i))) / exRFNormFactorGood(i);
-end
-firingDiff = firingInRF - firingExRF;
-[firingDiffSort,sortInd] = sort(firingDiff, 'descend');
-
-unitNamesSortByTDDelayDiff = unitNamesGood(sortInd);
-unitNamesSortByTDDelayDiff(1:15)
-firingDiffSort(1:15)
 
 
 
 %% stop
 stop
+
+
+
+
+
+
 
 
 

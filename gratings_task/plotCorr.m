@@ -24,7 +24,7 @@ yDiffBounds = maxAbsDiffY * [-1 1];
 maxDiffBounds = max([maxAbsDiffX maxAbsDiffY]) * [-1 1];
 
 cols = lines(6);
-dPulCol = cols(3,:);
+dPulCol = cols(4,:);
 vPulCol = cols(5,:);
 
 %% plot
@@ -34,9 +34,13 @@ plot(maxDiffBounds, maxDiffBounds, 'Color', 0.3*ones(3, 1));
 plot(maxDiffBounds, [0 0], 'Color', zeros(3, 1)); 
 plot([0 0], maxDiffBounds, 'Color', zeros(3, 1)); 
 plotParams = {'MarkerSize', 20};
-plot(xDiff, yDiff, '.', 'MarkerSize', 20, plotParams{:});
+plot(xDiff, yDiff, '.', plotParams{:});
 h1 = plot(xDiff(isDPul), yDiff(isDPul), '.', 'Color', dPulCol, plotParams{:});
 h2 = plot(xDiff(isVPul), yDiff(isVPul), '.', 'Color', vPulCol, plotParams{:});
+% plotParams = {'MarkerSize', 5, 'LineWidth', 2};
+% plot(xDiff, yDiff, 'o', plotParams{:});
+% h1 = plot(xDiff(isDPul), yDiff(isDPul), 'o', 'Color', dPulCol, plotParams{:});
+% h2 = plot(xDiff(isVPul), yDiff(isVPul), 'o', 'Color', vPulCol, plotParams{:});
 xlim(xDiffBounds);
 ylim(yDiffBounds);
 legend([h1 h2], {'dPul', 'vPul'}, 'Location', 'SouthEast');
