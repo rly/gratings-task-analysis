@@ -1,9 +1,9 @@
 function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds, ref)
 
-% clear;
-% readDataLocally;
-% sessionInds = 1:23;
-% ref = 'CAR';
+clear;
+readDataLocally;
+sessionInds = 1:23;
+ref = 'CAR';
 
 v = 12;
 
@@ -1611,7 +1611,7 @@ chanNames = dPulSpikeVPulFieldNames;
 
 plotFileBaseName = sprintf('%s/allSessions-baselineSFC-dPulSpikeVPulField-P3VsP1-LF-%s-v%d', outputDir, ref, v);
 makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisLF, chanNames, ...
-        sfcYBounds, sprintf('Cue-Target Delay SFC - dPul Spikes - vPul Field (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+        sfcYBounds, sprintf('Pre-Cue Baseline SFC - dPul Spikes - vPul Field (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
 
 sfcP3 = baselineSFCVPulSpikeDPulFieldLF;
 sfcP1 = nan(size(sfcP3));
@@ -1619,7 +1619,7 @@ chanNames = vPulSpikeDPulFieldNames;
 
 plotFileBaseName = sprintf('%s/allSessions-baselineSFC-vPulSpikeDPulField-P3VsP1-LF-%s-v%d', outputDir, ref, v);
 makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisLF, chanNames, ...
-        sfcYBounds, sprintf('Cue-Target Delay SFC - vPul Spikes - dPul Field (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
+        sfcYBounds, sprintf('Pre-Cue Baseline SFC - vPul Spikes - dPul Field (%d-%d Hz, %s)', round(fAxisLF([1 end])), ref), plotFileBaseName);
 
 sfcP3 = cueTargetDelaySFCDPulSpikeVPulFieldP3LF;
 sfcP1 = cueTargetDelaySFCDPulSpikeVPulFieldP1LF;
@@ -1659,7 +1659,7 @@ chanNames = dPulSpikeVPulFieldNames;
 
 plotFileBaseName = sprintf('%s/allSessions-baselineSFC-dPulSpikeVPulField-P3VsP1-HF-%s-v%d', outputDir, ref, v);
 makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisHF, chanNames, ...
-        sfcYBounds, sprintf('Cue-Target Delay SFC - dPul Spikes - vPul Field (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+        sfcYBounds, sprintf('Pre-Cue Baseline SFC - dPul Spikes - vPul Field (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
 
 sfcP3 = baselineSFCVPulSpikeDPulFieldHF;
 sfcP1 = nan(size(sfcP3));
@@ -1667,7 +1667,7 @@ chanNames = vPulSpikeDPulFieldNames;
 
 plotFileBaseName = sprintf('%s/allSessions-baselineSFC-vPulSpikeDPulField-P3VsP1-HF-%s-v%d', outputDir, ref, v);
 makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisHF, chanNames, ...
-        sfcYBounds, sprintf('Cue-Target Delay SFC - vPul Spikes - dPul Field (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+        sfcYBounds, sprintf('Pre-Cue Baseline SFC - vPul Spikes - dPul Field (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
     
 sfcP3 = cueTargetDelaySFCDPulSpikeVPulFieldP3HF;
 sfcP1 = cueTargetDelaySFCDPulSpikeVPulFieldP1HF;
@@ -1703,6 +1703,329 @@ makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP
 
 %%
 return; % end plots, rest is live testing
+
+%%
+p3Col = [0.9 0 0];
+p1Col = [0 0 0.9];
+
+relPowYBounds = [-1.5 0.2];
+sfcCTDelayYBoundsLF = [0.04 0.1];
+sfcCTDelayYBoundsHF = [0.015 0.052];
+sfcArrayRespYBoundsLF = [0.04 0.1];
+sfcArrayRespYBoundsHF = [0.015 0.052];
+sfcTDDelayYBoundsLF = [0.07 0.18];
+sfcTDDelayYBoundsHF = [0.02 0.08];
+
+%% only plot SFC for pairs with nonflat baseline SFC
+% goodPairs = true(1, size(isInDPulvinar, 1));
+goodPairs = ~(all(baselineSFCLF' < 0.05) | all(baselineSFCLF' < 0.03));
+
+channelCond = isInDPulvinar & goodPairs';
+nChannel = sum(channelCond);
+cueTargetDelayRelSFCLF = [cueTargetDelaySFCP3LF(channelCond,:); cueTargetDelaySFCP1LF(channelCond,:)];
+cueTargetDelayRelSFCHF = [cueTargetDelaySFCP3HF(channelCond,:); cueTargetDelaySFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+grcPlotLfpPower2(cueTargetDelayRelSFCLF, cueTargetDelayRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcCTDelayYBoundsLF; sfcCTDelayYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-ctDelaySFC-dPul-P3vsP1-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot SFC for pairs with nonflat baseline SFC
+% goodPairs = true(1, size(isInVPulvinar, 1));
+goodPairs = ~(all(baselineSFCLF' < 0.05) | all(baselineSFCLF' < 0.03));
+
+channelCond = isInVPulvinar & goodPairs';
+nChannel = sum(channelCond);
+cueTargetDelayRelSFCLF = [cueTargetDelaySFCP3LF(channelCond,:); cueTargetDelaySFCP1LF(channelCond,:)];
+cueTargetDelayRelSFCHF = [cueTargetDelaySFCP3HF(channelCond,:); cueTargetDelaySFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+grcPlotLfpPower2(cueTargetDelayRelSFCLF, cueTargetDelayRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcCTDelayYBoundsLF; sfcCTDelayYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-ctDelaySFC-vPul-P3vsP1-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot SFC for pairs with nonflat baseline SFC
+% goodPairs = true(1, size(isInDPulvinar, 1));
+goodPairs = ~(all(baselineSFCLF' < 0.05) | all(baselineSFCLF' < 0.03));
+
+channelCond = isInDPulvinar & goodPairs';
+nChannel = sum(channelCond);
+arrayResponseHoldRelSFCLF = [arrayResponseHoldSFCP3LF(channelCond,:); arrayResponseHoldSFCP1LF(channelCond,:)];
+arrayResponseHoldRelSFCHF = [arrayResponseHoldSFCP3HF(channelCond,:); arrayResponseHoldSFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+grcPlotLfpPower2(arrayResponseHoldRelSFCLF, arrayResponseHoldRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcArrayRespYBoundsLF; sfcArrayRespYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldSFC-dPul-P3vsP1-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot SFC for pairs with nonflat baseline SFC
+% goodPairs = true(1, size(isInVPulvinar, 1));
+goodPairs = ~(all(baselineSFCLF' < 0.05) | all(baselineSFCLF' < 0.03));
+
+channelCond = isInVPulvinar & goodPairs';
+nChannel = sum(channelCond);
+arrayResponseHoldRelSFCLF = [arrayResponseHoldSFCP3LF(channelCond,:); arrayResponseHoldSFCP1LF(channelCond,:)];
+arrayResponseHoldRelSFCHF = [arrayResponseHoldSFCP3HF(channelCond,:); arrayResponseHoldSFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+grcPlotLfpPower2(arrayResponseHoldRelSFCLF, arrayResponseHoldRelSFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcArrayRespYBoundsLF; sfcArrayRespYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-arrayResponseHoldSFC-vPul-P3vsP1-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot SFC for pairs with nonflat baseline SFC
+% goodPairs = true(1, size(isInDPulvinar, 1));
+goodPairs = ~(all(baselineSFCLF' < 0.05) | all(baselineSFCLF' < 0.03));
+
+channelCond = isInDPulvinar & goodPairs';
+nChannel = sum(channelCond);
+targetDimDelaySFCLF = [targetDimDelaySFCP3LF(channelCond,:); targetDimDelaySFCP1LF(channelCond,:)];
+targetDimDelaySFCHF = [targetDimDelaySFCP3HF(channelCond,:); targetDimDelaySFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+grcPlotLfpPower2(targetDimDelaySFCLF, targetDimDelaySFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcTDDelayYBoundsLF; sfcTDDelayYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-tdDelaySFC-dPul-P3vsP1-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot SFC for pairs with nonflat baseline SFC
+% goodPairs = true(1, size(isInVPulvinar, 1));
+goodPairs = ~(all(baselineSFCLF' < 0.05) | all(baselineSFCLF' < 0.03));
+
+channelCond = isInVPulvinar & goodPairs';
+nChannel = sum(channelCond);
+targetDimDelaySFCLF = [targetDimDelaySFCP3LF(channelCond,:); targetDimDelaySFCP1LF(channelCond,:)];
+targetDimDelaySFCHF = [targetDimDelaySFCP3HF(channelCond,:); targetDimDelaySFCP1HF(channelCond,:)];
+p3p1Logical = [true(nChannel, 1) false(nChannel, 1); false(nChannel, 1) true(nChannel, 1)];
+
+grcPlotLfpPower2(targetDimDelaySFCLF, targetDimDelaySFCHF, fAxisLF, fAxisHF, p3p1Logical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcTDDelayYBoundsLF; sfcTDDelayYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+
+plotFileName = sprintf('%s/allSessions-tdDelaySFC-vPul-P3vsP1-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+
+%% only plot across-subdiv SFC for pairs with nonflat baseline SFC
+
+% goodPairs = true(size(baselineSFCDPulSpikeVPulFieldLF, 1), 1);
+goodPairs = ~(all(baselineSFCDPulSpikeVPulFieldLF' < 0.05) | all(baselineSFCDPulSpikeVPulFieldHF' < 0.03));
+
+nSubPairs = size(baselineSFCDPulSpikeVPulFieldLF(goodPairs,:), 1);
+sfcAllLF = [cueTargetDelaySFCDPulSpikeVPulFieldP3LF(goodPairs,:); cueTargetDelaySFCDPulSpikeVPulFieldP1LF(goodPairs,:)];
+sfcAllHF = [cueTargetDelaySFCDPulSpikeVPulFieldP3HF(goodPairs,:); cueTargetDelaySFCDPulSpikeVPulFieldP1HF(goodPairs,:)];
+condLogical = false(nSubPairs * 2, 2);
+for i = 1:2
+    condLogical(((i-1)*nSubPairs+1):(i*nSubPairs), i) = 1;
+end
+
+grcPlotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcCTDelayYBoundsLF; sfcCTDelayYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+    
+plotFileName = sprintf('%s/allSessions-dPulSpike-vPulField-ctDelaySFC-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot across-subdiv SFC for pairs with nonflat baseline SFC
+
+% goodPairs = true(size(baselineSFCVPulSpikeDPulFieldLF, 1), 1);
+goodPairs = ~(all(baselineSFCVPulSpikeDPulFieldLF' < 0.05) | all(baselineSFCVPulSpikeDPulFieldHF' < 0.03));
+
+nSubPairs = size(baselineSFCVPulSpikeDPulFieldLF(goodPairs,:), 1);
+sfcAllLF = [cueTargetDelaySFCVPulSpikeDPulFieldP3LF(goodPairs,:); cueTargetDelaySFCVPulSpikeDPulFieldP1LF(goodPairs,:)];
+sfcAllHF = [cueTargetDelaySFCVPulSpikeDPulFieldP3HF(goodPairs,:); cueTargetDelaySFCVPulSpikeDPulFieldP1HF(goodPairs,:)];
+condLogical = false(nSubPairs * 2, 2);
+for i = 1:2
+    condLogical(((i-1)*nSubPairs+1):(i*nSubPairs), i) = 1;
+end
+
+grcPlotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcCTDelayYBoundsLF; sfcCTDelayYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+    
+plotFileName = sprintf('%s/allSessions-vPulSpike-dPulField-ctDelaySFC-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot across-subdiv SFC for pairs with nonflat baseline SFC
+
+% goodPairs = true(size(baselineSFCDPulSpikeVPulFieldLF, 1), 1);
+goodPairs = ~(all(baselineSFCDPulSpikeVPulFieldLF' < 0.05) | all(baselineSFCDPulSpikeVPulFieldHF' < 0.03));
+
+nSubPairs = size(baselineSFCDPulSpikeVPulFieldLF(goodPairs,:), 1);
+sfcAllLF = [arrayResponseHoldSFCDPulSpikeVPulFieldP3LF(goodPairs,:); arrayResponseHoldSFCDPulSpikeVPulFieldP1LF(goodPairs,:)];
+sfcAllHF = [arrayResponseHoldSFCDPulSpikeVPulFieldP3HF(goodPairs,:); arrayResponseHoldSFCDPulSpikeVPulFieldP1HF(goodPairs,:)];
+condLogical = false(nSubPairs * 2, 2);
+for i = 1:2
+    condLogical(((i-1)*nSubPairs+1):(i*nSubPairs), i) = 1;
+end
+
+grcPlotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcArrayRespYBoundsLF; sfcArrayRespYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+    
+plotFileName = sprintf('%s/allSessions-dPulSpike-vPulField-arrayResponseHoldSFC-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot across-subdiv SFC for pairs with nonflat baseline SFC
+
+% goodPairs = true(size(baselineSFCVPulSpikeDPulFieldLF, 1), 1);
+goodPairs = ~(all(baselineSFCVPulSpikeDPulFieldLF' < 0.05) | all(baselineSFCVPulSpikeDPulFieldHF' < 0.03));
+
+nSubPairs = size(baselineSFCVPulSpikeDPulFieldLF(goodPairs,:), 1);
+sfcAllLF = [arrayResponseHoldSFCVPulSpikeDPulFieldP3LF(goodPairs,:); arrayResponseHoldSFCVPulSpikeDPulFieldP1LF(goodPairs,:)];
+sfcAllHF = [arrayResponseHoldSFCVPulSpikeDPulFieldP3HF(goodPairs,:); arrayResponseHoldSFCVPulSpikeDPulFieldP1HF(goodPairs,:)];
+condLogical = false(nSubPairs * 2, 2);
+for i = 1:2
+    condLogical(((i-1)*nSubPairs+1):(i*nSubPairs), i) = 1;
+end
+
+grcPlotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcArrayRespYBoundsLF; sfcArrayRespYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+    
+plotFileName = sprintf('%s/allSessions-vPulSpike-dPulField-arrayResponseHoldSFC-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot across-subdiv SFC for pairs with nonflat baseline SFC
+
+% goodPairs = true(size(baselineSFCDPulSpikeVPulFieldLF, 1), 1);
+goodPairs = ~(all(baselineSFCDPulSpikeVPulFieldLF' < 0.05) | all(baselineSFCDPulSpikeVPulFieldHF' < 0.03));
+
+nSubPairs = size(baselineSFCDPulSpikeVPulFieldLF(goodPairs,:), 1);
+sfcAllLF = [targetDimDelaySFCDPulSpikeVPulFieldP3LF(goodPairs,:); targetDimDelaySFCDPulSpikeVPulFieldP1LF(goodPairs,:)];
+sfcAllHF = [targetDimDelaySFCDPulSpikeVPulFieldP3HF(goodPairs,:); targetDimDelaySFCDPulSpikeVPulFieldP1HF(goodPairs,:)];
+condLogical = false(nSubPairs * 2, 2);
+for i = 1:2
+    condLogical(((i-1)*nSubPairs+1):(i*nSubPairs), i) = 1;
+end
+
+grcPlotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcTDDelayYBoundsLF; sfcTDDelayYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+    
+plotFileName = sprintf('%s/allSessions-dPulSpike-vPulField-tdDelaySFC-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%% only plot across-subdiv SFC for pairs with nonflat baseline SFC
+
+% goodPairs = true(size(baselineSFCVPulSpikeDPulFieldLF, 1), 1);
+goodPairs = ~(all(baselineSFCVPulSpikeDPulFieldLF' < 0.05) | all(baselineSFCVPulSpikeDPulFieldHF' < 0.03));
+
+nSubPairs = size(baselineSFCVPulSpikeDPulFieldLF(goodPairs,:), 1);
+sfcAllLF = [targetDimDelaySFCVPulSpikeDPulFieldP3LF(goodPairs,:); targetDimDelaySFCVPulSpikeDPulFieldP1LF(goodPairs,:)];
+sfcAllHF = [targetDimDelaySFCVPulSpikeDPulFieldP3HF(goodPairs,:); targetDimDelaySFCVPulSpikeDPulFieldP1HF(goodPairs,:)];
+condLogical = false(nSubPairs * 2, 2);
+for i = 1:2
+    condLogical(((i-1)*nSubPairs+1):(i*nSubPairs), i) = 1;
+end
+
+grcPlotLfpPower2(sfcAllLF, sfcAllHF, fAxisLF, fAxisHF, condLogical, ...
+        'xBounds', [paramsLF.fpass; paramsHF.fpass(1) 80], ...
+        'yBounds', [sfcTDDelayYBoundsLF; sfcTDDelayYBoundsHF], ...
+        'cols', [p3Col; p1Col], ...
+        'lineLabels', {'Attend-RF', 'Attend-Away'}, ...
+        'ylabelText', 'Coherence', ...
+        'titleText', '', ...
+        'doDB', 0);
+    
+plotFileName = sprintf('%s/allSessions-vPulSpike-dPulField-tdDelaySFC-baselineRefined-%s-v%d.png', outputDir, ref, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+%%
+goodPairs = ~(all(baselineSFCDPulSpikeVPulFieldLF' < 0.05) | all(baselineSFCDPulSpikeVPulFieldHF' < 0.03));
+
+sfcP3 = cueTargetDelaySFCDPulSpikeVPulFieldP3HF(goodPairs,:);
+sfcP1 = cueTargetDelaySFCDPulSpikeVPulFieldP1HF(goodPairs,:);
+chanNames = dPulSpikeVPulFieldNames(goodPairs,:);
+
+plotFileBaseName = sprintf('%s/allSessions-ctDelaySFC-dPulSpikeVPulField-P3VsP1-HF-baselineRefined-%s-v%d', outputDir, ref, v);
+makeTinyPlotsOfPopulationPower(sfcP3, zeros(size(sfcP3)), sfcP1, zeros(size(sfcP1)), fAxisHF, chanNames, ...
+        sfcYBounds, sprintf('Cue-Target Delay SFC - dPul Spikes - vPul Field (%d-%d Hz, %s)', round(fAxisHF([1 end])), ref), plotFileBaseName);
+
+
+
 
 %% inspect cue-target power in vPul at 8-12 Hz
 fBounds = [8 12];
