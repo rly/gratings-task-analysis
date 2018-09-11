@@ -31,7 +31,7 @@ assert(numel(muaChannelsToLoad) == 1);
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, muaChannelsToLoad, 'VEPM', 'MUA_VEPM', 1, 0);
+        sessionInd, muaChannelsToLoad, 'VEPM', 'MUA_VEPM', 0, 1, 0);
 sessionName = R.sessionName;
 
 %% find nonsparse blocks
@@ -288,7 +288,7 @@ if doPlot
 
     %% plot spike waveform
     axes('Position', [waveformLeft1 waveformBtm waveformW waveformH]); 
-    plotSpikeWaveform(D, j, 1);
+    plotSpikeWaveform(D.allUnitStructs, 1);
 
     %% info
     writeUnitInfo(muaStruct, axBig, -0.03, infoTextTop);
