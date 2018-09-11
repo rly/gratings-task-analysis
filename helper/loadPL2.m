@@ -254,7 +254,7 @@ if isLoadSortedSua
     xlRange = 'A2:G3000';
 
     [sortQualityNotesNums,sortQualityNotesSessions] = xlsread(sortQualityNotesFileName, xlsSheet, xlRange);
-    assert(size(sortQualityNotesNums, 2) == 4);
+    assert(size(sortQualityNotesNums, 2) == 6);
     assert(size(sortQualityNotesNums, 1) == size(sortQualityNotesSessions, 1));
     [sortQualityNotesNums,i] = trimNanRows(sortQualityNotesNums);
     sortQualityNotesSessions(i) = [];
