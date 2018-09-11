@@ -21,7 +21,10 @@ end
 nSessions = numel(sessionInds);
 nUnitsApprox = nSessions * 2; % should be equal or an underestimate
 
+esFileNames = cell(nUnitsApprox, 1);
 unitNames = cell(nUnitsApprox, 1);
+meanWfs = cell(nUnitsApprox, 1);
+physClass = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 isSignificantResponseVsPreviousPeriod = false(nUnitsApprox, 4);
 % isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
@@ -86,7 +89,10 @@ for i = 1:nSessions
     currentUnitIndsAll{i} = currentUnitInds;
     unitCount = unitCount + numel(S.unitNames);
     
+    esFileNames(currentUnitInds) = S.esFileNames;
     unitNames(currentUnitInds) = S.unitNames; % TODO include sessionInd
+    meanWfs(currentUnitInds,:) = S.meanWfs;
+    physClass(currentUnitInds,:) = S.physClass;
     isSignificantResponseVsBaseline(currentUnitInds,:) = S.isSignificantResponseVsBaseline;
     isSignificantResponseVsPreviousPeriod(currentUnitInds,:) = S.isSignificantResponseVsPreviousPeriod;
 %     isSignificantResponseVsBootstrapBaseline(currentUnitInds,:) = S.isSignificantResponseVsBootstrapBaseline;
@@ -170,6 +176,9 @@ for i = 1:nSessions
     targetDimDelayNoiseCorrAll{i} = S.targetDimDelayNoiseCorr;
 end
 clear S;
+
+% convert cell array to 2d array
+meanWfs = cell2mat(meanWfs);
 
 % initialize using exact unit count. otherwise lots of 0s
 cueTargetDelayNoiseCorr = nan(unitCount, unitCount, nLoc);
@@ -488,6 +497,43 @@ fprintf('\t%d (%d%%) has InRF P3 (significantly suppressed response to P1 for th
 
 cols = lines(6);
 
+%% plot all waveforms
+tWf = (-16:40) / 40000 * 1000; % ms
+
+figure_tr_inch(6, 6);
+plot(tWf, meanWfs');
+title(sprintf('Mean Waveforms (N=%d)', size(meanWfs, 1)));
+grid on;
+
+precondition = isInPulvinar & isSignificantCueResponseInc;
+% figure_tr_inch(6, 6);
+% plot(tWf, meanWfs(precondition,:)');
+% title(sprintf('Mean Waveforms (N=%d)', size(meanWfs(precondition,:), 1)));
+% grid on;
+% set(gca, 'XMinorGrid', 'on');
+
+meanWfSub = meanWfs(precondition,:);
+physClassSub = physClass(precondition);
+figure_tr_inch(8, 5);
+hold on;
+for i = 1:size(meanWfSub, 1)
+    if strcmp(physClassSub{i}, 'Narrow-Spiking')
+        plot(tWf, meanWfSub(i,:)', 'r-');
+    elseif strcmp(physClassSub{i}, 'Broad-Spiking')
+        plot(tWf, meanWfSub(i,:)', 'b-');
+    else
+        plot(tWf, meanWfSub(i,:)', 'k:');
+    end
+end
+title(sprintf('Mean Waveforms (N=%d)', size(meanWfs(precondition,:), 1)));
+grid on;
+set(gca, 'XTick', -0.4:0.1:1);
+
+
+
+%% investigate narrow-spiking cells
+
+
 %% plot pre-saccadic activity aligned to y=0 at saccade
 preSaccadeWindowOffset = [-0.2 0];
 preSaccadeWindowIndices = getTimeLogicalWithTolerance(exitFixationT, preSaccadeWindowOffset);
@@ -662,7 +708,7 @@ export_fig(plotFileName, '-nocrop');
 % https://stats.stackexchange.com/questions/8019/averaging-correlation-values
 % or transform the r values using Fisher transform
 
-condition = isSignificantCueResponseInc & isInPulvinar;% & rtFiringRateStruct.spearmanCorrCoefPValHoldInRFCTDelayRT < 0.05;
+condition = isSignificantCueResponseInc & isInVPulvinar;% & rtFiringRateStruct.spearmanCorrCoefPValHoldInRFCTDelayRT < 0.05;
 % isInDPulvinar;
 fprintf('N = %d\n', sum(condition));
 corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelInRFCTDelayRT(condition);
@@ -738,6 +784,63 @@ arrayfun(@(x) ylim(x, yBounds), plotHs);
 plotFileName = sprintf('%s/allSessions-rtVsFiringRateCorr-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%% release trials only plot
+figure_tr_inch(4, 6);
+set(gcf, 'Color', 'w');
+
+binStep = 0.075;
+xBounds = [-ceil(maxAbs / binStep) ceil(maxAbs / binStep)] * binStep;
+histBinEdges = xBounds(1):binStep:xBounds(2);
+
+plotHs = nan(2, 1);
+plotHs(1) = subaxis(2, 1, 1);
+hold on;
+hist1 = histogram(corrCoefRelInRFCTDelayRTSub, histBinEdges);
+hist1.FaceColor = inRFCol;
+xlim(xBounds);
+ylabel('Number of Units');
+lh = legend('Attend RF', 'Location', 'NorthWest');
+set(lh, 'box', 'off');
+
+plotHs(2) = subaxis(2, 1, 2);
+hold on;
+hist2 = histogram(corrCoefRelExRFCTDelayRTSub, histBinEdges);
+hist2.FaceColor = exRFCol;
+xlim(xBounds);
+xlabel('Correlation Coefficient (Delay FR vs RT)');
+ylabel('Number of Units');
+lh = legend('Attend Away', 'Location', 'NorthWest');
+set(lh, 'box', 'off');
+
+% set all y bounds the same
+allYBounds = arrayfun(@(x) ylim(x), plotHs, 'UniformOutput', false);
+allYBounds = [allYBounds{:}];
+yBounds = [min(allYBounds) max(allYBounds)];
+arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
+arrayfun(@(x) ylim(x, yBounds), plotHs);
+
+plotFileName = sprintf('%s/allSessions-relRTVsFiringRateCorr-vPul-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+% figure_tr_inch(4, 3);
+% set(gcf, 'Color', 'w');
+% 
+% hold on;
+% hist1 = histogram(corrCoefRelInRFCTDelayRTSub - corrCoefRelExRFCTDelayRTSub, histBinEdges);
+% hist1.FaceColor = [0.7 0 0.9];
+% plot([0 0], yBounds, 'Color', 0.3*ones(3, 1))
+% xlim(xBounds);
+% ylabel('Number of Units');
+% lh = legend('Attend RF - Attend Away', 'Location', 'NorthWest');
+% set(lh, 'box', 'off');
+% 
+signrank(atanh(corrCoefRelInRFCTDelayRTSub))
+signrank(atanh(corrCoefRelExRFCTDelayRTSub))
+
+signrank(atanh(corrCoefRelInRFCTDelayRTSub) - atanh(corrCoefRelExRFCTDelayRTSub))
+
 
 %% mean firing rates in baseline
 goodUnits = isInDPulvinar & isSignificantCueResponseInc;
@@ -1278,8 +1381,8 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% array hold response mid noise correlations P3 vs P1
-goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
-goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldMidBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldMidBal.all]' >= 0;
 
 [~,ax1,ax2,ax3] = plotNoiseCorrDiff(arrayResponseHoldMidNoiseCorr, goodUnitsDPul, goodUnitsVPul);
 xlabel(ax1, 'Noise Correlation Attend-RF');
@@ -1294,8 +1397,8 @@ plotFileName = sprintf('%s/allSessions-arrayResponseHoldMidNoiseCorrDiff-v%d.png
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
-goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldMidBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldMidBal.all]' >= 0;
 
 [~,ax1,ax2,ax3] = plotNoiseCorrDiff(arrayResponseHoldMidNoiseCorr, goodUnitsDPul, false(size(goodUnitsVPul)));
 xlabel(ax1, 'Noise Correlation Attend-RF');
@@ -1310,8 +1413,8 @@ plotFileName = sprintf('%s/allSessions-dPul-arrayResponseHoldMidNoiseCorrDiff-v%
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
-goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldMidBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldMidBal.all]' >= 0;
 
 [~,ax1,ax2,ax3] = plotNoiseCorrDiff(arrayResponseHoldMidNoiseCorr, false(size(goodUnitsDPul)), goodUnitsVPul);
 xlabel(ax1, 'Noise Correlation Attend-RF');
@@ -1327,8 +1430,8 @@ fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
 %% array hold response late noise correlations P3 vs P1
-goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
-goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldLateBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldLateBal.all]' >= 0;
 
 [~,ax1,ax2,ax3] = plotNoiseCorrDiff(arrayResponseHoldLateNoiseCorr, goodUnitsDPul, goodUnitsVPul);
 xlabel(ax1, 'Noise Correlation Attend-RF');
@@ -1343,8 +1446,8 @@ plotFileName = sprintf('%s/allSessions-arrayResponseHoldLateNoiseCorrDiff-v%d.pn
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
-goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldLateBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldLateBal.all]' >= 0;
 
 [~,ax1,ax2,ax3] = plotNoiseCorrDiff(arrayResponseHoldLateNoiseCorr, goodUnitsDPul, false(size(goodUnitsVPul)));
 xlabel(ax1, 'Noise Correlation Attend-RF');
@@ -1359,8 +1462,8 @@ plotFileName = sprintf('%s/allSessions-dPul-arrayResponseHoldLateNoiseCorrDiff-v
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
-goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldLateBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.arrayResponseHoldLateBal.all]' >= 0;
 
 [~,ax1,ax2,ax3] = plotNoiseCorrDiff(arrayResponseHoldLateNoiseCorr, false(size(goodUnitsDPul)), goodUnitsVPul);
 xlabel(ax1, 'Noise Correlation Attend-RF');
@@ -1375,9 +1478,9 @@ plotFileName = sprintf('%s/allSessions-vPul-arrayResponseHoldLateNoiseCorrDiff-v
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
-%% target dim delay noise correlations P3 vs P1
-goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
-goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.cueTargetDelay.all]' >= 0;
+%% target-dim delay noise correlations P3 vs P1
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.targetDimDelayBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.targetDimDelayBal.all]' >= 0;
 
 [~,ax1,ax2,ax3] = plotNoiseCorrDiff(targetDimDelayNoiseCorr, goodUnitsDPul, goodUnitsVPul);
 xlabel(ax1, 'Noise Correlation Attend-RF');
@@ -1388,7 +1491,39 @@ xlabel(ax3, 'Noise Correlation Difference');
 ylabel(ax2, 'Number of Pairs');
 ylabel(ax3, 'Number of Pairs');
 
-plotFileName = sprintf('%s/allSessions-targetDimDelayNoiseCorrDiff-v%d.png', summaryDataDir, v);
+plotFileName = sprintf('%s/allSessions-tdDelayNoiseCorrDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.targetDimDelayBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.targetDimDelayBal.all]' >= 0;
+
+[~,ax1,ax2,ax3] = plotNoiseCorrDiff(targetDimDelayNoiseCorr, goodUnitsDPul, false(size(goodUnitsVPul)));
+xlabel(ax1, 'Noise Correlation Attend-RF');
+ylabel(ax1, 'Noise Correlation Attend-Away');
+title(ax1, 'All Within-Subdivision Pairs');
+xlabel(ax2, 'Noise Correlation Difference');
+xlabel(ax3, 'Noise Correlation Difference');
+ylabel(ax2, 'Number of Pairs');
+ylabel(ax3, 'Number of Pairs');
+
+plotFileName = sprintf('%s/allSessions-dPul-tdDelayNoiseCorrDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+goodUnitsDPul = isInDPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.targetDimDelayBal.all]' >= 0;
+goodUnitsVPul = isInVPulvinar & isSignificantCueResponseInc & isInRFP3 & [averageFiringRatesByCount.targetDimDelayBal.all]' >= 0;
+
+[~,ax1,ax2,ax3] = plotNoiseCorrDiff(targetDimDelayNoiseCorr, false(size(goodUnitsDPul)), goodUnitsVPul);
+xlabel(ax1, 'Noise Correlation Attend-RF');
+ylabel(ax1, 'Noise Correlation Attend-Away');
+title(ax1, 'All Within-Subdivision Pairs');
+xlabel(ax2, 'Noise Correlation Difference');
+xlabel(ax3, 'Noise Correlation Difference');
+ylabel(ax2, 'Number of Pairs');
+ylabel(ax3, 'Number of Pairs');
+
+plotFileName = sprintf('%s/allSessions-vPul-tdDelayNoiseCorrDiff-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
@@ -1479,7 +1614,7 @@ stop
 %% mean and image plots per-condition baseline-corrected normalized
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
-subdivisions = {'PulCueInc', 'PulCueDec', 'vPul', 'dPul'};
+subdivisions = {'dPulCueInc', 'vPulCueInc'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
     yBounds = [-0.25 0.5];
