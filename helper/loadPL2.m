@@ -251,7 +251,7 @@ if isLoadSortedSua
     %% read spike sorting quality metrics
     sortQualityNotesFileName = 'spike sorting notes.xlsx';
     xlsSheet = 1;
-    xlRange = 'A2:E3000';
+    xlRange = 'A2:G3000';
 
     [sortQualityNotesNums,sortQualityNotesSessions] = xlsread(sortQualityNotesFileName, xlsSheet, xlRange);
     assert(size(sortQualityNotesNums, 2) == 4);
@@ -263,6 +263,8 @@ if isLoadSortedSua
     % sortQualityNotesNums(:,2) = unit id (0 = unsorted)
     % sortQualityNotesNums(:,3) = 0 or 1 if waveform has typical shape
     % sortQualityNotesNums(:,4) = 0-5 quality of unit separation
+    % sortQualityNotesNums(:,5) = start time of unit in seconds
+    % sortQualityNotesNums(:,6) = end time of unit in seconds
 
     % save each unit into D
     D.allSpikeStructs = [];
@@ -305,6 +307,16 @@ if isLoadSortedSua
                 continue;
             end
             
+            unitStartTime = sortQualityNotesNums(qualityNotesMatchInd,5);
+            unitEndTime = sortQualityNotesNums(qualityNotesMatchInd,6);
+            if isempty(unitStartTime)
+                unitStartTime = D.blockStartTimes(1);
+            end
+            if isempty(unitEndTime)
+                unitEndTime = D.blockStopTimes(end);
+            end
+            sortComments = sortQualityNotesNums(qualityNotesMatchInd,7);
+            
             unitInd = unitInd + 1;
             unitMatch = suaData(:,2) == j;
             spikeStruct = struct();
@@ -319,6 +331,9 @@ if isLoadSortedSua
             spikeStruct.Fs = spikeFs;
             spikeStruct.hasTypicalWaveformShape = hasTypicalWaveformShape;
             spikeStruct.separationQuality = separationQuality;
+            spikeStruct.unitStartTime = unitStartTime;
+            spikeStruct.unitEndTime = unitEndTime;
+            spikeStruct.sortComments = sortComments;
             % get threshold data from muaData mat file
             spikeStruct.threshold = nanmean(muaData.thresholdParams.thresholds); % mV
             spikeStruct.thresholdTime = (muaData.thresholdParams.nPreThresholdSamples + 1) / spikeFs;

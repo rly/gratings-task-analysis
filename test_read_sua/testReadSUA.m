@@ -1,10 +1,10 @@
 %% read spike sorting quality metrics
 sortQualityNotesFileName = 'spike sorting notes.xlsx';
 xlsSheet = 1;
-xlRange = 'A2:E3000';
+xlRange = 'A2:G3000';
 
 [sortQualityNotesNums,sortQualityNotesSessions] = xlsread(sortQualityNotesFileName, xlsSheet, xlRange);
-assert(size(sortQualityNotesNums, 2) == 4);
+assert(size(sortQualityNotesNums, 2) == 6);
 assert(size(sortQualityNotesNums, 1) == size(sortQualityNotesSessions, 1));
 [sortQualityNotesNums,i] = trimNanRows(sortQualityNotesNums);
 sortQualityNotesSessions(i) = [];
@@ -13,12 +13,15 @@ sortQualityNotesSessions(i) = [];
 % sortQualityNotesNums(:,2) = unit id (0 = unsorted)
 % sortQualityNotesNums(:,3) = 0 or 1 if waveform has typical shape
 % sortQualityNotesNums(:,4) = 0-5 quality of unit separation
+% sortQualityNotesNums(:,5) = start time of unit in seconds
+% sortQualityNotesNums(:,6) = end time of unit in seconds
 
 %% load SUA
 fileNames = dir('C:\Users\Ryan\Documents\MATLAB\gratings-task-data\MUA\*-SUA_*.mat');
 nFiles = numel(fileNames);
 
 wfs = cell(nFiles, 1); % prelalocate with underestimate
+meanWfs = cell(nFiles, 1); % prelalocate with underestimate
 sessionNames = cell(nFiles, 1);
 channelNum = nan(nFiles, 1);
 unitIndInChannel = nan(nFiles, 1);
@@ -52,8 +55,9 @@ for i = 1:nFiles
         sessionNames{unitCount} = sessionName;
         channelNum(unitCount) = channelInd + 1;
         unitIndInChannel(unitCount) = j;
-        wfs{unitCount} = suaData(unitMatch,4:end);
-                
+%         wfs{unitCount} = suaData(unitMatch,4:end);
+        meanWfs{unitCount} = mean(suaData(unitMatch,4:end));
+        
         qualityNotesMatchInd = strcmp(sortQualityNotesSessions, sessionName) & ...
                 sortQualityNotesNums(:,1) == channelNum(unitCount) & ...
                 sortQualityNotesNums(:,2) == unitIndInChannel(unitCount);
@@ -76,18 +80,19 @@ recordingInfo = readRecordingInfo(recordingInfoFileName);
 %% save
 % wfs variable is huge
 saveFileName = 'allSuaData.mat';
-save(saveFileName, 'recordingInfo', 'wfs', 'sessionNames', ...
-        'channelNum', 'unitIndInChannel', 'hasTypicalWaveformShape', ...
-        'separationQuality', 'unitCount', '-v7.3');
+% save(saveFileName, 'recordingInfo', 'wfs', 'meanWfs', 'sessionNames', ...
+%         'channelNum', 'unitIndInChannel', 'hasTypicalWaveformShape', ...
+%         'separationQuality', 'unitCount', '-v7.3');
     
 %% load
-clear;
-saveFileName = 'allSuaData.mat';
-load(saveFileName);
+% clear;
+% saveFileName = 'allSuaData.mat';
+% load(saveFileName);
 
 %% compute mean wfs
-meanWfs = cellfun(@mean, wfs, 'UniformOutput', false);
+% meanWfs = cellfun(@mean, wfs, 'UniformOutput', false);
 nUnits = unitCount;
+% clear wfs;
 
 %% determine whether each unit is in pulvinar
 isInPulvinar = false(nUnits, 1);
@@ -98,6 +103,9 @@ for i = 1:nUnits
         if any(channelNum(i) == [R.dPulChannels R.vPulChannels])
             isInPulvinar(i) = 1;
         end
+    end
+    if strcmp(sessionNames{i}(1:end-2), 'M201706') || strcmp(sessionNames{i}(1:end-2), 'M201705')
+        isInPulvinar(i) = 1; % temp until these units are localized
     end
 end
 
@@ -132,8 +140,14 @@ for i = 1:nUnits
 end
 troughToPeakTime(isnan(troughToPeakTime)) = [];
 
-figure;
+figure_tr_inch(6, 4);
 histogram(troughToPeakTime, 0:0.05:1);
+xlabel('Trough to Peak Duration (ms)');
+ylabel('Voltage (mV)');
+box off;
+
+plotFileName = 'troughToPeakDurations.png';
+export_fig(plotFileName, '-nocrop');
 
 %% plot all units considered as single units
 t = (-16:40) / 40;
