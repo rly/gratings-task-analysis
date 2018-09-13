@@ -275,7 +275,10 @@ for j = 1:nUnits
             fprintf('2\n'); assert(nTrialsRelInRF == numel(cueTargetDelayRelInRFRate));
             fprintf('3\n'); assert(nTrialsRelExRF == numel(cueTargetDelayRelExRFRate));
             fprintf('4\n'); assert(all(nTrialsHoldInRF == [numel(cueTargetDelayHoldInRFRate) numel(targetDimDelayHoldInRFRate)]));
-            fprintf('5\n'); assert(all(nTrialsHoldExRF == [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]));
+            fprintf('5\n'); 
+            nTrialsHoldExRF
+            [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]
+            assert(all(nTrialsHoldExRF == [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]));
             
             [~,sortRTHoldInRFInd] = sortBreakOrder(rtHoldInRF);
             [~,sortRTHoldExRFInd] = sortBreakOrder(rtHoldExRF);
