@@ -27,8 +27,8 @@ end
 
 tic;
 if isLoadMetaDataOnly
-    R.metaDataFileName = sprintf('%s-sua%d-mua%d-metadata.mat', R.pl2FileName(1:end-4), isLoadSortedSua, isLoadMua);
-    R.metaDataFilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.metaDataFileName);
+    R.metaDataFileName = sprintf('%s-sua%d-mua%d-gratings-metadata.mat', R.pl2FileName(1:end-4), isLoadSortedSua, isLoadMua);
+    R.metaDataFilePath = sprintf('%s/%s/%s', processedDataRootDir, sessionName, R.metaDataFileName);
     fprintf('Loading metadata %s...\n', R.metaDataFilePath);
     MD = load(R.metaDataFilePath);
     D = MD.MD;

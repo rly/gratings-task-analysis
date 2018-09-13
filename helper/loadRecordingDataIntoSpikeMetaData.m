@@ -1,5 +1,5 @@
 function MD = loadRecordingDataIntoSpikeMetaData(...
-        dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
+        processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
         sessionInd, channelsToLoad, isLoadSortedSua, isLoadMua)
 % read SUA/MUA data from PL2 file, trim the spike times based on the blocks
 % of interest, and save only the cell array of unit structs and the block
@@ -65,7 +65,7 @@ if isLoadLfp
 end
 
 %% save meta data into smaller file
-R.metaDataFileName = sprintf('%s-sua%d-mua%d-metadata.mat', R.pl2FileName(1:end-4), isLoadSortedSua, isLoadMua);
-R.metaDataFilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.metaDataFileName);
+R.metaDataFileName = sprintf('%s-sua%d-mua%d-gratings-metadata.mat', R.pl2FileName(1:end-4), isLoadSortedSua, isLoadMua);
+R.metaDataFilePath = sprintf('%s/%s/%s', processedDataRootDir, sessionName, R.metaDataFileName);
 fprintf('Writing metadata %s...\n', R.metaDataFilePath);
 MD = createMetaDataFile(D, R.metaDataFilePath);
