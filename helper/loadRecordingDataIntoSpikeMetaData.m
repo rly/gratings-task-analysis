@@ -33,16 +33,20 @@ if ~isempty(channelsToLoad)
     R.lfpChannelsToLoad = channelsToLoad;
 end
 
+processedDataDirPre = sprintf('%s/%s', processedDataRootDir, sessionName);
+if exist(processedDataDirPre, 'dir') == 0
+    mkdir(processedDataDirPre);
+end
+processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
+if exist(processedDataDir, 'dir') == 0
+    mkdir(processedDataDir);
+end
+
 tic;
 fprintf('Loading data %s...\n', pl2FilePath);
 D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
         R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
 fprintf('... done (%0.2f s).\n', toc);
-
-processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
-if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
-end
 
 %% get block indices
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
