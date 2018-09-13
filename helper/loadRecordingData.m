@@ -25,6 +25,7 @@ if ~isempty(channelsToLoad)
     R.lfpChannelsToLoad = channelsToLoad;
 end
 
+tic;
 if isLoadMetaDataOnly
     R.metaDataFileName = sprintf('%s-sua%d-mua%d-metadata.mat', R.pl2FileName(1:end-4), isLoadSortedSua, isLoadMua);
     R.metaDataFilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.metaDataFileName);
@@ -36,6 +37,7 @@ else
     D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
             R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
 end
+fprintf('... done (%0.2f s).\n', toc);
 
 processedDataDirPre = sprintf('%s/%s', processedDataRootDir, sessionName);
 if exist(processedDataDirPre, 'dir') == 0
@@ -45,7 +47,6 @@ processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
 if exist(processedDataDir, 'dir') == 0
     mkdir(processedDataDir);
 end
-fprintf('... done (%0.2f s).\n', toc);
 
 %% get block indices
 assert(numel(R.blockNames) == numel(D.blockStartTimes));

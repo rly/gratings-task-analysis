@@ -32,6 +32,7 @@ if ~isempty(channelsToLoad)
     R.lfpChannelsToLoad = channelsToLoad;
 end
 
+tic;
 fprintf('Loading data %s...\n', pl2FilePath);
 D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
         R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
