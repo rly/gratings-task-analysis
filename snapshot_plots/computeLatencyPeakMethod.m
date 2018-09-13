@@ -18,6 +18,9 @@ function latencyInfo = computeLatencyPeakMethod(spdf, eventT, ...
 % that peak.
 
 fprintf('10\n');
+spdf
+numel(eventT)
+numel(eventTAnalysisLogical)
 assert(all(~isnan(spdf)));
 assert(numel(eventT) == numel(eventTAnalysisLogical));
 fprintf('11\n');
