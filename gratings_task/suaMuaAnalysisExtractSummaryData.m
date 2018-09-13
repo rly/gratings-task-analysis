@@ -146,6 +146,7 @@ for j = 1:nUnits
             if unitCount == 1
                 isLocUsed = ES.isLocUsed;
             else
+                fprintf('1\n');
                 assert(all(isLocUsed == ES.isLocUsed));
             end
 
@@ -271,10 +272,10 @@ for j = 1:nUnits
             topThirdIndicesHoldExRF = round(nTrialsHoldExRF * 2/3)+1:nTrialsHoldExRF;
             bottomThirdIndicesHoldExRF = 1:round(nTrialsHoldExRF * 1/3);
             
-            assert(nTrialsRelInRF == numel(cueTargetDelayRelInRFRate));
-            assert(nTrialsRelExRF == numel(cueTargetDelayRelExRFRate));
-            assert(all(nTrialsHoldInRF == [numel(cueTargetDelayHoldInRFRate) numel(targetDimDelayHoldInRFRate)]));
-            assert(all(nTrialsHoldExRF == [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]));
+            fprintf('2\n'); assert(nTrialsRelInRF == numel(cueTargetDelayRelInRFRate));
+            fprintf('3\n'); assert(nTrialsRelExRF == numel(cueTargetDelayRelExRFRate));
+            fprintf('4\n'); assert(all(nTrialsHoldInRF == [numel(cueTargetDelayHoldInRFRate) numel(targetDimDelayHoldInRFRate)]));
+            fprintf('5\n'); assert(all(nTrialsHoldExRF == [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]));
             
             [~,sortRTHoldInRFInd] = sortBreakOrder(rtHoldInRF);
             [~,sortRTHoldExRFInd] = sortBreakOrder(rtHoldExRF);
@@ -346,7 +347,7 @@ for j = 1:nUnits
             
             % make session-wise RT plots while processing the first unit
             if unitCount == 1
-                assert(all(ES.UE.rt >= 0.28 & ES.UE.rt <= 0.8)); 
+                fprintf('6\n'); assert(all(ES.UE.rt >= 0.28 & ES.UE.rt <= 0.8)); 
                 checkRTStatAlpha = 0.05;
                 plotFileName = sprintf('%s/%s-sessionInd%d-rtDist-v%d.png', outputDir, sessionName, sessionInd, v);
                 plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
@@ -364,8 +365,8 @@ for j = 1:nUnits
                     warning('Hold Trial median RT is significantly different between InRF and ExRF conditions (p = %0.3f)\n', p);
                 end
                 
-                assert(all(ES.UE.cueTargetDelayDur >= 450 & ES.UE.cueTargetDelayDur <= 850));
-                assert(all(ES.UE.cueTargetDelayDur >= 250 & ES.UE.cueTargetDelayDur <= 1150));
+                fprintf('7\n'); assert(all(ES.UE.cueTargetDelayDur >= 450 & ES.UE.cueTargetDelayDur <= 850));
+                fprintf('8\n'); assert(all(ES.UE.cueTargetDelayDur >= 250 & ES.UE.cueTargetDelayDur <= 1150));
                 figure_tr_inch(12, 5);
                 subaxis(1, 2, 1);
                 histogram(ES.UE.cueTargetDelayDur, 450:25:850);
@@ -638,7 +639,7 @@ for j = 1:nUnits
                     sum(concatTargetDimWindowIndices) + ...
                     sum(concatExitFixationWindowIndices);
             tStep = mean(diff(cueOnsetT));
-            assert(all((tStep - diff(cueOnsetT)) < 1e-8));
+            fprintf('9\n'); assert(all((tStep - diff(cueOnsetT)) < 1e-8));
             tStart = cueOnsetT(find(concatCueOnsetWindowIndices, 1, 'first'));
             tEnd = tStart + (nConcatValues - 1) * tStep;
             spdfInfo.concatCueOnsetT = tStart:tStep:tEnd;
