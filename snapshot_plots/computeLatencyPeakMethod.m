@@ -17,13 +17,8 @@ function latencyInfo = computeLatencyPeakMethod(spdf, eventT, ...
 % the latency and the time of its associated peak cannot drop below 25% of
 % that peak.
 
-fprintf('10\n');
-spdf
-numel(eventT)
-numel(eventTAnalysisLogical)
 assert(all(~isnan(spdf)));
 assert(numel(eventT) == numel(eventTAnalysisLogical));
-fprintf('11\n');
 
 if isFindTrough
     % reverse the sign

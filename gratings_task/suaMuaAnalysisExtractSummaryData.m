@@ -279,6 +279,9 @@ for j = 1:nUnits
             [~,sortRTHoldInRFInd] = sortBreakOrder(rtHoldInRF);
             [~,sortRTHoldExRFInd] = sortBreakOrder(rtHoldExRF);
             
+            rfLocsUsed = false(nLoc, 1);
+            rfLocsUsed([inRFLoc exRFLoc]) = 1;
+            
             % slowest RTs
             targetDimByLocSlowThirdRT = cell(nLoc, 1);
             targetDimByLocSlowThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(topThirdIndicesHoldInRF));
@@ -286,7 +289,7 @@ for j = 1:nUnits
             targetDimSlowThirdRT.window = ES.targetDimBal.window;
             targetDimSlowThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
             targetDimSlowThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocSlowThirdRT, targetDimSlowThirdRT, ES.kernelSigma);
-            targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, ES.isLocUsed);
+            targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, rfLocsUsed);
             
             % fastest RTs
             targetDimByLocFastThirdRT = cell(nLoc, 1);
@@ -295,7 +298,7 @@ for j = 1:nUnits
             targetDimFastThirdRT.window = ES.targetDimBal.window;
             targetDimFastThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
             targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
-            targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, ES.isLocUsed);
+            targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, rfLocsUsed);
 
             fprintf('5a\n');
             % InRF only
