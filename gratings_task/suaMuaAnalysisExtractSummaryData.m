@@ -80,7 +80,7 @@ scriptName = 'SUA_MUA_GRATINGS';
 isZeroDistractors = 0;
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, 0);
+        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 1);
 sessionName = R.sessionName;
 areaName = R.areaName;
 

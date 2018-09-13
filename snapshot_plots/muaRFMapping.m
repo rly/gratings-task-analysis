@@ -22,7 +22,7 @@ assert(numel(muaChannelsToLoad) == 1);
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, muaChannelsToLoad, 'RFM_OLD', 'MUA_RFM', 1, 0);
+        sessionInd, muaChannelsToLoad, 'RFM_OLD', 'MUA_RFM', 0, 1, 0, 0);
 
 %%
 % task as of 1/10/17 (or earlier)

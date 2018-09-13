@@ -32,7 +32,7 @@ else
 end
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, 'LFP_RFM', 1, 1);
+        sessionInd, channelsToLoad, taskName, 'LFP_RFM', 0, 1, 1, 0);
 sessionName = R.sessionName;
 areaName = R.areaName;
 

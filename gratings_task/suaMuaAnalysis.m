@@ -50,7 +50,7 @@ end
 
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
         dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ...
-        taskName, scriptName, isLoadSortedSua, isLoadMua, 0);
+        taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 0);
 sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);

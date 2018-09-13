@@ -1,6 +1,6 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, rfMappingNewInfoFileName, rfMappingNewMode)
+        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, rfMappingNewInfoFileName, rfMappingNewMode)
 % loads MUA data and eyetracking/lever data into D struct and recording
 % metadata into R struct
 
@@ -14,7 +14,6 @@ end
 R = recordingInfo(sessionInd);
 sessionName = R.sessionName;
 pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
-fprintf('Loading %s...\n', pl2FilePath);
 
 %% load recording data
 isLoadSpkc = 0;
@@ -26,8 +25,17 @@ if ~isempty(channelsToLoad)
     R.lfpChannelsToLoad = channelsToLoad;
 end
 
-D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
+if isLoadMetaDataOnly
+    R.metaDataFileName = sprintf('%s-sua%d-mua%d-metadata.mat', R.pl2FileName(1:end-4), isLoadSortedSua, isLoadMua);
+    R.metaDataFilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.metaDataFileName);
+    fprintf('Loading metadata %s...\n', R.metaDataFilePath);
+    MD = load(R.metaDataFilePath);
+    D = MD.MD;
+else
+    fprintf('Loading data %s...\n', pl2FilePath);
+    D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
+            R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
+end
 
 processedDataDirPre = sprintf('%s/%s', processedDataRootDir, sessionName);
 if exist(processedDataDirPre, 'dir') == 0
@@ -77,7 +85,10 @@ blockName = strjoin(R.blockNames(R.blockIndices), '-');
 fprintf('Analyzing task name: %s, block names: %s.\n', taskName, blockName);
 
 %% remove spike and event times not during task to save memory
-D = trimSpikeTimesAndEvents(D, R.blockIndices);
-if isLoadLfp
-    D = adjustSpikeTimesLfpsAndEvents(D, R.blockIndices);
+% meta data already had spike times adjusted
+if ~isLoadMetaDataOnly
+    D = trimSpikeTimesAndEvents(D, R.blockIndices);
+    if isLoadLfp
+        D = adjustSpikeTimesLfpsAndEvents(D, R.blockIndices);
+    end
 end

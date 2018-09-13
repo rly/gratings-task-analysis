@@ -48,7 +48,7 @@ end
 
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
         dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannels, ...
-        taskName, scriptName, 1, 1);
+        taskName, scriptName, 1, 1, 0);
 sessionName = R.sessionName;
 areaName = R.areaName;
 

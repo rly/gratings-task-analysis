@@ -41,7 +41,7 @@ assert(numel(channelsToLoad) > 1);
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, 'RFM_NEW', 'LFP_RFM', 1, 1, rfMappingNewInfoFileName, rfMappingNewMode);
+        sessionInd, channelsToLoad, 'RFM_NEW', 'LFP_RFM', 0, 1, 1, 0, rfMappingNewInfoFileName, rfMappingNewMode);
 sessionName = R.sessionName;
 
 %%

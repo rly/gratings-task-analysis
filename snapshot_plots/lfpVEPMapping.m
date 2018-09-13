@@ -23,7 +23,7 @@ assert(numel(channelsToLoad) == 32);
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, 'VEPM', 'LFP_VEPM', 0, 1, 1);
+        sessionInd, channelsToLoad, 'VEPM', 'LFP_VEPM', 0, 1, 1, 0);
 sessionName = R.sessionName;
 areaName = R.areaName;
 

@@ -31,7 +31,7 @@ assert(numel(muaChannelsToLoad) == 1);
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, muaChannelsToLoad, 'VEPM', 'MUA_VEPM', 0, 1, 0);
+        sessionInd, muaChannelsToLoad, 'VEPM', 'MUA_VEPM', 0, 1, 0, 0);
 sessionName = R.sessionName;
 
 %% find nonsparse blocks
