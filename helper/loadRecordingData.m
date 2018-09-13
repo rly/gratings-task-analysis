@@ -25,10 +25,18 @@ if ~isempty(channelsToLoad)
     R.lfpChannelsToLoad = channelsToLoad;
 end
 
+processedDataDirPre = sprintf('%s/%s', processedDataRootDir, sessionName);
+if exist(processedDataDirPre, 'dir') == 0
+    mkdir(processedDataDirPre);
+end
+processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
+if exist(processedDataDir, 'dir') == 0
+    mkdir(processedDataDir);
+end
+
 tic;
 if isLoadMetaDataOnly
-    R.metaDataFileName = sprintf('%s-sua%d-mua%d-gratings-metadata.mat', R.pl2FileName(1:end-4), isLoadSortedSua, isLoadMua);
-    R.metaDataFilePath = sprintf('%s/%s/%s', processedDataRootDir, sessionName, R.metaDataFileName);
+    R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
     fprintf('Loading metadata %s...\n', R.metaDataFilePath);
     MD = load(R.metaDataFilePath);
     D = MD.MD;
@@ -38,15 +46,6 @@ else
             R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
 end
 fprintf('... done (%0.2f s).\n', toc);
-
-processedDataDirPre = sprintf('%s/%s', processedDataRootDir, sessionName);
-if exist(processedDataDirPre, 'dir') == 0
-    mkdir(processedDataDirPre);
-end
-processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
-if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
-end
 
 %% get block indices
 assert(numel(R.blockNames) == numel(D.blockStartTimes));

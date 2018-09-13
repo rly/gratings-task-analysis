@@ -1,5 +1,5 @@
 function MD = loadRecordingDataIntoSpikeMetaData(...
-        processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
+        dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
         sessionInd, channelsToLoad, isLoadSortedSua, isLoadMua)
 % read SUA/MUA data from PL2 file, trim the spike times based on the blocks
 % of interest, and save only the cell array of unit structs and the block
@@ -8,6 +8,7 @@ function MD = loadRecordingDataIntoSpikeMetaData(...
 % do this once to save time loading the full POL2 file for the sua/mua
 % analysis extract summary script and other summary scripts
 taskName = 'GRATINGS';
+scriptName = 'SUA_MUA_GRATINGS';
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
@@ -38,6 +39,11 @@ D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSorte
         R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
 fprintf('... done (%0.2f s).\n', toc);
 
+processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
+if exist(processedDataDir, 'dir') == 0
+    mkdir(processedDataDir);
+end
+
 %% get block indices
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 if strcmp(taskName, 'GRATINGS')
@@ -65,7 +71,6 @@ if isLoadLfp
 end
 
 %% save meta data into smaller file
-R.metaDataFileName = sprintf('%s-sua%d-mua%d-gratings-metadata.mat', R.pl2FileName(1:end-4), isLoadSortedSua, isLoadMua);
-R.metaDataFilePath = sprintf('%s/%s/%s', processedDataRootDir, sessionName, R.metaDataFileName);
+R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
 fprintf('Writing metadata %s...\n', R.metaDataFilePath);
 MD = createMetaDataFile(D, R.metaDataFilePath);
