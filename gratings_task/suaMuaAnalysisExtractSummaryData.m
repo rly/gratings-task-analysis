@@ -275,10 +275,7 @@ for j = 1:nUnits
             fprintf('2\n'); assert(nTrialsRelInRF == numel(cueTargetDelayRelInRFRate));
             fprintf('3\n'); assert(nTrialsRelExRF == numel(cueTargetDelayRelExRFRate));
             fprintf('4\n'); assert(all(nTrialsHoldInRF == [numel(cueTargetDelayHoldInRFRate) numel(targetDimDelayHoldInRFRate)]));
-            fprintf('5\n'); 
-            nTrialsHoldExRF
-            [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]
-            assert(all(nTrialsHoldExRF == [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]));
+            fprintf('5\n'); assert(all(nTrialsHoldExRF == [numel(cueTargetDelayHoldExRFRate) numel(targetDimDelayHoldExRFRate)]));
             
             [~,sortRTHoldInRFInd] = sortBreakOrder(rtHoldInRF);
             [~,sortRTHoldExRFInd] = sortBreakOrder(rtHoldExRF);
@@ -301,6 +298,7 @@ for j = 1:nUnits
             targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
             targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, ES.isLocUsed);
 
+            fprintf('5a\n');
             % InRF only
             diffTargetDimLatencySplitThirdsRT(unitCount) = targetDimSlowThirdRT.latencyInfoByLoc{inRFLoc}.latency - ...
                     targetDimFastThirdRT.latencyInfoByLoc{inRFLoc}.latency;
