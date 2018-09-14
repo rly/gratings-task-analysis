@@ -1,8 +1,8 @@
-function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
+% function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
-% clear;
-% readDataLocally;
-% sessionInds = 1:37;
+clear;
+readDataLocally;
+sessionInds = 1:37;
 
 v = 13;
 
@@ -840,6 +840,9 @@ signrank(atanh(corrCoefRelInRFCTDelayRTSub))
 signrank(atanh(corrCoefRelExRFCTDelayRTSub))
 
 signrank(atanh(corrCoefRelInRFCTDelayRTSub) - atanh(corrCoefRelExRFCTDelayRTSub))
+
+unitNamesSub = unitNames(condition);
+unitNamesSub(corrCoefRelInRFCTDelayRTSub < -0.2)
 
 
 %% mean firing rates in baseline
