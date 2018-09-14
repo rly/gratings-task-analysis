@@ -527,6 +527,32 @@ for j = 1:nUnits
             [rtFiringRateStruct(unitCount).spearmanCorrCoefHoldInRFTDDelayRT,rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldInRFTDDelayRT] = corr(targetDimDelayHoldInRFRate, rtHoldInRF, 'type', 'Spearman');
             [rtFiringRateStruct(unitCount).spearmanCorrCoefHoldExRFTDDelayRT,rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldExRFTDDelayRT] = corr(targetDimDelayHoldExRFRate, rtHoldExRF, 'type', 'Spearman');
             
+            maxPropTrialsNoSpikes = 0.75;
+            if sum(cueTargetDelayRelInRFRate == 0) / numel(cueTargetDelayRelInRFRate) > maxPropTrialsNoSpikes
+                rtFiringRateStruct(unitCount).spearmanCorrCoefRelInRFCTDelayRT = NaN;
+                rtFiringRateStruct(unitCount).spearmanCorrCoefPValRelInRFCTDelayRT = NaN;
+            end
+            if sum(cueTargetDelayRelExRFRate == 0) / numel(cueTargetDelayRelExRFRate) > maxPropTrialsNoSpikes
+                rtFiringRateStruct(unitCount).spearmanCorrCoefRelExRFCTDelayRT = NaN;
+                rtFiringRateStruct(unitCount).spearmanCorrCoefPValRelExRFCTDelayRT = NaN;
+            end
+            if sum(cueTargetDelayHoldInRFRate == 0) / numel(cueTargetDelayHoldInRFRate) > maxPropTrialsNoSpikes
+                rtFiringRateStruct(unitCount).spearmanCorrCoefHoldInRFCTDelayRT = NaN;
+                rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldInRFCTDelayRT = NaN;
+            end
+            if sum(cueTargetDelayHoldExRFRate == 0) / numel(cueTargetDelayHoldExRFRate) > maxPropTrialsNoSpikes
+                rtFiringRateStruct(unitCount).spearmanCorrCoefHoldExRFCTDelayRT = NaN;
+                rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldExRFCTDelayRT = NaN;
+            end
+            if sum(targetDimDelayHoldInRFRate == 0) / numel(targetDimDelayHoldInRFRate) > maxPropTrialsNoSpikes
+                rtFiringRateStruct(unitCount).spearmanCorrCoefHoldInRFTDDelayRT = NaN;
+                rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldInRFTDDelayRT = NaN;
+            end
+            if sum(targetDimDelayHoldExRFRate == 0) / numel(targetDimDelayHoldExRFRate) > maxPropTrialsNoSpikes
+                rtFiringRateStruct(unitCount).spearmanCorrCoefHoldExRFTDDelayRT = NaN;
+                rtFiringRateStruct(unitCount).spearmanCorrCoefPValHoldExRFTDDelayRT = NaN;
+            end
+            
             %%
             plotFileName = sprintf('%s/%s-%s-rtVsFiringScatter-v%d.png', processedDataDir, unitName, blockName, v);
             plotRTFiringRateCorrelation(cueTargetDelayRelInRFRate, ...
