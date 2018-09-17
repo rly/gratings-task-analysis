@@ -1,4 +1,5 @@
-% function lfpRFMappingNewMode1(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
+% function lfpRFMappingNewMode1(processedDataRootDir, dataDirRoot, muaDataDirRoot, ...
+%         recordingInfoFileName, sessionInd, channelsToLoad, rfMappingNewInfoFileName)
 % LFP RF Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
@@ -8,13 +9,13 @@
 % computationally intensive: shuffle trials
 % easier: shuffle conditions around map
 
-sessionInd = 28;
-channelsToLoad = 33:64;%1:32;
-recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
-processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';%'Y:/rly/gratings-task-analysis/processed_data/';
-dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data';%'Z:/ryanly/McCartney/originals/';
-muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170608';%'Y:/rly/simple-mua-detection/processed_data/';
-rfMappingNewInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/rfMappingNewInfo.csv';
+% sessionInd = 28;
+% channelsToLoad = 33:64;%1:32;
+% recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+% processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';%'Y:/rly/gratings-task-analysis/processed_data/';
+% dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data';%'Z:/ryanly/McCartney/originals/';
+% muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170608';%'Y:/rly/simple-mua-detection/processed_data/';
+% rfMappingNewInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/rfMappingNewInfo.csv';
 
 %% setup and load data
 v = 11;
@@ -43,6 +44,9 @@ assert(numel(channelsToLoad) > 1);
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
         sessionInd, channelsToLoad, 'RFM_NEW', 'LFP_RFM', 0, 1, 1, 0, rfMappingNewInfoFileName, rfMappingNewMode);
 sessionName = R.sessionName;
+areaName = R.areaName;
+
+plotFileNamePrefix = sprintf('%s-ind%d-%s-ch%d-ch%d-%s', sessionName, sessionInd, areaName, channelsToLoad([1 end]), blockName);
 
 %%
 doOutlierCheckPlot = 0;
@@ -91,7 +95,7 @@ simultSignalTol = 0.001; % tolerance level for simultaneous signals --
 % if two events are within this number of  seconds from each other, they 
 % represent the same signal. 
 flashDuration = 0.1;
-flashDurationTol = 0.04;
+flashDurationTol = 0.025;
 
 allEventTimes = D.events;
 flashEventTimes = D.events{6};
@@ -137,7 +141,11 @@ for i = 1:numel(flashEventTimes)
         foundEndEvts{j} = find(abs(allEventTimes{j} - flashOnset - flashDuration) < flashDurationTol);
         % there should be at most 1 event9, event10, etc within the
         % simultaneous signal tolerance of each flashEventTime
-        assert(numel(foundEndEvts{j}) <= 1)
+        if numel(foundEndEvts{j}) > 1
+            warning('Found %d offset events for event #%d after flash onset #%d at time %f\n', ...
+                    numel(foundEndEvts{j}), j, i, flashEventTimes(i));
+            foundEndEvts{j} = foundEndEvts{j}(1); % take the earliest if there are multiple
+        end
         if ~isempty(foundEndEvts{j})
             isFoundEndEvt = 1;
         end
@@ -186,30 +194,32 @@ assert((numel(flashEventTimes) - sum(flashesToSkip)) == fpCount);
 
 flashOnsets(flashesToSkip) = [];
 stimIDs(flashesToSkip) = [];
-nFlashes = numel(flashOnsets);
 
 %% preprocess LFPs
 Fs = D.lfpFs;
 nChannels = D.nLfpCh;
 
-plotNumSpikesByChannel(channelsToLoad, D.allMUAStructs, processedDataDir, blockName, v);
+% plotNumSpikesByChannel(channelsToLoad, D.allMUAStructs, processedDataDir, blockName, v);
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
-hiCutoffFreq = 50;
-outlierCheckWindowOffset = [-0.25 0.3];
-[channelDataNorm,flashOnsetsClean,isEventOutlier,isNoisyChannel] = preprocessLfps(D.adjLfpsClean, ...
-        Fs, D.lfpNames, flashOnsets, processedDataDir, blockName, hiCutoffFreq, 1, v, outlierCheckWindowOffset);
-D.adjLfps = [];
+hiCutoffFreq = 10;
+[channelDataCARNorm,channelDataNorm,commonAverageNorm,isNoisyChannel] = preprocessLfps(...
+        D.adjLfpsClean, Fs, D.lfpNames, processedDataDir, plotFileNamePrefix, hiCutoffFreq, 1, v);
 D.adjLfpsClean = [];
-for j = 1:nChannels
-    fprintf('Channel %d: Mean: %0.2f, SD: %0.2f\n', j, nanmean(channelDataNorm(j,:)), nanstd(channelDataNorm(j,:)));
-end
+
+channelDataBIPNorm = channelDataCARNorm(2:end,:) - channelDataCARNorm(1:end-1,:);
+% note channelDataCARNorm, channelDataNorm, and channelDataBIPNorm are HUGE
+
+outlierCheckWindowOffset = [-0.25 0.3];
+[flashEventsClean,isEventOutlier] = detectOutlierLfpEvents(channelDataCARNorm, Fs, D.lfpNames, flashOnsets, ...
+        outlierCheckWindowOffset, processedDataDir, plotFileNamePrefix, 1, v);
+nFlashes = numel(flashEventsClean);
 
 flashParamsClean = flashParams(~isEventOutlier);
 distsToFix = cell2mat({flashParamsClean.distToFix});
 polarAngles = cell2mat({flashParamsClean.polarAngle});
 diameters = cell2mat({flashParamsClean.diameter});
-assert(numel(flashOnsetsClean) == numel(flashParamsClean));
+assert(numel(flashEventsClean) == numel(flashParamsClean));
 
 %% process RF for each channel
 for j = 1:nChannels
@@ -241,7 +251,7 @@ trialCounts = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
 
 for k = 1:numel(distsToFixUnique)
     for l = 1:numel(polarAnglesUnique)
-        theseFlashOnsets = flashOnsetsClean(distsToFix == distsToFixUnique(k) & polarAngles == polarAnglesUnique(l));
+        theseFlashOnsets = flashEventsClean(distsToFix == distsToFixUnique(k) & polarAngles == polarAnglesUnique(l));
         trialCounts(k,l) = numel(theseFlashOnsets);
         if isempty(theseFlashOnsets)
             continue;
@@ -254,7 +264,7 @@ for k = 1:numel(distsToFixUnique)
         endIndices = startIndices + round(diff(periEventWindowOffset) * Fs) - 1;
 
         for n = 1:numel(theseFlashOnsets)
-            rawSignals(n,:) = channelDataNorm(j,startIndices(n):endIndices(n));
+            rawSignals(n,:) = channelDataCARNorm(j,startIndices(n):endIndices(n));
         end
         averageFlashResponse(k,l,:) = mean(rawSignals, 1); % mean over flashes
         meanMeanBaselineResponse(k,l) = mean(averageFlashResponse(k,l,baselineWindowLogical));
@@ -273,14 +283,14 @@ for k = 1:numel(distsToFixUnique)
     end
 end
 
-rawSignalsAll = nan(numel(flashOnsetsClean), nTime);
+rawSignalsAll = nan(numel(flashEventsClean), nTime);
 % convert flash time to lfp variable index
 % slightly more accurate than createdatamatc b/c of rounding after offset
-startIndices = round((flashOnsetsClean + periEventWindowOffset(1)) * Fs); 
+startIndices = round((flashEventsClean + periEventWindowOffset(1)) * Fs); 
 endIndices = startIndices + round(diff(periEventWindowOffset) * Fs) - 1;
 
-for n = 1:numel(flashOnsetsClean)
-    rawSignalsAll(n,:) = channelDataNorm(j,startIndices(n):endIndices(n));
+for n = 1:numel(flashEventsClean)
+    rawSignalsAll(n,:) = channelDataCARNorm(j,startIndices(n):endIndices(n));
 end
 
 %%
