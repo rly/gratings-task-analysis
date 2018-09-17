@@ -1,5 +1,5 @@
-% function lfpRFMappingNewMode1(processedDataRootDir, dataDirRoot, muaDataDirRoot, ...
-%         recordingInfoFileName, sessionInd, channelsToLoad, rfMappingNewInfoFileName)
+function lfpRFMappingNewMode1(processedDataRootDir, dataDirRoot, muaDataDirRoot, ...
+        recordingInfoFileName, sessionInd, channelsToLoad, rfMappingNewInfoFileName)
 % LFP RF Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
