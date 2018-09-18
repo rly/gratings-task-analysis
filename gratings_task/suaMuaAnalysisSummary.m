@@ -1,8 +1,8 @@
-% function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
+function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
-clear;
-readDataLocally;
-sessionInds = 1:37;
+% clear;
+% readDataLocally;
+% sessionInds = 1:37;
 
 v = 13;
 
