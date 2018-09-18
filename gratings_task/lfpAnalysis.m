@@ -15,7 +15,7 @@ function lfpAnalysis(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordin
 % evt7 = target dim
 % evt8 = juice
 
-v = 12;
+v = 13;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');
@@ -48,7 +48,7 @@ end
 
 [R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
         dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, lfpChannels, ...
-        taskName, scriptName, 1, 1, 0);
+        taskName, scriptName, 1, 1, 0, 0);
 sessionName = R.sessionName;
 areaName = R.areaName;
 

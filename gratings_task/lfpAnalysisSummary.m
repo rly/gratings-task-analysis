@@ -1,11 +1,11 @@
 function lfpAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds, ref)
 
-clear;
-readDataLocally;
-sessionInds = 1:23;
-ref = 'CAR';
+% clear;
+% readDataLocally;
+% sessionInds = 1:23;
+% ref = 'CAR';
 
-v = 12;
+v = 13;
 
 %%
 recordingInfo = readRecordingInfo(recordingInfoFileName);
