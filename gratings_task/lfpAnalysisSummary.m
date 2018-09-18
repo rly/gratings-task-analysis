@@ -14,7 +14,7 @@ outputDir = sprintf('%s/%s/', processedDataRootDir, 'LFP_GRATINGS_SUMMARY');
 if ~exist(outputDir, 'dir')
     mkdir(outputDir);
 end
-muaOutputDir = sprintf('%s/%s/', processedDataRootDir, 'MUA_GRATINGS_SUMMARY');
+muaOutputDir = sprintf('%s/%s/', processedDataRootDir, 'SUA_MUA_GRATINGS_SUMMARY');
 muaUnitNamesPulFileName = sprintf('%s/unitNamesPul-v%d.mat', muaOutputDir, v);
 load(muaUnitNamesPulFileName);
 
