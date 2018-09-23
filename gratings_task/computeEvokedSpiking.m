@@ -29,7 +29,6 @@ function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE
 
 spikeTs = spikeStruct.ts;
 kernelSigma = 0.01;
-kernelSigmaShort = 0.0015;
 
 clear spikeStruct;
 
@@ -67,7 +66,6 @@ arrayOnsetRelBalError = arrayOnset; % copy
 arrayOnsetHoldBalError = arrayOnset; % copy
 
 arrayOnset = createTimeLockedSpdf(spikeTs, UE.arrayOnset, UE.arrayOnsetByLoc, arrayOnset, kernelSigma);
-arrayOnsetShortKernel = createTimeLockedSpdf(spikeTs, UE.arrayOnset, UE.arrayOnsetByLoc, arrayOnset, kernelSigmaShort);
 % arrayOnsetRel = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRel, UE.arrayOnsetRelByLoc, arrayOnsetRel, kernelSigma);
 % arrayOnsetHold = createTimeLockedSpdf(spikeTs, UE.arrayOnsetHold, UE.arrayOnsetHoldByLoc, arrayOnsetHold, kernelSigma);
 arrayOnsetRelBal = createTimeLockedSpdf(spikeTs, UE.arrayOnsetRelBal, UE.arrayOnsetRelBalByLoc, arrayOnsetRelBal, kernelSigma);
@@ -504,6 +502,16 @@ fprintf('.');
 cueTargetDelayAttnStats.diffCount.rankSum.p = ranksum(...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{inRFLoc}, ...
         averageFiringRatesByCount.cueTargetDelay.trialRateByLoc{exRFLoc});
+    
+%% permutation test on cue-target delay period LONG
+cueTargetDelayLongAttnStats = permutationTestAttn(arrayOnset, cueTargetDelayLongWindowOffset, ...
+        inRFLoc, exRFLoc, averageFiringRatesBySpdf.cueTargetDelayLong.byLoc, kernelSigma, numRandomizations);
+fprintf('.');
+
+%% rank sum test on cue-target delay period LONG using individual trial spike counts
+cueTargetDelayLongAttnStats.diffCount.rankSum.p = ranksum(...
+        averageFiringRatesByCount.cueTargetDelayLong.trialRateByLoc{inRFLoc}, ...
+        averageFiringRatesByCount.cueTargetDelayLong.trialRateByLoc{exRFLoc});
 
 %% permutation test on array onset response period - hold balanced trials only
 arrayResponseHoldAttnStats = permutationTestAttn(arrayOnsetHoldBal, arrayResponseWindowOffset, ...
@@ -541,6 +549,11 @@ fprintf('.');
 % cue target delay period using info rate
 cueTargetDelayInfoRate = computeInfoRatePValueByShuffle(...
         arrayOnset, averageFiringRatesBySpdf.cueTargetDelay, cueTargetDelayWindowOffset, numRandomizations);
+fprintf('.');
+
+% cue target delay period long using info rate
+cueTargetDelayLongInfoRate = computeInfoRatePValueByShuffle(...
+        arrayOnset, averageFiringRatesBySpdf.cueTargetDelayLong, cueTargetDelayLongWindowOffset, numRandomizations);
 fprintf('.');
 
 % array response using info rate
