@@ -15,14 +15,14 @@ xTick = [-0.4 0 0.4 0.8];
 unitStruct = allUnitStructs{unitInd};
 nWfTime = numel(unitStruct.meanWf);
 spikeFs = unitStruct.Fs;
-waveformT = (0:nWfTime-1)/(spikeFs/1000); % start at 0
+waveformT = (0:nWfTime-1)/(spikeFs/1000) - unitStruct.thresholdTime * 1000; % start at 0
 
 %% SUA
 if ~unitStruct.isMUA
     %% plot threshold and axes
     hold on;
-    plot([waveformT(1) waveformT(end)] - unitStruct.thresholdTime, [0 0], 'Color', 0.5*ones(3, 1));
-    plot([waveformT(1) waveformT(end)] - unitStruct.thresholdTime, [unitStruct.threshold unitStruct.threshold], '--', ...
+    plot([waveformT(1) waveformT(end)], [0 0], 'Color', 0.5*ones(3, 1));
+    plot([waveformT(1) waveformT(end)], [unitStruct.threshold unitStruct.threshold], '--', ...
             'Color', thresholdCol);
     plot([0 0], yBounds, '--', ...
             'Color', thresholdCol);
@@ -41,11 +41,11 @@ if ~unitStruct.isMUA
             otherUnitSd = std(otherUnitSpikeStruct.wf);
             otherUnitShadingUB = otherUnitSpikeStruct.meanWf + numSDsShading * otherUnitSd;
             otherUnitShadingLB = otherUnitSpikeStruct.meanWf - numSDsShading * otherUnitSd;
-            jbfill(waveformT - unitStruct.thresholdTime, otherUnitShadingUB, otherUnitShadingLB, allCols(k,:), ...
+            jbfill(waveformT, otherUnitShadingUB, otherUnitShadingLB, allCols(k,:), ...
                     ones(3, 1), otherUnitSDShadingOpacity);
             hold on;
 
-            plot(waveformT - unitStruct.thresholdTime, otherUnitSpikeStruct.meanWf, ...
+            plot(waveformT, otherUnitSpikeStruct.meanWf, ...
                     'LineWidth', otherUnitLineWidth, 'Color', allCols(k,:));
         end
     end
@@ -54,19 +54,19 @@ if ~unitStruct.isMUA
     sd = std(unitStruct.wf);
     shadingUB = unitStruct.meanWf + numSDsShading * sd;
     shadingLB = unitStruct.meanWf - numSDsShading * sd;
-    jbfill(waveformT - unitStruct.thresholdTime, shadingUB, shadingLB, currentUnitCol, ones(3, 1), unitSDShadingOpacity);
+    jbfill(waveformT, shadingUB, shadingLB, currentUnitCol, ones(3, 1), unitSDShadingOpacity);
     hold on;
 
     %% plot current waveform on top of everything else
-    plot(waveformT - unitStruct.thresholdTime, unitStruct.meanWf, 'LineWidth', unitLineWidth, 'Color', currentUnitCol);
+    plot(waveformT, unitStruct.meanWf, 'LineWidth', unitLineWidth, 'Color', currentUnitCol);
     
 else % MUA
     threshold = nanmean(unitStruct.thresholdParams.thresholds);
 
     %% plot threshold and axes
     hold on;
-    plot([waveformT(1) waveformT(end)] - unitStruct.thresholdTime, [0 0], 'Color', 0.5*ones(3, 1));
-    plot([waveformT(1) waveformT(end)] - unitStruct.thresholdTime, [threshold threshold], '--', ...
+    plot([waveformT(1) waveformT(end)], [0 0], 'Color', 0.5*ones(3, 1));
+    plot([waveformT(1) waveformT(end)], [threshold threshold], '--', ...
             'Color', thresholdCol);
     plot([0 0], yBounds, '--', ...
             'Color', thresholdCol); % TODO this is actually the alignment time
@@ -77,7 +77,7 @@ end
 
 %% formatting and labels
 xlabel('Time (ms)');
-xlim([0 waveformT(end)] - unitStruct.thresholdTime);
+xlim([waveformT(1) waveformT(end)]);
 set(gca, 'XTick', xTick);
 ylim(yBounds);
 title('Waveform');
