@@ -9,6 +9,7 @@ nUnitsApprox = 1;
 
 esFileNames = cell(nUnitsApprox, 1);
 unitNames = cell(nUnitsApprox, 1);
+unitStructs = cell(nUnitsApprox, 1);
 meanWfs = cell(nUnitsApprox, 1);
 physClass = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
@@ -109,6 +110,7 @@ for j = 1:nUnits
             unitCount = unitCount + 1;
             esFileNames{unitCount} = saveFileName;
             unitNames{unitCount} = unitName;
+            unitStructs{unitCount} = unitStruct;
             channelIDByUnit(unitCount) = unitStruct.channelID;
             meanWfs{unitCount} = unitStruct.meanWf;
             physClass{unitCount} = unitStruct.physClass;
@@ -874,6 +876,7 @@ fprintf('Writing file %s ...\n', saveFileName);
 save(saveFileName, ...
         'esFileNames', ...
         'unitNames', ...
+        'unitStructs', ...
         'isSignificantResponseVsBaseline', ...
         'isSignificantResponseVsPreviousPeriod', ...
         'isSignificantResponseVsBootstrapBaseline', ...
