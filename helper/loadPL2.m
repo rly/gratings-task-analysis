@@ -341,7 +341,7 @@ if isLoadSortedSua
             spikeStruct.sortComments = sortComments;
             % get threshold data from muaData mat file
             spikeStruct.threshold = nanmean(muaData.thresholdParams.thresholds); % mV
-            spikeStruct.thresholdTime = (muaData.thresholdParams.nPreThresholdSamples + 1) / spikeFs;
+            spikeStruct.thresholdTime = muaData.thresholdParams.nPreThresholdSamples / spikeFs;
             spikeStruct.thresholdParams = muaData.thresholdParams;
             spikeStruct.wf = suaData(unitMatch,4:end) / 1000; % now in millivolts
             spikeStruct.ts = suaData(unitMatch,3); % seconds
