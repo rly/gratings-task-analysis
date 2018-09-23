@@ -239,6 +239,10 @@ for j = 1:nUnits
             % TEMP: FORCE INRF to be P3. Rare case where InRF is P1.
             inRFLoc = 3; %ES.inRFLoc;
             exRFLoc = 1; %ES.exRFLoc;
+            if ES.inRFLoc == 1
+                diffRates(unitCount,:) = -diffRates(unitCount,:);
+                attnIndices(unitCount,:) = -attnIndices(unitCount,:);
+            end
             
             %%
             % extract firing rates (count-based) at InRF and ExRF locations
