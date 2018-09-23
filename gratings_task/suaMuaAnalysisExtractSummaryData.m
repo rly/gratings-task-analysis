@@ -111,6 +111,7 @@ for j = 1:nUnits
             esFileNames{unitCount} = saveFileName;
             unitNames{unitCount} = unitName;
             unitStructs{unitCount} = unitStruct;
+            unitStructs{unitCount}.wf = []; % large memory
             channelIDByUnit(unitCount) = unitStruct.channelID;
             meanWfs{unitCount} = unitStruct.meanWf;
             physClass{unitCount} = unitStruct.physClass;
