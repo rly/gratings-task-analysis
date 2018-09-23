@@ -236,8 +236,9 @@ for j = 1:nUnits
                     ES.targetDimDelayAttnStats.ai.actual ...
                     ES.cueTargetDelayLongAttnStats.ai.actual];  
 
-            inRFLoc = ES.inRFLoc;
-            exRFLoc = ES.exRFLoc;
+            % TEMP: FORCE INRF to be P3. Rare case where InRF is P1.
+            inRFLoc = 3; %ES.inRFLoc;
+            exRFLoc = 1; %ES.exRFLoc;
             
             %%
             % extract firing rates (count-based) at InRF and ExRF locations

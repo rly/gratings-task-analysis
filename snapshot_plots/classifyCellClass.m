@@ -1,7 +1,7 @@
 function spikeStruct = classifyCellClass(spikeStruct)
 
-nsClassThresh = 0.326/1000; % <= this is Narrow-Spiking
-uncClassThresh = 0.326/1000; % > above and <= this is Unclassified
+nsClassThresh = 0.351/1000; % <= this is Narrow-Spiking
+uncClassThresh = 0.351/1000; % > above and <= this is Unclassified
 
 % conditions:
 % there must be a peak above 0 V after smoothing
