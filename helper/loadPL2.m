@@ -355,6 +355,15 @@ if isLoadSortedSua
             [postTroughPeak,relPeakInd] = max(spikeStruct.meanWf(troughInd:end)); % peak must be after trough
             spikeStruct.troughToPeakTime = (relPeakInd-1)/spikeFs;
             
+            % alternatively use interpolated mean for trough to peak time
+            waveformT = (0:numel(spikeStruct.meanWf)-1)/(spikeFs/1000); % start at 0
+            waveformTFine = (0:0.2:numel(spikeStruct.meanWf)-1)/(spikeFs/1000); % finer by 5x
+            spikeStruct.meanWfInterp = interp1(waveformT, spikeStruct.meanWf, waveformTFine, 'spline');
+            
+            [~,troughIndFine] = min(spikeStruct.meanWfInterp); % not necessarily the trough associated with thresh crossing
+            [~,relPeakIndFine] = max(spikeStruct.meanWfInterp(troughIndFine:end)); % peak must be after trough
+            spikeStruct.troughToPeakTimeFine = (relPeakIndFine-1)/spikeFs*0.2;
+            
             smoothedWf = movmean(spikeStruct.meanWf, 5); % moving average over 5 data points
             d1 = diff(spikeStruct.meanWf) > 0; % 1 if moving up, 0 if moving down
             d1Smooth = diff(smoothedWf) > 0; % 1 if moving up, 0 if moving down

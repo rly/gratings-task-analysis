@@ -15,7 +15,7 @@ xTick = [-0.4 0 0.4 0.8];
 unitStruct = allUnitStructs{unitInd};
 nWfTime = numel(unitStruct.meanWf);
 spikeFs = unitStruct.Fs;
-waveformT = (0:nWfTime-1)/(spikeFs/1000) - unitStruct.thresholdTime * 1000; % start at 0
+waveformT = (0:nWfTime-1)/(spikeFs/1000) - unitStruct.thresholdTime * 1000; % center trough at 0
 
 %% SUA
 if ~unitStruct.isMUA
