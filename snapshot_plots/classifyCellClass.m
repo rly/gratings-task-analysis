@@ -12,9 +12,9 @@ if ~isempty(spikeStruct.peakSmoothedAmps) && ...
             (strcmp(spikeStruct.inflectionPattern, 'ptp') && ...
             spikeStruct.peakSmoothedAmps(1) < -1/2 * spikeStruct.troughSmoothedAmps(1) && ...
             spikeStruct.peakSmoothedAmps(1) < 1/2 * max(spikeStruct.peakSmoothedAmps)))
-    if spikeStruct.troughToPeakTime <= nsClassThresh
+    if spikeStruct.troughToPeakTimeFine <= nsClassThresh
         spikeStruct.physClass = 'Narrow-Spiking';
-    elseif spikeStruct.troughToPeakTime <= uncClassThresh
+    elseif spikeStruct.troughToPeakTimeFine <= uncClassThresh
         spikeStruct.physClass = 'Unclassified Trough-Peak';
     else
         spikeStruct.physClass = 'Broad-Spiking';
