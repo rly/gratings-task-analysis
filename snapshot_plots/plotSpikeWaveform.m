@@ -51,18 +51,20 @@ if ~unitStruct.isMUA
     end
 
     %% shading of current waveform
-    sd = std(unitStruct.wf);
-    shadingUB = unitStruct.meanWf + numSDsShading * sd;
-    shadingLB = unitStruct.meanWf - numSDsShading * sd;
+    meanWf = mean(unitStruct.wf); % could use mean/se overall, but instead use the mean/se of only wfs seen in the included blocks
+    sdWf = std(unitStruct.wf);
+    shadingUB = meanWf + numSDsShading * sdWf;
+    shadingLB = meanWf - numSDsShading * sdWf;
     jbfill(waveformT, shadingUB, shadingLB, currentUnitCol, ones(3, 1), unitSDShadingOpacity);
     hold on;
 
     %% plot current waveform on top of everything else
-    plot(waveformT, unitStruct.meanWf, 'LineWidth', unitLineWidth, 'Color', currentUnitCol);
+    plot(waveformT, meanWf, 'LineWidth', unitLineWidth, 'Color', currentUnitCol);
     
 else % MUA
     threshold = nanmean(unitStruct.thresholdParams.thresholds);
-
+    meanWf = mean(unitStruct.wf);
+    
     %% plot threshold and axes
     hold on;
     plot([waveformT(1) waveformT(end)], [0 0], 'Color', 0.5*ones(3, 1));
@@ -72,7 +74,7 @@ else % MUA
             'Color', thresholdCol); % TODO this is actually the alignment time
     
     %% plot this waveform on top of everything else
-    plot(waveformT, unitStruct.meanWf, 'LineWidth', unitLineWidth, 'Color', lines(1));
+    plot(waveformT, meanWf, 'LineWidth', unitLineWidth, 'Color', lines(1));
 end
 
 %% formatting and labels
