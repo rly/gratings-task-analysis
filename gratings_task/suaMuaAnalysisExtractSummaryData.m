@@ -234,7 +234,10 @@ for j = 1:nUnits
                     ES.cueTargetDelayAttnStats.ai.actual ...
                     ES.arrayResponseHoldAttnStats.ai.actual ...
                     ES.targetDimDelayAttnStats.ai.actual ...
-                    ES.cueTargetDelayLongAttnStats.ai.actual]; 
+                    ES.cueTargetDelayLongAttnStats.ai.actual];  
+
+            inRFLoc = ES.inRFLoc;
+            exRFLoc = ES.exRFLoc;
             
             %%
             % extract firing rates (count-based) at InRF and ExRF locations
