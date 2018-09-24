@@ -62,7 +62,7 @@ targetDimDelayHoldInRFRateAll = cell(nUnitsApprox, 1);
 rtHoldInRFAll = cell(nUnitsApprox, 1);
 
 unitCount = 0;
-minFiringRate = 2; % use only cells with a time-locked response > 1 Hz in any window
+minFiringRate = 1; % use only cells with a time-locked response > 1 Hz in any window
 statAlpha = 0.01; % account for multiple comparisons later
 % should also be running a lot of shuffle tests given the number of trials
 
