@@ -354,12 +354,17 @@ meanCueResponseBaselineCorrByLoc = nan(nLoc, 1);
 for i = 1:nLoc
     meanCueResponseBaselineCorrByLoc(i) = averageFiringRatesBySpdf.cueResponse.byLoc(i) - averageFiringRatesBySpdf.preCueBaseline.byLoc(i);
 end
-[~,inRFLoc] = max(meanCueResponseBaselineCorrByLoc);
+[~,inRFLocByMean] = max(meanCueResponseBaselineCorrByLoc);
 assert(nLoc == 4); % next line based on nLoc == 4
-exRFLoc = mod(inRFLoc + 1, 4) + 1; % opposite location
+exRFLocByMean = mod(inRFLocByMean + 1, 4) + 1; % opposite location
 
 % InRF and ExRF are always defined, even if there is no significant
 % response
+
+% FOR NOW, INRF is P3 or P4
+[~,inRFLoc] = max(meanCueResponseBaselineCorrByLoc(3:4));
+inRFLoc = inRFLoc + 2;
+exRFLoc = mod(inRFLoc + 1, 4) + 1; % opposite location
 
 %% compute InRF by max per-condition z-scored cue response
 cueResponseWindowIndices = getTimeLogicalWithTolerance(cueOnset.t, cueOnset.window(1) + cueResponseWindowOffset);
