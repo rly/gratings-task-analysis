@@ -532,6 +532,7 @@ if isLoadMua
 
         % fill in same fields as spikeStruct
         muaStruct.troughToPeakTime = [];
+        muaStruct.troughToPeakTimeFine = [];
         muaStruct.firstTroughIndex = [];
         muaStruct.fullWidthHalfMax = [];
         muaStruct.peakSmoothedIndices = [];
