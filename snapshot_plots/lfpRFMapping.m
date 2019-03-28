@@ -5,8 +5,12 @@
 % for a couple of sessions and blocks, I used big stimuli in eighths of 
 % the screen to do RF mapping 
 
+%%
+% TODO look into where isEighthsOnly should be defined for these sessions
+isEighthsOnly = false;
+
 %% setup and load data
-v = 11;
+v = 14;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');
@@ -81,11 +85,11 @@ nChannels = D.nLfpCh;
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
 hiCutoffFreq = 10;
-[channelDataCARNorm,channelDataNorm,commonAverageNorm,isNoisyChannel] = preprocessLfps(...
+[channelDataCARNorm,~,~,isNoisyChannel] = preprocessLfps(...
         D.adjLfpsClean, Fs, D.lfpNames, processedDataDir, plotFileNamePrefix, hiCutoffFreq, 1, v);
 D.adjLfpsClean = [];
 
-channelDataBIPNorm = channelDataCARNorm(2:end,:) - channelDataCARNorm(1:end-1,:);
+% channelDataBIPNorm = channelDataCARNorm(2:end,:) - channelDataCARNorm(1:end-1,:);
 % note channelDataCARNorm, channelDataNorm, and channelDataBIPNorm are HUGE
 
 outlierCheckWindowOffset = [-0.25 0.3];
@@ -268,7 +272,7 @@ textParams = {'Units', 'normalized', 'FontSize', 8, 'Interpreter', 'none'};
 text(axBig, -0.03, 0.11, {''}, ...
         textParams{:});
 
-%%
+%% plot mean evoked potentials organized by eccentricity
 if numel(distsToFixUnique) > 1
     axes('Position', [rawLeft1 btm rawW rawH]); 
     hold on;
@@ -297,7 +301,7 @@ if numel(distsToFixUnique) > 1
     title('VEP by eccentricity');
 end
 
-%%
+%% plot mean evoked potentials organized by polar angle
 if numel(polarAnglesUnique) > 1
     axes('Position', [rawLeft2 btm rawW rawH]); 
     hold on;
@@ -435,7 +439,12 @@ text(0.02, 0.04, sprintf('Response diff norm, SD across cond: %0.2f', sdAllFlash
 text(0.02, 0.02, sprintf('Max response diff norm: %0.2f', maxAllFlashResponsesNorm), textParams{:});
 axis(heatAx, 'square'); % shouldn't do much if i set the dims properly
 colorbar;
-caxis([0 15]); 
+
+if hiCutoffFreq == 10
+    caxis([0 25]);
+else
+    caxis([0 15]); % heatmap scale
+end
 
 %%
 if isNoisyChannel(j)

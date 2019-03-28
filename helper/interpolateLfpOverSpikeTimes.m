@@ -1,7 +1,7 @@
 function adjLfpsClean = interpolateLfpOverSpikeTimes(adjLfps, channelIDs, lfpFs, allSpikeStructs)
 
 % remove 2 ms window around spike time (i.e. the data point before and 
-% after since we're sampling at 1000 Hz) and interpolate
+% after since we're sampling at 1000 Hz) and linearly interpolate
 fprintf('Interpolating over spike times...\n');
 adjLfpsClean = adjLfps;
 nChannels = size(adjLfps, 1);
@@ -18,5 +18,6 @@ for j = 1:nChannels
         isSpikeTimeThisCh(min(nTime, ceil(allSpikeStructs{unitsThisCh(k)}.ts * lfpFs))) = true;
     end
     ix = 1:size(adjLfps, 2);
-    adjLfpsClean(j,isSpikeTimeThisCh) = interp1(ix(~isSpikeTimeThisCh), adjLfps(j,~isSpikeTimeThisCh), ix(isSpikeTimeThisCh));
+    adjLfpsClean(j,isSpikeTimeThisCh) = interp1(ix(~isSpikeTimeThisCh), ...
+            adjLfps(j,~isSpikeTimeThisCh), ix(isSpikeTimeThisCh), 'linear');
 end
