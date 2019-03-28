@@ -1,4 +1,4 @@
-% function lfpRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, isEighthsOnly)
+function lfpRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
 % LFP RF Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
