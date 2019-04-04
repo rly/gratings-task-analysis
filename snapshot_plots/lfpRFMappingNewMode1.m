@@ -165,8 +165,7 @@ fpCount = numel(fpStimIDs);
 %         fpCount = fpCount - 2;
 %     end
 % end
-stimIDs(~flashesToSkip)
-fpStimIDs(1:numel(stimIDs(~flashesToSkip)))
+[(1:numel(stimIDs(~flashesToSkip)))' stimIDs(~flashesToSkip) fpStimIDs(1:numel(stimIDs(~flashesToSkip)))']
 
 fprintf('Found %d flash event times and %d flashParam stimIDs.\n', ...
         numel(flashEventTimes) - sum(flashesToSkip), fpCount);
