@@ -430,7 +430,7 @@ rfmapAllSmoothByOriAll = squeeze(sum(rfmapSmoothByOri(:,m2,:,:), 1));
 %% plot smoothed heatmap for all grating orientations combined
 heatAx = axes('Position', [heatLeft btm heatW heatH]); 
 hold on;
-plotRfMapSmooth(rfmapAllSmoothByOriAll, rfmapAllOriCount, numPixelsPerDegree, mapScale, mapXOffset, mapYOffset);
+plotRfMapSmooth(rfmapAllSmoothByOriAll, rfmapAllOriCount, numPixelsPerDegree, mapScale);
 
 title(sprintf('VEP Heatmap (%d-%d ms after flash onset; all orientations)', round(analysisWindowOffset * 1000)), 'Interpreter', 'none');
 textParams = {'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]};
