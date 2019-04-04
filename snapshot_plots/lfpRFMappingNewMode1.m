@@ -351,7 +351,7 @@ text(axBig, -0.03, 0.11, {''}, ...
 
 %% plot mean evoked potentials organized by eccentricity
 if nEcc > 1
-    axes('Position', [meanLfpsGroupeLeft1 btm meanLfpsGroupedW meanLfpsGroupedH]); 
+    axes('Position', [meanLfpsGroupedLeft1 btm meanLfpsGroupedW meanLfpsGroupedH]); 
     hold on;
     channelSep = 1;
     groupSep = (nPolarAngle - 1) / (nEcc - 1) * 2;
