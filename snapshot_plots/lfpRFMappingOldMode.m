@@ -1,4 +1,4 @@
-function lfpRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
+function lfpRFMappingOldMode(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
 % LFP RF Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
@@ -16,7 +16,7 @@ tic;
 fprintf('\n-------------------------------------------------------\n');
 fprintf('RF Mapping Analysis - LFP\n');
 fprintf('Session index: %d\n', sessionInd);
-fprintf('LFP Channel to Load: %d\n', channelsToLoad);
+fprintf('LFP Channels to Load: %d\n', channelsToLoad);
 fprintf('Recording info file name: %s\n', recordingInfoFileName);
 fprintf('Processed data root dir: %s\n', processedDataRootDir);
 fprintf('Data root dir: %s\n', dataDirRoot);
@@ -25,8 +25,7 @@ fprintf('Version: %d\n', v);
 fprintf('------------------------\n');
 
 %% input check
-% assert(numel(channelsToLoad) == 1);
-assert(numel(channelsToLoad) > 1);
+assert(numel(channelsToLoad) == 32);
 
 %% load recording information
 if ~isEighthsOnly
@@ -75,8 +74,8 @@ end
 % 4 possible, coded in events 15-16: 00, 01, 10, 11, in the order below
 gratingAnglesUnique = (0:3)*pi/4;
 
-[flashOnsets,flashParams] = decodeFlashParams(origFlashEvents, ...
-        D.events, distsToFixUnique, polarAnglesUnique, gratingAnglesUnique);
+flashParams = decodeFlashParams(origFlashEvents, D.events, ...
+        distsToFixUnique, polarAnglesUnique, gratingAnglesUnique);
 
 %% preprocess LFPs
 Fs = D.lfpFs;
@@ -101,43 +100,51 @@ flashParamsClean = flashParams(~isEventOutlier,:);
 assert(numel(flashEventsClean) == size(flashParamsClean, 1));
 
 %% process RF for each channel
+periEventWindowOffset = [-0.25 0.25];
+analysisWindowOffset = [0.025 0.2];
+baselineWindowOffset = [-0.175 0];
+
+% set time vector and logical vector for baseline and analysis windows
+t = periEventWindowOffset(1):1/Fs:periEventWindowOffset(2)-1/Fs;
+analysisWindowLogical = t >= analysisWindowOffset(1) & t < analysisWindowOffset(2);
+baselineWindowLogical = t >= baselineWindowOffset(1) & t < baselineWindowOffset(2);
+
+nTime = numel(t);
+nEcc = numel(distsToFixUnique);
+nPolarAngle = numel(polarAnglesUnique);
+nOri = numel(gratingAnglesUnique);
+
 for j = 1:nChannels
 
 channelName = D.lfpNames{j};
 fprintf('Processing %s (%d/%d = %d%%)... \n', channelName, j, ...
         nChannels, round(j/nChannels*100));
 
-periEventWindowOffset = [-0.25 0.25];
-t = periEventWindowOffset(1):1/Fs:periEventWindowOffset(2)-1/Fs;
+% initialize matrices
+averageFlashResponse = zeros(nEcc, nPolarAngle, nOri+1, nTime);
+averageFlashResponseNorm = zeros(nEcc, nPolarAngle, nOri+1, nTime);
+flashResponseMetric = zeros(nEcc, nPolarAngle, nOri+1);
+baselineResponseMetric = zeros(nEcc, nPolarAngle, nOri+1);
+trialCounts = zeros(nEcc, nPolarAngle, nOri+1);
+meanMeanBaselineResponse = zeros(nEcc, nPolarAngle, nOri+1);
+sdMeanBaselineResponse = zeros(nEcc, nPolarAngle, nOri+1);
 
-analysisWindowOffset = [0.025 0.2];
-analysisWindowLogical = t >= analysisWindowOffset(1) & t < analysisWindowOffset(2);
-
-baselineWindowOffset = [-0.175 0];
-baselineWindowLogical = t >= baselineWindowOffset(1) & t < baselineWindowOffset(2);
-
-averageFlashResponse = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), numel(gratingAnglesUnique)+1, numel(t));
-averageFlashResponseNorm = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), numel(gratingAnglesUnique)+1, numel(t));
-flashResponseMetric = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), numel(gratingAnglesUnique)+1);
-baselineResponseMetric = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), numel(gratingAnglesUnique)+1);
-trialCounts = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), numel(gratingAnglesUnique)+1);
-meanMeanBaselineResponse = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), numel(gratingAnglesUnique)+1);
-sdMeanBaselineResponse = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), numel(gratingAnglesUnique)+1);
-m2 = numel(gratingAnglesUnique) + 1; % for indexing the no orientation case
-
-% TEMP: use only index m2 into the gratingAngles dimension (3rd dimension
+% use only index m2 into the gratingAngles dimension (3rd dimension
 % typically). currently ignoring grating orientation
+m2 = nOri + 1; % for indexing the no orientation case
 
-for k = 1:numel(distsToFixUnique)
-    for l = 1:numel(polarAnglesUnique)
-%         for m = 1:numel(gratingAnglesUnique)
+%% loop over flash eccentricity and polar angle, determine mean normalized response over flash and time
+for k = 1:nEcc
+    for l = 1:nPolarAngle
+        % TEMP, do not process data separately for each grating angle
+%         for m = 1:nOri
 %             theseFlashOnsets = flashOnsetsClean(flashStatsClean(:,4) == k & flashStatsClean(:,5) == l & flashStatsClean(:,6) == m);
 %             trialCounts(k,l,m) = numel(theseFlashOnsets);
 %             if isempty(theseFlashOnsets)
 %                 continue;
 %             end
 %                         
-%             rawSignals = nan(numel(theseFlashOnsets), numel(t));
+%             rawSignals = nan(numel(theseFlashOnsets), nTime);
 %             % convert flash time to lfp variable index
 %             % slightly more accurate than createdatamatc b/c of rounding after offset
 %             startIndices = round((theseFlashOnsets + periEventWindowOffset(1)) * Fs); 
@@ -154,14 +161,15 @@ for k = 1:numel(distsToFixUnique)
 %                     min(averageFlashResponse(k,l,m,baselineWindowLogical));
 %         end
         
-        % case: regardless of orientation 
+        % case: pull all flash events with this eccentricity and polar 
+        % angle, regardless of orientation, store responses in (k,l,m2)
         theseFlashOnsets = flashEventsClean(flashParamsClean(:,4) == k & flashParamsClean(:,5) == l);
         trialCounts(k,l,m2) = numel(theseFlashOnsets);
         if isempty(theseFlashOnsets)
             continue;
         end
         
-        rawSignals = nan(numel(theseFlashOnsets), numel(t));
+        rawSignals = nan(numel(theseFlashOnsets), nTime);
         % convert flash time to lfp variable index
         % slightly more accurate than createdatamatc b/c of rounding after offset
         startIndices = round((theseFlashOnsets + periEventWindowOffset(1)) * Fs); 
@@ -172,15 +180,17 @@ for k = 1:numel(distsToFixUnique)
         end
         
         averageFlashResponse(k,l,m2,:) = mean(rawSignals, 1); % mean over flashes
-        meanMeanBaselineResponse(k,l,m2) = mean(averageFlashResponse(k,l,m2,baselineWindowLogical));
-        sdMeanBaselineResponse(k,l,m2) = std(averageFlashResponse(k,l,m2,baselineWindowLogical));
-%         fprintf('Location (%d,%0.2f): Bsaeline Mean: %0.2f, Baseline SD: %0.2f\n', distsToFixUnique(k), polarAnglesUnique(l), ...
+        meanMeanBaselineResponse(k,l,m2) = mean(averageFlashResponse(k,l,m2,baselineWindowLogical)); % mean over time in baseline window
+        sdMeanBaselineResponse(k,l,m2) = std(averageFlashResponse(k,l,m2,baselineWindowLogical)); % SD over time in baseline window
+%         fprintf('Location (%d,%0.2f): Baseline Mean: %0.2f, Baseline SD: %0.2f\n', distsToFixUnique(k), polarAnglesUnique(l), ...
 %                 meanMeanBaselineResponse(k,l), sdMeanBaselineResponse(k,l));
         
         % per-condition z-score normalization of LFP
-        averageFlashResponseNorm(k,l,m2,:) = (averageFlashResponse(k,l,m2,:) - meanMeanBaselineResponse(k,l,m2)) / sdMeanBaselineResponse(k,l,m2);
+        averageFlashResponseNorm(k,l,m2,:) = (averageFlashResponse(k,l,m2,:) - meanMeanBaselineResponse(k,l,m2)) / ...
+                sdMeanBaselineResponse(k,l,m2);
         
-%         averageFlashResponseMeanOverTime(k,l,m2) = mean(abs(averageFlashResponse(k,l,m2,:)));
+        % RESPONSE METRIC: max - min in window
+        % alts: mean(abs(x)), power(x) at some freq
         flashResponseMetric(k,l,m2) = max(averageFlashResponseNorm(k,l,m2,analysisWindowLogical)) - ...
                 min(averageFlashResponseNorm(k,l,m2,analysisWindowLogical));
         baselineResponseMetric(k,l,m2) = max(averageFlashResponseNorm(k,l,m2,baselineWindowLogical)) - ...
@@ -188,14 +198,15 @@ for k = 1:numel(distsToFixUnique)
     end
 end
 
-rawSignals = nan(numel(flashEventsClean), numel(t));
+%% extract all raw signals regardless of flash parameters
+rawSignalsAll = nan(numel(flashEventsClean), nTime);
 % convert flash time to lfp variable index
 % slightly more accurate than createdatamatc b/c of rounding after offset
 startIndices = round((flashEventsClean + periEventWindowOffset(1)) * Fs); 
 endIndices = startIndices + round(diff(periEventWindowOffset) * Fs) - 1;
 
 for n = 1:numel(flashEventsClean)
-    rawSignals(n,:) = channelDataCARNorm(j,startIndices(n):endIndices(n));
+    rawSignalsAll(n,:) = channelDataCARNorm(j,startIndices(n):endIndices(n));
 end
 
 %%
@@ -217,41 +228,32 @@ titleParams = {'Interpreter', 'None', 'FontWeight', 'bold'};
 title(modTitle, 'FontSize', 14, titleParams{:});
 
 %% location params
-waveformW = 0.1;
-rasterByTimeW = 0.1;
-rawW = 0.11;
+exampleLfpsByTimeW = 0.1;
+meanLfpsGroupedW = 0.11;
 heatW = 0.6;
-% miniHeatW = 0.18;
-waveformH = 0.15;
-rasterByTimeH = 0.35;
-rawH = 0.85;
+exampleLfpsByTimeH = 0.5;
+meanLfpsGroupedH = 0.85;
 heatH = 0.85;
-% miniHeatH = 0.385;
 
-waveformLeft1 = 0.05;
-rasterByTimeLeft1 = waveformLeft1;
-rawLeft1 = rasterByTimeLeft1 + rasterByTimeW + 0.03;
-rawLeft2 = rawLeft1 + rawW + 0.02;
-heatLeft = rawLeft2 + rawW;
-% miniHeatLeft1 = heatLeft + heatW + 0.005;
-% miniHeatLeft2 = miniHeatLeft1 + miniHeatW + 0.01;
+exampleLfpsByTimeLeft1 = 0.05;
+meanLfpsGroupedLeft1 = exampleLfpsByTimeLeft1 + exampleLfpsByTimeW + 0.03;
+meanLfpsGroupedLeft2 = meanLfpsGroupedLeft1 + meanLfpsGroupedW + 0.02;
+heatLeft = meanLfpsGroupedLeft2 + meanLfpsGroupedW;
 btm = 0.07;
-rasterByTimeBtm = btm + 0.25;
-waveformBtm = rasterByTimeBtm + rasterByTimeH + 0.1;
-% miniHeatBtm2 = btm + miniHeatH + 0.08;
+exampleLfpsByTimeBtm = btm + 0.25;
 
-%%
-axes('Position', [rasterByTimeLeft1 rasterByTimeBtm rasterByTimeW rasterByTimeH]); 
+%% plot example raw data around flash onset for N flashes
+axes('Position', [exampleLfpsByTimeLeft1 exampleLfpsByTimeBtm exampleLfpsByTimeW exampleLfpsByTimeH]); 
 hold on;
 
 nRawToShow = 20;
-indRawToShow = round(linspace(1, size(rawSignals, 1), nRawToShow));
+indRawToShow = round(linspace(1, size(rawSignalsAll, 1), nRawToShow));
 rasterY = 0;
 yScale = 0.5;
 lineParams = {'Color', [0 0 0], 'LineWidth', 1};
 for k = 1:numel(indRawToShow)
     rasterY = rasterY + 1;
-    plot(t, rawSignals(indRawToShow(k),:)*yScale + rasterY, lineParams{:});
+    plot(t, rawSignalsAll(indRawToShow(k),:)*yScale + rasterY, lineParams{:});
 end
 
 yBounds = [0 rasterY+1];
@@ -263,9 +265,7 @@ ylim(yBounds);
 set(gca, 'YDir', 'reverse');
 xlabel('Time from flash onset (s)'); 
 ylabel('Flash number');
-titleH = title('Example LFPs by time', 'Interpreter', 'None');
-set(gca, 'Layer', 'top');
-
+title('Example LFPs');
 
 %% info
 textParams = {'Units', 'normalized', 'FontSize', 8, 'Interpreter', 'none'};
@@ -273,20 +273,20 @@ text(axBig, -0.03, 0.11, {''}, ...
         textParams{:});
 
 %% plot mean evoked potentials organized by eccentricity
-if numel(distsToFixUnique) > 1
-    axes('Position', [rawLeft1 btm rawW rawH]); 
+if nEcc > 1
+    axes('Position', [meanLfpsGroupedLeft1 btm meanLfpsGroupedW meanLfpsGroupedH]); 
     hold on;
     channelSep = 1;
-    groupSep = (numel(polarAnglesUnique) - 1) / (numel(distsToFixUnique) - 1) * 2;
+    groupSep = (nPolarAngle - 1) / (nEcc - 1) * 2;
     count1 = 1;
     yScale = 1;
-    cols = lines(numel(polarAnglesUnique));
-    for k = 1:numel(distsToFixUnique)
-        for l = 1:numel(polarAnglesUnique)
+    cols = lines(nPolarAngle);
+    for k = 1:nEcc
+        for l = 1:nPolarAngle
             count1 = count1 + channelSep;
             plot(t, squeeze(averageFlashResponse(k,l,m2,:))*yScale + count1, 'Color', cols(l,:));
         end
-        if numel(polarAnglesUnique) > 1 && k < numel(distsToFixUnique)
+        if nPolarAngle > 1 && k < nEcc
             count1 = count1 + groupSep;
         end
     end
@@ -302,20 +302,20 @@ if numel(distsToFixUnique) > 1
 end
 
 %% plot mean evoked potentials organized by polar angle
-if numel(polarAnglesUnique) > 1
-    axes('Position', [rawLeft2 btm rawW rawH]); 
+if nPolarAngle > 1
+    axes('Position', [meanLfpsGroupedLeft2 btm meanLfpsGroupedW meanLfpsGroupedH]); 
     hold on;
     channelSep = 1;
     groupSep = 2;
     count2 = 1;
     yScale = 1;
-    cols = lines(numel(polarAnglesUnique));
-    for l = 1:numel(polarAnglesUnique)
-        for k = 1:numel(distsToFixUnique)
+    cols = lines(nPolarAngle);
+    for l = 1:nPolarAngle
+        for k = 1:nEcc
             count2 = count2 + channelSep;
             plot(t, squeeze(averageFlashResponse(k,l,m2,:))*yScale + count2, 'Color', cols(l,:));
         end
-        if numel(distsToFixUnique) > 1 && l < numel(polarAnglesUnique)
+        if nEcc > 1 && l < nPolarAngle
             count2 = count2 + groupSep;
         end
     end
@@ -328,7 +328,7 @@ if numel(polarAnglesUnique) > 1
     set(gca, 'YTickLabel', {});
     % xlabel('Time from flash onset (s)');
     title('VEP by polar angle');
-    if numel(distsToFixUnique) > 1
+    if nEcc > 1
         assert(count1 == count2); % i.e. the y axes are the same for the two raw plots
     end
 end
@@ -336,8 +336,8 @@ end
 %% make heatmap
 mapScale = 1/10;
 mapDim = round(800 * mapScale) + 1; % x and y: -400 to 400 
-rfmapByOri = zeros(numel(distsToFixUnique), numel(gratingAnglesUnique)+1, mapDim, mapDim); % extra dim uses all trials
-rfmapByOriCount = zeros(numel(distsToFixUnique), numel(gratingAnglesUnique)+1, mapDim, mapDim);
+rfmapByOri = zeros(nEcc, nOri+1, mapDim, mapDim); % extra dim uses all trials
+rfmapByOriCount = zeros(nEcc, nOri+1, mapDim, mapDim);
 rfmapSmoothByOri = zeros(size(rfmapByOri));
 mapXOffset = (mapDim + 1)/2;
 mapYOffset = (mapDim + 1)/2;
@@ -359,13 +359,14 @@ threshold = 0;
 thresholdName = 'Response == Baseline';
 
 gaussianFilterExtent = mapDim;
-for k = 1:numel(distsToFixUnique)
+for k = 1:nEcc
     % slight adjustment for eve movement, which is radius 68 but here let's treat it as diameter 68
     if ~isEighthsOnly
         diskDiameter = floor((distsToFixUnique(k) / 150 * 3 * 28 * 2 - 68) * mapScale); % pixels, floor to nearest even
     else
         diskDiameter = floor((distsToFixUnique(k) * 0.04 * 28 * 2 - 68) * mapScale); % pixels, floor to nearest even
     end
+    
 %     uniformFilter = fspecial('disk', diskDiameter/2);
 %     uniformFilter = uniformFilter/max(uniformFilter(:));
     
@@ -374,12 +375,13 @@ for k = 1:numel(distsToFixUnique)
             gaussianFilterSigma);
     gaussianFilter = gaussianFilter / max(gaussianFilter(:));
     
-    for l = 1:numel(polarAnglesUnique)
+    for l = 1:nPolarAngle
         flashX = distsToFixUnique(k) * cos(polarAnglesUnique(l));
         flashY = distsToFixUnique(k) * sin(polarAnglesUnique(l));
         mapX = round(flashX * mapScale) + mapXOffset;
         mapY = round(flashY * mapScale) + mapYOffset;
-%         for m = 1:numel(gratingAnglesUnique)
+        % for now, do not calculate heatmap responses by grating angle
+%         for m = 1:nOri
 %             % threshold at baseline
 %             rfmapByOri(k,m,mapX,mapY) = max(0, responseMetric(k,l,m) - threshold);
 %             rfmapByOriCount(k,m,mapX,mapY) = trialCounts(k,l,m); 
@@ -391,12 +393,13 @@ for k = 1:numel(distsToFixUnique)
 %                     / sum(trialCounts(k,l,:)) - threshold);
 %             rfmapByOriCount(k,m2,mapX,mapY) = sum(trialCounts(k,l,:)); 
 %         end
+
 %         rfmapByOri(k,m2,mapX,mapY) = max(0, responseMetric(k,l,m2) - threshold);
         rfmapByOri(k,m2,mapX,mapY) = flashResponseMetricNorm(k,l,m2); % can be negative
         rfmapByOriCount(k,m2,mapX,mapY) = trialCounts(k,l,m2); 
     end
-    % maintain separate smooth maps for each distsToFix
-    for m = 1:numel(gratingAnglesUnique) + 1
+    % maintain separate smooth maps for each distsToFix (eccentricity)
+    for m = 1:nOri + 1
         rfmapSmoothByOri(k,m,:,:) = imfilter(squeeze(rfmapByOri(k,m,:,:)), gaussianFilter, 'replicate');
     end
 end
@@ -424,12 +427,11 @@ rfmapAllSmoothByOriAll = squeeze(sum(rfmapSmoothByOri(:,m2,:,:), 1));
 % 
 % title(sprintf('%s - Response Heatmap (20-220ms after flash onset)', spkVarName), 'Interpreter', 'none');
 
-%% plot smoothed heatmap for all and individual orientations
-
-% start with all orientations together
+%% plot smoothed heatmap for all grating orientations combined
 heatAx = axes('Position', [heatLeft btm heatW heatH]); 
 hold on;
-plotRfMapSmooth(rfmapAllSmoothByOriAll, rfmapAllOriCount, numPixelsPerDegree, mapScale, mapDim, mapXOffset, mapYOffset);
+plotRfMapSmooth(rfmapAllSmoothByOriAll, rfmapAllOriCount, numPixelsPerDegree, mapScale, mapXOffset, mapYOffset);
+
 title(sprintf('VEP Heatmap (%d-%d ms after flash onset; all orientations)', round(analysisWindowOffset * 1000)), 'Interpreter', 'none');
 textParams = {'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]};
 text(0.02, 0.1, sprintf('Threshold: %s', thresholdName), textParams{:});
@@ -437,20 +439,22 @@ text(0.02, 0.08, sprintf('Baseline diff, SD across cond: %0.2f', sdBaselineRespo
 text(0.02, 0.06, sprintf('Response diff norm, mean across cond: %0.2f', meanAllFlashResponsesNorm), textParams{:});
 text(0.02, 0.04, sprintf('Response diff norm, SD across cond: %0.2f', sdAllFlashResponsesNorm), textParams{:});
 text(0.02, 0.02, sprintf('Max response diff norm: %0.2f', maxAllFlashResponsesNorm), textParams{:});
-axis(heatAx, 'square'); % shouldn't do much if i set the dims properly
+axis(heatAx, 'square'); % shouldn't do much if dims were set properly
 colorbar;
 
+% set heatmap scale
 if hiCutoffFreq == 10
     caxis([0 25]);
 else
-    caxis([0 15]); % heatmap scale
+    caxis([0 15]);
 end
 
-%%
+%% if channel has outlier SD, make background red
 if isNoisyChannel(j)
-    set(gcf, 'Color', [1 0.5 0.5]); % make background red
+    set(gcf, 'Color', [1 0.5 0.5]);
 end
 
+%% save
 plotFileName = sprintf('%s/%s-%s-v%d.png', processedDataDir, channelName, blockName, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
