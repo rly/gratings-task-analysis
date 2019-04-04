@@ -9,14 +9,6 @@ function lfpRFMappingNewMode1(processedDataRootDir, dataDirRoot, muaDataDirRoot,
 % computationally intensive: shuffle trials
 % easier: shuffle conditions around map
 
-% sessionInd = 28;
-% channelsToLoad = 33:64;%1:32;
-% recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
-% processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';%'Y:/rly/gratings-task-analysis/processed_data/';
-% dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data';%'Z:/ryanly/McCartney/originals/';
-% muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170608';%'Y:/rly/simple-mua-detection/processed_data/';
-% rfMappingNewInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/rfMappingNewInfo.csv';
-
 %% setup and load data
 v = 14;
 rfMappingNewMode = 1;
@@ -101,7 +93,7 @@ for i = 1:numel(flashEventTimes)
         end
     end
     if ~isFoundEvt
-        fprintf('huh... no event 9-16 (flash info) corresponding to event 6 (flash onset) for flash #%d\n', i);
+        fprintf('huh... no START event 9-16 (flash info) corresponding to event 6 (flash onset) for flash event #%d\n', i);
         continue;
     end
 
@@ -118,6 +110,7 @@ for i = 1:numel(flashEventTimes)
     assert(all(diff(allFoundEvtTimes) < simultSignalTol));
     flashOnset = allFoundEvtTimes(1);
     
+    % for confirmation:
     % there should be a second event (in events 9-16) marking the flash
     % offset, indicating the trial was not aborted mid-flash
     isFoundEndEvt = 0;
@@ -136,7 +129,7 @@ for i = 1:numel(flashEventTimes)
         end
     end
     if ~isFoundEndEvt
-        fprintf('huh huh... no event 9-16 (flash info) corresponding to event 6 (flash onset) for flash #%d\n', i);
+        fprintf('huh... no END event 9-16 (flash info) corresponding to event 6 (flash onset) for flash event #%d\n', i);
         continue;
     end
     allFoundEndEvtTimes = [allEventTimes{9}(foundEndEvts{9}); 
@@ -172,6 +165,7 @@ fpCount = numel(fpStimIDs);
 %         fpCount = fpCount - 2;
 %     end
 % end
+[1:numel(stimIDs(~flashesToSkip)) stimIDs(~flashesToSkip) fpStimIDs(1:numel(stimIDs(~flashesToSkip)))]
 
 fprintf('Found %d flash event times and %d flashParam stimIDs.\n', ...
         numel(flashEventTimes) - sum(flashesToSkip), fpCount);
