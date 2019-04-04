@@ -161,7 +161,7 @@ if nGoodStimIDs < fpCount
     warning('Extra entry/entries in flashParams (JSON) not found in EVT06');
     stimIDsPlus = nan(fpCount,1);
     stimIDsPlus(1:nGoodStimIDs) = stimIDs(~flashesToSkip);
-    [(1:fpCount)' stimIDsPlus fpStimIDs(1:nGoodStimIDs)'] % print
+    [(1:fpCount)' stimIDsPlus fpStimIDs'] % print
     
     % remove extra entries in flashParams
     for i = numel(stimIDs):-1:1
