@@ -155,17 +155,33 @@ fprintf('Skipping %d flashes due to missing events.\n', sum(flashesToSkip));
 %% quick hack
 fpStimIDs = cell2mat({flashParams.stimId});
 fpCount = numel(fpStimIDs);
-% for i = numel(stimIDs):-1:1
-%     if stimIDs(i) == fpStimIDs(fpCount)
-%         fpCount = fpCount - 1;
-%         continue;
-%     end
-%     if stimIDs(i) == fpStimIDs(fpCount - 1)
-%         flashParams(fpCount) = [];
-%         fpCount = fpCount - 2;
-%     end
-% end
-[(1:numel(stimIDs(~flashesToSkip)))' stimIDs(~flashesToSkip) fpStimIDs(1:numel(stimIDs(~flashesToSkip)))']
+
+nGoodStimIDs = numel(stimIDs(~flashesToSkip));
+if nGoodStimIDs < fpCount
+    warning('Extra entry/entries in flashParams (JSON) not found in EVT06');
+    stimIDsPlus = nan(fpCount,1);
+    stimIDsPlus(1:nGoodStimIDs) = stimIDs(~flashesToSkip);
+    [(1:fpCount)' stimIDsPlus fpStimIDs(1:nGoodStimIDs)'] % print
+    
+    % remove extra entries in flashParams
+    for i = numel(stimIDs):-1:1
+        if stimIDs(i) == fpStimIDs(fpCount)
+            fpCount = fpCount - 1;
+            continue;
+        end
+        if stimIDs(i) == fpStimIDs(fpCount - 1)
+            flashParams(fpCount) = [];
+            fpCount = fpCount - 2;
+        end
+    end
+    fpStimIDs = cell2mat({flashParams.stimId});
+    fpCount = numel(fpStimIDs);
+
+elseif nGoodStimIDs > fpCount
+    fpStimIDsPlus = nan(nGoodStimIDs, 1);
+    fpStimIDsPlus(1:fpCount) = fpStimIDs;
+    [(1:nGoodStimIDs)' stimIDs(~flashesToSkip) fpStimIDsPlus] % print
+end
 
 fprintf('Found %d flash event times and %d flashParam stimIDs.\n', ...
         numel(flashEventTimes) - sum(flashesToSkip), fpCount);
