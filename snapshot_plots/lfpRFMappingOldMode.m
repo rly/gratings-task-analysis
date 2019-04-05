@@ -106,8 +106,8 @@ baselineWindowOffset = [-0.175 0];
 
 % set time vector and logical vector for baseline and analysis windows
 t = periEventWindowOffset(1):1/Fs:periEventWindowOffset(2)-1/Fs;
-analysisWindowLogical = t >= analysisWindowOffset(1) & t < analysisWindowOffset(2);
-baselineWindowLogical = t >= baselineWindowOffset(1) & t < baselineWindowOffset(2);
+analysisWindowLogical = getTimeLogicalWithTolerance(t, analysisWindowOffset);
+baselineWindowLogical = getTimeLogicalWithTolerance(t, baselineWindowOffset);
 
 nTime = numel(t);
 nEcc = numel(distsToFixUnique);
