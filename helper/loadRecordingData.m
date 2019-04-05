@@ -17,7 +17,12 @@ pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
 
 %% load recording data
 isLoadSpkc = 0;
-isLoadDirect = 1;
+
+if strcmp(taskName, 'GRATINGS') || strcmp(taskName, 'GRATINGS_0D')
+    isLoadDirect = 1;
+else
+    isLoadDirect = 0;
+end
 
 if ~isempty(channelsToLoad)
     R.spikeChannelsToLoad = channelsToLoad;
