@@ -55,6 +55,7 @@ end
 fprintf('... done (%0.2f s).\n', toc);
 
 %% get block indices
+fprintf('%d block names specified, %d entries in block start times.\n', numel(R.blockNames), numel(D.blockStartTimes));
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 if strcmp(taskName, 'GRATINGS')
     R.blockIndices = R.gratingsTask3DIndices;
