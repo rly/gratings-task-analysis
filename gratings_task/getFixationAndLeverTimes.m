@@ -111,7 +111,7 @@ end
 firstEnterFixationTimesPreCue = enterFixationTimes(isEnterFixationTimesFirstPreCue);
 otherEnterFixationTimes = enterFixationTimes(~isEnterFixationTimesFirstPreCue);
 
-maxDiffExitFixationTimesToJuice = 1.1;
+maxDiffExitFixationTimesToJuice = 2; % TODO deal with rare case where exit fixation is too long after juice
 isExitFixationTimesFirstAroundJuice = false(size(exitFixationTimes));
 for i = 1:numel(firstJuiceEvent)
     % exit fixation may happen anytime within say 1 second around juice
@@ -131,7 +131,6 @@ firstExitFixationTimesAroundJuice = exitFixationTimes(isExitFixationTimesFirstAr
 otherExitFixationTimes = exitFixationTimes(~isExitFixationTimesFirstAroundJuice);
 firstExitFixationVector = exitFixationVector(isExitFixationTimesFirstAroundJuice,:);
 firstExitFixationPolarAngle = exitFixationPolarAngle(isExitFixationTimesFirstAroundJuice);
-fprintf('%d\n', sum(any(any(isnan(firstExitFixationVector)))));
 assert(~any(any(isnan(firstExitFixationVector))));
 firstExitFixationVector = firstExitFixationVector ./ sqrt(sum(firstExitFixationVector.^2, 2)); % normalize
 
@@ -184,11 +183,6 @@ firstLeverReleaseTimesAroundJuice = leverReleaseTimes(isLeverReleaseTimesFirstAr
 otherLeverReleaseTimes = leverReleaseTimes(~isLeverReleaseTimesFirstAroundJuice);
 
 %%
-fprintf('%d %d %d %d %d\n', numel(firstEnterFixationTimesPreCue), ...
-        numel(firstLeverPressTimesPreCue), ...
-        numel(firstExitFixationTimesAroundJuice), ...
-        numel(firstLeverReleaseTimesAroundJuice), ...
-        numel(cueLoc));
 assert(all([numel(firstEnterFixationTimesPreCue) ...
         numel(firstLeverPressTimesPreCue) ...
         numel(firstExitFixationTimesAroundJuice) ...
