@@ -131,7 +131,7 @@ firstExitFixationTimesAroundJuice = exitFixationTimes(isExitFixationTimesFirstAr
 otherExitFixationTimes = exitFixationTimes(~isExitFixationTimesFirstAroundJuice);
 firstExitFixationVector = exitFixationVector(isExitFixationTimesFirstAroundJuice,:);
 firstExitFixationPolarAngle = exitFixationPolarAngle(isExitFixationTimesFirstAroundJuice);
-fprintf(~any(any(isnan(firstExitFixationVector))));
+fprintf('%d\n', sum(any(any(isnan(firstExitFixationVector)))));
 assert(~any(any(isnan(firstExitFixationVector))));
 firstExitFixationVector = firstExitFixationVector ./ sqrt(sum(firstExitFixationVector.^2, 2)); % normalize
 
