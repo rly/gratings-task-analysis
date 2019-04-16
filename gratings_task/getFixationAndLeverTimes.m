@@ -143,7 +143,7 @@ firstExitFixationRightTimesAroundJuice = firstExitFixationTimesAroundJuice(isExi
 
 %% find lever press/release around trial start/juice
 isLeverPressTimesFirstPreCue = false(size(leverPressTimes));
-maxLeverPressTimesToCueOnset = 4;
+maxLeverPressTimesToCueOnset = 6;
 minLeverPressTimesToCueOnset = 0.35;
 for i = 1:numel(cueOnset)
     leverPressTimesToCueOnset = cueOnset(i) - leverPressTimes;
