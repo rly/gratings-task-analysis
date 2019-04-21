@@ -1,17 +1,20 @@
-function saveGratingsTaskResultsJsonToMatRunner(dataDirRoot, recordingInfoFileName, isZeroDistractors)
+function saveGratingsTaskResultsJsonToMatRunner(dataDirRoot, recordingInfoFileName, sessionInds, isZeroDistractors)
 
 fprintf('\n-------------------------------------------------------\n');
 fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Session indices: %d\n', sessionInds);
 fprintf('Data root dir: %s\n', dataDirRoot);
 fprintf('Is zero distractors: %s\n', isZeroDistractors);
 fprintf('------------------------\n');
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
-for sessionInd = 1:numel(recordingInfo)
+for sessionInd = sessionInds
     tic;
-    % note this is not efficient because there are multiple sessionInds for
-    % the same session (same log file)
+    % note this is not efficient because when there are multiple 
+    % sessionInds for the same experimental session, those sessionInds will
+    % have the same log file and this will generate the same mat file
+    % multiple times
     R = recordingInfo(sessionInd);
     if ~isZeroDistractors
         R.blockIndices = R.gratingsTask3DIndices;
