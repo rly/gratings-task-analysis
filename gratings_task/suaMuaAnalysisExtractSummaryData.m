@@ -24,6 +24,7 @@ attnIndices = nan(nUnitsApprox, 4); % 2 delay periods + array response
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
+channelsFromDVPulLine = nan(nUnitsApprox, 1);
 isMUA = false(nUnitsApprox, 1);
 channelIDByUnit = nan(nUnitsApprox, 1);
 preCueBaselineExpFit = cell(nUnitsApprox, 1);
@@ -80,7 +81,7 @@ scriptName = 'SUA_MUA_GRATINGS';
 isZeroDistractors = 0;
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 1);
+        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 1, 0);
 sessionName = R.sessionName;
 areaName = R.areaName;
 
@@ -134,10 +135,12 @@ for j = 1:nUnits
             if ismember(unitStruct.channelID, R.vPulChannels)
                 isInVPulvinar(unitCount) = 1;
                 localization{unitCount} = 'vPul'; % TEMP
+                channelsFromDVPulLine(unitCount) = min(R.vPulChannels) - unitStruct.channelID - 0.5;
             end
             if ismember(unitStruct.channelID, R.dPulChannels)
                 isInDPulvinar(unitCount) = 1;
                 localization{unitCount} = 'dPul'; % TEMP
+                channelsFromDVPulLine(unitCount) = max(R.dPulChannels) - unitStruct.channelID + 0.5;
             end
             if ismember(unitStruct.channelID, R.vPulChannels) && ...
                     ismember(unitStruct.channelID, R.dPulChannels)
@@ -356,7 +359,7 @@ for j = 1:nUnits
             
             % make session-wise RT plots while processing the first unit
             if unitCount == 1
-                assert(all(ES.UE.rt >= 0.28 & ES.UE.rt <= 0.8)); 
+                assert(all(ES.UE.rt >= 0.2 & ES.UE.rt <= 0.8)); 
                 checkRTStatAlpha = 0.05;
                 plotFileName = sprintf('%s/%s-sessionInd%d-rtDist-v%d.png', outputDir, sessionName, sessionInd, v);
                 plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
@@ -894,6 +897,7 @@ save(saveFileName, ...
         'localization', ...
         'isInVPulvinar', ...
         'isInDPulvinar', ...
+        'channelsFromDVPulLine', ...
         'isMUA', ...
         'channelIDByUnit', ...
         'meanWfs', ...
