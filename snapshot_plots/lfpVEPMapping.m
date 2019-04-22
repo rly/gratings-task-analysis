@@ -2,6 +2,8 @@ function lfpVEPMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, ...
         recordingInfoFileName, sessionInd, channelsToLoad)
 % LFP VEP Mapping, all channels on a probe
 
+% TODO: is interpolation over MUA necessary?
+
 %% setup and load data
 v = 12;
 tic;
@@ -23,7 +25,7 @@ assert(numel(channelsToLoad) == 32);
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, 'VEPM', 'LFP_VEPM', 0, 1, 1, 0);
+        sessionInd, channelsToLoad, 'VEPM', 'LFP_VEPM', 0, 0, 1, 0);
 sessionName = R.sessionName;
 areaName = R.areaName;
 
@@ -60,7 +62,7 @@ plotFileNamePrefix = sprintf('%s-ind%d-%s-ch%d-ch%d-%s', sessionName, sessionInd
 %% preprocess LFPs
 Fs = D.lfpFs;
 
-D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
+D.adjLfpsClean = D.adjLfps; %interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 D.adjLfps = [];
 
 hiCutoffFreq = 100;
@@ -302,5 +304,39 @@ for r = 1:numel(refs)
     title(sprintf('%s %s - Mean Early Response (%s)', sessionName, areaName, ref));
 
     plotFileName = sprintf('%s/%s-%s-meanEarlyResponse-v%d.png', processedDataDir, plotFileNamePrefix, ref, v);
+    export_fig(plotFileName, '-nocrop');
+    
+    
+    
+    
+    
+    %% staggered channel color plot of average visually evoked LFP
+    figure_tr_inch(8, 10);
+    subaxis(1, 1, 1, 'ML', 0.1);
+    hold on;
+    imagesc(t, 1:nChannels, averageResponse);
+    set(gca, 'YDir', 'reverse');
+    plot([0 0], [0 nChannels + 1], '-', 'Color', 0.3*ones(3, 1));
+    xlim(xBounds);
+    ylim([0.5 nChannels+0.5]);
+    xlabel('Time from Flash Onset (s)');
+    ylabel('Channel Number (1 = topmost)');
+    title(sprintf('%s %s - Response to Full-Field Flash (N=%d) (%s)', sessionName, areaName, nFlashes, ref));
+    maxCAxis = max(abs(caxis));
+    caxis([-maxCAxis maxCAxis]);
+    colormap(getCoolWarmMap());
+    colorbar;
+    set(gca, 'FontSize', 16);
+
+    if (nChannels > 31 && strcmp(ref, 'BIP')) || (nChannels > 32 && strcmp(ref, 'CAR'))
+        plot(xlim(), [nChannels/2+0.5 nChannels/2+0.5], 'Color', 0.3*ones(3, 1));
+    end
+
+    % plot early latency line at 35 ms, 45 ms
+    plot([0.035 0.035], [-1000 1000], 'm-');
+    plot([0.045 0.045], [-1000 1000], 'm-');
+    text(0.050, nChannels, '35-45 ms', 'Color', 'm');
+
+    plotFileName = sprintf('%s/%s-%s-lfpColor-v%d.png', processedDataDir, plotFileNamePrefix, ref, v);
     export_fig(plotFileName, '-nocrop');
 end
