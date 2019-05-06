@@ -251,7 +251,7 @@ if isLoadSortedSua
     %% read spike sorting quality metrics
     sortQualityNotesFileName = 'spikeSortingNotes.xlsx';
     xlsSheet = 1;
-    xlRange = 'A2:H4000';
+    xlRange = 'A2:H5000';
 
     [sortQualityNotesNums,sortQualityNotesText] = xlsread(sortQualityNotesFileName, xlsSheet, xlRange);
     assert(size(sortQualityNotesNums, 2) == 6);
