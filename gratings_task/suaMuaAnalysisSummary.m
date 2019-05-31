@@ -29,11 +29,11 @@ isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 isSignificantResponseVsPreviousPeriod = false(nUnitsApprox, 4);
 % isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 % isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);
-isSignificantSelectivity = false(nUnitsApprox, 5); % 5 periods info rate
+isSignificantSelectivity = false(nUnitsApprox, 6); % 5 periods info rate TVV changed to 6 !!! ---
 cueResponseVsBaselineDirection = zeros(nUnitsApprox, 1);
-infoRates = nan(nUnitsApprox, 5); % 5 periods
-diffRates = nan(nUnitsApprox, 3); % 2 delay periods + array response
-attnIndices = nan(nUnitsApprox, 3); % 2 delay periods + array response
+infoRates = nan(nUnitsApprox, 6); % 5 periods TVV changed to 6 !!! ---
+diffRates = nan(nUnitsApprox, 4); % 2 delay periods + array response TVV changed to 4 (was 3) !!! ---
+attnIndices = nan(nUnitsApprox, 4); % 2 delay periods + array response TVV changed to 4 (was 3) !!! ---
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
@@ -170,10 +170,10 @@ for i = 1:nSessions
     exRFCountNormFactor(currentUnitInds) = S.exRFCountNormFactor;    
     
     % consider sparse matrix
-    cueTargetDelayNoiseCorrAll{i} = S.cueTargetDelayNoiseCorr;
-    arrayResponseHoldMidNoiseCorrAll{i} = S.arrayResponseHoldMidNoiseCorr;
-    arrayResponseHoldLateNoiseCorrAll{i} = S.arrayResponseHoldLateNoiseCorr;
-    targetDimDelayNoiseCorrAll{i} = S.targetDimDelayNoiseCorr;
+%     cueTargetDelayNoiseCorrAll{i} = S.cueTargetDelayNoiseCorr;
+%     arrayResponseHoldMidNoiseCorrAll{i} = S.arrayResponseHoldMidNoiseCorr;
+%     arrayResponseHoldLateNoiseCorrAll{i} = S.arrayResponseHoldLateNoiseCorr;
+%     targetDimDelayNoiseCorrAll{i} = S.targetDimDelayNoiseCorr;
 end
 clear S;
 
@@ -186,14 +186,14 @@ arrayResponseHoldMidNoiseCorr = nan(unitCount, unitCount, nLoc);
 arrayResponseHoldLateNoiseCorr = nan(unitCount, unitCount, nLoc);
 targetDimDelayNoiseCorr = nan(unitCount, unitCount, nLoc);
 
-for i = 1:nSessions
-    currentUnitInds = currentUnitIndsAll{i};
-    % consider sparse matrix
-    cueTargetDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = cueTargetDelayNoiseCorrAll{i};
-    arrayResponseHoldMidNoiseCorr(currentUnitInds,currentUnitInds,:) = arrayResponseHoldMidNoiseCorrAll{i};
-    arrayResponseHoldLateNoiseCorr(currentUnitInds,currentUnitInds,:) = arrayResponseHoldLateNoiseCorrAll{i};
-    targetDimDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = targetDimDelayNoiseCorrAll{i};
-end
+% for i = 1:nSessions
+%     currentUnitInds = currentUnitIndsAll{i};
+%     % consider sparse matrix
+%     cueTargetDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = cueTargetDelayNoiseCorrAll{i};
+%     arrayResponseHoldMidNoiseCorr(currentUnitInds,currentUnitInds,:) = arrayResponseHoldMidNoiseCorrAll{i};
+%     arrayResponseHoldLateNoiseCorr(currentUnitInds,currentUnitInds,:) = arrayResponseHoldLateNoiseCorrAll{i};
+%     targetDimDelayNoiseCorr(currentUnitInds,currentUnitInds,:) = targetDimDelayNoiseCorrAll{i};
+% end
 
 %% print session-wise presence of delay selectivity in MUA firing
 fprintf('--------------\n');

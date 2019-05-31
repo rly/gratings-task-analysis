@@ -314,6 +314,6 @@ text(axBig, -0.03, infoText2Top, {...
 %             cols(ES.exRFLoc,:), round(ES.targetDimBal.latencyBootByLoc(ES.exRFLoc) * 1000)) ... 
 %% save
 if ~isempty(plotFileName)
-    fprintf('\tSaving figure to file %s...\n', plotFileName);
-    export_fig(plotFileName, '-nocrop');
+%     fprintf('\tSaving figure to file %s...\n', plotFileName);
+%     export_fig(plotFileName, '-nocrop');
 end

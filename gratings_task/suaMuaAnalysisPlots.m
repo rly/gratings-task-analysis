@@ -81,28 +81,28 @@ for i = 1:nUnits
 
             quickSpdfAllVisualEvents(ES, blockName, ...
                     D, i, unitStruct, nLoc, isZeroDistractors, plotFileName);
-            close;
+%             close;
 
             plotFileName = sprintf('%s/%s-%s-visualError-v%d.png', processedDataDir, unitName, blockName, v);
             fprintf('\tPlotting...\n');
 
             quickSpdfAllVisualEventsError(ES, blockName, ...
                     D, i, unitStruct, nLoc, isZeroDistractors, plotFileName);
-            close;
+%             close;
 
             plotFileName = sprintf('%s/%s-%s-visualLatency-v%d.png', processedDataDir, unitName, blockName, v);
             fprintf('\tPlotting...\n');
 
             quickSpdfInspectLatency(ES, blockName, ...
                     D, i, unitStruct, nLoc, isZeroDistractors, plotFileName);
-            close;
+%             close;
 
             plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
             fprintf('\tPlotting...\n');
 
             quickSpdfAllMotorEvents(ES, blockName, ...
                     D, i, unitStruct, nLoc, isZeroDistractors, plotFileName);
-            close;
+%             close;
         else
             fprintf('\tTask-related firing rate < minimum task-related firing rate = %0.2f Hz - skipping.\n', ...
                     minFiringRate);
