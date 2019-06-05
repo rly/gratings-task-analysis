@@ -24,7 +24,7 @@ attnIndices = nan(nUnitsApprox, 4); % 2 delay periods + array response
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
-channelsFromDVPulLine = nan(nUnitsApprox, 1);
+channelsFromDVPulLine = nan(nUnitsApprox, 1); % code requires that dPul is adjacent to vPul
 isMUA = false(nUnitsApprox, 1);
 channelIDByUnit = nan(nUnitsApprox, 1);
 preCueBaselineExpFit = cell(nUnitsApprox, 1);
@@ -132,6 +132,7 @@ for j = 1:nUnits
 
             isInVPulvinar(unitCount) = 0;
             isInDPulvinar(unitCount) = 0;
+            channelsFromDVPulLine(unitCount) = NaN;
             if ismember(unitStruct.channelID, R.vPulChannels)
                 isInVPulvinar(unitCount) = 1;
                 localization{unitCount} = 'vPul'; % TEMP

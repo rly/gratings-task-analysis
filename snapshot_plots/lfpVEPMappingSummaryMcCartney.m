@@ -260,6 +260,55 @@ for s = 1:nSessions
     drawnow;
 end
 
+%% compute average
+% figure_tr_inch(20, 9);
+maxCAxis = -Inf;
+minShift = min(shiftBest(templateSessionIndInd,:));
+maxShift = max(shiftBest(templateSessionIndInd,:));
+
+[~,sessionIndsOrder] = sort(shiftBest(2,:));%[3 4 14 8 15 
+assert(numel(sessionIndsOrder) == nSessions);
+
+sumShiftResponses = zeros(maxShift - minShift + 32, numel(t));
+countShiftResponses = zeros(maxShift - minShift + 32, 1);
+
+for s = 1:nSessions
+    so = sessionIndsOrder(s);
+    sessionInd = sessionInds(s);
+    
+    shift = shiftBest(templateSessionIndInd,so);
+    
+    % plot shifted channel data side by side
+    newY = (1+minShift):(32+maxShift);
+    nChannelsNew = numel(newY);
+    shiftResponse = nan(nChannelsNew, nTime);
+    [~,newYInd] = intersect(newY, (1:nChannels)+shift);
+    
+    sumShiftResponses(newYInd,:) = sumShiftResponses(newYInd,:) + meanResponseAll{so} - superCommonAverage;
+    countShiftResponses(newYInd) = countShiftResponses(newYInd) + 1;
+end
+
+meanShiftResponses = sumShiftResponses ./ countShiftResponses;
+
+figure_tr_inch(4, 9);
+subaxis(1, 1, 1, 'ML', 0.1);
+hold on;
+imagesc(t, newY, meanShiftResponses);
+set(gca, 'YDir', 'reverse');
+plot([0 0], newY([1 end]) + [-1 1], '-', 'Color', 0.3*ones(3, 1));
+xlim(periFlashWindowOffset);
+ylim(newY([1 end]) + [-0.5 0.5]);
+set(gca, 'XTickLabel', []);
+set(gca, 'YTickLabel', []);
+%     xlabel('Time from Flash Onset (s)');
+%         maxCAxis = max([maxCAxis max(abs(caxis))]);
+maxCAxis = 1/2 * max(abs(caxis));
+caxis([-maxCAxis maxCAxis]);
+%     colormap(getCoolWarmMap());
+    colorbar;
+    set(gca, 'FontSize', 16);
+title(sprintf('Mean'));
+
 %%
 figure_tr_inch(20, 9);
 plotHs = nan(nSessions, 1);
@@ -267,7 +316,7 @@ maxCAxis = -Inf;
 minShift = min(shiftBest(templateSessionIndInd,:));
 maxShift = max(shiftBest(templateSessionIndInd,:));
 
-[~,sessionIndsOrder] = sort(shiftBest(2,:));%[3 4 14 8 15 
+[~,sessionIndsOrder] = sort(shiftBest(templateSessionIndInd,:));%[3 4 14 8 15 
 assert(numel(sessionIndsOrder) == nSessions);
 
 for s = 1:nSessions
@@ -302,3 +351,67 @@ for s = 1:nSessions
 %     set(gca, 'FontSize', 16);
     title(sprintf('Sess %d', so));
 end
+
+%%
+sessionIndsIncl = [15 2 5 11 10];
+nSessionsIncl = numel(sessionIndsIncl);
+
+figure_tr_inch(10, 7);
+plotHs = nan(nSessionsIncl, 1);
+maxCAxis = -Inf;
+
+minShift = min(shiftBest(templateSessionIndInd,sessionIndsIncl));
+maxShift = max(shiftBest(templateSessionIndInd,sessionIndsIncl));
+
+[~,sessionIndsOrder] = sort(shiftBest(templateSessionIndInd,sessionIndsIncl));
+assert(numel(sessionIndsOrder) == nSessionsIncl);
+
+for s = 1:nSessionsIncl
+    so = sessionIndsOrder(s);
+    sessionInd = sessionIndsIncl(s);
+    
+    shift = shiftBest(templateSessionIndInd,sessionIndsIncl(so));
+    
+    % plot shifted channel data side by side
+    newY = (1+minShift):(32+maxShift);
+    nChannelsNew = numel(newY);
+    shiftResponse = nan(nChannelsNew, nTime);
+    [~,newYInd] = intersect(newY, (1:nChannels)+shift);
+    shiftResponse(newYInd,:) = meanResponseAll{sessionIndsIncl(so)} - superCommonAverage;  
+    shiftResponse(isnan(shiftResponse)) = -Inf; % make nans Inf for colormap
+    plotHs(s) = subaxis(1, nSessionsIncl, s, 'SH', 0.004, 'ML', 0.04, 'MR', 0.02, 'MB', 0.11, 'MT', 0.06);
+    hold on;
+
+    imagesc(t, newY, shiftResponse);
+    set(gca, 'YDir', 'reverse');
+    newYInd([1 end])
+    plot([0 0], newYInd([1 end]) + [-2.5 -1.5], '-', 'Color', 0.3*ones(3, 1));
+    xlim([-0.05 0.25]);
+    ylim(newY([1 end]) + [-0.5 0.5]);
+    set(gca, 'YTickLabel', []);
+%     xlabel('Time from Flash Onset (s)');
+%         maxCAxis = max([maxCAxis max(abs(caxis))]);
+    maxCAxis = max(abs(caxis))*1.1; % scale larger b/c max will show as white with nan=white mapping
+    caxis([-maxCAxis maxCAxis]);
+    colormap([1 1 1; colormap('parula')]); % make nans appear as white
+%     colormap(getCoolWarmMap());
+%     colorbar;
+    set(gca, 'FontSize', 16);
+    title(sprintf('Session %d', sessionIndsIncl(so)));
+    
+    set(gca, 'XTickLabel', []);
+    if s == 5
+        ax2 = axes('Position', get(plotHs(s), 'Position'), 'Color', 'none', 'FontSize', 14);
+        set(ax2, 'XLim', get(plotHs(s), 'XLim'), 'YLim', get(plotHs(s), 'YLim'));
+        set(ax2, 'YTick', [], 'YColor', 'w', 'YAxisLocation', 'right', 'XAxisLocation', 'bottom', 'TickDir', 'out');
+    end
+    if s == 3
+        xlabel({'','Time from Flash Onset (s)'});
+    end
+    if s == 1
+        ylabel('(bottom)     ----------     Channel Index     ----------     (top)');
+    end
+end
+
+plotFileName = sprintf('%s/ex-lfp-vepm-alignment-v%d.png', processedDataRootDir, v);
+export_fig(plotFileName, '-nocrop');
