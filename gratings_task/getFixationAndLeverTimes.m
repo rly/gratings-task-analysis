@@ -111,7 +111,7 @@ for i = 1:numel(cueOnset)
             fprintf('\tEnter fixation event already assigned to cue onset event: %d, %d\n', i, enterFixationTimesGoodInd);
         end
         isEnterFixationTimesFirstPreCue(enterFixationTimesGoodInd) = 1;
-        firstEnterFixationTimesPreCue(i) = enterFixationTimes(isEnterFixationTimesFirstPreCue(enterFixationTimesGoodInd));
+        firstEnterFixationTimesPreCue(i) = enterFixationTimes(enterFixationTimesGoodInd);
     else
         fprintf('\tCue onset event without associated enter fixation event: %d\n', i);
     end
@@ -134,7 +134,7 @@ for i = 1:numel(firstJuiceEvent)
             fprintf('\tExit fixation event already assigned to first juice event: %d, %d\n', i, exitFixationTimesGoodInd);
         end
         isExitFixationTimesFirstAroundJuice(exitFixationTimesGoodInd) = 1;
-        firstExitFixationTimesAroundJuice(i) = exitFixationTimes(isExitFixationTimesFirstAroundJuice(exitFixationTimesGoodInd));
+        firstExitFixationTimesAroundJuice(i) = exitFixationTimes(exitFixationTimesGoodInd);
 %         firstExitFixationVector(i,:) = exitFixationVector(isExitFixationTimesFirstAroundJuice(exitFixationTimesGoodInd),:);
 %         disp(firstExitFixationVector(i,:))
 %         firstExitFixationPolarAngle(i) = exitFixationPolarAngle(isExitFixationTimesFirstAroundJuice(exitFixationTimesGoodInd));
@@ -164,7 +164,7 @@ for i = 1:numel(cueOnset)
             fprintf('\tLever press event already assigned to cue onset event: %d, %d\n', i, leverPressTimesGoodInd);
         end
         isLeverPressTimesFirstPreCue(leverPressTimesGoodInd) = 1;
-        firstLeverPressTimesPreCue(i) = leverPressTimes(isLeverPressTimesFirstPreCue(leverPressTimesGoodInd));
+        firstLeverPressTimesPreCue(i) = leverPressTimes(leverPressTimesGoodInd);
     else
         fprintf('\tCue onset event without associated lever press event: %d\n', i);
     end
@@ -185,7 +185,7 @@ for i = 1:numel(firstJuiceEvent)
             fprintf('\tLever release event already assigned to first juice event: %d, %d\n', i, leverReleaseTimesGoodInd);
         end
         isLeverReleaseTimesFirstAroundJuice(leverReleaseTimesGoodInd) = 1;
-        firstLeverReleaseTimesAroundJuice(i) = leverReleaseTimes(isLeverReleaseTimesFirstAroundJuice(leverReleaseTimesGoodInd));
+        firstLeverReleaseTimesAroundJuice(i) = leverReleaseTimes(leverReleaseTimesGoodInd);
     else
         fprintf('\tFirst juice event without associated lever release event: %d\n', i);
     end
