@@ -1,6 +1,6 @@
 function quickSpdfAllEventsRowPopMeanRunner(name, isIncluded, spdfInfo, ...
         cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
-        yBounds, isShowLabels, summaryDataDir, v)
+        yBounds, isShowLabels, plotFileName)
 
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs for group %s...\n', name);
@@ -16,7 +16,6 @@ exitFixationSpdfExRFNormSub = (spdfInfo.exitFixationSpdfExRFNorm(isIncluded,:));
 
 fprintf('\t%s: %d units\n', name, sum(isIncluded));
 
-plotFileName = sprintf('%s/allSessions-%s-meanSpdfs4-v%d.png', summaryDataDir, name, v);
 fprintf('Saving to %s...\n', plotFileName);
 
 quickSpdfAllEvents4InARowPopMean(...

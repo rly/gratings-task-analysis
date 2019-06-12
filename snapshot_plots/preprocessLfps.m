@@ -6,7 +6,7 @@ doOutlierCheckPlot = 1;
 
 maxAbsNonOutlier = 0.5;
 warningSDByChannelLarge = 2.5;
-outlierMaxSDStep1 = 8; % first-pass threshold before LPF
+outlierMaxSDStep1 = 10; % first-pass threshold before LPF
 
 isNanOrig = isnan(adjLfps); % track nans in original data
 nChannels = size(adjLfps, 1);
