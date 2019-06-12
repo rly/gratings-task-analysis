@@ -42,7 +42,7 @@ else
     endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<spikeStruct.unitEndTime,1,'last'));
 end
 assert(startTime < endTime)
-    
+
 kernelSigma = 0.01;
 
 clear spikeStruct;

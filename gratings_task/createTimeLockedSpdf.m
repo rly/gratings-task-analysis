@@ -25,26 +25,26 @@ timeLockStruct.kernelSigma = kernelSigma;
 % compute time vector at which spdf values will be computed
 timeLockStruct.t = computeTForSpdf(timeLockStruct.window(1), timeLockStruct.spdfWindowOffset, kernelSigma);
 
-% filter event times based on startTime and endTime
+% filter event times based on startTime and endTime == "valid"
 if ~isempty(eventTimes)
-    eventTimes = eventTimes(((eventTimes > startTime) & (eventTimes <= endTime)));
+    timeLockStruct.validEvents = (eventTimes > startTime) & (eventTimes <= endTime);
+    timeLockStruct.validEventTimes = eventTimes(timeLockStruct.validEvents);
     for i = 1:nLoc
-        timeLockStruct.trialIndicesByLoc{i} = ((eventTimesByLoc{i} > startTime) & (eventTimesByLoc{i} <= endTime));
-        eventTimesByLoc{i} = eventTimesByLoc{i}(timeLockStruct.trialIndicesByLoc{i});
+        timeLockStruct.validEventsByLoc{i} = (eventTimesByLoc{i} > startTime) & (eventTimesByLoc{i} <= endTime);
+        timeLockStruct.validEventTimesByLoc{i} = eventTimesByLoc{i}(timeLockStruct.validEventsByLoc{i});
     end
-    timeLockStruct.trialsBetweenStartEndTimes = eventTimes;
 end
 
 % align spike times to event (0 = start of window)
-timeLockStruct.spikeTimes = createnonemptydatamatpt(spikeTs, eventTimes, timeLockStruct.window);
+timeLockStruct.spikeTimes = createnonemptydatamatpt(spikeTs, timeLockStruct.validEventTimes, timeLockStruct.window);
 
 % compute the spike density function and bootstrapped error measure
 [timeLockStruct.spdf,~,timeLockStruct.spdfErr] = fixedPsth(timeLockStruct.spikeTimes, kernelSigma, 2, timeLockStruct.t);
 
 % compute spdf for single trials
-timeLockStruct.spdfByEvent = nan(numel(eventTimes), numel(timeLockStruct.t));
-for i = 1:numel(eventTimes)
-    alignedSpikeTimesThisEvent = createnonemptydatamatpt(spikeTs, eventTimes(i), timeLockStruct.window);
+timeLockStruct.spdfByEvent = nan(numel(timeLockStruct.validEventTimes), numel(timeLockStruct.t));
+for i = 1:numel(timeLockStruct.validEventTimes)
+    alignedSpikeTimesThisEvent = createnonemptydatamatpt(spikeTs, timeLockStruct.validEventTimes(i), timeLockStruct.window);
     timeLockStruct.spdfByEvent(i,:) = fixedPsth(alignedSpikeTimesThisEvent, kernelSigma, 0, timeLockStruct.t); % no error
 end
 
@@ -52,6 +52,6 @@ timeLockStruct.spikeTimesByLoc = cell(nLoc, 1);
 timeLockStruct.spdfByLoc = nan(nLoc, numel(timeLockStruct.t));
 timeLockStruct.spdfErrByLoc = nan(nLoc, numel(timeLockStruct.t));
 for i = 1:nLoc
-    timeLockStruct.spikeTimesByLoc{i} = createnonemptydatamatpt(spikeTs, eventTimesByLoc{i}, timeLockStruct.window);
+    timeLockStruct.spikeTimesByLoc{i} = createnonemptydatamatpt(spikeTs, timeLockStruct.validEventTimesByLoc{i}, timeLockStruct.window);
     [timeLockStruct.spdfByLoc(i,:),~,timeLockStruct.spdfErrByLoc(i,:)] = fixedPsth(timeLockStruct.spikeTimesByLoc{i}, kernelSigma, 2, timeLockStruct.t);
 end
