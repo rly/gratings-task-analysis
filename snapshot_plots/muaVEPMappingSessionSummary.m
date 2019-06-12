@@ -166,3 +166,46 @@ plotFileName = sprintf('%s/%s_%s_%s-spdfByChannelJoyplotFilled-all-%s-v%d.png', 
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% heatmap
+figure_tr_inch(4, 5.5);
+ax1 = subaxis(1, 1, 1, 'ML', 0.07, 'MB', 0.14, 'MR', 0.06, 'MT', 0.03);
+hold on;
+cmap = getCoolWarmMap();
+xBounds = [-0.05 0.251];
+
+spikeStruct = allMUAStructs{1};
+t = spikeStruct.vepmPsthParams.t;
+normPsthResp = nan(nUnits, numel(spikeStruct.vepmPsthParams.normPsthResponse));
+for j = 1:nUnits
+    spikeStruct = allMUAStructs{j};
+    normPsthResp(j,:) = spikeStruct.vepmPsthParams.normPsthResponse;
+end
+imagesc(t, 1:nUnits, normPsthResp);
+
+cBounds = max(abs(caxis)) * [-1 1] * 1/2;
+caxis(cBounds); % symmetric cmap
+colormap(cmap);
+plot([0 0], [0.5 nUnits+0.5], '-', 'Color', 0.3*ones(3, 1)); 
+set(gca, 'FontSize', 16);
+set(gca, 'YDir', 'reverse');
+xlabel('Time from Flash Onset (s)');
+% ylabel({'Unit (Ordered by Depth)', ''});
+% set(gca, 'XTickLabel', {' '});
+set(gca, 'XTick', -0.05:0.05:0.25);
+set(gca, 'YTickLabel', '');
+grid on;
+xlim(xBounds);
+ylim([0.5 nUnits+0.5]);
+ax2 = axes('Position', get(ax1, 'Position'), 'Color', 'none', 'FontSize', 16);
+set(ax2, 'XLim', get(ax1, 'XLim'), 'YLim', get(ax1, 'YLim'));
+set(ax2, 'YTick', [], 'YColor', 'w', 'YAxisLocation', 'right');
+set(ax2, 'XTick', get(ax1, 'XTick'), 'XTickLabel', [], 'XAxisLocation', 'bottom', 'TickDir', 'out');
+
+% title(sprintf('%s %s - Flash Responses (N=%d)', sessionName, areaName, nUnits));
+
+plotFileName = sprintf('%s/%s_%s_%s-spdfByChannelHeat-all-%s-v%d.png', ...
+        processedDataDir, sessionName, areaName, muaChannelRangeStr, blockName, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
