@@ -1,7 +1,7 @@
 function suaMuaAnalysisExtractSummaryData(processedDataRootDir, dataDirRoot, ...
         suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, isLoadSortedSua, isLoadMua)
 
-v = 13;
+v = 14;
 
 % for preallocation. make sure this is an underestimate or equal to actual
 % number of units saved
