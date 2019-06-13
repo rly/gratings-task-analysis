@@ -3,7 +3,7 @@ function quickSpdfAllVisualEvents(ES, blockName, ...
 
 unitName = unitStruct.name;
 nTrials = numel(ES.UE.cueOnset);
-nValidTrials = numel(ES.cueOnset.validEvents);
+nValidTrials = numel(ES.cueOnset.validEventTimes);
 cols = lines(4);
 
 %%
