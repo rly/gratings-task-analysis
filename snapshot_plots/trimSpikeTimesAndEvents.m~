@@ -42,7 +42,9 @@ for j = 1:numel(blockInds)
     end
     if isfield(D, 'allSpikeStructs')
         for i = 1:numel(D.allSpikeStructs)
-            spikesToKeep{i} = spikesToKeep{i} | (D.allSpikeStructs{i}.ts >= blockStartTime & D.allSpikeStructs{i}.ts <= blockStopTime); 
+            if ~isLoadAllSpikes
+                spikesToKeep{i} = spikesToKeep{i} | (D.allSpikeStructs{i}.ts >= blockStartTime & D.allSpikeStructs{i}.ts <= blockStopTime); 
+            end
         end
     end
     if isfield(D, 'allMUAStructs')
@@ -102,4 +104,4 @@ if isfield(D, 'adjDirects')
     % TODO special case for adjDirects -- make the matrix smaller and adjust
     % the event times accordingly
 end
-
+end

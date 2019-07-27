@@ -1,4 +1,4 @@
-function d = createnonemptydatamatpt(sig,times,window)
+function [d,all_indx] = createnonemptydatamatpt(sig,times,window)
 % Wrapper to chronux's createdatamatpt() that returns datamat with no NaN/Inf in
 % it (in case that ever happens...) and some min spikes per window (currently 0)
 % The whole d may be empty though!!! (check with isempty())
@@ -7,7 +7,7 @@ function d = createnonemptydatamatpt(sig,times,window)
 
 min_spikes_per_window = 0;
 
-datamat = createdatamatpt(sig,times,window);
+[datamat,all_indx] = createdatamatpt(sig,times,window);
 d = struct([]); c = 1;
 for j = 1:numel(datamat)
     if length(datamat(j).times) >= min_spikes_per_window && ...

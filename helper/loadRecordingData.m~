@@ -1,4 +1,4 @@
-function [R, D, processedDataDir, blockName] = loadRecordingData(...
+function [R, D, processedDataDir, blockName, spikesToKeep] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
         sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, rfMappingNewInfoFileName, rfMappingNewMode, isLoadAllSpikes)
 % loads MUA data and eyetracking/lever data into D struct and recording
@@ -87,13 +87,10 @@ fprintf('Analyzing task name: %s, block names: %s.\n', taskName, blockName);
 %% remove spike and event times not during task to save memory
 % meta data already had spike times adjusted
 if ~isLoadMetaDataOnly 
-    if isLoadAllSpikes
+    if ~isLoadAllSpikes
         DallSpikes = D;
         [D, spikesToKeep] = trimSpikeTimesAndEvents(D, R.blockIndices, isLoadAllSpikes);
-        for uniti = 1:numel(DallSpikes.allUnitStructs)
-            D.allUnitStructs{uniti}.tsAll = DallSpikes.allUnitStructs{uniti}.ts;
-            D.spikesToKeep = spikesToKeep;
-        end
+        for un
     else
         [D, spikesToKeep] = trimSpikeTimesAndEvents(D, R.blockIndices, isLoadAllSpikes);
     end

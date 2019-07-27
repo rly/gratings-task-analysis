@@ -308,7 +308,7 @@ if isLoadSortedSua
             separationQuality = sortQualityNotesNums(qualityNotesMatchInd,4);
             % INCLUDE ONLY UNITS WITH TYPICAL WAVEFORM SHAPE AND GOOD
             % SEPARATION QUALITY FOR NOW
-            if ~(hasTypicalWaveformShape && separationQuality >= 3)
+            if ~(hasTypicalWaveformShape && separationQuality >= 5)
                 continue;
             end
             
