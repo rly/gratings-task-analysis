@@ -86,18 +86,26 @@ fprintf('Analyzing task name: %s, block names: %s.\n', taskName, blockName);
 
 %% remove spike and event times not during task to save memory
 % meta data already had spike times adjusted
-if ~isLoadMetaDataOnly 
-    if isLoadAllSpikes
-        DallSpikes = D;
-        [D, spikesToKeep] = trimSpikeTimesAndEvents(D, R.blockIndices, isLoadAllSpikes);
-        for uniti = 1:numel(DallSpikes.allUnitStructs)
-            D.allUnitStructs{uniti}.tsAll = DallSpikes.allUnitStructs{uniti}.ts;
-            D.spikesToKeep = spikesToKeep;
-        end
-    else
-        [D, spikesToKeep] = trimSpikeTimesAndEvents(D, R.blockIndices, isLoadAllSpikes);
-    end
+if ~isLoadMetaDataOnly
+    D = trimSpikeTimesAndEvents(D, R.blockIndices);
     if isLoadLfp
         D = adjustSpikeTimesLfpsAndEvents(D, R.blockIndices);
     end
 end
+% %% remove spike and event times not during task to save memory
+% % meta data already had spike times adjusted
+% if ~isLoadMetaDataOnly 
+%     if isLoadAllSpikes
+%         DallSpikes = D;
+%         [D, spikesToKeep] = trimSpikeTimesAndEvents(D, R.blockIndices, isLoadAllSpikes);
+%         for uniti = 1:numel(DallSpikes.allUnitStructs)
+%             D.allUnitStructs{uniti}.tsAll = DallSpikes.allUnitStructs{uniti}.ts;
+%             D.spikesToKeep = spikesToKeep;
+%         end
+%     else
+%         [D, spikesToKeep] = trimSpikeTimesAndEvents(D, R.blockIndices, isLoadAllSpikes);
+%     end
+%     if isLoadLfp
+%         D = adjustSpikeTimesLfpsAndEvents(D, R.blockIndices);
+%     end
+% end

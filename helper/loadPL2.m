@@ -249,7 +249,7 @@ if isLoadSortedSua
 %     D.nUnits
 
     %% read spike sorting quality metrics
-    sortQualityNotesFileName = 'spike sorting notes.xlsx';
+    sortQualityNotesFileName = 'spikeSortingNotes.xlsx';
     xlsSheet = 1;
     xlRange = 'A2:H3000';
 

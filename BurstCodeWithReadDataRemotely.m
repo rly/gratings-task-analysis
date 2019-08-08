@@ -7,7 +7,7 @@ fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigMcCartney.csv.bak');
 % fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigFerdy.csv.bak');
 sessionInfo = textscan(fid, '%d8%s%s', 'Delimiter', ',', 'HeaderLines' ,2-1, 'ReturnOnError', false, 'EndOfLine', '\r\n');
 fclose(fid);
-for sessioni = 1:numel(sessionInfo{1})
+for sessioni = 1:3%numel(sessionInfo{1})
     clear -sessionInfo -sessioni
     sessionInd = sessionInfo{1}(sessioni);
     processedDataRootDir = '/Volumes/scratch/rly/gratings-task-analysis/processed_data/';
@@ -180,10 +180,10 @@ for sessioni = 1:numel(sessionInfo{1})
                 subplot(4,6,21)
                 [autocorrSpikeTimes,lags] = xcorr(binnedSpikes,1000,'coeff');
                 plot(lags,autocorrSpikeTimes)
-                xlim([-50 50])
+                xlim([-75 75])
                 title('Normalized Autocorrelogram Zoomed In')
                 
-                tcorr=0:0.001:tcorrmax; % time-vector for the calculation of correlations
+                tcorr=0:0.001:1; % time-vector for the calculation of correlations
                 nbins = length(binnedSpikes);
                 ncorr = length(tcorr); %number of points of time at which correlation is calculated
                 corr=zeros(size(tcorr)); % set up the vector that will contain the correlations
@@ -220,7 +220,6 @@ for sessioni = 1:numel(sessionInfo{1})
         end
     end
 end
-clear
 
 
 
