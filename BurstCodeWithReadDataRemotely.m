@@ -7,8 +7,8 @@ fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigMcCartney.csv.bak');
 % fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigFerdy.csv.bak');
 sessionInfo = textscan(fid, '%d8%s%s', 'Delimiter', ',', 'HeaderLines' ,2-1, 'ReturnOnError', false, 'EndOfLine', '\r\n');
 fclose(fid);
-for sessioni = 1:3%numel(sessionInfo{1})
-    clear -sessionInfo -sessioni
+for sessioni = 1:numel(sessionInfo{1})
+    clearvars -except sessionInfo sessioni outputDir
     sessionInd = sessionInfo{1}(sessioni);
     processedDataRootDir = '/Volumes/scratch/rly/gratings-task-analysis/processed_data/';
     dataDirRoot = '/Volumes/kastner/ryanly/McCartney/merged';
