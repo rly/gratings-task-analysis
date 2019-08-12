@@ -1,8 +1,8 @@
-function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
+% function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
-% clear;
-% readDataLocally;
-% sessionInds = 1:37;
+clear;
+readDataLocally;
+sessionInds = 39:57; % temp. 38 probably not in pulvinar
 
 v = 13;
 
@@ -23,20 +23,22 @@ nUnitsApprox = nSessions * 2; % should be equal or an underestimate
 
 esFileNames = cell(nUnitsApprox, 1);
 unitNames = cell(nUnitsApprox, 1);
+unitStructs = cell(nUnitsApprox, 1);
 meanWfs = cell(nUnitsApprox, 1);
 physClass = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 isSignificantResponseVsPreviousPeriod = false(nUnitsApprox, 4);
 % isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 % isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);
-isSignificantSelectivity = false(nUnitsApprox, 6); % 5 periods info rate TVV changed to 6 !!! ---
+isSignificantSelectivity = false(nUnitsApprox, 6); % 6 periods info rate
 cueResponseVsBaselineDirection = zeros(nUnitsApprox, 1);
-infoRates = nan(nUnitsApprox, 6); % 5 periods TVV changed to 6 !!! ---
-diffRates = nan(nUnitsApprox, 4); % 2 delay periods + array response TVV changed to 4 (was 3) !!! ---
-attnIndices = nan(nUnitsApprox, 4); % 2 delay periods + array response TVV changed to 4 (was 3) !!! ---
+infoRates = nan(nUnitsApprox, 6); % 6 periods
+diffRates = nan(nUnitsApprox, 4); % 2 delay periods + array response
+attnIndices = nan(nUnitsApprox, 4); % 2 delay periods + array response
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
+channelsFromDVPulLine = nan(nUnitsApprox, 1);
 earlyPreExitFixationSlope = nan(nUnitsApprox, 1);
 latePreExitFixationSlope = nan(nUnitsApprox, 1);
 spdfInfo = struct();
@@ -91,6 +93,7 @@ for i = 1:nSessions
     
     esFileNames(currentUnitInds) = S.esFileNames;
     unitNames(currentUnitInds) = S.unitNames; % TODO include sessionInd
+    unitStructs(currentUnitInds) = S.unitStructs;
     meanWfs(currentUnitInds,:) = S.meanWfs;
     physClass(currentUnitInds,:) = S.physClass;
     isSignificantResponseVsBaseline(currentUnitInds,:) = S.isSignificantResponseVsBaseline;
@@ -105,6 +108,7 @@ for i = 1:nSessions
     localization(currentUnitInds) = S.localization;
     isInVPulvinar(currentUnitInds) = S.isInVPulvinar;
     isInDPulvinar(currentUnitInds) = S.isInDPulvinar;
+    channelsFromDVPulLine(currentUnitInds) = S.channelsFromDVPulLine;
     earlyPreExitFixationSlope(currentUnitInds) = S.earlyPreExitFixationSlope;
     latePreExitFixationSlope(currentUnitInds) = S.latePreExitFixationSlope;
     
@@ -244,9 +248,10 @@ isSignificantAnySpatialSelectivity = isCell & any(isSignificantSelectivity, 2);
 isSignificantEvokedSelectivity = isCell & any(isSignificantSelectivity(:,[1 3 5]), 2);
 isSignificantDelaySelectivity = isCell & any(isSignificantSelectivity(:,[2 4]), 2);
 isSignificantSelectivityCueTargetDelay = isCell & isSignificantSelectivity(:,2);
-isSignificantSelectivityArrayHoldResponse = isCell & isSignificantSelectivity(:,3);
+isSignificantSelectivityArrayResponseHold = isCell & isSignificantSelectivity(:,3);
 isSignificantSelectivityTargetDimDelay = isCell & isSignificantSelectivity(:,4);
 isSignificantSelectivityTargetDimResponse = isCell & isSignificantSelectivity(:,5);
+isSignificantSelectivityCueTargetDelayLong = isCell & isSignificantSelectivity(:,6);
 
 isSignificantSelectivityCueTargetDelayInc = isCell & isSignificantSelectivity(:,2) & diffRates(:,1) > 0;
 isSignificantSelectivityCueTargetDelayDec = isCell & isSignificantSelectivity(:,2) & diffRates(:,1) < 0;
@@ -254,6 +259,8 @@ isSignificantSelectivityArrayHoldResponseInc = isCell & isSignificantSelectivity
 isSignificantSelectivityArrayHoldResponseDec = isCell & isSignificantSelectivity(:,3) & diffRates(:,2) < 0;
 isSignificantSelectivityTargetDimDelayInc = isCell & isSignificantSelectivity(:,4) & diffRates(:,3) > 0;
 isSignificantSelectivityTargetDimDelayDec = isCell & isSignificantSelectivity(:,4) & diffRates(:,3) < 0;
+isSignificantSelectivityCueTargetDelayLongInc = isCell & isSignificantSelectivity(:,6) & diffRates(:,4) > 0;
+isSignificantSelectivityCueTargetDelayLongDec = isCell & isSignificantSelectivity(:,6) & diffRates(:,4) < 0;
 
 isInRFP1 = isCell & inRFLocs == 1;
 isInRFP3 = isCell & inRFLocs == 3;
@@ -342,11 +349,11 @@ fprintf('Of the %d units in the pulvinar that show spatial selectivity during th
         sum(isSignificantSelectivityCueTargetDelayDec & isInPulvinar), ...
         round(sum(isSignificantSelectivityCueTargetDelayDec & isInPulvinar)/sum(isSignificantSelectivityCueTargetDelay & isInPulvinar) * 100));
 fprintf('Of the %d units in the pulvinar that show spatial selectivity during the array hold response, \n\t%d (%d%%) are InRF > ExRF, %d (%d%%) are InRF < ExRF\n', ...
-        sum(isSignificantSelectivityArrayHoldResponse & isInPulvinar), ...
+        sum(isSignificantSelectivityArrayResponseHold & isInPulvinar), ...
         sum(isSignificantSelectivityArrayHoldResponseInc & isInPulvinar), ...
-        round(sum(isSignificantSelectivityArrayHoldResponseInc & isInPulvinar)/sum(isSignificantSelectivityArrayHoldResponse & isInPulvinar) * 100), ...
+        round(sum(isSignificantSelectivityArrayHoldResponseInc & isInPulvinar)/sum(isSignificantSelectivityArrayResponseHold & isInPulvinar) * 100), ...
         sum(isSignificantSelectivityArrayHoldResponseDec & isInPulvinar), ...
-        round(sum(isSignificantSelectivityArrayHoldResponseDec & isInPulvinar)/sum(isSignificantSelectivityArrayHoldResponse & isInPulvinar) * 100));
+        round(sum(isSignificantSelectivityArrayHoldResponseDec & isInPulvinar)/sum(isSignificantSelectivityArrayResponseHold & isInPulvinar) * 100));
 fprintf('Of the %d units in the pulvinar that show spatial selectivity during the target-dim delay, \n\t%d (%d%%) are InRF > ExRF, %d (%d%%) are InRF < ExRF\n', ...
         sum(isSignificantSelectivityTargetDimDelay & isInPulvinar), ...
         sum(isSignificantSelectivityTargetDimDelayInc & isInPulvinar), ...
@@ -423,13 +430,13 @@ fprintf('\n');
 
 fprintf('Significant selectivity in array hold response:\n');
 fprintf('\t%d/%d = %d%% vPul units\n',...
-        sum(isCell & isSignificantSelectivityArrayHoldResponse & strcmp(localization, 'vPul')), ...
+        sum(isCell & isSignificantSelectivityArrayResponseHold & strcmp(localization, 'vPul')), ...
         sum(isCell & strcmp(localization, 'vPul')), ...
-        round(sum(isCell & isSignificantSelectivityArrayHoldResponse & strcmp(localization, 'vPul'))/sum(isCell & strcmp(localization, 'vPul')) * 100));
+        round(sum(isCell & isSignificantSelectivityArrayResponseHold & strcmp(localization, 'vPul'))/sum(isCell & strcmp(localization, 'vPul')) * 100));
 fprintf('\t%d/%d = %d%% dPul units\n',...
-        sum(isCell & isSignificantSelectivityArrayHoldResponse & strcmp(localization, 'dPul')), ...
+        sum(isCell & isSignificantSelectivityArrayResponseHold & strcmp(localization, 'dPul')), ...
         sum(isCell & strcmp(localization, 'dPul')), ...
-        round(sum(isCell & isSignificantSelectivityArrayHoldResponse & strcmp(localization, 'dPul'))/sum(isCell & strcmp(localization, 'dPul')) * 100));
+        round(sum(isCell & isSignificantSelectivityArrayResponseHold & strcmp(localization, 'dPul'))/sum(isCell & strcmp(localization, 'dPul')) * 100));
 fprintf('\n');
 
 fprintf('Significant selectivity in target-dim delay:\n');
@@ -473,8 +480,8 @@ fprintf('\t%d (%d%%) show significant pre-saccadic activity compared to baseline
         round(sum(precondition & isSignificantPreExitFixation)/sum(precondition) * 100));
 fprintf('\t%d (%d%%) show significant selectivity during the cue-target delay\n', sum(precondition & isSignificantSelectivityCueTargetDelay), ...
         round(sum(precondition & isSignificantSelectivityCueTargetDelay)/sum(precondition) * 100));
-fprintf('\t%d (%d%%) show significant selectivity during the array hold response\n', sum(precondition & isSignificantSelectivityArrayHoldResponse), ...
-        round(sum(precondition & isSignificantSelectivityArrayHoldResponse)/sum(precondition) * 100));
+fprintf('\t%d (%d%%) show significant selectivity during the array hold response\n', sum(precondition & isSignificantSelectivityArrayResponseHold), ...
+        round(sum(precondition & isSignificantSelectivityArrayResponseHold)/sum(precondition) * 100));
 fprintf('\t%d (%d%%) show significant selectivity during the target-dim delay\n', sum(precondition & isSignificantSelectivityTargetDimDelay), ...
         round(sum(precondition & isSignificantSelectivityTargetDimDelay)/sum(precondition) * 100));
 fprintf('\t%d (%d%%) show significant selectivity during the target-dim response\n', sum(precondition & isSignificantSelectivityTargetDimResponse), ...
@@ -495,43 +502,651 @@ fprintf('\t%d (%d%%) has InRF P1 (significantly suppressed response to P3 for th
 fprintf('\t%d (%d%%) has InRF P3 (significantly suppressed response to P1 for the 2 loc sessions)\n', sum(precondition & isInRFP3), ...
         round(sum(precondition & isInRFP3)/sum(precondition) * 100));
 
+isBS = strcmp(physClass, 'Broad-Spiking');
+isNS = strcmp(physClass, 'Narrow-Spiking');
+
 cols = lines(6);
+
+unitNamesDPul = unitNames(isInDPulvinar);
+unitNamesVPul = unitNames(isInVPulvinar);
+
+save(sprintf('%s/unitNamesPul-v%d.mat', summaryDataDir, v), 'unitNamesDPul', 'unitNamesVPul');
 
 %% plot all waveforms
 tWf = (-16:40) / 40000 * 1000; % ms
 
 figure_tr_inch(6, 6);
 plot(tWf, meanWfs');
-title(sprintf('Mean Waveforms (N=%d)', size(meanWfs, 1)));
+title(sprintf('Mean Waveforms (ALL; N=%d)', size(meanWfs, 1)));
 grid on;
 
-precondition = isInPulvinar & isSignificantCueResponseInc;
+precondition = true(size(isSignificantCueResponseInc));%isInPulvinar & isSignificantCueResponseInc;
 % figure_tr_inch(6, 6);
 % plot(tWf, meanWfs(precondition,:)');
 % title(sprintf('Mean Waveforms (N=%d)', size(meanWfs(precondition,:), 1)));
 % grid on;
 % set(gca, 'XMinorGrid', 'on');
+troughToPeakTimeSub = cellfun(@(x) x.troughToPeakTimeFine * 1000, unitStructs(precondition));
 
 meanWfSub = meanWfs(precondition,:);
 physClassSub = physClass(precondition);
 figure_tr_inch(8, 5);
 hold on;
 for i = 1:size(meanWfSub, 1)
+    [mx,mi] = max(meanWfSub(i,:));
     if strcmp(physClassSub{i}, 'Narrow-Spiking')
         plot(tWf, meanWfSub(i,:)', 'r-');
+        plot(troughToPeakTimeSub(i), mx, 'r+');
     elseif strcmp(physClassSub{i}, 'Broad-Spiking')
         plot(tWf, meanWfSub(i,:)', 'b-');
+        plot(troughToPeakTimeSub(i), mx, 'b+');
     else
-        plot(tWf, meanWfSub(i,:)', 'k:');
+%         plot(tWf, meanWfSub(i,:)', 'k:');
     end
 end
+plot([0.351 0.351], [-0.2 0.15], 'k--');
 title(sprintf('Mean Waveforms (N=%d)', size(meanWfs(precondition,:), 1)));
 grid on;
 set(gca, 'XTick', -0.4:0.1:1);
+xlabel('Time from Trough (ms)');
 
 
+figure_tr_inch(6, 8);
+subaxis(2, 1, 1, 'SV', 0.1);
+hold on;
+for i = 1:size(meanWfSub, 1)
+    [mx,mi] = max(meanWfSub(i,:));
+    if strcmp(physClassSub{i}, 'Narrow-Spiking')
+        plot(tWf, meanWfSub(i,:)', 'r-');
+        plot(troughToPeakTimeSub(i), mx, 'r+');
+    end
+end
+% plot([0.351 0.351], [-0.2 0.15], 'k--');
+title(sprintf('BS Waveforms (N=%d)', sum(strcmp(physClassSub, 'Narrow-Spiking'))));
+grid on;
+set(gca, 'XTick', -0.4:0.1:1);
+ylabel('Voltage (mV)');
+
+subaxis(2, 1, 2);
+hold on;
+for i = 1:size(meanWfSub, 1)
+    [mx,mi] = max(meanWfSub(i,:));
+    if strcmp(physClassSub{i}, 'Broad-Spiking')
+        plot(tWf, meanWfSub(i,:)', 'b-');
+        plot(troughToPeakTimeSub(i), mx, 'b+');
+    end
+end
+% plot([0.351 0.351], [-0.2 0.15], 'k--');
+title(sprintf('BS Waveforms (N=%d)', sum(strcmp(physClassSub, 'Broad-Spiking'))));
+grid on;
+set(gca, 'XTick', -0.4:0.1:1);
+xlabel('Time from Trough (ms)');
+ylabel('Voltage (mV)');
+
+plotFileName = sprintf('%s/allSessions-wfs-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+fprintf('NS in Pul w/ Sig Cue+ Resp: %d cells\n', sum(strcmp(physClassSub, 'Narrow-Spiking')));
+fprintf('BS in Pul w/ Sig Cue+ Resp: %d cells\n', sum(strcmp(physClassSub, 'Broad-Spiking')));
+
+%%
+precondition = strcmp(physClassSub, 'Narrow-Spiking') | strcmp(physClassSub, 'Broad-Spiking');%isInPulvinar & isSignificantCueResponseInc;
+unitStructsSub = unitStructs(precondition);
+troughToPeakTime = nan(size(unitStructsSub, 1), 1);
+for i = 1:size(unitStructsSub, 1)
+    troughToPeakTime(i) = unitStructsSub{i}.troughToPeakTimeFine;
+end
+
+figure_tr_inch(4, 4);
+histogram(troughToPeakTime * 1000, (0.15:0.02501:0.6));
+xlabel('Trough to Peak Time (ms)');
+ylabel('Number of Cells');
+
+plotFileName = sprintf('%s/allSessions-histTroughToPeakTime-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%%
+precondition = isInPulvinar & isSignificantSelectivityCueTargetDelayLongInc;
+unitStructsSub = unitStructs(precondition);
+troughToPeakTimeCTInc = nan(size(unitStructsSub, 1), 1);
+for i = 1:size(unitStructsSub, 1)
+    troughToPeakTimeCTInc(i) = unitStructsSub{i}.troughToPeakTimeFine;
+end
+
+unitNamesSub = unitNames(precondition)
+
+
+precondition = isInPulvinar & isSignificantSelectivityCueTargetDelayLongDec;
+unitStructsSub = unitStructs(precondition);
+troughToPeakTimeCTDec = nan(size(unitStructsSub, 1), 1);
+for i = 1:size(unitStructsSub, 1)
+    troughToPeakTimeCTDec(i) = unitStructsSub{i}.troughToPeakTimeFine;
+end
+
+unitNamesSub = unitNames(precondition)
+
+
+figure;
+subaxis(2, 1, 1);
+histogram(troughToPeakTimeCTInc, (0:0.02501:0.8)*1e-3);
+subaxis(2, 1, 2);
+histogram(troughToPeakTimeCTDec, (0:0.02501:0.8)*1e-3);
+
+%% FR vs Trough to Peak Time
+% Do narrow-spiking cells have higher FR?
+precondition = isInPulvinar;
+troughToPeakTimeSub = cellfun(@(x) x.troughToPeakTimeFine * 1000, unitStructs(precondition));
+baselineFRSub = [averageFiringRatesByCount.preCueBaseline(precondition).all];
+
+figure_tr_inch(6, 5);
+plot(troughToPeakTimeSub, baselineFRSub, '.');
+
+%%
+unitNamesInc = {...
+%     'M20170130_PUL_12a' % 0.385 not visual
+    'M20170201_PUL_18a' % 0.400 visual supp P3
+    'M20170201_PUL_20a' % 0.460 visual P3
+    'M20170211_PUL_19c' % 0.565 visual supp P3 or visual P1
+    'M20170211_PUL_21a' % 0.385 visual P3
+    'M20170211_PUL_25a' % 0.435 visual P3
+    'M20170308_PUL_20a' % 0.360 visual supp P3
+    'M20170311_PUL_6a'  % 0.365 visual P3 (weak) 
+%     'M20170311_PUL_6c'  % 0.165 axonal, visual P3
+%     'M20170311_PUL_48a' % 0.400 not visual
+    'M20170320_PUL_48d' % 0.425 visual supp P3
+%     'M20170327_PUL_3a'  % 0.150 axonal, not visual
+%     'M20170327_PUL_6b'  % 0.155 axonal, visual P3, lost unit
+    'M20170327_PUL_50a' % 0.405 visual P3
+    'M20170327_PUL_51a' % 0.435 visual P3
+    'M20170327_PUL_57a' % 0.370 visual P3, need to adjust times
+    'M20170329_PUL_17a' % 0.435 visual P3, only attn inc in second blocks
+%     'M20170331_PUL_4a'  % 0.495 not visual
+    'M20170331_PUL_4a'  % 0.495 visual P1 (weak), only attn dec in second blocks
+    'M20170529_PUL_48a' % 0.240 visual P4, 
+%     'M20170608_PUL_27b' % 0.590 not visual, noisy
+    'M20170608_PUL_43a' % 0.430 visual P3
+    'M20170608_PUL_43b' % 0.410 visual P3
+    'M20170613_PUL_54a' % 0.430 visual supp P3
+    'M20170613_PUL_60a' % 0.400 visual P4
+    'M20170615_PUL_41a' % 0.405 visual P3
+    'M20170615_PUL_44a' % 0.505 visual P3
+    'M20170615_PUL_47a' % 0.255 visual P3
+%     'M20170201_PUL_30b' % 0.700 visual supp P1, attn inc
+%     'M20170329_PUL_26a' % 0.655 visual P1, attn inc, only attn inc in second blocks
+%     'M20170331_PUL_1a'  % 0.480 visual P1, attn inc, only attn inc in second blocks (noisy)
+    };
+
+unitNamesDec = {...
+    'M20170130_PUL_17a' % 0.265 visual supp P3
+    'M20170201_PUL_26a' % 0.305 visual supp P3
+    'M20170201_PUL_29a' % 0.480 visual P3
+    'M20170201_PUL_30a' % 0.425 visual supp P3
+%     'M20170201_PUL_30b' % 0.700 visual supp P1, attn inc
+    'M20170308_PUL_17a' % 0.340 visual supp P3
+    'M20170311_PUL_57a' % 0.370 visual P3
+    'M20170320_PUL_16b' % 0.375 visual P3 (no firing P3 during delay)
+    'M20170320_PUL_41a' % 0.330 visual P3
+    'M20170327_PUL_17b' % 0.330 visual P3
+    'M20170327_PUL_55a' % 0.345 visual P3
+%     'M20170329_PUL_8a'  % 0.380 not visual, only attn dec in first blocks, sparse 
+%     'M20170329_PUL_26a' % 0.655 visual P1, attn inc, only attn inc in second blocks
+    'M20170331_PUL_46a' % 0.430 visual P3
+%     'M20170331_PUL_1a'  % 0.480 visual P1, attn inc, only attn inc in second blocks (noisy)
+    'M20170331_PUL_12a' % 0.335 visual P3, only attn dec in second blocks
+    'M20170331_PUL_46a' % 0.430 visual P3, both first and second blocks
+%     'M20170608_PUL_38b' % 0.420 not visual
+    'M20170613_PUL_30a' % 0.420 visual P3
+%     'M20170613_PUL_32a' % 0.175 axonal, visual P4
+%     'M20170618_PUL_63a' % 0.445 visual P4 (weak), insig attn dec
+    };
+
+indInc = cellfun(@(x) find(strcmp(unitNames, x), 1, 'first'), unitNamesInc);
+indDec = cellfun(@(x) find(strcmp(unitNames, x), 1, 'first'), unitNamesDec);
+
+troughToPeakTimeCTInc = cellfun(@(x) x.troughToPeakTimeFine * 1000, unitStructs(indInc));
+troughToPeakTimeCTDec = cellfun(@(x) x.troughToPeakTimeFine * 1000, unitStructs(indDec));
+
+figure_tr_inch(5, 7);
+subaxis(2, 1, 1, 'SV', 0.1, 'ML', 0.1);
+histogram(troughToPeakTimeCTInc, (0.2:0.02501:0.6));
+title(sprintf('Increased FR in Cue-Target Delay (N=%d)', numel(troughToPeakTimeCTInc)));
+ylabel('Number of Cells');
+
+subaxis(2, 1, 2);
+histogram(troughToPeakTimeCTDec, (0.2:0.02501:0.6));
+title(sprintf('Decreased FR in Cue-Target Delay (N=%d)', numel(troughToPeakTimeCTDec)));
+ylabel('Number of Cells');
+xlabel('Trough to Peak Time (ms)');
+
+fprintf('ranksum p = %0.3f\n', ranksum(troughToPeakTimeCTInc, troughToPeakTimeCTDec));
+
+baselineFRInc = [averageFiringRatesByCount.preCueBaseline(indInc).all];
+baselineFRDec = [averageFiringRatesByCount.preCueBaseline(indDec).all];
+
+figure_tr_inch(5, 7);
+subaxis(2, 1, 1, 'SV', 0.1, 'ML', 0.1);
+histogram(baselineFRInc,0:2.5:50);
+title(sprintf('Increased FR in Cue-Target Delay (N=%d)', numel(troughToPeakTimeCTInc)));
+ylabel('Number of Cells');
+
+subaxis(2, 1, 2);
+histogram(baselineFRDec,0:2.5:50);
+title(sprintf('Decreased FR in Cue-Target Delay (N=%d)', numel(troughToPeakTimeCTDec)));
+ylabel('Number of Cells');
+xlabel('Pre-Cue Baseline Firing Rate (Hz)');
+
+
+
+% inc
+% 16 dPul vs 6 vPul
+% dec
+% 5 dPul vs 9 vPul
 
 %% investigate narrow-spiking cells
+precondition = isInPulvinar & isInDPulvinar;
+unitStructsSub = unitStructs(precondition);
+troughToPeakTimeSub = cellfun(@(x) x.troughToPeakTimeFine * 1000, unitStructsSub);
+
+cond2 = troughToPeakTimeSub > 0.2 & troughToPeakTimeSub < 0.6;
+unitStructsSub2 = unitStructsSub(cond2);
+troughToPeakTimeSub2DPul = troughToPeakTimeSub(cond2);
+
+precondition = isInPulvinar & isInVPulvinar;
+unitStructsSub = unitStructs(precondition);
+troughToPeakTimeSub = cellfun(@(x) x.troughToPeakTimeFine * 1000, unitStructsSub);
+
+cond2 = troughToPeakTimeSub > 0.2 & troughToPeakTimeSub < 0.6;
+unitStructsSub2 = unitStructsSub(cond2);
+troughToPeakTimeSub2VPul = troughToPeakTimeSub(cond2);
+
+figure_tr_inch(5, 7);
+subaxis(2, 1, 1, 'SV', 0.1, 'ML', 0.1);
+histogram(troughToPeakTimeSub2DPul, (0.2:0.02501:0.6));
+title(sprintf('Dorsal Pulvinar (N=%d)', numel(troughToPeakTimeSub2DPul)));
+ylabel('Number of Cells');
+
+subaxis(2, 1, 2);
+histogram(troughToPeakTimeSub2VPul, (0.2:0.02501:0.6));
+title(sprintf('Ventral Pulvinar (N=%d)', numel(troughToPeakTimeSub2VPul)));
+ylabel('Number of Cells');
+xlabel('Trough to Peak Time (ms)');
+
+
+%%
+
+indBS = strcmp(physClass, 'Broad-Spiking');%isInPulvinar & strcmp(physClass, 'Broad-Spiking');
+indNS = strcmp(physClass, 'Narrow-Spiking');%isInPulvinar & strcmp(physClass, 'Narrow-Spiking');
+
+arrayFR_BS_InRF = {averageFiringRatesByCount.arrayResponseHoldMidBal(indBS).byLoc};
+arrayFR_BS_InRF = cellfun(@(x) x(3), arrayFR_BS_InRF);
+arrayFR_BS_ExRF = {averageFiringRatesByCount.arrayResponseHoldMidBal(indBS).byLoc};
+arrayFR_BS_ExRF = cellfun(@(x) x(1), arrayFR_BS_ExRF);
+
+arrayFR_NS_InRF = {averageFiringRatesByCount.arrayResponseHoldMidBal(indNS).byLoc};
+arrayFR_NS_InRF = cellfun(@(x) x(3), arrayFR_NS_InRF);
+arrayFR_NS_ExRF = {averageFiringRatesByCount.arrayResponseHoldMidBal(indNS).byLoc};
+arrayFR_NS_ExRF = cellfun(@(x) x(1), arrayFR_NS_ExRF);
+
+figure;
+plot(arrayFR_BS_InRF, arrayFR_BS_ExRF, '.');
+
+%%
+goodUnits = indNS;
+
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        isSignificantSelectivityArrayResponseHold(goodUnits));
+xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
+ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
+xlabel(ax2, 'Firing Rate Difference (Hz)');
+xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+%%
+goodUnits = isInPulvinar & indNS;
+
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueTargetDelayLong(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInPulvinar(goodUnits), false(size(goodUnits')), ...
+        isSignificantSelectivityCueTargetDelayLong(goodUnits));
+xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
+ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
+xlabel(ax2, 'Firing Rate Difference (Hz)');
+xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+plotFileName = sprintf('%s/allSessions-NS-cueTargetDelayLongMeanNormFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%%
+goodUnits = isInPulvinar & indBS;
+
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueTargetDelayLong(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        false(size(goodUnits')), isInPulvinar(goodUnits), ...
+        isSignificantSelectivityCueTargetDelayLong(goodUnits));
+xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
+ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
+xlabel(ax2, 'Firing Rate Difference (Hz)');
+xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+plotFileName = sprintf('%s/allSessions-BS-cueTargetDelayLongMeanNormFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%%
+goodUnits = isInPulvinar & indNS;
+
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInPulvinar(goodUnits), false(size(goodUnits')), ...
+        isSignificantSelectivityCueTargetDelayLong(goodUnits));
+xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
+ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
+xlabel(ax2, 'Firing Rate Difference (Hz)');
+xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+plotFileName = sprintf('%s/allSessions-NS-arrayResponseHoldMeanNormFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%%
+goodUnits = isInPulvinar & indBS;
+
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        false(size(goodUnits')), isInPulvinar(goodUnits), ...
+        isSignificantSelectivityCueTargetDelayLong(goodUnits));
+xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
+ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
+xlabel(ax2, 'Firing Rate Difference (Hz)');
+xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+plotFileName = sprintf('%s/allSessions-BS-arrayResponseHoldMeanNormFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+%%
+%%
+goodUnits = isInPulvinar & indNS;
+
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueTargetDelayLong(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInPulvinar(goodUnits), false(size(goodUnits')), ...
+        isSignificantSelectivityCueTargetDelayLong(goodUnits));
+xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
+ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
+xlabel(ax2, 'Firing Rate Difference (Hz)');
+xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+plotFileName = sprintf('%s/allSessions-NS-cueTargetDelayLongMeanNormFRDiff-v%d.png', summaryDataDir, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%%
+cols = lines(6);
+dPulCol = cols(4,:);
+vPulCol = cols(5,:);
+
+%% cue target delay 400 ms window, AI InRF vs ExRF
+goodUnits = isInDPulvinar;
+sub = 'dPul';
+aiSub = attnIndices(goodUnits,1);
+isSigUnit = isSignificantSelectivityCueTargetDelayLong(goodUnits);
+
+ax = plotMetricDiffHist(aiSub, zeros(size(aiSub)), dPulCol, isSigUnit, 0.1);
+xlabel(ax, 'Attention Index');
+
+plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayLongAIDiff-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+goodUnits = isInVPulvinar;
+sub = 'vPul';
+aiSub = attnIndices(goodUnits,1);
+isSigUnit = isSignificantSelectivityCueTargetDelayLong(goodUnits);
+
+ax = plotMetricDiffHist(aiSub, zeros(size(aiSub)), vPulCol, isSigUnit, 0.1);
+xlabel(ax, 'Attention Index');
+
+plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayLongAIDiff-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+%% array response, AI InRF vs ExRF
+goodUnits = isInDPulvinar;
+sub = 'dPul';
+aiSub = attnIndices(goodUnits,2);
+isSigUnit = isSignificantSelectivityArrayResponseHold(goodUnits);
+
+ax = plotMetricDiffHist(aiSub, zeros(size(aiSub)), dPulCol, isSigUnit, 0.1);
+xlabel(ax, 'Attention Index');
+
+plotFileName = sprintf('%s/allSessions-%s-arrayResponseHoldAIDiff-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+goodUnits = isInVPulvinar;
+sub = 'vPul';
+aiSub = attnIndices(goodUnits,2);
+isSigUnit = isSignificantSelectivityArrayResponseHold(goodUnits);
+
+ax = plotMetricDiffHist(aiSub, zeros(size(aiSub)), vPulCol, isSigUnit, 0.1);
+xlabel(ax, 'Attention Index');
+
+plotFileName = sprintf('%s/allSessions-%s-arrayResponseHoldAIDiff-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%%
+cols = lines(6);
+bsCol = cols(3,:);
+nsCol = cols(6,:);
+indBS = isInPulvinar & strcmp(physClass, 'Broad-Spiking');
+indNS = isInPulvinar & strcmp(physClass, 'Narrow-Spiking');
+
+%% cue target delay 400 ms window, AI InRF vs ExRF
+goodUnits = isInPulvinar & indBS & isSignificantCueResponse;
+sub = 'BS';
+aiSub = attnIndices(goodUnits,1);
+isSigUnit = isSignificantSelectivityCueTargetDelayLong(goodUnits);
+
+ax = plotMetricDiffHist(aiSub, zeros(size(aiSub)), bsCol, isSigUnit, 0.1);
+xlabel(ax, 'Attention Index');
+
+plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayLongAIDiff-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+goodUnits = isInPulvinar & indNS & isSignificantCueResponse;
+sub = 'NS';
+aiSub = attnIndices(goodUnits,1);
+isSigUnit = isSignificantSelectivityCueTargetDelayLong(goodUnits);
+
+ax = plotMetricDiffHist(aiSub, zeros(size(aiSub)), nsCol, isSigUnit, 0.1);
+xlabel(ax, 'Attention Index');
+
+plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayLongAIDiff-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+%% array response, AI InRF vs ExRF
+goodUnits = isInPulvinar & indBS & isSignificantCueResponse;
+sub = 'BS';
+aiSub = attnIndices(goodUnits,2);
+isSigUnit = isSignificantSelectivityArrayResponseHold(goodUnits);
+
+ax = plotMetricDiffHist(aiSub, zeros(size(aiSub)), bsCol, isSigUnit, 0.1);
+xlabel(ax, 'Attention Index');
+
+plotFileName = sprintf('%s/allSessions-%s-arrayResponseHoldAIDiff-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+goodUnits = isInPulvinar & indNS & isSignificantCueResponse;
+sub = 'NS';
+aiSub = attnIndices(goodUnits,2);
+isSigUnit = isSignificantSelectivityArrayResponseHold(goodUnits);
+
+ax = plotMetricDiffHist(aiSub, zeros(size(aiSub)), nsCol, isSigUnit, 0.1);
+xlabel(ax, 'Attention Index');
+
+plotFileName = sprintf('%s/allSessions-%s-arrayResponseHoldAIDiff-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+
+
+
+
+
+
+
+
+
+
+
+%%
+%% population correlation of RT vs firing rates in delay periods
+condition = isInDPulvinar & attnIndices(:,1) > 0.1;
+sub = 'dPulPosAI';
+fprintf('N = %d\n', sum(condition));
+corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelInRFCTDelayRT(condition);
+corrCoefRelExRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelExRFCTDelayRT(condition);
+
+[signrank(atanh(corrCoefRelInRFCTDelayRTSub)); 
+        signrank(atanh(corrCoefRelExRFCTDelayRTSub))]
+    
+signrank(atanh(corrCoefRelInRFCTDelayRTSub), atanh(corrCoefRelExRFCTDelayRTSub))
+
+inRFCol = [0.9 0 0];%cols(1,:);
+exRFCol = [0 0 0.9];%cols(2,:);
+
+maxAbs = max(max(abs([corrCoefRelInRFCTDelayRTSub, ...
+        corrCoefRelExRFCTDelayRTSub])));
+
+binStep = 0.05;
+xBounds = [-ceil(maxAbs / binStep) ceil(maxAbs / binStep)] * binStep;
+histBinEdges = xBounds(1):binStep:xBounds(2);
+
+figure_tr_inch(4, 6);
+set(gcf, 'Color', 'w');
+plotHs = nan(2, 1);
+plotHs(1) = subaxis(2, 1, 1, 'SV', 0.08, 'MB', 0.14, 'MT', 0.05);
+hold on;
+hist1 = histogram(corrCoefRelInRFCTDelayRTSub, histBinEdges);
+hist1.FaceColor = inRFCol;
+xlim(xBounds);
+ylabel('Number of Units');
+set(gca, 'FontSize', 14);
+
+plotHs(2) = subaxis(2, 1, 2);
+hold on;
+hist2 = histogram(corrCoefRelExRFCTDelayRTSub, histBinEdges);
+hist2.FaceColor = exRFCol;
+xlim(xBounds);
+xlabel('Correlation Coefficient');
+ylabel('Number of Units');
+set(gca, 'FontSize', 14);
+
+% set all y bounds the same
+allYBounds = arrayfun(@(x) ylim(x), plotHs, 'UniformOutput', false);
+allYBounds = [allYBounds{:}];
+yBounds = [min(allYBounds) max(allYBounds)];
+arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
+arrayfun(@(x) ylim(x, yBounds), plotHs);
+
+plotFileName = sprintf('%s/allSessions-relRTVsCTDelayFiringRateCorr-%s-v%d.png', summaryDataDir, sub, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
+%%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%%
 
 
 %% plot pre-saccadic activity aligned to y=0 at saccade
@@ -631,10 +1246,10 @@ meanRTHoldInRFDiffThirdFiringRateTDDelaySub = meanRTHoldInRFDiffThirdFiringRateT
 meanRTHoldExRFDiffThirdFiringRateTDDelaySub = meanRTHoldExRFDiffThirdFiringRateTDDelay(condition);
 
 [signrank(meanRTRelInRFDiffThirdFiringRateCTDelaySub) ...
-        signrank(meanRTRelExRFDiffThirdFiringRateCTDelaySub) ...
         signrank(meanRTHoldInRFDiffThirdFiringRateCTDelaySub) ...
+        signrank(meanRTHoldInRFDiffThirdFiringRateTDDelaySub); ...% **
+        signrank(meanRTRelExRFDiffThirdFiringRateCTDelaySub) ...
         signrank(meanRTHoldExRFDiffThirdFiringRateCTDelaySub) ...
-        signrank(meanRTHoldInRFDiffThirdFiringRateTDDelaySub) ...% **
         signrank(meanRTHoldExRFDiffThirdFiringRateTDDelaySub)]
 
 inRFCol = cols(1,:);
@@ -708,7 +1323,7 @@ export_fig(plotFileName, '-nocrop');
 % https://stats.stackexchange.com/questions/8019/averaging-correlation-values
 % or transform the r values using Fisher transform
 
-condition = isSignificantCueResponseInc & isInVPulvinar;% & rtFiringRateStruct.spearmanCorrCoefPValHoldInRFCTDelayRT < 0.05;
+condition = isInPulvinar;% & rtFiringRateStruct.spearmanCorrCoefPValHoldInRFCTDelayRT < 0.05;
 % isInDPulvinar;
 fprintf('N = %d\n', sum(condition));
 corrCoefRelInRFCTDelayRTSub = rtFiringRateStruct.spearmanCorrCoefRelInRFCTDelayRT(condition);
@@ -719,14 +1334,18 @@ corrCoefHoldInRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldInRFTDDela
 corrCoefHoldExRFTDDelayRTSub = rtFiringRateStruct.spearmanCorrCoefHoldExRFTDDelayRT(condition);
 
 [signrank(atanh(corrCoefRelInRFCTDelayRTSub)) ...
-        signrank(atanh(corrCoefRelExRFCTDelayRTSub)) ...
         signrank(atanh(corrCoefHoldInRFCTDelayRTSub)) ...
+        signrank(atanh(corrCoefHoldInRFTDDelayRTSub)); ... % **
+        signrank(atanh(corrCoefRelExRFCTDelayRTSub)) ...
         signrank(atanh(corrCoefHoldExRFCTDelayRTSub)) ...
-        signrank(atanh(corrCoefHoldInRFTDDelayRTSub)) ... % **
         signrank(atanh(corrCoefHoldExRFTDDelayRTSub))]
+    
+[signrank(atanh(corrCoefRelInRFCTDelayRTSub), atanh(corrCoefRelExRFCTDelayRTSub)) ...
+        signrank(atanh(corrCoefHoldInRFCTDelayRTSub), atanh(corrCoefHoldExRFCTDelayRTSub)) ...
+        signrank(atanh(corrCoefHoldInRFTDDelayRTSub), atanh(corrCoefHoldExRFTDDelayRTSub))]
 
-inRFCol = cols(1,:);
-exRFCol = cols(2,:);
+inRFCol = [0.9 0 0];%cols(1,:);
+exRFCol = [0 0 0.9];%cols(2,:);
 
 maxAbs = max(max(abs([corrCoefHoldInRFCTDelayRTSub, ...
         corrCoefRelInRFCTDelayRTSub, ...
@@ -784,6 +1403,34 @@ arrayfun(@(x) ylim(x, yBounds), plotHs);
 plotFileName = sprintf('%s/allSessions-rtVsFiringRateCorr-v%d.png', summaryDataDir, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%%
+figure_tr_inch(9, 3);
+set(gcf, 'Color', 'w');
+plotHs = nan(3, 1);
+plotHs(1) = subaxis(1, 3, 1);
+hold on;
+hist1 = histogram(corrCoefRelInRFCTDelayRTSub - corrCoefRelExRFCTDelayRTSub, histBinEdges);
+hist1.FaceColor = inRFCol;
+xlim(xBounds);
+plotHs(2) = subaxis(1, 3, 2);
+hold on;
+hist2 = histogram(corrCoefHoldInRFCTDelayRTSub - corrCoefHoldExRFCTDelayRTSub, histBinEdges);
+hist2.FaceColor = inRFCol;
+xlim(xBounds);
+plotHs(3) = subaxis(1, 3, 3);
+hold on;
+hist3 = histogram(corrCoefHoldInRFTDDelayRTSub - corrCoefHoldExRFTDDelayRTSub, histBinEdges);
+hist3.FaceColor = inRFCol;
+xlim(xBounds);
+
+% set all y bounds the same
+allYBounds = arrayfun(@(x) ylim(x), plotHs, 'UniformOutput', false);
+allYBounds = [allYBounds{:}];
+yBounds = [min(allYBounds) max(allYBounds)];
+arrayfun(@(x) plot(x, [0 0], yBounds, 'Color', 0.3*ones(3, 1)), plotHs);
+arrayfun(@(x) ylim(x, yBounds), plotHs);
+
 
 %% release trials only plot
 figure_tr_inch(4, 6);
@@ -845,6 +1492,10 @@ unitNamesSub = unitNames(condition);
 unitNamesSub(corrCoefRelInRFCTDelayRTSub < -0.2)
 
 
+%%
+unitNamesSub = unitNames(condition);
+unitNamesSub(corrCoefHoldInRFTDDelayRTSub > 0.2)
+
 %% mean firing rates in baseline
 goodUnits = isInDPulvinar & isSignificantCueResponseInc;
 firingRates = averageFiringRatesByCount.preCueBaseline(goodUnits);
@@ -868,9 +1519,9 @@ fprintf('Mean vPul baseline pre-cue firing: %0.2f Hz\n', mean(firing));
 subdivisions = {'dPul', 'vPul'};
 for i = 1:numel(subdivisions)
     if strcmp(subdivisions{i}, 'dPul')
-        goodUnits = isInDPulvinar & isSignificantCueResponseInc;
+        goodUnits = isInDPulvinar & isSignificantCueResponseInc & (isBS | isNS);
     elseif strcmp(subdivisions{i}, 'vPul')
-        goodUnits = isInVPulvinar & isSignificantCueResponseInc;
+        goodUnits = isInVPulvinar & isSignificantCueResponseInc & (isBS | isNS);
     end
     
 %% cue response mean firing rate InRF vs ExRF -- sanity check
@@ -917,6 +1568,20 @@ plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayMeanFRDiff-v%d.png', sum
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
 
+%% cue target delay 400 ms window, mean firing rate InRF vs ExRF
+[~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.cueTargetDelayLong(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        isSignificantSelectivityCueTargetDelay(goodUnits));
+xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
+ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
+xlabel(ax2, 'Firing Rate Difference (Hz)');
+xlabel(ax3, 'Firing Rate Difference (Hz)');
+
+plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayLongMeanFRDiff-v%d.png', summaryDataDir, subdivisions{i}, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 %% cue target delay mean norm firing rate InRF vs ExRF
 [~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
         averageFiringRatesByCount.preCueBaseline(goodUnits), ...
@@ -932,6 +1597,23 @@ xlabel(ax3, 'Norm. Firing Rate Difference');
 plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayMeanNormFRDiff-v%d.png', summaryDataDir, subdivisions{i}, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
+
+%% cue target delay 400 ms window, mean norm firing rate InRF vs ExRF
+[~,ax1,ax2,ax3] = plotNormRateDiff(averageFiringRatesByCount.cueTargetDelayLong(goodUnits), ...
+        averageFiringRatesByCount.preCueBaseline(goodUnits), ...
+        inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
+        inRFLocs(goodUnits), exRFLocs(goodUnits), ...
+        isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
+        isSignificantSelectivityCueTargetDelay(goodUnits));
+xlabel(ax1, 'Norm. Firing Rate Attend-RF');
+ylabel(ax1, 'Norm. Firing Rate Attend-Away');
+xlabel(ax2, 'Norm. Firing Rate Difference');
+xlabel(ax3, 'Norm. Firing Rate Difference');
+
+plotFileName = sprintf('%s/allSessions-%s-cueTargetDelayLongMeanNormFRDiff-v%d.png', summaryDataDir, subdivisions{i}, v);
+fprintf('Saving to %s...\n', plotFileName);
+export_fig(plotFileName, '-nocrop');
+
 
 %% cue target delay fano factor InRF vs ExRF
 [~,ax1,ax2,ax3] = plotFanoFactorDiff(averageFiringRatesByCount.cueTargetDelay(goodUnits), ...
@@ -965,7 +1647,7 @@ export_fig(plotFileName, '-nocrop');
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.arrayResponseHoldBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
         isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
-        isSignificantSelectivityArrayHoldResponse(goodUnits));
+        isSignificantSelectivityArrayResponseHold(goodUnits));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -981,7 +1663,7 @@ export_fig(plotFileName, '-nocrop');
         inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
         isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
-        isSignificantSelectivityArrayHoldResponse(goodUnits));
+        isSignificantSelectivityArrayResponseHold(goodUnits));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -995,7 +1677,7 @@ export_fig(plotFileName, '-nocrop');
 [~,ax1,ax2,ax3] = plotRateDiff(averageFiringRatesByCount.arrayResponseHoldMidBal(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
         isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
-        false(sum(goodUnits), 1));
+        isSignificantSelectivityArrayResponseHold(goodUnits));
 xlabel(ax1, 'Firing Rate Attend-RF (Hz)');
 ylabel(ax1, 'Firing Rate Attend-Away (Hz)');
 xlabel(ax2, 'Firing Rate Difference (Hz)');
@@ -1011,7 +1693,7 @@ export_fig(plotFileName, '-nocrop');
         inRFCountNormFactor(goodUnits), exRFCountNormFactor(goodUnits), ...
         inRFLocs(goodUnits), exRFLocs(goodUnits), ...
         isInDPulvinar(goodUnits), isInVPulvinar(goodUnits), ...
-        false(sum(goodUnits), 1));
+        isSignificantSelectivityArrayResponseHold(goodUnits));
 xlabel(ax1, 'Norm. Firing Rate Attend-RF');
 ylabel(ax1, 'Norm. Firing Rate Attend-Away');
 xlabel(ax2, 'Norm. Firing Rate Difference');
@@ -1542,7 +2224,7 @@ for a = 1:2
 
     %% which units have strong cue-target delay modulation
     goodUnits = isCell & isSignificantCueResponseInc & isInSubdivision & isSignificantSelectivityCueTargetDelayInc;
-    unitNamesSub = unitNames(goodUnits)
+    unitNamesSub = unitNames(goodUnits);
 
     goodUnits = isCell & isSignificantCueResponseInc & isInSubdivision;
     nGoodUnits = sum(goodUnits);
@@ -1617,10 +2299,10 @@ stop
 %% mean and image plots per-condition baseline-corrected normalized
 fprintf('\n');
 fprintf('Plotting normalized mean SPDFs...\n');
-subdivisions = {'dPulCueInc', 'vPulCueInc'};
+subdivisions = {'PulCueInc'};%'dPulCueInc', 'vPulCueInc'};
 for j = 1:numel(subdivisions)
     subdivision = subdivisions{j};
-    yBounds = [-0.25 0.5];
+    yBounds = [-0.15 0.32];
     isShowLabels = 1;
     if strcmp(subdivision, 'all')
         isInSubdivision = true(nUnitsAll, 1);
@@ -1630,8 +2312,11 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInVPulvinar;
     elseif strcmp(subdivision, 'dPul')
         isInSubdivision = isInDPulvinar;
+    elseif strcmp(subdivision, 'PulCue')
+        isInSubdivision = isInPulvinar & isSignificantCueResponse;
     elseif strcmp(subdivision, 'PulCueInc')
         isInSubdivision = isInPulvinar & isSignificantCueResponseInc;
+        yBounds = [-0.1 0.3];
     elseif strcmp(subdivision, 'PulCueDec')
         isInSubdivision = isInPulvinar & isSignificantCueResponseDec;
     elseif strcmp(subdivision, 'endPC2Pos')
@@ -1646,6 +2331,10 @@ for j = 1:numel(subdivisions)
         isInSubdivision = isInVPulvinar & isSignificantCueResponseInc;
     elseif strcmp(subdivision, 'vPulCueDec')
         isInSubdivision = isInVPulvinar & isSignificantCueResponseDec;
+    elseif strcmp(subdivision, 'dPulCue')
+        isInSubdivision = isInDPulvinar & isSignificantCueResponse;
+    elseif strcmp(subdivision, 'vPulCue')
+        isInSubdivision = isInVPulvinar & isSignificantCueResponse;
     elseif strcmp(subdivision, 'concatPC3High')
         isInSubdivision = false(size(isInPulvinar));
         isInSubdivision(isInPulvinar) = pcaConcatAllScore(:,3) > 50;
@@ -1681,13 +2370,16 @@ for j = 1:numel(subdivisions)
         isInSubdivision = strcmp(localization, subdivision);
     end
     
+    plotFileName = sprintf('%s/allSessions-%s-meanSpdfs4-v%d.png', summaryDataDir, name, v);
     quickSpdfAllEventsRowPopMeanRunner(subdivision, isInSubdivision, spdfInfo, ...
             cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
-            yBounds, isShowLabels, summaryDataDir, v);
+            yBounds, isShowLabels, plotFileName);
     
+    diffPlotFileName = sprintf('%s/allSessions-%s-imagePopDiffSpdfs4-v%d.png', summaryDataDir, groupName, v);
+    inRFPlotFileName = sprintf('%s/allSessions-%s-imagePopInRFSpdfs4-v%d.png', summaryDataDir, groupName, v);
     quickImagePlotAllEventsRowRunner(subdivision, isInSubdivision, spdfInfo, ...
             cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
-            summaryDataDir, v);
+            diffPlotFileName, inRFPlotFileName);
 end
 
 %% test runs
@@ -1811,6 +2503,8 @@ fprintf('\tPC4 explains %0.1f%% of the variance.\n', pcaPctExplained(3));
 fprintf('\tPC1 + PC2 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:2)));
 fprintf('\tPC1 + PC2 + PC3 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:3)));
 fprintf('\tPC1 + PC2 + PC3 + PC4 explain %0.1f%% of the variance.\n', sum(pcaPctExplained(1:4)));
+fprintf('\tFirst %d PCs explain >99%% of the variance.\n', find(cumsum(pcaPctExplained) > 99, 1, 'first'));
+fprintf('\tFirst %d PCs explain >99.9%% of the variance.\n', find(cumsum(pcaPctExplained) > 99.9, 1, 'first'));
 
 figure_tr_inch(10, 6);
 subaxis(1, 1, 1, 'MB', 0.12, 'ML', 0.1);

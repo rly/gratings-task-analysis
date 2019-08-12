@@ -1,0 +1,220 @@
+% function lfpVEPMappingSummary(processedDataRootDir, recordingInfoFileName, sessionInds, ref)
+
+clear;
+processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
+recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+ref = 'RAW';
+sessionInds = [1:16 19:20 23];
+
+fprintf('\n-------------------------------------------------------\n');
+fprintf('VEP Mapping Summary - LFP\n');
+fprintf('Processed data root dir: %s\n', processedDataRootDir);
+fprintf('Recording info file name: %s\n', recordingInfoFileName);
+fprintf('Reference: %s\n', ref);
+fprintf('Session index: %d\n', sessionInds);
+fprintf('------------------------\n');
+
+v = 12;
+
+%%
+recordingInfo = readRecordingInfo(recordingInfoFileName);
+nSessions = numel(sessionInds);
+
+outputDir = sprintf('%s/%s/', processedDataRootDir, 'LFP_GRATINGS_SUMMARY');
+if ~exist(outputDir, 'dir')
+    mkdir(outputDir);
+end
+
+if isempty(sessionInds)
+    sessionInds = 1:numel(recordingInfo);
+end
+
+% TEMP until it is saved
+periFlashWindowOffset = [-0.25 0.3]; % seconds around flash
+Fs = 1000;
+t = periFlashWindowOffset(1):1/Fs:periFlashWindowOffset(2)-1/Fs;
+baselineInd = t > -0.075 & t < 0.025;
+minLatency = 0.025;
+sdsThreshold = 4;
+
+fprintf('\n-------------------------------------------------------\n');
+fprintf('Across Session VEP Mapping Summary\n');
+fprintf('Reference: %s\n', ref);
+
+meanResponseAll = cell(nSessions, 1);
+latencyAll = cell(nSessions, 1);
+
+%% session loop
+for i = 1:nSessions
+    sessionInd = sessionInds(i);
+    R = recordingInfo(sessionInd);
+    sessionName = R.sessionName;
+    areaName = R.areaName;
+    lfpChannelsToLoad = R.lfpChannelsToLoad;
+    blockName = strjoin(R.blockNames(R.vepmIndices), '-');
+    processedDataDir = sprintf('%s/%s/LFP_VEPM/', processedDataRootDir, sessionName);
+    fileNamePrefix = sprintf('%s-ind%d-%s-ch%d-ch%d-%s', sessionName, sessionInd, areaName, lfpChannelsToLoad([1 end]), blockName);
+    saveFileName = sprintf('%s/%s-%s-responses-v%d.mat', processedDataDir, fileNamePrefix, ref, v);
+    fprintf('Loading file %s...\n', saveFileName);
+    RR = load(saveFileName);
+    
+    % get mean response across flashes
+    meanResponseAll{i} = mean(RR.responses, 3);
+    % channel x time
+    
+    % compute evoked potential latency
+    latencyAll{i} = nan(numel(lfpChannelsToLoad)-5, 1);
+    
+    meanSig = nan(numel(lfpChannelsToLoad)-5, size(meanResponseAll{i},2));
+    for j = 1:numel(lfpChannelsToLoad)-5
+%         sig = meanResponseAll{i}(j+2,:) + meanResponseAll{i}(j+3,:) - meanResponseAll{i}(j+1,:) - meanResponseAll{i}(j,:);
+        sig = meanResponseAll{i}(j+4,:) + meanResponseAll{i}(j+5,:) + meanResponseAll{i}(j+1,:) + meanResponseAll{i}(j,:) - 2 * (meanResponseAll{i}(j+2,:) + meanResponseAll{i}(j+3,:));
+%         meanBaseline = mean(sig(baselineInd)); % mean over time
+%         sdBaseline = std(sig(baselineInd)); % sd over time
+%         ub = meanBaseline + sdsThreshold * sdBaseline;
+%         lb = meanBaseline - sdsThreshold * sdBaseline;
+%         latencyInd = find(t >= minLatency & (sig >= ub | sig <= lb), 1, 'first');
+%         latencyAll{i}(j) = t(latencyInd) * 1000; % ms
+%         figure;
+%         hold on;
+%         plot(t, sig);
+%         plot(t([1 end]), ub * [1 1]);
+%         plot(t([1 end]), lb * [1 1]);
+%         plot(latencyAll{i}(j) / 1000, sig(latencyInd), 'o', 'MarkerSize', 10)
+        meanSig(j,:) = sig;
+    end
+    
+%     figure_tr_inch(7, 8);
+%     subaxis(1, 1, 1, 'ML', 0.12, 'MB', 0.11, 'MR', 0.05);
+%     hold on;
+%     plot(latencyAll{i}, 3:numel(lfpChannelsToLoad)-1, '.--', 'MarkerSize', 25, 'LineWidth', 2, 'Color', lines(1));
+%     set(gca, 'FontSize', 18);
+%     set(gca, 'YDir', 'reverse');
+%     ylim([1 numel(lfpChannelsToLoad)] + [-1 1]);
+%     xlim([minLatency 0.075] * 1000);
+
+%     figure;
+%     imagesc(t, 4:numel(lfpChannelsToLoad)-2, meanSig);
+    meanResponseAll{i}([1:3 numel(lfpChannelsToLoad)-1:numel(lfpChannelsToLoad)],:) = NaN;
+    meanResponseAll{i}(4:numel(lfpChannelsToLoad)-2,:) = meanSig;
+end
+
+%% common average across all recordings and channels
+commonAverageAll = nan(nSessions, numel(t));
+for i = 1:nSessions
+    assert(size(meanResponseAll{i}, 1) == 32);
+    commonAverageAll(i,:) = mean(meanResponseAll{i}, 1);
+end
+
+superCommonAverage = mean(commonAverageAll, 1);
+
+% note: subtracting the super common average later can flip the sign for
+% some sessions and keep the sign for others... this won't matter for the
+% fitting procedure but for visualization
+
+%% brute-force search against template
+
+% sessionInd 9 is very noisy and unusual
+% sessionInd 12, 14, 15, 16, 17, 19 are very unusual
+% especially 16
+
+% positive shift means test (dim1) is deeper than template (dim2)
+shiftBest = zeros(nSessions, nSessions);
+shiftBest(2,1) = 15;
+shiftBest(2,2) = 0;
+shiftBest(2,3) = -9;
+shiftBest(2,4) = -9;
+shiftBest(2,5) = 0;
+shiftBest(2,6) = 3;
+shiftBest(2,7) = 12;
+shiftBest(2,8) = -3;
+shiftBest(2,9) = 12; % shift might be less - look at pre-cue activity
+shiftBest(2,10) = 7;
+shiftBest(2,11) = 5;
+shiftBest(2,12) = 0; % not sure
+shiftBest(2,13) = 5;
+shiftBest(2,14) = -7; % not sure
+shiftBest(2,15) = -2;
+shiftBest(2,16) = 0; % don't know
+shiftBest(2,17) = 11;
+shiftBest(2,18) = 6;
+shiftBest(2,19) = 11;
+
+templateSessionIndInd = 2; % index into sessionInds (compare to s)
+
+nTime = numel(t);
+nChannels = size(meanResponseAll{templateSessionIndInd}, 1);
+
+%%
+sessionIndsIncl = [15 2 5 11 10];
+nSessionsIncl = numel(sessionIndsIncl);
+
+figure_tr_inch(12, 6);
+plotHs = nan(nSessionsIncl, 1);
+maxCAxis = -Inf;
+
+minShift = min(shiftBest(templateSessionIndInd,sessionIndsIncl));
+maxShift = max(shiftBest(templateSessionIndInd,sessionIndsIncl));
+
+[~,sessionIndsOrder] = sort(shiftBest(templateSessionIndInd,sessionIndsIncl));
+assert(numel(sessionIndsOrder) == nSessionsIncl);
+
+for s = 1:nSessionsIncl
+    so = sessionIndsOrder(s);
+    sessionInd = sessionIndsIncl(s);
+    
+    shift = shiftBest(templateSessionIndInd,sessionIndsIncl(so));
+    
+    % plot shifted channel data side by side
+    newY = (1+minShift):(32+maxShift);
+    nChannelsNew = numel(newY);
+    shiftResponse = nan(nChannelsNew, nTime);
+    [~,newYInd] = intersect(newY, (1:nChannels)+shift);
+    shiftResponse(newYInd,:) = meanResponseAll{sessionIndsIncl(so)};
+    shiftResponse(isnan(shiftResponse)) = -Inf; % make nans Inf for colormap
+    plotHs(s) = subaxis(1, nSessionsIncl, s, 'SH', 0.004, 'ML', 0.04, 'MR', 0.1, 'MB', 0.13, 'MT', 0.06);
+    hold on;
+
+    imagesc(t, newY, shiftResponse);
+    set(gca, 'YDir', 'reverse');
+    plot([0 0], newYInd([1 end]) + [-2.5 -1.5], '-', 'Color', 0.3*ones(3, 1));
+    xlim([-0.05 0.25]);
+    ylim(newY([1 end]) + [-0.5 0.5]);
+    set(gca, 'YTickLabel', []);
+%     xlabel('Time from Flash Onset (s)');
+%         maxCAxis = max([maxCAxis max(abs(caxis))]);
+%     max(abs(caxis))
+    maxCAxis = max(abs(caxis))*1.1; % scale larger b/c max will show as white with nan=white mapping
+    caxis([-maxCAxis maxCAxis]);
+%     colormap([1 1 1; colormap('parula')]); % make nans appear as white
+    colormap([1 1 1; getCoolWarmMap()]);
+%     colorbar;
+    set(gca, 'FontSize', 18);
+    title(sprintf('Session %d', sessionIndsIncl(so)));
+    
+    set(gca, 'XTickLabel', []);
+    if s == 5
+        ax2 = axes('Position', get(plotHs(s), 'Position'), 'Color', 'none', 'FontSize', 18);
+        set(ax2, 'XLim', get(plotHs(s), 'XLim'), 'YLim', get(plotHs(s), 'YLim'));
+        set(ax2, 'YTick', [], 'YColor', 'w', 'YAxisLocation', 'right', 'XAxisLocation', 'bottom', 'TickDir', 'out');
+        ax3 = axes('Position', get(plotHs(s), 'Position'), 'Color', 'none', 'XColor', 'none', 'YColor', 'none');
+        maxCAxis = max(abs(caxis(plotHs(s))))*1.1; %max(abs(caxis))*0.5 % scale larger b/c max will show as white with nan=white mapping
+        caxis([-maxCAxis maxCAxis]);
+        cax = colorbar('FontSize', 18);
+        set(cax, 'YTick', -2:2);
+        cpos = get(cax, 'Position');
+        set(cax, 'Position', [0.91 cpos(2:4)]);
+        yl = ylabel(cax, 'CSD Voltage', 'Rotation', -90, 'FontSize', 18);
+        ylpos = get(yl, 'Position');
+        set(yl, 'Position', ylpos + [1.7 0 0]);
+    end
+    if s == 3
+        xlabel({'','Time from Flash Onset (s)'});
+    end
+    if s == 1
+        ylabel('(bottom)   ----   Channel Index   ----   (top)');
+    end
+end
+
+plotFileName = sprintf('%s/SFN/ex-csd-vepm-alignment-v%d.png', processedDataRootDir, v);
+export_fig(plotFileName, '-nocrop');

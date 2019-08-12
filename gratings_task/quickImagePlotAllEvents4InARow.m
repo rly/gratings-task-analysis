@@ -1,7 +1,7 @@
 function quickImagePlotAllEvents4InARow(...
         cueOnsetR, arrayOnsetR, targetDimR, exitFixationR, ...
         cueOnsetT, arrayOnsetT, targetDimT, exitFixationT, ...
-        groupName, isDiff, plotFileName)
+        isDiff, plotFileName)
 
 % check size assert
 nSessions = size(cueOnsetR, 1);
@@ -23,7 +23,7 @@ spdfArrayOnsetLeft = spdfCueOnsetLeft + spdfW - 0.015;
 spdfTargetDimLeft = spdfArrayOnsetLeft + spdfW- 0.015;
 spdfExitFixationLeft = spdfTargetDimLeft + spdfW- 0.015;
 
-btm = 0.16;
+btm = 0.18;
 
 %% spdf for cue onset
 axCueOnsetSpdf = axes('Position', [spdfCueOnsetLeft btm spdfW spdfH]); 

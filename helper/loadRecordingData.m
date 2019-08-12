@@ -17,7 +17,12 @@ pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
 
 %% load recording data
 isLoadSpkc = 0;
-isLoadDirect = 1;
+
+if strcmp(taskName, 'GRATINGS') || strcmp(taskName, 'GRATINGS_0D')
+    isLoadDirect = 1;
+else
+    isLoadDirect = 0;
+end
 
 if ~isempty(channelsToLoad)
     R.spikeChannelsToLoad = channelsToLoad;
@@ -37,6 +42,8 @@ end
 tic;
 if isLoadMetaDataOnly
     R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
+%     R.metaDataFilePath = sprintf('C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/PUL_SUA_GRATINGS_ALL/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', ...
+%             sessionName, sessionInd, isLoadSortedSua, isLoadMua);
     fprintf('Loading metadata %s...\n', R.metaDataFilePath);
     MD = load(R.metaDataFilePath);
     D = MD.MD;
@@ -48,6 +55,7 @@ end
 fprintf('... done (%0.2f s).\n', toc);
 
 %% get block indices
+fprintf('%d block names specified, %d entries in block start times.\n', numel(R.blockNames), numel(D.blockStartTimes));
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 if strcmp(taskName, 'GRATINGS')
     R.blockIndices = R.gratingsTask3DIndices;

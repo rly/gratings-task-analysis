@@ -251,7 +251,7 @@ if isLoadSortedSua
     %% read spike sorting quality metrics
     sortQualityNotesFileName = 'spikeSortingNotes.xlsx';
     xlsSheet = 1;
-    xlRange = 'A2:H3000';
+    xlRange = 'A2:H5000';
 
     [sortQualityNotesNums,sortQualityNotesText] = xlsread(sortQualityNotesFileName, xlsSheet, xlRange);
     assert(size(sortQualityNotesNums, 2) == 6);
@@ -663,6 +663,7 @@ if isLoadSpkc
         channelInd = D.spkcChannelIndices(i);
         spkcChCounter = spkcChCounter + 1;
 %             adInfo = PL2Ad(fileName, dataInfo.AnalogChannels{channelInd}.Name);
+        % TODO replace below with PL2ReadFirstDataBlock for 5x speedup
         adInfo = PL2AdTimeSpan(fileName, dataInfo.AnalogChannels{channelInd}.Name, startTime, endTime);
         % index time (1:maxTimeToSave) because there might be an extra timestamp
         D.spkcs(spkcChCounter,:) = adInfo.Values(1:maxTimeToSave);

@@ -1,4 +1,4 @@
-function [f1, ax1, ax2, ax3] = plotMetricDiff(mInRF, mExRF, isDPul, isVPul, isSigUnit, histBinStep)
+function [f1, ax1, ax2, ax3] = plotMetricDiffSfn(mInRF, mExRF, isDPul, isVPul, isSigUnit, histBinStep)
 % works for firing rate and fano factor and whatever else
 
 %% stat test
@@ -39,7 +39,7 @@ histXBounds = [-ceil(maxAbsDiffFR / histBinStep) ceil(maxAbsDiffFR / histBinStep
 histBinEdges = histXBounds(1):histBinStep:histXBounds(2);
 
 cols = lines(6);
-dPulCol = cols(3,:);
+dPulCol = cols(4,:);
 vPulCol = cols(5,:);
 
 %% plot

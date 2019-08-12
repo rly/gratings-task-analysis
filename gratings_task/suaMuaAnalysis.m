@@ -18,7 +18,7 @@ function suaMuaAnalysis(processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, re
 % evt7 = target dim
 % evt8 = juice
 
-v = 13;
+v = 14;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');

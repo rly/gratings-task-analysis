@@ -13,17 +13,17 @@ caxis([-1 1]);
 
 xlabel(sprintf('Time from %s (s)', eventName));
 
-titleText = eventName;
-titleParams = {'Interpreter', 'None', 'FontWeight', 'bold'};
-title(titleText, 'FontSize', 14, titleParams{:});
+% titleText = eventName;
+% titleParams = {'Interpreter', 'None', 'FontWeight', 'bold'};
+% title(titleText, 'FontSize', 14, titleParams{:});
 
 set(gca, 'box', 'off');
 set(gca, 'FontSize', 16);
-set(gca, 'FontName', 'Calibri');
+set(gca, 'FontName', 'Arial');
 set(gca, 'LineWidth', 2);
 
 if isDiff
-    clabel = 'Diff. Norm. Firing Rate';
+    clabel = 'Difference in Norm. Firing Rate';
 else
     clabel = 'Attend-RF Norm. Firing Rate';
 end
