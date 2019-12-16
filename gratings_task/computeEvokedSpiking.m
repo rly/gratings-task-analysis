@@ -40,8 +40,14 @@ if isnan(spikeStruct.unitEndTime)
 else
     endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice < spikeStruct.unitEndTime, 1, 'last'));
 end
-assert(~isempty(startTime))
-assert(~isempty(endTime))
+if isempty(startTime)
+    warning('Start time is empty. No spikes after start time / first enter fixation time.\n')
+    return
+end
+if isempty(endTime)
+    warning('End time is empty. No spikes before end time / last lever release time.\n')
+    return
+end
 assert(startTime < endTime)
     
 kernelSigma = 0.01;
