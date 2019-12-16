@@ -1,4 +1,5 @@
-function timeLockStruct = createTimeLockedSpdf(spikeTs, eventTimes, eventTimesByLoc, timeLockStruct, kernelSigma, startTime, endTime)
+function timeLockStruct = createTimeLockedSpdf(spikeTs, eventTimes, eventTimesByLoc, timeLockStruct, kernelSigma, ...
+        startTime, endTime)
 % Create a struct of spike density functions aligned to event times
 % Parameters:
 % - spikeTs - spike times, in seconds from recording file (0 = start of

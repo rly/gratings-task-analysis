@@ -290,8 +290,8 @@ if isLoadSortedSua
         % suaData(:,4:nSamples+3) = waveform in microvolts
         assert(all(suaData(:,1) == i));
         
-        muaFilePath = sprintf('%s/%s-SPKC%03d-MUA.mat', suaMuaDataDirRoot, sessionName, i);
-        muaData = load(muaFilePath); % for getting threshold data
+%         muaFilePath = sprintf('%s/%s-SPKC%03d-MUA.mat', suaMuaDataDirRoot, sessionName, i);
+%         muaData = load(muaFilePath); % for getting threshold data
         
         nUnitsThisCh = max(suaData(:,2));
         for j = 1:nUnitsThisCh
@@ -340,9 +340,9 @@ if isLoadSortedSua
             spikeStruct.unitEndTime = unitEndTime;
             spikeStruct.sortComments = sortComments;
             % get threshold data from muaData mat file
-            spikeStruct.threshold = nanmean(muaData.thresholdParams.thresholds); % mV
-            spikeStruct.thresholdTime = muaData.thresholdParams.nPreThresholdSamples / spikeFs;
-            spikeStruct.thresholdParams = muaData.thresholdParams;
+%             spikeStruct.threshold = nanmean(muaData.thresholdParams.thresholds); % mV
+%             spikeStruct.thresholdTime = muaData.thresholdParams.nPreThresholdSamples / spikeFs;
+%             spikeStruct.thresholdParams = muaData.thresholdParams;
             spikeStruct.wf = suaData(unitMatch,4:end) / 1000; % now in millivolts
             spikeStruct.ts = suaData(unitMatch,3); % seconds
             if isempty(spikeStruct.ts) % don't add more information if there are no waveforms

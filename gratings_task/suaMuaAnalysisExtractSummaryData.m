@@ -298,42 +298,41 @@ for j = 1:nUnits
             rfLocsUsed = false(nLoc, 1);
             rfLocsUsed([inRFLoc exRFLoc]) = 1;
             
-            % slowest RTs
-            targetDimByLocSlowThirdRT = cell(nLoc, 1);
-            targetDimByLocSlowThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(topThirdIndicesHoldInRF));
-            targetDimByLocSlowThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(topThirdIndicesHoldExRF));
-            targetDimSlowThirdRT.window = ES.targetDimBal.window;
-            targetDimSlowThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
-            targetDimSlowThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocSlowThirdRT, targetDimSlowThirdRT, ES.kernelSigma);
-            targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, rfLocsUsed);
-            
-            % fastest RTs
-            targetDimByLocFastThirdRT = cell(nLoc, 1);
-            targetDimByLocFastThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(bottomThirdIndicesHoldInRF));
-            targetDimByLocFastThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(bottomThirdIndicesHoldExRF));
-            targetDimFastThirdRT.window = ES.targetDimBal.window;
-            targetDimFastThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
-            targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
-            targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, rfLocsUsed);
-
-            fprintf('5a\n');
-            % InRF only
-            diffTargetDimLatencySplitThirdsRT(unitCount) = targetDimSlowThirdRT.latencyInfoByLoc{inRFLoc}.latency - ...
-                    targetDimFastThirdRT.latencyInfoByLoc{inRFLoc}.latency;
-            if ~isnan(diffTargetDimLatencySplitThirdsRT(unitCount))
-                figure_tr_inch(6, 5);
-                hold on;
-                targetDimT = targetDimSlowThirdRT.t - targetDimSlowThirdRT.window(1);
-                plot(targetDimT, targetDimSlowThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
-                plot(targetDimT, targetDimFastThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
-                xlabel('Time from Target Dimming (s)');
-                ylabel('Estimated Firing Rate (Hz)');
-                title(sprintf('%s Target Dim InRF - Slow vs Fast RTs', unitName), 'Interpreter', 'none');
-                legend({'Slow Third of RTs', 'Fast Third of RTs'});
-                plotFileName = sprintf('%s/%s-%s-targetDimSlowVsFastRT-v%d.png', processedDataDir, unitName, blockName, v);
-                fprintf('\tSaving figure to file %s...\n', plotFileName);
-                export_fig(plotFileName, '-nocrop');
-            end
+%             % slowest RTs
+%             targetDimByLocSlowThirdRT = cell(nLoc, 1);
+%             targetDimByLocSlowThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(topThirdIndicesHoldInRF));
+%             targetDimByLocSlowThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(topThirdIndicesHoldExRF));
+%             targetDimSlowThirdRT.window = ES.targetDimBal.window;
+%             targetDimSlowThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
+%             targetDimSlowThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocSlowThirdRT, targetDimSlowThirdRT, ES.kernelSigma);
+%             targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, rfLocsUsed);
+%             
+%             % fastest RTs
+%             targetDimByLocFastThirdRT = cell(nLoc, 1);
+%             targetDimByLocFastThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(bottomThirdIndicesHoldInRF));
+%             targetDimByLocFastThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(bottomThirdIndicesHoldExRF));
+%             targetDimFastThirdRT.window = ES.targetDimBal.window;
+%             targetDimFastThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
+%             targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
+%             targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, rfLocsUsed);
+% 
+%             % InRF only
+%             diffTargetDimLatencySplitThirdsRT(unitCount) = targetDimSlowThirdRT.latencyInfoByLoc{inRFLoc}.latency - ...
+%                     targetDimFastThirdRT.latencyInfoByLoc{inRFLoc}.latency;
+%             if ~isnan(diffTargetDimLatencySplitThirdsRT(unitCount))
+%                 figure_tr_inch(6, 5);
+%                 hold on;
+%                 targetDimT = targetDimSlowThirdRT.t - targetDimSlowThirdRT.window(1);
+%                 plot(targetDimT, targetDimSlowThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
+%                 plot(targetDimT, targetDimFastThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
+%                 xlabel('Time from Target Dimming (s)');
+%                 ylabel('Estimated Firing Rate (Hz)');
+%                 title(sprintf('%s Target Dim InRF - Slow vs Fast RTs', unitName), 'Interpreter', 'none');
+%                 legend({'Slow Third of RTs', 'Fast Third of RTs'});
+%                 plotFileName = sprintf('%s/%s-%s-targetDimSlowVsFastRT-v%d.png', processedDataDir, unitName, blockName, v);
+%                 fprintf('\tSaving figure to file %s...\n', plotFileName);
+%                 export_fig(plotFileName, '-nocrop');
+%             end
             
             % algorithm:
             % sort trials according to firing rate during each delay period
