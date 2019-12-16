@@ -7,7 +7,6 @@ muaDataDirRoot = ['C:/Users/Ryan/Documents/MATLAB/gratings-task-data/' sessionNa
 suaMuaDataDirRoot = muaDataDirRoot;
 recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 % channelsToLoad = 1:32;
-channelsToLoad = 3;
 % muaChannelsToLoad = 1:32;
 % lfpChannelsToLoad = 1:32;
 % lfpChannels = lfpChannelsToLoad;
@@ -35,12 +34,12 @@ isLoadMua = 0;
 % 
 % saveGratingsTaskResultsJsonToMatRunner(dataDirRoot, recordingInfoFileName, sessionInd, isZeroDistractors)
 % 
-% for chan = 1:32
-%     suaMuaAnalysis(processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, chan, ...
-%             isZeroDistractors, numRandomizations, isLoadSortedSua, isLoadMua)
-%     suaMuaAnalysisPlots(processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, chan, ...
-%             isZeroDistractors, isLoadSortedSua, isLoadMua)
-% end
+for chan = 1:32
+    suaMuaAnalysis(processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, chan, ...
+            isZeroDistractors, numRandomizations, isLoadSortedSua, isLoadMua)
+    suaMuaAnalysisPlots(processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, chan, ...
+            isZeroDistractors, isLoadSortedSua, isLoadMua)
+end
 % 
 % channelsToLoad = 1:32;
 % loadRecordingDataIntoSpikeMetaData(processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
