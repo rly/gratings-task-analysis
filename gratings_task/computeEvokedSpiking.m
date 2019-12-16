@@ -30,18 +30,18 @@ spikeTs = spikeStruct.ts;
 
 % Match spikeTimes with first fixation event
 if isnan(spikeStruct.unitStartTime)
-    startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue>spikeTs(1), 1, 'first'));
+    startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue > spikeTs(1), 1, 'first'));
 else
-    startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue>spikeStruct.unitStartTime, 1, 'first'));
+    startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue > spikeStruct.unitStartTime, 1, 'first'));
 end
 % Match spikeTimes with last lever release
 if isnan(spikeStruct.unitEndTime)
-    endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<spikeTs(end),1,'last'));
+    endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice < spikeTs(end), 1, 'last'));
 else
-    endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<spikeStruct.unitEndTime,1,'last'));
+    endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice < spikeStruct.unitEndTime, 1, 'last'));
 end
-disp(startTime)
-disp(endTime)
+assert(~isempty(startTime))
+assert(~isempty(endTime))
 assert(startTime < endTime)
     
 kernelSigma = 0.01;
