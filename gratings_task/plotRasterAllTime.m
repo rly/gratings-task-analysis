@@ -78,7 +78,7 @@ xlabel('Time (s)');
 ylabel('');
 
 % plot in bounds data
-spikeTsInBounds = ES.spikeTs >= ES.startTime & ES.spikeTs < ES.endTime;
+spikeTsInBounds = ES.spikeTs >= ES.startTime & ES.spikeTs < ES.endTime & ~ES.isSpikeTsInTrial;
 data = createnonemptydatamatpt(ES.spikeTs(spikeTsInBounds), rowStartTimes, window);
 rasterY = 0;
 lineParams = {'Color', [0 0 0], 'LineWidth', 1};
