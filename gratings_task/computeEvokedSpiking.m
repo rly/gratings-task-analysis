@@ -40,6 +40,8 @@ if isnan(spikeStruct.unitEndTime)
 else
     endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<spikeStruct.unitEndTime,1,'last'));
 end
+disp(startTime)
+disp(endTime)
 assert(startTime < endTime)
     
 kernelSigma = 0.01;
