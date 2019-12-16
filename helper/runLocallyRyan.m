@@ -34,7 +34,7 @@ isLoadMua = 0;
 % 
 % saveGratingsTaskResultsJsonToMatRunner(dataDirRoot, recordingInfoFileName, sessionInd, isZeroDistractors)
 % 
-for chan = 1:32
+for chan = 3%1:32
     suaMuaAnalysis(processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, chan, ...
             isZeroDistractors, numRandomizations, isLoadSortedSua, isLoadMua)
     suaMuaAnalysisPlots(processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, chan, ...

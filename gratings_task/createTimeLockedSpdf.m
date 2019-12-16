@@ -14,8 +14,8 @@ function timeLockStruct = createTimeLockedSpdf(spikeTs, eventTimes, eventTimesBy
 % spdf
 % - kernelSigma - the sigma for the Gaussian kernel for convolving around
 % spikes
-% - startTime - lower bound for time points to use
-% - endTime - upper bound for time points to use
+% - startTime - lower bound for time points to use (inclusive)
+% - endTime - upper bound for time points to use (exclusive)
 %
 % Returns:
 %   timeLockStruct with many useful parameters
@@ -30,17 +30,16 @@ timeLockStruct.kernelSigma = kernelSigma;
 timeLockStruct.t = computeTForSpdf(timeLockStruct.window(1), timeLockStruct.spdfWindowOffset, kernelSigma);
 
 % filter event times based on startTime and endTime == "valid"
-if ~isempty(eventTimes)
-    timeLockStruct.validEvents = (eventTimes > startTime) & (eventTimes <= endTime);
-    timeLockStruct.validEventTimes = eventTimes(timeLockStruct.validEvents);
-    for i = 1:nLoc
-        timeLockStruct.validEventsByLoc{i} = (eventTimesByLoc{i} > startTime) & (eventTimesByLoc{i} <= endTime);
-        timeLockStruct.validEventTimesByLoc{i} = eventTimesByLoc{i}(timeLockStruct.validEventsByLoc{i});
-    end
+timeLockStruct.validEvents = (eventTimes >= startTime) & (eventTimes < endTime);
+timeLockStruct.validEventTimes = eventTimes(timeLockStruct.validEvents);
+for i = 1:nLoc
+    timeLockStruct.validEventsByLoc{i} = (eventTimesByLoc{i} > startTime) & (eventTimesByLoc{i} <= endTime);
+    timeLockStruct.validEventTimesByLoc{i} = eventTimesByLoc{i}(timeLockStruct.validEventsByLoc{i});
 end
 
 % align spike times to event (0 = start of window)
-[timeLockStruct.spikeTimes,timeLockStruct.spikeIndices] = createnonemptydatamatpt(spikeTs, timeLockStruct.validEventTimes, timeLockStruct.window);
+[timeLockStruct.spikeTimes,timeLockStruct.spikeIndices] = createnonemptydatamatpt(spikeTs, ...
+        timeLockStruct.validEventTimes, timeLockStruct.window);
 
 spikeCount = zeros(size(timeLockStruct.spikeTimes,2),1);
 for i = 1:size(timeLockStruct.spikeTimes,2)

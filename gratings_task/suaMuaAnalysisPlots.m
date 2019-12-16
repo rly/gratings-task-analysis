@@ -65,7 +65,7 @@ fprintf('Processing %d Units...\n', nUnits);
 for i = 1:nUnits
     unitStruct = D.allUnitStructs{i};
     unitName = unitStruct.name;
-    spikeTimes = unitStruct.ts;
+%     spikeTimes = unitStruct.ts;
     fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
             nUnits, round(i/nUnits*100));
 
@@ -76,6 +76,12 @@ for i = 1:nUnits
         ES = load(saveFileName);
 
         if isFiringRateGreaterThanMin(ES, minFiringRate)
+            plotFileName = sprintf('%s/%s-%s-raster-allTime-v%d.png', processedDataDir, unitName, blockName, v);
+            fprintf('\tPlotting...\n');
+
+            plotRasterAllTime(ES, D, i, unitStruct, isZeroDistractors, plotFileName);
+            close;
+            
             plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
             fprintf('\tPlotting...\n');
 

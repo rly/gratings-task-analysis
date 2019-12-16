@@ -26,7 +26,6 @@ function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE
 
 
 %%
-
 spikeTs = spikeStruct.ts;
 
 % Match spikeTimes with first fixation event
@@ -42,7 +41,7 @@ else
     endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<spikeStruct.unitEndTime,1,'last'));
 end
 assert(startTime < endTime)
-
+    
 kernelSigma = 0.01;
 
 clear spikeStruct;
@@ -57,6 +56,15 @@ fprintf('Computing evoked spiking with SPDF sigma %0.3f seconds and %d randomiza
         kernelSigma, numRandomizations, nTrials);
 fprintf('\t');
 
+%%
+isSpikeTsInTrial = zeros(size(spikeTs));
+for i = 1:nTrials
+    inTrial = spikeTs >= UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(i) & ...
+              spikeTs < UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(i);
+    isSpikeTsInTrial = isSpikeTsInTrial | inTrial;
+end
+clear inTrial;
+
 %% align spikes to cue onset, compute spdf
 cueOnset.window = [0.8 0.8]; % seconds before, after
 cueOnset.spdfWindowOffset = [-0.7 0.7]; % tighter window for spdf to avoid edge effects
@@ -69,7 +77,7 @@ cueOnset = createTimeLockedSpdf(spikeTs, UE.cueOnset, UE.cueOnsetByLoc, cueOnset
 % cueOnsetHold = createTimeLockedSpdf(spikeTs, UE.cueOnsetHold, UE.cueOnsetHoldByLoc, cueOnsetHold, kernelSigma);
 cueOnsetError = createTimeLockedSpdf(spikeTs, UE.cueOnsetError, UE.cueOnsetErrorByLoc, cueOnsetError, kernelSigma, startTime, endTime);
 
-fprintf('Using only %d valid trials out of %d total trial.\n', numel(cueOnset.validEvents), nTrials)
+fprintf('Using %d valid trials out of %d total trials.\n', numel(cueOnset.validEvents), nTrials)
 
 %% align spikes to array onset, compute spdf
 arrayOnset.window = [0.8 0.8]; % seconds before, after
