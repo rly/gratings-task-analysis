@@ -308,7 +308,7 @@ if isLoadSortedSua
             separationQuality = sortQualityNotesNums(qualityNotesMatchInd,4);
             % INCLUDE ONLY UNITS WITH TYPICAL WAVEFORM SHAPE AND GOOD
             % SEPARATION QUALITY FOR NOW
-            if ~(hasTypicalWaveformShape && separationQuality >= 5)
+            if ~(hasTypicalWaveformShape && separationQuality >= 4)
                 continue;
             end
             
@@ -369,6 +369,18 @@ if isLoadSortedSua
             d1Smooth = diff(smoothedWf) > 0; % 1 if moving up, 0 if moving down
             d2Smooth = diff(d1Smooth); % 0->1 = 1 = trough, 1->0 = -1 = peak
             spikeStruct.firstTroughIndex = find(d2Smooth == 1, 1, 'first') + 1;
+            
+            % calculate repolarization time TvV Trainito et al. 2019 by:
+            % taking the first derivative followed by taking the second 
+            % derivative by using the diff function. Then get the indices
+            % of the inflection point by using sign, diff and find
+            inflectionIdx = find(diff(sign(diff(diff(spikeStruct.meanWf)))));
+            % also calculate the repolarization for the smoothed Wf
+            inflectionInterpIdx = find(diff(sign(diff(diff(spikeStruct.meanWfInterp)))));
+            inflAfterPeak = inflectionIdx > (relPeakInd + troughInd);
+            inflInterpAfterPeak = inflectionInterpIdx > (relPeakIndFine + troughIndFine);
+            spikeStruct.repolTime = waveformT(inflectionIdx(find(inflAfterPeak,1,'first')));
+            spikeStruct.repolTimeInterp = waveformTFine(inflectionInterpIdx(find(inflInterpAfterPeak,1,'first')));
             
 %             figure_tr_inch(6, 6);
 %             hold on;

@@ -1,18 +1,21 @@
 clear
 close all
-outputDir = '/Users/labmanager/Documents/MATLAB/BurstSep5/';
+outputDir = '/Users/labmanager/Documents/MATLAB/BurstSep4/';
 v = 14;
 
-fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigMcCartney.csv.bak');
-% fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigFerdy.csv.bak');
-sessionInfo = textscan(fid, '%d8%s%s', 'Delimiter', ',', 'HeaderLines' ,2-1, 'ReturnOnError', false, 'EndOfLine', '\r\n');
+% fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigMcCartney.csv.bak');
+fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigFerdy.csv.bak');
+sessionInfo = textscan(fid, '%d8%s%s', 'Delimiter', ',', 'HeaderLines' ,1-1, 'ReturnOnError', false, 'EndOfLine', '\r\n');
 fclose(fid);
-for sessioni = 1:numel(sessionInfo{1})
-    clearvars -except sessionInfo sessioni outputDir
+counterFR = zeros(1,numel(sessionInfo{1}));
+nUnitsPerSession = zeros(1,numel(sessionInfo{1}));
+
+for sessioni = 6:numel(sessionInfo{1})
+    clearvars -except sessionInfo sessioni outputDir counterFR nUnitsPerSession v
     sessionInd = sessionInfo{1}(sessioni);
     processedDataRootDir = '/Volumes/scratch/rly/gratings-task-analysis/processed_data/';
-    dataDirRoot = '/Volumes/kastner/ryanly/McCartney/merged';
-%     dataDirRoot = '/Volumes/kastner/ryanly/Ferdy/merged';
+%     dataDirRoot = '/Volumes/kastner/ryanly/McCartney/merged';
+    dataDirRoot = '/Volumes/kastner/ryanly/Ferdy/merged';
     muaDataDirRoot = '/Volumes/scratch/rly/simple-mua-detection/processed_data/';
     suaMuaDataDirRoot = muaDataDirRoot;
     recordingInfoFileName = '/Users/labmanager/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
@@ -69,6 +72,8 @@ for sessioni = 1:numel(sessionInfo{1})
             fprintf('SPNA %s (%d/%d = %d%%)... \n', unitName, uniti, ...
                 nUnits, round(uniti/nUnits*100));
             
+            nUnitsPerSession(sessioni) = nUnits;
+            
             %     saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
             %             processedDataDir, unitName, blockName, v);
             if firingRateOverall >= minFiringRateOverall
@@ -81,6 +86,11 @@ for sessioni = 1:numel(sessionInfo{1})
                 allDiffSpikeTimesPost = [allDiffSpikeTimes; NaN];
                 allDiffSpikeTimesPre = log10(allDiffSpikeTimesPre*1000); % logISI in ms
                 allDiffSpikeTimesPost = log10(allDiffSpikeTimesPost*1000);
+                
+                
+                
+                
+                
                 
                 FigH = figure;
                 % return plot
@@ -212,10 +222,12 @@ for sessioni = 1:numel(sessionInfo{1})
                     preTimesOverThreshLong preTimesOverThreshShort bothTimesOverThresh ...
                     postTimesOverThreshLong postTimesOverThreshShort bothTimesOverThreshShort
                 
-                plotFileName = sprintf('%s/%s-sessionInd%d-Uniti%d-BurstingTvV-v%d.png', outputDir, sessionName, sessionInd, uniti, v);
+                plotFileName = sprintf('%s/%s-sessionInd%d-sessioni%d-Uniti%d-BurstingTvV-v%d.png', outputDir, sessionName, sessionInd, sessioni, uniti, v);
                 fprintf('\tSaving figure to file %s...\n', plotFileName);
                 saveas(FigH, plotFileName);
                 close all
+            else
+                counterFR(sessioni) = 1;
             end
         end
     end
