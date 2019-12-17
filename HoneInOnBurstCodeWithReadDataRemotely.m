@@ -60,22 +60,22 @@ for sessioni = 31%1:numel(sessionInfo{1})
             taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 0, ...
             [],[],isLoadAllSpikes);
         
-%         fig_h1 = figure;
-%         fig_h2 = figure;
-%         for chani = 1:32
-%             cueOnset.windowOffset = [-0.7 0.7];
-%             cueOnset = alignLfpToEvents(D.adjLfps(chani,:), UE.cueOnset, D.lfpFs, cueOnset);
-% 
-%             for triali = 1:size(cueOnset.lfp(1,:,:),2)
-%                 lfpFFT(triali,:) = fft(cueOnset.lfp(1,triali,:));
-%             end
-%             
-%             meanpow(chani,:) = squeeze(mean(imag(lfpFFT).^2 + real(lfpFFT).^2,1));
-%             figure(fig_h1); hold on; plot(meanpow(chani,:))
-%             xlim([0 50])
-%             [Frac{chani}] = getFractalOscillatoryComponents(squeeze(cueOnset.lfp));
-%             figure(fig_h2); hold on; plot(mean(Frac{chani}.osci,2))
-%         end
+        %         fig_h1 = figure;
+        %         fig_h2 = figure;
+        %         for chani = 1:32
+        %             cueOnset.windowOffset = [-0.7 0.7];
+        %             cueOnset = alignLfpToEvents(D.adjLfps(chani,:), UE.cueOnset, D.lfpFs, cueOnset);
+        %
+        %             for triali = 1:size(cueOnset.lfp(1,:,:),2)
+        %                 lfpFFT(triali,:) = fft(cueOnset.lfp(1,triali,:));
+        %             end
+        %
+        %             meanpow(chani,:) = squeeze(mean(imag(lfpFFT).^2 + real(lfpFFT).^2,1));
+        %             figure(fig_h1); hold on; plot(meanpow(chani,:))
+        %             xlim([0 50])
+        %             [Frac{chani}] = getFractalOscillatoryComponents(squeeze(cueOnset.lfp));
+        %             figure(fig_h2); hold on; plot(mean(Frac{chani}.osci,2))
+        %         end
         
         sessionName = R.sessionName;
         fprintf('Processing %s...\n', sessionName);
@@ -90,9 +90,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
         % kCluster = 4;
         % centroid = zeros(nUnits,kCluster,2);
         
-        
-        
-        for uniti = 1:nUnits
+        for uniti = 2%1:nUnits
             [~,iidx] = ismember(sessioni,burstsession);
             if ismember(uniti,burstunit(iidx,:))
                 
@@ -100,407 +98,409 @@ for sessioni = 31%1:numel(sessionInfo{1})
                 unitName = unitStruct.name;
                 fprintf('-----------------------------\n');
                 fprintf('\n');
-                if ~isempty(unitStruct.ts)
+                
+                spikeTimes = D.allUnitStructs{uniti}.ts;
+                totalTimeOverall = spikeTimes(end) - spikeTimes(1);
+                
+                %                     spikeTimes(50000:end) = spikeTimes(50000:end) + 10000;
+                
+                firingRateOverall = numel(spikeTimes) / totalTimeOverall;
+                fprintf('SPNA %s (%d/%d = %d%%)... \n', unitName, uniti, ...
+                    nUnits, round(uniti/nUnits*100));
+                
+                nUnitsPerSession(sessioni) = nUnits;
+                
+                %     saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
+                %             processedDataDir, unitName, blockName, v);
+                fprintf('\tOverall firing rate = %0.2f Hz > minimum firing rate = %0.2f Hz in these blocks.\n', ...
+                    firingRateOverall, minFiringRateOverall);
+                %         fprintf('\tComputing evoked spiking and writing file %s...\n', saveFileName);
+                
+                allDiffSpikeTimes = diff(spikeTimes); % get the ISIs
+                allDiffSpikeTimesPre = [NaN; allDiffSpikeTimes]; % miss align ISIs by adding NaN to create pre and postISI
+                allDiffSpikeTimesPost = [allDiffSpikeTimes; NaN];
+                allDiffSpikeTimesPre = log10(allDiffSpikeTimesPre*1000); % logISI in ms
+                allDiffSpikeTimesPost = log10(allDiffSpikeTimesPost*1000);
+                
+                silencethreshold = [100 50];
+                isiburstthreshold = [5 20];
+                
+                for threshi = 1:length(silencethreshold)
+                    figure
+                    % return plot
+                    plot(allDiffSpikeTimesPre,allDiffSpikeTimesPost,'.','LineWidth',1)
+                    preTimesOverThreshLong = find(allDiffSpikeTimesPre > log10(silencethreshold(threshi)));
+                    postTimesUnderThreshShort = find(allDiffSpikeTimesPost < log10(isiburstthreshold(threshi)));
+                    hold on
+                    y1 = allDiffSpikeTimesPost(preTimesOverThreshLong);
+                    x2 = allDiffSpikeTimesPre(postTimesUnderThreshShort);
+                    bothTimesOverThreshPre = find(allDiffSpikeTimesPre(postTimesUnderThreshShort) > log10(silencethreshold(threshi)));
+                    bothTimesOverThreshPost = find(allDiffSpikeTimesPost(preTimesOverThreshLong) < log10(isiburstthreshold(threshi)));
+                    x3 = x2(bothTimesOverThreshPre);
+                    y3 = y1(bothTimesOverThreshPost);
+                    plot(x3,y3,'k.','LineWidth', 2)
+                    xlim([-1 3])
+                    ylim([-1 3])
                     
-                    spikeTimes = D.allUnitStructs{uniti}.ts;
-                    totalTimeOverall = spikeTimes(end) - spikeTimes(1);
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig1_burstInfo' unitStruct.name '_s' num2str(sessioni) ...
+                        '_u' num2str(uniti) 'silT' num2str(silencethreshold(threshi)) ...
+                        '_isiT' num2str(isiburstthreshold(threshi)) '.png'])
+                    close all
                     
-                    %                     spikeTimes(50000:end) = spikeTimes(50000:end) + 10000;
-                    
-                    firingRateOverall = numel(spikeTimes) / totalTimeOverall;
-                    fprintf('SPNA %s (%d/%d = %d%%)... \n', unitName, uniti, ...
-                        nUnits, round(uniti/nUnits*100));
-                    
-                    nUnitsPerSession(sessioni) = nUnits;
-                    
-                    %     saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
-                    %             processedDataDir, unitName, blockName, v);
-                    if firingRateOverall >= minFiringRateOverall 
-                        fprintf('\tOverall firing rate = %0.2f Hz > minimum firing rate = %0.2f Hz in these blocks.\n', ...
-                            firingRateOverall, minFiringRateOverall);
-                        %         fprintf('\tComputing evoked spiking and writing file %s...\n', saveFileName);
-                        
-                        allDiffSpikeTimes = diff(spikeTimes); % get the ISIs
-                        allDiffSpikeTimesPre = [NaN; allDiffSpikeTimes]; % miss align ISIs by adding NaN to create pre and postISI
-                        allDiffSpikeTimesPost = [allDiffSpikeTimes; NaN];
-                        allDiffSpikeTimesPre = log10(allDiffSpikeTimesPre*1000); % logISI in ms
-                        allDiffSpikeTimesPost = log10(allDiffSpikeTimesPost*1000);
-                        
-                        figure
-                        % return plot
-                        plot(allDiffSpikeTimesPre,allDiffSpikeTimesPost,'.','LineWidth',1)
-                        preTimesOverThreshLong = find(allDiffSpikeTimesPre > log10(100));
-                        postTimesUnderThreshShort = find(allDiffSpikeTimesPost < log10(6));
-                        hold on
-                        y1 = allDiffSpikeTimesPost(preTimesOverThreshLong);
-                        x2 = allDiffSpikeTimesPre(postTimesUnderThreshShort);
-                        bothTimesOverThreshPre = find(allDiffSpikeTimesPre(postTimesUnderThreshShort) > log10(100));
-                        bothTimesOverThreshPost = find(allDiffSpikeTimesPost(preTimesOverThreshLong) < log10(6));
-                        x3 = x2(bothTimesOverThreshPre);
-                        y3 = y1(bothTimesOverThreshPost);
-                        plot(x3,y3,'k.','LineWidth', 2)
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig1_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        silence_period = log10(50);
-                        min_spikes = 3;
-                        min_isi = log10(10);
-                        i = 1;
-                        burstVect = zeros(1, length(spikeTimes));
-                        while i < length(spikeTimes) - 1
-                            if allDiffSpikeTimesPre(i) > silence_period
-                                possible_burst = true; n_sib = 0;
-                                while possible_burst
-                                    if allDiffSpikeTimesPost(i+n_sib) < min_isi
-                                    else
-                                        possible_burst = false;
-                                    end
-                                    n_sib = n_sib + 1;
-                                end
-                                
-                                if n_sib >= min_spikes
-                                    burstVect(i) = 2;                   % 2: start of burst
-                                    burstVect(i+n_sib-1) = 3;           % 3: end of burst
-                                    if min_spikes > 2
-                                        burstVect(i+1:i+n_sib-2) = 1;     % 1: within burst
-                                    else
-                                        if n_sib-1 > 2
-                                            burstVect(i+1:i+n_sib-2) = 1; % 1: within burst
-                                        end
-                                    end
+                    silence_period = log10(silencethreshold(threshi));
+                    min_spikes = 3;
+                    min_isi = log10(isiburstthreshold(threshi));
+                    i = 1;
+                    burstVect = zeros(1, length(spikeTimes));
+                    while i < length(spikeTimes) - 1
+                        if allDiffSpikeTimesPre(i) > silence_period
+                            possible_burst = true; n_sib = 0;
+                            while possible_burst
+                                if allDiffSpikeTimesPost(i+n_sib) < min_isi
                                 else
-                                    burstVect(i:i+n_sib) = 0;         % 0: not in burst
+                                    possible_burst = false;
                                 end
-                                i = i+n_sib;
+                                n_sib = n_sib + 1;
                             end
-                            i = i + 1;
-                        end
-                                                
-                        burstEventOnset = spikeTimes(burstVect==2);
-                        burstEventArrayRelated = []; burstEventCueRelated = []; burstEventEnterFix = [];
-                        burstEventExitFix = []; burstEventLeverPress =[]; burstEventLeverRelease =[];
-                        burstEventTargetDim = []; burstEventPostTargetDim = [];
-                        burstEventUnrelated = [];
-                        burstEventArrayRelatedAttAway = []; burstEventArrayRelatedAttIn = [];
-                        burstEventCueRelatedAttAway = []; burstEventCueRelatedAttIn = [];
-                        for bursti = 1:length(burstEventOnset)
-                            for triali = 1:length(UE.arrayOnset)
-                                % check whether burst event falls within 200ms
-                                % of arrayOnset
-                                if burstEventOnset(bursti) >= UE.arrayOnset(triali) && burstEventOnset(bursti) < ( UE.arrayOnset(triali) + 0.2 )
-                                    burstEventArrayRelated = [burstEventArrayRelated bursti];
-                                    if UE.cueLoc(triali) == 1
-                                        burstEventArrayRelatedAttAway = [burstEventArrayRelatedAttAway bursti];
-                                    elseif UE.cueLoc(triali) == 3
-                                        burstEventArrayRelatedAttIn = [burstEventArrayRelatedAttIn bursti];
-                                    end
-                                elseif burstEventOnset(bursti) >= UE.cueOnset(triali) && burstEventOnset(bursti) < ( UE.cueOnset(triali) + 0.2 )
-                                    burstEventCueRelated = [burstEventCueRelated bursti];
-                                    if UE.cueLoc(triali) == 1
-                                        burstEventCueRelatedAttAway = [burstEventCueRelatedAttAway bursti];
-                                    elseif UE.cueLoc(triali) == 3
-                                        burstEventCueRelatedAttIn = [burstEventCueRelatedAttIn bursti];
-                                    end
-                                elseif burstEventOnset(bursti) >= UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(triali) && burstEventOnset(bursti) < ( UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(triali) + 0.2 )
-                                    burstEventEnterFix = [burstEventEnterFix bursti];
-                                elseif burstEventOnset(bursti) >= UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice(triali) && burstEventOnset(bursti) < ( UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice(triali) + 0.2 )
-                                    burstEventExitFix = [burstEventExitFix bursti];
-                                elseif burstEventOnset(bursti) >= UE.fixationAndLeverTimes.firstLeverPressTimesPreCue(triali) && burstEventOnset(bursti) < ( UE.fixationAndLeverTimes.firstLeverPressTimesPreCue(triali) + 0.2 )
-                                    burstEventLeverPress = [burstEventLeverPress bursti];
-                                elseif burstEventOnset(bursti) >= UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(triali) && burstEventOnset(bursti) < ( UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(triali) + 0.2 )
-                                    burstEventLeverRelease = [burstEventLeverRelease bursti];
-                                elseif triali < length(UE.targetDim)
-                                    if burstEventOnset(bursti) >= (UE.targetDim(triali) - 0.2) && burstEventOnset(bursti) < UE.targetDim(triali)
-                                        burstEventTargetDim = [burstEventTargetDim bursti];
-                                    elseif burstEventOnset(bursti) >= UE.targetDim(triali) && burstEventOnset(bursti) < (UE.targetDim(triali) + 0.2)
-                                        burstEventPostTargetDim = [burstEventPostTargetDim bursti];
+                            
+                            if n_sib >= min_spikes
+                                burstVect(i) = 2;                   % 2: start of burst
+                                burstVect(i+n_sib-1) = 3;           % 3: end of burst
+                                if min_spikes > 2
+                                    burstVect(i+1:i+n_sib-2) = 1;     % 1: within burst
+                                else
+                                    if n_sib-1 > 2
+                                        burstVect(i+1:i+n_sib-2) = 1; % 1: within burst
                                     end
                                 end
+                            else
+                                burstVect(i:i+n_sib) = 0;         % 0: not in burst
                             end
+                            i = i+n_sib;
                         end
-                        
-                        sumlength = sum([length(burstEventArrayRelated) length(burstEventCueRelated) ...
-                            length(burstEventEnterFix) length(burstEventExitFix) length(burstEventLeverPress) ...
-                            length(burstEventLeverRelease) length(burstEventTargetDim) length(burstEventPostTargetDim)] );
-                        figure
-                        bar([1 2 3 4 5 6 7 8 9],[length(burstEventArrayRelated) length(burstEventCueRelated) ...
-                            length(burstEventEnterFix) length(burstEventExitFix) length(burstEventLeverPress) ...
-                            length(burstEventLeverRelease) length(burstEventTargetDim) length(burstEventPostTargetDim)...
-                            (length(burstEventOnset)-sumlength)])
-                        xticklabels({'Array','Cue','EnterFix','ExitFix','LeverPress','LeverRel','TargetDim','PostTarget','Unrelated'})
-                        title('Burst events related to task events')
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig2_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        figure
-                        bar([1 2 3 4],[length(burstEventCueRelatedAttAway) length(burstEventCueRelatedAttIn)...
-                            length(burstEventArrayRelatedAttAway) length(burstEventArrayRelatedAttIn)])
-                        xticklabels({'Cue Att Away','Cue Att In','Array Att Away','Array Att In'})
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig3_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        arrayOnset.window = [0.2 0.8]; % seconds before, after
-                        arrayOnset.spdfWindowOffset = [-0.1 0.7]; % tighter window for spdf to avoid edge effects
-                        kernelSigma = 0.01;
-                        arrayOnset = createTimeLockedSpdf(spikeTimes, UE.arrayOnset, UE.arrayOnsetByLoc, arrayOnset, kernelSigma, spikeTimes(1), spikeTimes(end));
-
-                        cueOnset.window = [0.2 0.8]; % seconds before, after
-                        cueOnset.spdfWindowOffset = [-0.1 0.7]; % tighter window for spdf to avoid edge effects
-                        kernelSigma = 0.01;
-                        cueOnset = createTimeLockedSpdf(spikeTimes, UE.cueOnset, UE.cueOnsetByLoc, cueOnset, kernelSigma, spikeTimes(1), spikeTimes(end));
-
-                       
-                        
-                        %             spikeTimesTask = spikeTimesTask(spikeTimesTask >= startTime & spikeTimesTask <= endTime);
-                        [spikeTimesCueLocked,spikeTimesCueLockedInd] = createnonemptydatamatpt(spikeTimes, UE.cueOnset, arrayOnset.window);
-                        [spikeTimesCueLockedAttOut,spikeTimesCueLockedAttOutInd] = createnonemptydatamatpt(spikeTimes, UE.cueOnset(UE.cueLoc == 1), arrayOnset.window);
-                        [spikeTimesCueLockedAttIn,spikeTimesCueLockedAttInInd] = createnonemptydatamatpt(spikeTimes, UE.cueOnset(UE.cueLoc == 3), arrayOnset.window);
-                        [spikeTimesArrayLocked,spikeTimesArrayLockedInd] = createnonemptydatamatpt(spikeTimes, UE.arrayOnset, arrayOnset.window);
-                        [spikeTimesArrayLockedAttOut,spikeTimesArrayLockedAttOutInd] = createnonemptydatamatpt(spikeTimes, UE.arrayOnset(UE.cueLoc == 1), arrayOnset.window);
-                        [spikeTimesArrayLockedAttIn,spikeTimesArrayLockedAttInInd] = createnonemptydatamatpt(spikeTimes, UE.arrayOnset(UE.cueLoc == 3), arrayOnset.window);
-
-                        figure; 
-                        subplot(211); 
-                        plot(arrayOnset.t,cueOnset.spdfByLoc(1,:),'b')
-                        hold on
-                        plot(arrayOnset.t,cueOnset.spdfByLoc(3,:),'r')
-                        subplot(212); 
-                        plot(arrayOnset.t,arrayOnset.spdfByLoc(1,:),'b')
-                        hold on
-                        plot(arrayOnset.t,arrayOnset.spdfByLoc(3,:),'r')
-                        legend('Att Away','Att In')
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig4_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        % raster plots with bursts color coded
-                        % all trials 
-                        % cue onset
-                        figure
-                        hold on
-                        spikeIdx = 0;
-                        for triali = 1:length(cueOnset.spikeCount)
-                            for spikei = 1:length(cueOnset.spikeTimes(triali).times)
-                                spikeIdx = spikeIdx + 1;
-                                if burstVect(cueOnset.spikeIndices(spikeIdx)) == 0
-                                    plot([cueOnset.spikeTimes(triali).times(spikei) cueOnset.spikeTimes(triali).times(spikei)],...
-                                        [triali triali+1],'k')
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 2 % start of burst
-                                    plot([cueOnset.spikeTimes(triali).times(spikei) cueOnset.spikeTimes(triali).times(spikei)],...
-                                        [triali triali+1],'r','LineWidth',4)
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 3 % end of burst
-                                    plot([cueOnset.spikeTimes(triali).times(spikei) cueOnset.spikeTimes(triali).times(spikei)],...
-                                        [triali triali+1],'b','LineWidth',4)
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 1 % within burst
-                                    plot([cueOnset.spikeTimes(triali).times(spikei) cueOnset.spikeTimes(triali).times(spikei)],...
-                                        [triali triali+1],'m','LineWidth',4)
-                                end
-                            end
-                        end
-%                         xlim([0 0.3])
-                        title('cueOnset all')
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig5_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        % all trials 
-                        % array onset
-                        figure
-                        hold on
-                        spikeIdx = 0;
-%                         AOidx = 0;
-                        for triali = 1:length(arrayOnset.spikeCount)
-                            for spikei = 1:length(arrayOnset.spikeTimes(triali).times)
-                                spikeIdx = spikeIdx + 1;
-                                if burstVect(arrayOnset.spikeIndices(spikeIdx)) == 0
-                                    plot([arrayOnset.spikeTimes(triali).times(spikei) arrayOnset.spikeTimes(triali).times(spikei)],...
-                                        [triali triali+1],'k')
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 2 % start of burst
-                                    plot([arrayOnset.spikeTimes(triali).times(spikei) arrayOnset.spikeTimes(triali).times(spikei)],...
-                                        [triali triali+1],'r','LineWidth',4)
-%                                     AOidx = AOidx + 1;
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 3 % end of burst
-                                    plot([arrayOnset.spikeTimes(triali).times(spikei) arrayOnset.spikeTimes(triali).times(spikei)],...
-                                        [triali triali+1],'b','LineWidth',4)
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 1 % within burst
-                                    plot([arrayOnset.spikeTimes(triali).times(spikei) arrayOnset.spikeTimes(triali).times(spikei)],...
-                                        [triali triali+1],'m','LineWidth',4)
-                                end
-                            end
-                        end
-                        title('arrayOnset all')
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig6_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        
-                        % split on attend in and attend away conditions
-                        
-                        % attend in trials 
-                        % cue onset
-                        figure
-                        hold on
-                        spikeIdx = 0;
-                        for triali = 1:size(cueOnset.spikeTimesByLoc{3},2)
-                            % Att In
-                            for spikei = 1:length(cueOnset.spikeTimesByLoc{3}(triali).times)
-                                spikeIdx = spikeIdx + 1;
-                                if burstVect(cueOnset.spikeIndices(spikeIdx)) == 0
-                                    plot([cueOnset.spikeTimesByLoc{3}(triali).times(spikei) cueOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
-                                        [triali triali+1],'k')
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 2 % start of burst
-                                    plot([cueOnset.spikeTimesByLoc{3}(triali).times(spikei) cueOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
-                                        [triali triali+1],'r','LineWidth',4)
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 3 % end of burst
-                                    plot([cueOnset.spikeTimesByLoc{3}(triali).times(spikei) cueOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
-                                        [triali triali+1],'b','LineWidth',4)
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 1 % within burst
-                                    plot([cueOnset.spikeTimesByLoc{3}(triali).times(spikei) cueOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
-                                        [triali triali+1],'m','LineWidth',4)
-                                end
-                            end
-                        end
-%                         xlim([0 0.3])
-                        title('cueOnset Att In')
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig7_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        % attend away trials 
-                        % cue onset
-                        figure
-                        hold on
-                        spikeIdx = 0;
-                        for triali = 1:size(cueOnset.spikeTimesByLoc{1},2)
-                            % Att Away
-                            for spikei = 1:length(cueOnset.spikeTimesByLoc{1}(triali).times)
-                                spikeIdx = spikeIdx + 1;
-                                if burstVect(cueOnset.spikeIndices(spikeIdx)) == 0
-                                    plot([cueOnset.spikeTimesByLoc{1}(triali).times(spikei) cueOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
-                                        [triali triali+1],'k')
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 2 % start of burst
-                                    plot([cueOnset.spikeTimesByLoc{1}(triali).times(spikei) cueOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
-                                        [triali triali+1],'r','LineWidth',4)
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 3 % end of burst
-                                    plot([cueOnset.spikeTimesByLoc{1}(triali).times(spikei) cueOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
-                                        [triali triali+1],'b','LineWidth',4)
-                                elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 1 % within burst
-                                    plot([cueOnset.spikeTimesByLoc{1}(triali).times(spikei) cueOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
-                                        [triali triali+1],'m','LineWidth',4)
-                                end
-                            end
-                        end
-%                         xlim([0 0.3])
-                        title('cueOnset Att Away')
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig8_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        figure
-                        hold on
-                        spikeIdx = 0;
-%                         AOidx = 0;
-                        for triali = 1:size(arrayOnset.spikeTimesByLoc{3},2)
-                            % Att In
-                            for spikei = 1:length(arrayOnset.spikeTimesByLoc{3}(triali).times)
-                                spikeIdx = spikeIdx + 1;
-                                if burstVect(arrayOnset.spikeIndices(spikeIdx)) == 0
-                                    plot([arrayOnset.spikeTimesByLoc{3}(triali).times(spikei) arrayOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
-                                        [triali triali+1],'k')
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 2 % start of burst
-                                    plot([arrayOnset.spikeTimesByLoc{3}(triali).times(spikei) arrayOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
-                                        [triali triali+1],'r','LineWidth',4)
-%                                     AOidx = AOidx + 1;
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 3 % end of burst
-                                    plot([arrayOnset.spikeTimesByLoc{3}(triali).times(spikei) arrayOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
-                                        [triali triali+1],'b','LineWidth',4)
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 1 % within burst
-                                    plot([arrayOnset.spikeTimesByLoc{3}(triali).times(spikei) arrayOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
-                                        [triali triali+1],'m','LineWidth',4)
-                                end
-                            end
-                        end
-                        title('arrayOnset Att In')
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig9_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        figure
-                        hold on
-                        spikeIdx = 0;
-%                         AOidx = 0;
-                        for triali = 1:size(arrayOnset.spikeTimesByLoc{1},2)
-                            % Att Away
-                            for spikei = 1:length(arrayOnset.spikeTimesByLoc{1}(triali).times)
-                                spikeIdx = spikeIdx + 1;
-                                if burstVect(arrayOnset.spikeIndices(spikeIdx)) == 0
-                                    plot([arrayOnset.spikeTimesByLoc{1}(triali).times(spikei) arrayOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
-                                        [triali triali+1],'k')
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 2 % start of burst
-                                    plot([arrayOnset.spikeTimesByLoc{1}(triali).times(spikei) arrayOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
-                                        [triali triali+1],'r','LineWidth',4)
-%                                     AOidx = AOidx + 1;
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 3 % end of burst
-                                    plot([arrayOnset.spikeTimesByLoc{1}(triali).times(spikei) arrayOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
-                                        [triali triali+1],'b','LineWidth',4)
-                                elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 1 % within burst
-                                    plot([arrayOnset.spikeTimesByLoc{1}(triali).times(spikei) arrayOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
-                                        [triali triali+1],'m','LineWidth',4)
-                                end
-                            end
-                        end
-                        title('arrayOnset Att Away')
-                        
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        saveas(gcf,['Fig10_burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti) '.png'])
-                        close all
-                        
-                        
-                        % ADD PPC
-                        % move to fieldtrip format
-                        
-                        
-                        
-                        % save and close figures
-                        
-                        
-                        
-                        % collect info
-                        AllBurstEvents = [length(burstEventArrayRelated) length(burstEventCueRelated) ...
-                            length(burstEventEnterFix) length(burstEventExitFix) length(burstEventLeverPress) ...
-                            length(burstEventLeverRelease) length(burstEventTargetDim) length(burstEventPostTargetDim) ...
-                            length(burstEventUnrelated) length(burstEventArrayRelatedAttAway) length(burstEventArrayRelatedAttIn) ...
-                            length(burstEventCueRelatedAttAway) length(burstEventCueRelatedAttIn)];
-                        cd('/Users/labmanager/Documents/MATLAB/burstEvents')
-                        save(['burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
-                            '_uniti' num2str(uniti)],'burstVect','burstEventOnset','spikeTimes','UE','AllBurstEvents')
-                        
-                        clear burstVect burstEventOnset spikeTimes AllBurstEvents
-                    else
-                        counterFR(sessioni) = 1;
+                        i = i + 1;
                     end
+                    
+                    burstEventOnset = spikeTimes(burstVect==2);
+                    burstEventArrayRelated = []; burstEventCueRelated = []; burstEventEnterFix = [];
+                    burstEventExitFix = []; burstEventLeverPress =[]; burstEventLeverRelease =[];
+                    burstEventTargetDim = []; burstEventPostTargetDim = [];
+                    burstEventUnrelated = [];
+                    burstEventArrayRelatedAttAway = []; burstEventArrayRelatedAttIn = [];
+                    burstEventCueRelatedAttAway = []; burstEventCueRelatedAttIn = [];
+                    for bursti = 1:length(burstEventOnset)
+                        for triali = 1:length(UE.arrayOnset)
+                            % check whether burst event falls within 200ms
+                            % of arrayOnset
+                            if burstEventOnset(bursti) >= UE.arrayOnset(triali) && burstEventOnset(bursti) < ( UE.arrayOnset(triali) + 0.2 )
+                                burstEventArrayRelated = [burstEventArrayRelated bursti];
+                                if UE.cueLoc(triali) == 1
+                                    burstEventArrayRelatedAttAway = [burstEventArrayRelatedAttAway bursti];
+                                elseif UE.cueLoc(triali) == 3
+                                    burstEventArrayRelatedAttIn = [burstEventArrayRelatedAttIn bursti];
+                                end
+                            elseif burstEventOnset(bursti) >= UE.cueOnset(triali) && burstEventOnset(bursti) < ( UE.cueOnset(triali) + 0.2 )
+                                burstEventCueRelated = [burstEventCueRelated bursti];
+                                if UE.cueLoc(triali) == 1
+                                    burstEventCueRelatedAttAway = [burstEventCueRelatedAttAway bursti];
+                                elseif UE.cueLoc(triali) == 3
+                                    burstEventCueRelatedAttIn = [burstEventCueRelatedAttIn bursti];
+                                end
+                            elseif burstEventOnset(bursti) >= UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(triali) && burstEventOnset(bursti) < ( UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(triali) + 0.2 )
+                                burstEventEnterFix = [burstEventEnterFix bursti];
+                            elseif burstEventOnset(bursti) >= UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice(triali) && burstEventOnset(bursti) < ( UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice(triali) + 0.2 )
+                                burstEventExitFix = [burstEventExitFix bursti];
+                            elseif burstEventOnset(bursti) >= UE.fixationAndLeverTimes.firstLeverPressTimesPreCue(triali) && burstEventOnset(bursti) < ( UE.fixationAndLeverTimes.firstLeverPressTimesPreCue(triali) + 0.2 )
+                                burstEventLeverPress = [burstEventLeverPress bursti];
+                            elseif burstEventOnset(bursti) >= UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(triali) && burstEventOnset(bursti) < ( UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(triali) + 0.2 )
+                                burstEventLeverRelease = [burstEventLeverRelease bursti];
+                            elseif triali < length(UE.targetDim)
+                                if burstEventOnset(bursti) >= (UE.targetDim(triali) - 0.2) && burstEventOnset(bursti) < UE.targetDim(triali)
+                                    burstEventTargetDim = [burstEventTargetDim bursti];
+                                elseif burstEventOnset(bursti) >= UE.targetDim(triali) && burstEventOnset(bursti) < (UE.targetDim(triali) + 0.2)
+                                    burstEventPostTargetDim = [burstEventPostTargetDim bursti];
+                                end
+                            end
+                        end
+                    end
+                    
+                    sumlength = sum([length(burstEventArrayRelated) length(burstEventCueRelated) ...
+                        length(burstEventEnterFix) length(burstEventExitFix) length(burstEventLeverPress) ...
+                        length(burstEventLeverRelease) length(burstEventTargetDim) length(burstEventPostTargetDim)] );
+                    figure
+                    bar([1 2 3 4 5 6 7 8 9],[length(burstEventArrayRelated) length(burstEventCueRelated) ...
+                        length(burstEventEnterFix) length(burstEventExitFix) length(burstEventLeverPress) ...
+                        length(burstEventLeverRelease) length(burstEventTargetDim) length(burstEventPostTargetDim)...
+                        (length(burstEventOnset)-sumlength)])
+                    xticklabels({'Array','Cue','EnterFix','ExitFix','LeverPress','LeverRel','TargetDim','PostTarget','Unrelated'})
+                    title('Burst events related to task events')
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig2_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    figure
+                    bar([1 2 3 4],[length(burstEventCueRelatedAttAway) length(burstEventCueRelatedAttIn)...
+                        length(burstEventArrayRelatedAttAway) length(burstEventArrayRelatedAttIn)])
+                    xticklabels({'Cue Att Away','Cue Att In','Array Att Away','Array Att In'})
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig3_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    arrayOnset.window = [0.2 0.8]; % seconds before, after
+                    arrayOnset.spdfWindowOffset = [-0.1 0.7]; % tighter window for spdf to avoid edge effects
+                    kernelSigma = 0.01;
+                    arrayOnset = createTimeLockedSpdf(spikeTimes, UE.arrayOnset, UE.arrayOnsetByLoc, arrayOnset, kernelSigma, spikeTimes(1), spikeTimes(end));
+                    
+                    cueOnset.window = [0.2 0.8]; % seconds before, after
+                    cueOnset.spdfWindowOffset = [-0.1 0.7]; % tighter window for spdf to avoid edge effects
+                    kernelSigma = 0.01;
+                    cueOnset = createTimeLockedSpdf(spikeTimes, UE.cueOnset, UE.cueOnsetByLoc, cueOnset, kernelSigma, spikeTimes(1), spikeTimes(end));
+                    
+                    
+                    
+                    %             spikeTimesTask = spikeTimesTask(spikeTimesTask >= startTime & spikeTimesTask <= endTime);
+                    [spikeTimesCueLocked,spikeTimesCueLockedInd] = createnonemptydatamatpt(spikeTimes, UE.cueOnset, arrayOnset.window);
+                    [spikeTimesCueLockedAttOut,spikeTimesCueLockedAttOutInd] = createnonemptydatamatpt(spikeTimes, UE.cueOnset(UE.cueLoc == 1), arrayOnset.window);
+                    [spikeTimesCueLockedAttIn,spikeTimesCueLockedAttInInd] = createnonemptydatamatpt(spikeTimes, UE.cueOnset(UE.cueLoc == 3), arrayOnset.window);
+                    [spikeTimesArrayLocked,spikeTimesArrayLockedInd] = createnonemptydatamatpt(spikeTimes, UE.arrayOnset, arrayOnset.window);
+                    [spikeTimesArrayLockedAttOut,spikeTimesArrayLockedAttOutInd] = createnonemptydatamatpt(spikeTimes, UE.arrayOnset(UE.cueLoc == 1), arrayOnset.window);
+                    [spikeTimesArrayLockedAttIn,spikeTimesArrayLockedAttInInd] = createnonemptydatamatpt(spikeTimes, UE.arrayOnset(UE.cueLoc == 3), arrayOnset.window);
+                    
+                    figure;
+                    subplot(211);
+                    plot(arrayOnset.t,cueOnset.spdfByLoc(1,:),'b')
+                    hold on
+                    plot(arrayOnset.t,cueOnset.spdfByLoc(3,:),'r')
+                    subplot(212);
+                    plot(arrayOnset.t,arrayOnset.spdfByLoc(1,:),'b')
+                    hold on
+                    plot(arrayOnset.t,arrayOnset.spdfByLoc(3,:),'r')
+                    legend('Att Away','Att In')
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig4_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    % raster plots with bursts color coded
+                    % all trials
+                    % cue onset
+                    figure
+                    hold on
+                    spikeIdx = 0;
+                    for triali = 1:length(cueOnset.spikeCount)
+                        for spikei = 1:length(cueOnset.spikeTimes(triali).times)
+                            spikeIdx = spikeIdx + 1;
+                            if burstVect(cueOnset.spikeIndices(spikeIdx)) == 0
+                                plot([cueOnset.spikeTimes(triali).times(spikei) cueOnset.spikeTimes(triali).times(spikei)],...
+                                    [triali triali+1],'k')
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 2 % start of burst
+                                plot([cueOnset.spikeTimes(triali).times(spikei) cueOnset.spikeTimes(triali).times(spikei)],...
+                                    [triali triali+1],'r','LineWidth',4)
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 3 % end of burst
+                                plot([cueOnset.spikeTimes(triali).times(spikei) cueOnset.spikeTimes(triali).times(spikei)],...
+                                    [triali triali+1],'b','LineWidth',4)
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 1 % within burst
+                                plot([cueOnset.spikeTimes(triali).times(spikei) cueOnset.spikeTimes(triali).times(spikei)],...
+                                    [triali triali+1],'m','LineWidth',4)
+                            end
+                        end
+                    end
+                    %                         xlim([0 0.3])
+                    title('cueOnset all')
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig5_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    % all trials
+                    % array onset
+                    figure
+                    hold on
+                    spikeIdx = 0;
+                    %                         AOidx = 0;
+                    for triali = 1:length(arrayOnset.spikeCount)
+                        for spikei = 1:length(arrayOnset.spikeTimes(triali).times)
+                            spikeIdx = spikeIdx + 1;
+                            if burstVect(arrayOnset.spikeIndices(spikeIdx)) == 0
+                                plot([arrayOnset.spikeTimes(triali).times(spikei) arrayOnset.spikeTimes(triali).times(spikei)],...
+                                    [triali triali+1],'k')
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 2 % start of burst
+                                plot([arrayOnset.spikeTimes(triali).times(spikei) arrayOnset.spikeTimes(triali).times(spikei)],...
+                                    [triali triali+1],'r','LineWidth',4)
+                                %                                     AOidx = AOidx + 1;
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 3 % end of burst
+                                plot([arrayOnset.spikeTimes(triali).times(spikei) arrayOnset.spikeTimes(triali).times(spikei)],...
+                                    [triali triali+1],'b','LineWidth',4)
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 1 % within burst
+                                plot([arrayOnset.spikeTimes(triali).times(spikei) arrayOnset.spikeTimes(triali).times(spikei)],...
+                                    [triali triali+1],'m','LineWidth',4)
+                            end
+                        end
+                    end
+                    title('arrayOnset all')
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig6_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    
+                    % split on attend in and attend away conditions
+                    
+                    % attend in trials
+                    % cue onset
+                    figure
+                    hold on
+                    spikeIdx = 0;
+                    for triali = 1:size(cueOnset.spikeTimesByLoc{3},2)
+                        % Att In
+                        for spikei = 1:length(cueOnset.spikeTimesByLoc{3}(triali).times)
+                            spikeIdx = spikeIdx + 1;
+                            if burstVect(cueOnset.spikeIndices(spikeIdx)) == 0
+                                plot([cueOnset.spikeTimesByLoc{3}(triali).times(spikei) cueOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
+                                    [triali triali+1],'k')
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 2 % start of burst
+                                plot([cueOnset.spikeTimesByLoc{3}(triali).times(spikei) cueOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
+                                    [triali triali+1],'r','LineWidth',4)
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 3 % end of burst
+                                plot([cueOnset.spikeTimesByLoc{3}(triali).times(spikei) cueOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
+                                    [triali triali+1],'b','LineWidth',4)
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 1 % within burst
+                                plot([cueOnset.spikeTimesByLoc{3}(triali).times(spikei) cueOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
+                                    [triali triali+1],'m','LineWidth',4)
+                            end
+                        end
+                    end
+                    %                         xlim([0 0.3])
+                    title('cueOnset Att In')
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig7_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    % attend away trials
+                    % cue onset
+                    figure
+                    hold on
+                    spikeIdx = 0;
+                    for triali = 1:size(cueOnset.spikeTimesByLoc{1},2)
+                        % Att Away
+                        for spikei = 1:length(cueOnset.spikeTimesByLoc{1}(triali).times)
+                            spikeIdx = spikeIdx + 1;
+                            if burstVect(cueOnset.spikeIndices(spikeIdx)) == 0
+                                plot([cueOnset.spikeTimesByLoc{1}(triali).times(spikei) cueOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
+                                    [triali triali+1],'k')
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 2 % start of burst
+                                plot([cueOnset.spikeTimesByLoc{1}(triali).times(spikei) cueOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
+                                    [triali triali+1],'r','LineWidth',4)
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 3 % end of burst
+                                plot([cueOnset.spikeTimesByLoc{1}(triali).times(spikei) cueOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
+                                    [triali triali+1],'b','LineWidth',4)
+                            elseif burstVect(cueOnset.spikeIndices(spikeIdx)) == 1 % within burst
+                                plot([cueOnset.spikeTimesByLoc{1}(triali).times(spikei) cueOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
+                                    [triali triali+1],'m','LineWidth',4)
+                            end
+                        end
+                    end
+                    %                         xlim([0 0.3])
+                    title('cueOnset Att Away')
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig8_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    figure
+                    hold on
+                    spikeIdx = 0;
+                    %                         AOidx = 0;
+                    for triali = 1:size(arrayOnset.spikeTimesByLoc{3},2)
+                        % Att In
+                        for spikei = 1:length(arrayOnset.spikeTimesByLoc{3}(triali).times)
+                            spikeIdx = spikeIdx + 1;
+                            if burstVect(arrayOnset.spikeIndices(spikeIdx)) == 0
+                                plot([arrayOnset.spikeTimesByLoc{3}(triali).times(spikei) arrayOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
+                                    [triali triali+1],'k')
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 2 % start of burst
+                                plot([arrayOnset.spikeTimesByLoc{3}(triali).times(spikei) arrayOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
+                                    [triali triali+1],'r','LineWidth',4)
+                                %                                     AOidx = AOidx + 1;
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 3 % end of burst
+                                plot([arrayOnset.spikeTimesByLoc{3}(triali).times(spikei) arrayOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
+                                    [triali triali+1],'b','LineWidth',4)
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 1 % within burst
+                                plot([arrayOnset.spikeTimesByLoc{3}(triali).times(spikei) arrayOnset.spikeTimesByLoc{3}(triali).times(spikei)],...
+                                    [triali triali+1],'m','LineWidth',4)
+                            end
+                        end
+                    end
+                    title('arrayOnset Att In')
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig9_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    figure
+                    hold on
+                    spikeIdx = 0;
+                    %                         AOidx = 0;
+                    for triali = 1:size(arrayOnset.spikeTimesByLoc{1},2)
+                        % Att Away
+                        for spikei = 1:length(arrayOnset.spikeTimesByLoc{1}(triali).times)
+                            spikeIdx = spikeIdx + 1;
+                            if burstVect(arrayOnset.spikeIndices(spikeIdx)) == 0
+                                plot([arrayOnset.spikeTimesByLoc{1}(triali).times(spikei) arrayOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
+                                    [triali triali+1],'k')
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 2 % start of burst
+                                plot([arrayOnset.spikeTimesByLoc{1}(triali).times(spikei) arrayOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
+                                    [triali triali+1],'r','LineWidth',4)
+                                %                                     AOidx = AOidx + 1;
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 3 % end of burst
+                                plot([arrayOnset.spikeTimesByLoc{1}(triali).times(spikei) arrayOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
+                                    [triali triali+1],'b','LineWidth',4)
+                            elseif burstVect(arrayOnset.spikeIndices(spikeIdx)) == 1 % within burst
+                                plot([arrayOnset.spikeTimesByLoc{1}(triali).times(spikei) arrayOnset.spikeTimesByLoc{1}(triali).times(spikei)],...
+                                    [triali triali+1],'m','LineWidth',4)
+                            end
+                        end
+                    end
+                    title('arrayOnset Att Away')
+                    
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    saveas(gcf,['Fig10_burstInfo' unitStruct.name '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti) '.png'])
+                    close all
+                    
+                    
+                    % ADD PPC
+                    % move to fieldtrip format
+                    
+                    
+                    
+                    % save and close figures
+                    
+                    
+                    
+                    % collect info
+                    AllBurstEvents = [length(burstEventArrayRelated) length(burstEventCueRelated) ...
+                        length(burstEventEnterFix) length(burstEventExitFix) length(burstEventLeverPress) ...
+                        length(burstEventLeverRelease) length(burstEventTargetDim) length(burstEventPostTargetDim) ...
+                        length(burstEventUnrelated) length(burstEventArrayRelatedAttAway) length(burstEventArrayRelatedAttIn) ...
+                        length(burstEventCueRelatedAttAway) length(burstEventCueRelatedAttIn)];
+                    cd('/Users/labmanager/Documents/MATLAB/burstEvents')
+                    save(['burstInfo' sessionInfo{2}{sessioni}(2:end-1) '_sessioni' num2str(sessioni) ...
+                        '_uniti' num2str(uniti)],'burstVect','burstEventOnset','spikeTimes','UE','AllBurstEvents')
+                    
+                    clear burstVect burstEventOnset spikeTimes AllBurstEvents
                 end
             end
         end
