@@ -130,6 +130,76 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         gaussian = normpdf(x, 0, kernelSigma * 1000);  % does the same thing as computing a gaussian with an equation as you had done
                         binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
                         allSpikesGauss = conv(binarySpikeTrain, gaussian);
+                        
+                        for shuffi = 1:10;
+                            shuffledBinarySpikeTrain = binarySpikeTrain(randperm(length(binarySpikeTrain)));
+                            shuffledSpikesGauss = conv(shuffledBinarySpikeTrain, gaussian);
+                            highestShuf(shuffi) = max(shuffledSpikesGauss);
+                        end
+                        sepLowHigh = mean(highestShuf);
+                        
+                        % plot histogram of gaks
+                        figure
+                        subplot(131)
+                        histogram(allSpikesGauss,linspace(0,0.12,10000))
+                        title('real data')
+                        ylim([0 700000])
+                        subplot(132)
+                        histogram(allSpikesGauss,linspace(0,0.12,10000))
+                        title('real data')
+                        ylim([0 1000])
+                        subplot(133)
+                        histogram(allSpikesGauss,linspace(0,0.12,10000))
+                        title('real data')
+                        ylim([0 100])
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramGAKSzoomingIn.png')
+                        
+                        figure
+                        subplot(121)
+                        histogram(allSpikesGauss,linspace(0,0.12,10000))
+                        title('real data')
+                        ylim([0 700000])
+                        subplot(122)
+                        histogram(shuffledSpikesGauss,linspace(0,0.12,10000))
+                        title('shuffled data')
+                        ylim([0 700000])
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramGAKSrealShuff.png')
+                        
+%                         [N,EDGES,BINS] = histcounts(allSpikesGauss,linspace(0,0.12,10000));
+%                         shuffledBinarySpikeTrain = binarySpikeTrain(randperm(length(binarySpikeTrain)));
+%                         shuffledSpikesGauss = conv(shuffledBinarySpikeTrain, gaussian);
+%                         [Ns,EDGESs,BINSs] = histcounts(shuffledSpikesGauss,linspace(0,0.12,10000));
+%                         figure
+%                         plot(EDGES(1:end-1), log10(N))
+%                         hold on
+%                         plot(EDGES(1:end-1), log10(Ns))
+%                         legend('real data','shuffled1','shuffled2','shuffled3','shuffled4','shuffled5')
+%                         saveas(gcf,'Log histogram GAKS same edges.png')
+                        
+%                         figure
+%                         subplot(211)
+%                         plot(allSpikesGauss)
+%                         hold on
+%                         plot(shuffledSpikesGauss)
+%                         xlim([0 1000000])
+%                         ylim([0 0.04])
+%                         subplot(212)
+%                         plot(EDGES(1:end-1), N)
+%                         hold on
+%                         plot(EDGES(1:end-1), Ns)
+%                         ylim([0 100000])
+%                         xlim([0 0.05])
+%                         saveas(gcf,'GaksSnippetAndGaksHist.png')
+                        
+%                         figure
+%                         subplot(211)
+%                         plot(EDGES(1:end-1), N)
+%                         xlim([0.04 0.12])
+%                         subplot(212)
+%                         plot(EDGES(1:end-1), N)
+%                         xlim([0.08 0.12])
 
                         % You can do plot(x, gaussian) to make sure this is a normal distribution with the right mean and sd. x goes from -5 sigma to 5 sigma because values should be negligible outside of that range. You can also use -4 sigma to 4 sigma. I multiply by 1000 so that x is in steps of milliseconds, which is what your binarySpikeTrain is in.
                         % You can test this with fake data:
@@ -151,6 +221,15 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         saveas(gcf,['Fig1_burstInfo_' unitStruct.name '_sessioni' num2str(sessioni) ...
                             '_uniti' num2str(uniti) '.png'])
                         close all
+                        
+                        spikesGaussFT4plotWsepTmp = ((spikesGaussFakeTrials<sepLowHigh) * 0.5);
+                        spikesGaussFT4plotWsep = spikesGaussFT4plotWsepTmp + (spikesGaussFakeTrials==0);
+                        
+                        figure
+                        imagesc(spikesGaussFT4plotWsep')
+                        colormap(gray)
+                        saveas(gcf,'sepOnGAKShist.png')
+                        % white is silence; black is bursty; gray is normal activity 
                         
                         [~,idx] = sort(mean(spikesGaussFakeTrials,1));
                         figure
@@ -227,7 +306,6 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         close all
                         
                         % create shuffled data to compare
-                        binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
                         shuffledBinarySpikeTrain = binarySpikeTrain(randperm(length(binarySpikeTrain)));
                         shuffledSpikesGauss = conv(shuffledBinarySpikeTrain, gaussian);
                         
