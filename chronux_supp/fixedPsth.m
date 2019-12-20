@@ -1,5 +1,5 @@
 % function [R,t,E] = psth(data,sig,plt,T,err,t)
-function [R,t,E] = fixedPsth(data,sig,err,t)
+function [R,t,E,RR] = fixedPsth(data,sig,err,t)
 %  function to plot trial averaged rate smoothed by 
 %  a Gaussian kernel - visual check on stationarity 
 %  Usage: [R,t,E] = psth(data,sig,err,t)
@@ -27,7 +27,8 @@ function [R,t,E] = fixedPsth(data,sig,err,t)
 %                                                    
 % Outputs:                                 
 %                                                   
-% R = rate                                          
+% R = rate  
+% RR = single trial rate  %%%%% TvV added December2019
 % t = times                                         
 % E = errors (standard error)                       
 

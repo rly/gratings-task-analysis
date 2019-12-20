@@ -137,7 +137,106 @@ for sessioni = 31%1:numel(sessionInfo{1})
                             highestShuf(shuffi) = max(shuffledSpikesGauss);
                         end
                         sepLowHigh = mean(highestShuf);
+
+                        % cut in trials
+                        allSpikesGaussSepTmp = ((allSpikesGauss<sepLowHigh) * 0.5);
+                        allSpikesGaussSep = allSpikesGaussSepTmp + (allSpikesGauss==0);
+
+%                         allSpikesGaussSepCueLocked2.window = [1 2]; % seconds before, after
+%                         allSpikesGaussSepCueLocked2 = createdatamatc(allSpikesGaussSep',UE.cueOnset,D.directFs,allSpikesGaussSepCueLocked2.window);
+
+                        allSpikesGaussSepCueLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussSepCueLocked = createEventLockedGAKS(allSpikesGaussSep,UE.cueOnset- spikeTimes(1),D.directFs,allSpikesGaussSepCueLocked.window);
+
+                        figure
+                        imagesc(allSpikesGaussSepCueLocked.eventLockedGAKS)
+                        caxis([0 1])
+                        colormap(gray)
+                        title('cue locked t=1000')
+                        saveas(gcf,'cueLockedGAKS.png')
+
+                        allSpikesGaussSepArrayLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussSepArrayLocked = createEventLockedGAKS(allSpikesGaussSep,UE.arrayOnset- spikeTimes(1),D.directFs,allSpikesGaussSepArrayLocked.window);
+
+                        figure
+                        imagesc(allSpikesGaussSepArrayLocked.eventLockedGAKS)
+                        caxis([0 1])
+                        colormap(gray)
+                        title('array locked t=1000')
+                        saveas(gcf,'arrayLockedGAKS.png')
                         
+                        % fixation locked
+                        allSpikesGaussSepFixLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussSepFixLocked = createEventLockedGAKS(allSpikesGaussSep,UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue- spikeTimes(1),D.directFs,allSpikesGaussSepFixLocked.window);
+
+                        figure
+                        imagesc(allSpikesGaussSepFixLocked.eventLockedGAKS)
+                        caxis([0 1])
+                        colormap(gray)
+                        title('fixation locked t=1000')
+
+                        hold on
+                        cueTimeReltoFix = UE.cueOnset - UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue;
+                        timeOnxAxis = linspace(-1,2,size(allSpikesGaussSepFixLocked.eventLockedGAKS,2));
+                        cueTimeReltoFix = (cueTimeReltoFix*1000) + 1000; cueTimeReltoFix = round(cueTimeReltoFix);
+                        for ci = 1:length(cueTimeReltoFix)
+                            plot([cueTimeReltoFix(ci) cueTimeReltoFix(ci)],[ci ci],'*r');%,'LineWidth',2,'MarkerSize',10)
+                        end
+                        saveas(gcf,'fixLockedGAKS.png')
+
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %           Loosen boundaries
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        % cut in trials
+                        sepLowHighLoose = 0.03;
+                        allSpikesGaussSepTmp = ((allSpikesGauss<sepLowHighLoose & allSpikesGauss>.003) * 0.5);
+                        allSpikesGaussSep = allSpikesGaussSepTmp + (allSpikesGauss<=0.0015);
+
+%                         allSpikesGaussSepCueLocked2.window = [1 2]; % seconds before, after
+%                         allSpikesGaussSepCueLocked2 = createdatamatc(allSpikesGaussSep',UE.cueOnset,D.directFs,allSpikesGaussSepCueLocked2.window);
+
+                        allSpikesGaussSepCueLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussSepCueLocked = createEventLockedGAKS(allSpikesGaussSep,UE.cueOnset- spikeTimes(1),D.directFs,allSpikesGaussSepCueLocked.window);
+
+                        figure
+                        imagesc(allSpikesGaussSepCueLocked.eventLockedGAKS)
+                        caxis([0 1])
+                        colormap(gray)
+                        title('cue locked t=1000')
+                        saveas(gcf,'cueLockedGAKSloose2.png')
+
+                        allSpikesGaussSepArrayLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussSepArrayLocked = createEventLockedGAKS(allSpikesGaussSep,UE.arrayOnset- spikeTimes(1),D.directFs,allSpikesGaussSepArrayLocked.window);
+
+                        figure
+                        imagesc(allSpikesGaussSepArrayLocked.eventLockedGAKS)
+                        caxis([0 1])
+                        colormap(gray)
+                        title('array locked t=1000')
+                        saveas(gcf,'arrayLockedGAKSloose2.png')
+                        
+                        % fixation locked
+                        allSpikesGaussSepFixLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussSepFixLocked = createEventLockedGAKS(allSpikesGaussSep,UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue- spikeTimes(1),D.directFs,allSpikesGaussSepFixLocked.window);
+
+                        figure
+                        imagesc(allSpikesGaussSepFixLocked.eventLockedGAKS)
+                        caxis([0 1])
+                        colormap(gray)
+                        title('fixation locked t=1000')
+                        
+
+                        hold on
+                        cueTimeReltoFix = UE.cueOnset - UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue;
+                        timeOnxAxis = linspace(-1,2,size(allSpikesGaussSepFixLocked.eventLockedGAKS,2));
+                        cueTimeReltoFix = (cueTimeReltoFix*1000) + 1000; cueTimeReltoFix = round(cueTimeReltoFix);
+                        for ci = 1:length(cueTimeReltoFix)
+                            plot([cueTimeReltoFix(ci) cueTimeReltoFix(ci)],[ci ci],'*r');%,'LineWidth',2,'MarkerSize',10)
+                        end
+                        saveas(gcf,'fixLockedGAKSloose2.png')
+
+
+
                         % plot histogram of gaks
                         figure
                         subplot(131)
@@ -167,6 +266,10 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
                         saveas(gcf,'HistogramGAKSrealShuff.png')
                         
+                        
+
+% note that histogram lineplot with same edges can only be used when
+% binwidth are specified and equal for both histograms
 %                         [N,EDGES,BINS] = histcounts(allSpikesGauss,linspace(0,0.12,10000));
 %                         shuffledBinarySpikeTrain = binarySpikeTrain(randperm(length(binarySpikeTrain)));
 %                         shuffledSpikesGauss = conv(shuffledBinarySpikeTrain, gaussian);
@@ -230,6 +333,187 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         colormap(gray)
                         saveas(gcf,'sepOnGAKShist.png')
                         % white is silence; black is bursty; gray is normal activity 
+                        
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        % create similar heatmap for cue and array onset
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        
+                         % Match spikeTimes with first fixation event
+                        if isnan(unitStruct.unitStartTime)
+                            startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue>spikeTimes(1),1,'first'));
+                        else
+                            startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue>unitStruct.unitStartTime,1,'first'));
+                        end
+                        % Match spikeTimes with last lever release
+                        if isnan(unitStruct.unitEndTime)
+                            endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<spikeTimes(end),1,'last'));
+                        else
+                            endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<unitStruct.unitEndTime,1,'last'));
+                        end
+                        spikeTimesTask = D.allUnitStructs{uniti}.ts;
+                        gaussCueOnset.window = [1 2]; % seconds before, after
+                        gaussCueOnset.spdfWindowOffset = [-0.9 1.9]; % tighter window for spdf to avoid edge effects
+                        kernelSigma = 0.100;
+                        gaussCueOnset = createTimeLockedSpdf(spikeTimesTask, UE.cueOnset, UE.cueOnsetByLoc, gaussCueOnset, kernelSigma, startTime, endTime);
+                        
+                        spikesGaussCueLockedFT4plotWsepTmp = ((gaussCueOnset.singleTrialSpdf<sepLowHigh) * 0.5);
+                        spikesGaussCueLockedFT4plotWsep = spikesGaussCueLockedFT4plotWsepTmp + (gaussCueOnset.singleTrialSpdf==0);
+                        
+                        figure
+                        imagesc(spikesGaussCueLockedFT4plotWsep)
+                        caxis([0 1])
+                        colormap(gray)
+                        title('cue locked t=91')
+                        
+                        gaussArrayOnset.window = [1 2]; % seconds before, after
+                        gaussArrayOnset.spdfWindowOffset = [-0.9 1.9]; % tighter window for spdf to avoid edge effects
+                        kernelSigma = 0.100;
+                        gaussArrayOnset = createTimeLockedSpdf(spikeTimesTask, UE.arrayOnset, UE.arrayOnsetByLoc, gaussArrayOnset, kernelSigma, startTime, endTime);
+                        
+                        spikesGaussArrayLockedFT4plotWsepTmp = ((gaussArrayOnset.singleTrialSpdf<sepLowHigh) * 0.5);
+                        spikesGaussArrayLockedFT4plotWsep = spikesGaussArrayLockedFT4plotWsepTmp + (gaussArrayOnset.singleTrialSpdf==0);
+                        
+                        figure
+                        contour(linspace(-0.9,1.9,length(gaussCueOnset.t)),...
+                            1:size(spikesGaussArrayLockedFT4plotWsep,1),...
+                            spikesGaussArrayLockedFT4plotWsep,'LineWidth',0.1)
+                        caxis([0 1])
+                        colormap(gray)
+                        title('array locked t=91')
+                        
+                        
+                        
+                        
+                        % for cue locked data
+                        spikeTimesTask = D.allUnitStructs{uniti}.ts;
+                        windowOI = [1 2];
+                        [spikeTimesCueLocked,spikeTimesCueLockedInd] = createnonemptydatamatpt(spikeTimesTask, UE.cueOnset, windowOI);
+                        [spikeTimesCueLockedAttOut,spikeTimesCueLockedAttOutInd] = createnonemptydatamatpt(spikeTimesTask, UE.cueOnset(UE.cueLoc == 1), windowOI);
+                        [spikeTimesCueLockedAttIn,spikeTimesCueLockedAttInInd] = createnonemptydatamatpt(spikeTimesTask, UE.cueOnset(UE.cueLoc == 3), windowOI);
+                        timeOI = 0:.001:3;
+                        
+                        % for all cue locked trials
+                        binaryCueLocked = zeros(size(spikeTimesCueLocked,2),length(timeOI));
+                        cueLockedSpikes = 0;
+                        gaussCueLocked = zeros(size(spikeTimesCueLocked,2),(length(gaussian) +length(timeOI))-1);
+                        for triali = 1:size(spikeTimesCueLocked,2)
+                            binaryCueLocked(triali,ismembertol(timeOI,round(spikeTimesCueLocked(triali).times,3),.00000001)) = 1; 
+                            cueLockedSpikes = cueLockedSpikes + length(spikeTimesCueLocked(triali).times);
+                            gaussCueLocked(triali,:) = conv(binaryCueLocked(triali,:), gaussian);
+                        end
+                        spikesGaussCueLockedFT4plotWsepTmp = ((gaussCueLocked<sepLowHigh) * 0.5);
+                        spikesGaussCueLockedFT4plotWsep = spikesGaussCueLockedFT4plotWsepTmp + (gaussCueLocked==0);
+                        
+                        figure
+                        imagesc(spikesGaussCueLockedFT4plotWsep)
+                        colormap(gray)
+%                         saveas(gcf,'sepOnGAKShist.png')
+                        % white is silence; black is bursty; gray is normal activity
+                        
+                        % for att away cue locked trials
+                        binaryCueLockedAttOut = zeros(size(spikeTimesCueLockedAttOut,2),length(timeOI));
+                        cueLockedAttOutSpikes = 0;
+                        gaussCueLockedAttOut = zeros(size(spikeTimesCueLockedAttOut,2),(length(gaussian) * 2)-1);
+                        for triali = 1:size(spikeTimesCueLockedAttOut,2)
+                            binaryCueLockedAttOut(triali,ismembertol(timeOI,round(spikeTimesCueLockedAttOut(triali).times,3),.00000001)) = 1; 
+                            cueLockedAttOutSpikes = cueLockedAttOutSpikes + length(spikeTimesCueLockedAttOut(triali).times);
+                            gaussCueLockedAttOut(triali,:) = conv(binaryCueLockedAttOut(triali,:), gaussian);
+                        end
+                        spikesGaussCueLockedAttOutFT4plotWsepTmp = ((gaussCueLockedAttOut<sepLowHigh) * 0.5);
+                        spikesGaussCueLockedAttOutFT4plotWsep = spikesGaussCueLockedAttOutFT4plotWsepTmp + (gaussCueLockedAttOut==0);
+                        
+                        figure
+                        imagesc(spikesGaussCueLockedAttOutFT4plotWsep)
+                        caxis([0 1])
+                        colormap(gray)
+%                         saveas(gcf,'sepOnGAKShist.png')
+                        % white is silence; black is bursty; gray is normal activity
+                        
+                        % for att in cue locked trials
+                        binaryCueLockedAttIn = zeros(size(spikeTimesCueLockedAttIn,2),length(timeOI));
+                        cueLockedAttInSpikes = 0;
+                        gaussCueLockedAttIn = zeros(size(spikeTimesCueLockedAttIn,2),(length(gaussian) * 2)-1);
+                        for triali = 1:size(spikeTimesCueLockedAttIn,2)
+                            binaryCueLockedAttIn(triali,ismembertol(timeOI,round(spikeTimesCueLockedAttIn(triali).times,3),.00000001)) = 1; 
+                            cueLockedAttInSpikes = cueLockedAttInSpikes + length(spikeTimesCueLockedAttIn(triali).times);
+                            gaussCueLockedAttIn(triali,:) = conv(binaryCueLockedAttIn(triali,:), gaussian);
+                        end
+                        spikesGaussCueLockedAttInFT4plotWsepTmp = ((gaussCueLockedAttIn<sepLowHigh) * 0.5);
+                        spikesGaussCueLockedAttInFT4plotWsep = spikesGaussCueLockedAttInFT4plotWsepTmp + (gaussCueLockedAttIn==0);
+                        
+                        figure
+                        imagesc(spikesGaussCueLockedAttInFT4plotWsep)
+                        caxis([0 1])
+                        colormap(gray)
+%                         saveas(gcf,'sepOnGAKShist.png')
+                        % white is silence; black is bursty; gray is normal activity
+                        
+                        % for array locked data
+                        [spikeTimesArrayLocked,spikeTimesArrayLockedInd] = createnonemptydatamatpt(spikeTimesTask, UE.arrayOnset, windowOI);
+                        [spikeTimesArrayLockedAttOut,spikeTimesArrayLockedAttOutInd] = createnonemptydatamatpt(spikeTimesTask, UE.arrayOnset(UE.cueLoc == 1), windowOI);
+                        [spikeTimesArrayLockedAttIn,spikeTimesArrayLockedAttInInd] = createnonemptydatamatpt(spikeTimesTask, UE.arrayOnset(UE.cueLoc == 3), windowOI);
+                        
+                        % for all array locked trials
+                        binaryArrayLocked = zeros(size(spikeTimesArrayLocked,2),length(timeOI));
+                        ArrayLockedSpikes = 0;
+                        gaussArrayLocked = zeros(size(spikeTimesArrayLocked,2),(length(gaussian) +length(timeOI))-1);
+                        for triali = 1:size(spikeTimesArrayLocked,2)
+                            binaryArrayLocked(triali,ismembertol(timeOI,round(spikeTimesArrayLocked(triali).times,3),.00000001)) = 1; 
+                            ArrayLockedSpikes = ArrayLockedSpikes + length(spikeTimesArrayLocked(triali).times);
+                            gaussArrayLocked(triali,:) = conv(binaryArrayLocked(triali,:), gaussian);
+                        end
+                        spikesGaussArrayLockedFT4plotWsepTmp = ((gaussArrayLocked<sepLowHigh) * 0.5);
+                        spikesGaussArrayLockedFT4plotWsep = spikesGaussArrayLockedFT4plotWsepTmp + (gaussArrayLocked==0);
+                        
+                        figure
+                        imagesc(spikesGaussArrayLockedFT4plotWsep)
+                        colormap(gray)
+%                         saveas(gcf,'sepOnGAKShist.png')
+                        % white is silence; black is bursty; gray is normal activity
+                        
+                        % for att away cue locked trials
+                        binaryCueLockedAttOut = zeros(size(spikeTimesCueLockedAttOut,2),length(timeOI));
+                        cueLockedAttOutSpikes = 0;
+                        gaussCueLockedAttOut = zeros(size(spikeTimesCueLockedAttOut,2),(length(gaussian) * 2)-1);
+                        for triali = 1:size(spikeTimesCueLockedAttOut,2)
+                            binaryCueLockedAttOut(triali,ismembertol(timeOI,round(spikeTimesCueLockedAttOut(triali).times,3),.00000001)) = 1; 
+                            cueLockedAttOutSpikes = cueLockedAttOutSpikes + length(spikeTimesCueLockedAttOut(triali).times);
+                            gaussCueLockedAttOut(triali,:) = conv(binaryCueLockedAttOut(triali,:), gaussian);
+                        end
+                        spikesGaussCueLockedAttOutFT4plotWsepTmp = ((gaussCueLockedAttOut<sepLowHigh) * 0.5);
+                        spikesGaussCueLockedAttOutFT4plotWsep = spikesGaussCueLockedAttOutFT4plotWsepTmp + (gaussCueLockedAttOut==0);
+                        
+                        figure
+                        imagesc(spikesGaussCueLockedAttOutFT4plotWsep)
+                        caxis([0 1])
+                        colormap(gray)
+%                         saveas(gcf,'sepOnGAKShist.png')
+                        % white is silence; black is bursty; gray is normal activity
+                        
+                        % for att away cue locked trials
+                        binaryCueLockedAttIn = zeros(size(spikeTimesCueLockedAttIn,2),length(timeOI));
+                        cueLockedAttInSpikes = 0;
+                        gaussCueLockedAttIn = zeros(size(spikeTimesCueLockedAttIn,2),(length(gaussian) * 2)-1);
+                        for triali = 1:size(spikeTimesCueLockedAttIn,2)
+                            binaryCueLockedAttIn(triali,ismembertol(timeOI,round(spikeTimesCueLockedAttIn(triali).times,3),.00000001)) = 1; 
+                            cueLockedAttInSpikes = cueLockedAttInSpikes + length(spikeTimesCueLockedAttIn(triali).times);
+                            gaussCueLockedAttIn(triali,:) = conv(binaryCueLockedAttIn(triali,:), gaussian);
+                        end
+                        spikesGaussCueLockedAttInFT4plotWsepTmp = ((gaussCueLockedAttIn<sepLowHigh) * 0.5);
+                        spikesGaussCueLockedAttInFT4plotWsep = spikesGaussCueLockedAttInFT4plotWsepTmp + (gaussCueLockedAttIn==0);
+                        
+                        figure
+                        imagesc(spikesGaussCueLockedAttInFT4plotWsep)
+                        caxis([0 1])
+                        colormap(gray)
+%                         saveas(gcf,'sepOnGAKShist.png')
+                        % white is silence; black is bursty; gray is normal activity
+                        
+                        
+                        
+                        
+                        
+
                         
                         [~,idx] = sort(mean(spikesGaussFakeTrials,1));
                         figure

@@ -43,7 +43,7 @@ stdFactor = 2;
 spikeCountInd = boolean(spikeCount > mean(spikeCount) - stdFactor * std(spikeCount) );
 timeLockStruct.rateCorrInd = spikeCountInd;
 
-[timeLockStruct.spdf,~,timeLockStruct.spdfErr] = fixedPsth(timeLockStruct.spikeTimes, kernelSigma, 2, timeLockStruct.t);
+[timeLockStruct.spdf,~,timeLockStruct.spdfErr,timeLockStruct.singleTrialSpdf] = fixedPsth(timeLockStruct.spikeTimes, kernelSigma, 2, timeLockStruct.t);
 timeLockStruct.spdfRateCorr = fixedPsth(timeLockStruct.spikeTimes(spikeCountInd), kernelSigma, 2, timeLockStruct.t);
 
 timeLockStruct.spikeTimesByLoc = cell(nLoc, 1);
