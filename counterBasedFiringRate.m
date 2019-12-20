@@ -123,6 +123,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         spikeTimes2use = (spikeTimes - spikeTimes(1))';
                         data_pts = round(spikeTimes2use(1),3):1/1000:round(spikeTimes2use(end),3);
                         binarySpikeTrain = zeros(1,length(data_pts)); 
+                        binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
 
                         % calculate counter-based firing 
                         spikeTimesCBF = find(binarySpikeTrain);

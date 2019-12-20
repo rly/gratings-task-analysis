@@ -123,6 +123,34 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         spikeTimes2use = (spikeTimes - spikeTimes(1))';
                         data_pts = round(spikeTimes2use(1),3):1/1000:round(spikeTimes2use(end),3);
                         binarySpikeTrain = zeros(1,length(data_pts)); 
+                        binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
+
+                        % cut spike times that fall between enter and end
+                        % fixation
+                        endTimeTrial = UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice - spikeTimes(1);
+                        startTimeTrial = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue - spikeTimes(1);
+
+                        data = binarySpikeTrain; Fs = 1000;
+                        NE=length(startTimeTrial);
+                        nE=floor(startTimeTrial*Fs)+1;
+                        datatmp=[];
+                        for n=1:NE;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(endTimeTrial(n)*Fs);
+                            indx=nE(n):nwinr-1;
+                            if length(indx) >1
+                                datatmp=[datatmp diff(find(data(indx)))];
+                            end
+                        end
+
+                        figure
+                        subplot(121)
+                        loglog([NaN datatmp],[datatmp NaN],'.')
+                        title('return plot with spikes between enter and exit fix')
+                        subplot(122)
+                        loglog([NaN diff(find(binarySpikeTrain))],[diff(find(binarySpikeTrain)) NaN],'.')                        
+                        title('return plot all spikes')
+                        saveas(gcf,'returnPlot.png')
                         
                         % convolve with gaussian
                         kernelSigma = 0.1;
@@ -189,7 +217,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                         % cut in trials
                         sepLowHighLoose = 0.03;
-                        allSpikesGaussSepTmp = ((allSpikesGauss<sepLowHighLoose & allSpikesGauss>.003) * 0.5);
+                        allSpikesGaussSepTmp = ((allSpikesGauss<sepLowHighLoose & allSpikesGauss>.0015) * 0.5);
                         allSpikesGaussSep = allSpikesGaussSepTmp + (allSpikesGauss<=0.0015);
 
 %                         allSpikesGaussSepCueLocked2.window = [1 2]; % seconds before, after
@@ -197,12 +225,22 @@ for sessioni = 31%1:numel(sessionInfo{1})
 
                         allSpikesGaussSepCueLocked.window = [1 2]; % seconds before, after
                         allSpikesGaussSepCueLocked = createEventLockedGAKS(allSpikesGaussSep,UE.cueOnset- spikeTimes(1),D.directFs,allSpikesGaussSepCueLocked.window);
+                        
+                        allSpikesGaussCueLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussCueLocked = createEventLockedGAKS(allSpikesGauss,UE.cueOnset- spikeTimes(1),D.directFs,allSpikesGaussCueLocked.window);
 
                         figure
+%                         subplot(211)
                         imagesc(allSpikesGaussSepCueLocked.eventLockedGAKS)
                         caxis([0 1])
                         colormap(gray)
                         title('cue locked t=1000')
+%                         ylim([2.5 4.5])
+%                         subplot(212)
+%                         hold on
+%                         for ti = 3:4
+%                             plot(allSpikesGaussCueLocked.eventLockedGAKS(ti,:))
+%                         end
                         saveas(gcf,'cueLockedGAKSloose2.png')
 
                         allSpikesGaussSepArrayLocked.window = [1 2]; % seconds before, after
