@@ -130,6 +130,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         endTimeTrial = UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice - spikeTimes(1);
                         startTimeTrial = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue - spikeTimes(1);
 
+                        % heatmap return plot
                         data = binarySpikeTrain; Fs = 1000;
                         NE=length(startTimeTrial);
                         nE=floor(startTimeTrial*Fs)+1;
@@ -143,15 +144,59 @@ for sessioni = 31%1:numel(sessionInfo{1})
                             end
                         end
 
+                        dataSil = binarySpikeTrain; Fs = 1000;
+                        NE=length(endTimeTrial)-1;
+                        nE=floor(endTimeTrial*Fs)+1;
+                        datatmpSil=[];
+                        for n=1:NE;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(startTimeTrial(n+1)*Fs);
+                            indx=nE(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpSil=[datatmpSil diff(find(dataSil(indx)))];
+                            end
+                        end
+
                         figure
-                        subplot(121)
-                        loglog([NaN datatmp],[datatmp NaN],'.')
+                        subplot(131)
+                        loglog([NaN datatmp],[datatmp NaN],'.','MarkerSize',0.1)
                         title('return plot with spikes between enter and exit fix')
-                        subplot(122)
-                        loglog([NaN diff(find(binarySpikeTrain))],[diff(find(binarySpikeTrain)) NaN],'.')                        
+                        subplot(132)
+                        loglog([NaN datatmpSil],[datatmpSil NaN],'.','MarkerSize',0.1)
+                        title('return plot with spikes outside trial')
+                        subplot(133)
+                        loglog([NaN diff(find(binarySpikeTrain))],[diff(find(binarySpikeTrain)) NaN],'.','MarkerSize',0.1)                        
                         title('return plot all spikes')
                         saveas(gcf,'returnPlot.png')
                         
+                        figure
+                        subplot(131)
+                        edges = linspace(0,4,100);
+                        h = histogram2([NaN log10(datatmp)],[log10(datatmp) NaN], edges,edges,'Normalization','probability')
+                        h.FaceColor = 'flat';
+                        h.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.002 .002])
+                        title('return plot with spikes between enter and exit fix')
+                        subplot(132)
+                        s = histogram2([NaN log10(datatmpSil)],[log10(datatmpSil) NaN], edges,edges,'Normalization','probability')
+                        s.FaceColor = 'flat';
+                        s.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.002 .002])
+                        title('return plot with spikes outside trial')
+                        subplot(133)
+                        s = histogram2([NaN log10(diff(find(binarySpikeTrain)))],[log10(diff(find(binarySpikeTrain))) NaN], edges,edges,'Normalization','probability')
+                        s.FaceColor = 'flat';
+                        s.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.002 .002])
+                        title('return plot all spikes')
+                        saveas(gcf,'returnPlotHeatlikemapNormalized.png')
+
                         % convolve with gaussian
                         kernelSigma = 0.1;
                         x = -5 * kernelSigma * 1000 : 5 * kernelSigma * 1000;
