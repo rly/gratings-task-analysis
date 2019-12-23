@@ -566,7 +566,112 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         saveas(gcf,'HistogramGAKSThresholdedrealShuffCueTargetDim.png')
                         
                         % equate spike count for att in and att out
+                        % heatmap return plot
+                        targetDimTrialAttOut = UE.targetDimByLoc{1} - spikeTimes(1); targetDimTrialAttIn = UE.targetDimByLoc{3} - spikeTimes(1);
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200 - spikeTimes(1);
+                        data = binarySpikeTrain; dataGAKS = allSpikesGauss; dataGAKS2 = shuffledSpikesGauss; 
+                        dataGAKSsep = allSpikesGaussSep; dataGAKSsep2 = shuffledSpikesGaussSep;
+                        Fs = 1000;
+                        NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
+                        datatmpAttInSCM=[];datatmpAttOutSCM=[];
+                        datatmpAttInShuffledSCM=[];datatmpAttOutShuffledSCM=[];
+                        datatmpAttInGAKSSCM=[];datatmpAttOutGAKSSCM=[];
+                        datatmpAttInGAKSsepSCM=[];datatmpAttOutGAKSsepSCM=[];
+                        datatmpShuffledAttInGAKSSCM=[];datatmpShuffledAttOutGAKSSCM=[];
+                        datatmpShuffledAttInGAKSsepSCM=[];datatmpShuffledAttOutGAKSsepSCM=[];
+                        nTrials = max(NEAttIn, NEAttOut);
+                        if NEAttIn ~= nTrials 
+                            upsampledTrials = randperm(NEAttIn,diff([NEAttIn,NEAttOut]));
+                            cueOnsetTrialAttIn = [cueOnsetTrialAttIn; cueOnsetTrialAttIn(upsampledTrials)];
+                            targetDimTrialAttIn = [targetDimTrialAttIn; targetDimTrialAttIn(upsampledTrials)];
+                            NEAttIn=length(cueOnsetTrialAttIn);
+                        elseif NEAttOut ~= nTrials 
+                            upsampledTrials = randperm(NEAttOut,diff([NEAttIn,NEAttOut]));
+                            cueOnsetTrialAttOut = [cueOnsetTrialAttOut; cueOnsetTrialAttOut(upsampledTrials)];
+                            targetDimTrialAttOut = [targetDimTrialAttOut; targetDimTrialAttOut(upsampledTrials)];
+                            NEAttOut=length(cueOnsetTrialAttOut);
+                        end
+                        nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
                         
+                        for n=1:nTrials;
+                        %     nwinl=round(0.200*Fs);
+                            nwinrAttIn=round(targetDimTrialAttIn(n)*Fs);
+                            nwinrAttOut=round(targetDimTrialAttOut(n)*Fs);
+                            indxAttIn=nEAttIn(n):nwinrAttIn-1;
+                            indxAttOut=nEAttOut(n):nwinrAttOut-1;
+                            if length(indxAttIn) >1 && length(indxAttOut) >1
+                                if length(indxAttIn) == length(indxAttOut)
+                                    datatmpAttInSCM=[datatmpAttInSCM diff(find(data(indxAttIn)))];
+                                    datatmpAttInGAKSSCM=[datatmpAttInGAKSSCM dataGAKS(indxAttIn)];
+                                    datatmpAttInGAKSsepSCM=[datatmpAttInGAKSsepSCM dataGAKSsep(indxAttIn)];
+                                    datatmpShuffledAttInGAKSSCM=[datatmpShuffledAttInGAKSSCM dataGAKS2(indxAttIn)];
+                                    datatmpShuffledAttInGAKSsepSCM=[datatmpShuffledAttInGAKSsepSCM dataGAKSsep2(indxAttIn)];
+                                    indxAttIn = indxAttIn(randperm(length(indxAttIn)));
+                                    datatmpAttInShuffledSCM=[datatmpAttInShuffledSCM diff(find(data(indxAttIn)))];
+                                    
+                                    datatmpAttOutSCM=[datatmpAttOutSCM diff(find(data(indxAttOut)))];
+                                    datatmpAttOutGAKSSCM=[datatmpAttOutGAKSSCM dataGAKS(indxAttOut)];
+                                    datatmpAttOutGAKSsepSCM=[datatmpAttOutGAKSsepSCM dataGAKSsep(indxAttOut)];
+                                    datatmpShuffledAttOutGAKSSCM=[datatmpShuffledAttOutGAKSSCM dataGAKS2(indxAttOut)];
+                                    datatmpShuffledAttOutGAKSsepSCM=[datatmpShuffledAttOutGAKSsepSCM dataGAKSsep2(indxAttOut)];
+                                    indxAttOut = indxAttOut(randperm(length(indxAttOut)));
+                                    datatmpAttOutShuffledSCM=[datatmpAttOutShuffledSCM diff(find(data(indxAttOut)))];
+                                elseif length(indxAttIn) > length(indxAttOut)
+                                    indxAttIn = indxAttIn(randperm(length(indxAttIn),length(indxAttOut)));
+                                    datatmpAttInSCM=[datatmpAttInSCM diff(find(data(indxAttIn)))];
+                                    datatmpAttInGAKSSCM=[datatmpAttInGAKSSCM dataGAKS(indxAttIn)];
+                                    datatmpAttInGAKSsepSCM=[datatmpAttInGAKSsepSCM dataGAKSsep(indxAttIn)];
+                                    datatmpShuffledAttInGAKSSCM=[datatmpShuffledAttInGAKSSCM dataGAKS2(indxAttIn)];
+                                    datatmpShuffledAttInGAKSsepSCM=[datatmpShuffledAttInGAKSsepSCM dataGAKSsep2(indxAttIn)];
+                                    indxAttIn = indxAttIn(randperm(length(indxAttIn)));
+                                    datatmpAttInShuffledSCM=[datatmpAttInShuffledSCM diff(find(data(indxAttIn)))];
+                                    
+                                    datatmpAttOutSCM=[datatmpAttOutSCM diff(find(data(indxAttOut)))];
+                                    datatmpAttOutGAKSSCM=[datatmpAttOutGAKSSCM dataGAKS(indxAttOut)];
+                                    datatmpAttOutGAKSsepSCM=[datatmpAttOutGAKSsepSCM dataGAKSsep(indxAttOut)];
+                                    datatmpShuffledAttOutGAKSSCM=[datatmpShuffledAttOutGAKSSCM dataGAKS2(indxAttOut)];
+                                    datatmpShuffledAttOutGAKSsepSCM=[datatmpShuffledAttOutGAKSsepSCM dataGAKSsep2(indxAttOut)];
+                                    indxAttOut = indxAttOut(randperm(length(indxAttOut)));
+                                    datatmpAttOutShuffledSCM=[datatmpAttOutShuffledSCM diff(find(data(indxAttOut)))];
+                                elseif length(indxAttOut) > length(indxAttIn)
+                                    indxAttOut = indxAttOut(randperm(length(indxAttOut),length(indxAttIn)));
+                                    datatmpAttInSCM=[datatmpAttInSCM diff(find(data(indxAttIn)))];
+                                    datatmpAttInGAKSSCM=[datatmpAttInGAKSSCM dataGAKS(indxAttIn)];
+                                    datatmpAttInGAKSsepSCM=[datatmpAttInGAKSsepSCM dataGAKSsep(indxAttIn)];
+                                    datatmpShuffledAttInGAKSSCM=[datatmpShuffledAttInGAKSSCM dataGAKS2(indxAttIn)];
+                                    datatmpShuffledAttInGAKSsepSCM=[datatmpShuffledAttInGAKSsepSCM dataGAKSsep2(indxAttIn)];
+                                    indxAttIn = indxAttIn(randperm(length(indxAttIn)));
+                                    datatmpAttInShuffledSCM=[datatmpAttInShuffledSCM diff(find(data(indxAttIn)))];
+                                    
+                                    datatmpAttOutSCM=[datatmpAttOutSCM diff(find(data(indxAttOut)))];
+                                    datatmpAttOutGAKSSCM=[datatmpAttOutGAKSSCM dataGAKS(indxAttOut)];
+                                    datatmpAttOutGAKSsepSCM=[datatmpAttOutGAKSsepSCM dataGAKSsep(indxAttOut)];
+                                    datatmpShuffledAttOutGAKSSCM=[datatmpShuffledAttOutGAKSSCM dataGAKS2(indxAttOut)];
+                                    datatmpShuffledAttOutGAKSsepSCM=[datatmpShuffledAttOutGAKSsepSCM dataGAKSsep2(indxAttOut)];
+                                    indxAttOut = indxAttOut(randperm(length(indxAttOut)));
+                                    datatmpAttOutShuffledSCM=[datatmpAttOutShuffledSCM diff(find(data(indxAttOut)))];
+                                end
+                            end
+                        end
+                        figure
+                        subplot(221)
+                        histogram(datatmpAttInGAKSSCM,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('SCM GAKS real data Att In')
+                        subplot(223)
+                        histogram(datatmpShuffledAttInGAKSSCM,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('SCM GAKS shuffled data Att In')
+                        subplot(222)
+                        histogram(datatmpAttOutGAKSSCM,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('SCM GAKS real data Att Out')
+                        subplot(224)
+                        histogram(datatmpShuffledAttOutGAKSSCM,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('SCM GAKS shuffled data Att Out')
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramGAKSrealShuffCueTargetDimSCM.png')
 
 
                         
