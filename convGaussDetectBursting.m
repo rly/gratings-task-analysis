@@ -125,6 +125,27 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         binarySpikeTrain = zeros(1,length(data_pts)); 
                         binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
 
+                        % convolve with gaussian
+                        kernelSigma = 0.1;
+                        x = -5 * kernelSigma * 1000 : 5 * kernelSigma * 1000;
+                        gaussian = normpdf(x, 0, kernelSigma * 1000);  % does the same thing as computing a gaussian with an equation as you had done
+                        binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
+                        allSpikesGauss = conv(binarySpikeTrain, gaussian,'same');
+                        
+                        for shuffi = 1:10;
+                            shuffledBinarySpikeTrain = binarySpikeTrain(randperm(length(binarySpikeTrain)));
+                            shuffledSpikesGauss = conv(shuffledBinarySpikeTrain, gaussian,'same');
+                            highestShuf(shuffi) = max(shuffledSpikesGauss);
+                        end
+                        sepLowHigh = mean(highestShuf);
+
+                        % threshold
+                        allSpikesGaussSepTmp = ((allSpikesGauss<sepLowHigh) * 0.5);
+                        allSpikesGaussSep = allSpikesGaussSepTmp + (allSpikesGauss==0);
+                        
+                        shuffledSpikesGaussSepTmp = ((shuffledSpikesGauss<sepLowHigh) * 0.5);
+                        shuffledSpikesGaussSep = shuffledSpikesGaussSepTmp + (shuffledSpikesGauss==0);
+                        
                         % cut spike times that fall between enter and end
                         % fixation
                         endTimeTrial = UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice - spikeTimes(1);
@@ -197,27 +218,362 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         title('return plot all spikes')
                         saveas(gcf,'returnPlotHeatlikemapNormalized.png')
 
-                        % convolve with gaussian
-                        kernelSigma = 0.1;
-                        x = -5 * kernelSigma * 1000 : 5 * kernelSigma * 1000;
-                        gaussian = normpdf(x, 0, kernelSigma * 1000);  % does the same thing as computing a gaussian with an equation as you had done
-                        binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
-                        allSpikesGauss = conv(binarySpikeTrain, gaussian);
+
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        %       Repeat heatmap for attention sep Locs
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                        % use end and start times to select att in and out
+                        % trials
+                        endTimeTrialAttOut = endTimeTrial(UE.cueLoc == 1); endTimeTrialAttIn = endTimeTrial(UE.cueLoc == 3);
+                        startTimeTrialAttOut = startTimeTrial(UE.cueLoc == 1); startTimeTrialAttIn = startTimeTrial(UE.cueLoc == 3);
                         
-                        for shuffi = 1:10;
-                            shuffledBinarySpikeTrain = binarySpikeTrain(randperm(length(binarySpikeTrain)));
-                            shuffledSpikesGauss = conv(shuffledBinarySpikeTrain, gaussian);
-                            highestShuf(shuffi) = max(shuffledSpikesGauss);
+                        % heatmap return plot
+                        data = binarySpikeTrain; Fs = 1000;
+                        NEAttIn=length(startTimeTrialAttIn);NEAttOut=length(startTimeTrialAttOut);
+                        nEAttIn=floor(startTimeTrialAttIn*Fs)+1;nEAttOut=floor(startTimeTrialAttOut*Fs)+1;
+                        datatmpAttIn=[];datatmpAttOut=[];
+                        for n=1:NEAttIn;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(endTimeTrialAttIn(n)*Fs);
+                            indx=nEAttIn(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpAttIn=[datatmpAttIn diff(find(data(indx)))];
+                            end
                         end
-                        sepLowHigh = mean(highestShuf);
+                        for n=1:NEAttOut;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(endTimeTrialAttOut(n)*Fs);
+                            indx=nEAttOut(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
+                            end
+                        end
+                        dataSil = binarySpikeTrain; Fs = 1000;
+                        NEAttIn=length(endTimeTrialAttIn)-1;NEAttOut=length(endTimeTrialAttOut)-1;
+                        nEAttIn=floor(endTimeTrialAttIn*Fs)+1;nEAttOut=floor(endTimeTrialAttOut*Fs)+1;
+                        datatmpSilAttIn=[];datatmpSilAttOut=[];
+                        for n=1:NEAttIn;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(startTimeTrialAttIn(n+1)*Fs);
+                            indx=nEAttIn(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpSilAttIn=[datatmpSilAttIn diff(find(dataSil(indx)))];
+                            end
+                        end
+                        for n=1:NEAttOut;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(startTimeTrialAttOut(n+1)*Fs);
+                            indx=nEAttOut(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpSilAttOut=[datatmpSilAttOut diff(find(dataSil(indx)))];
+                            end
+                        end
 
-                        % cut in trials
-                        allSpikesGaussSepTmp = ((allSpikesGauss<sepLowHigh) * 0.5);
-                        allSpikesGaussSep = allSpikesGaussSepTmp + (allSpikesGauss==0);
+                        figure
+                        subplot(211)
+                        loglog([NaN datatmpAttIn],[datatmpAttIn NaN],'.','MarkerSize',0.1)
+                        title('return plot with spikes between enter and exit fix Att In')
+                        subplot(212)
+                        loglog([NaN datatmpAttOut],[datatmpAttOut NaN],'.','MarkerSize',0.1)
+                        title('return plot with spikes between enter and exit fix Att Out')
+%                         subplot(223)
+%                         loglog([NaN datatmpSilAttIn],[datatmpSilAttIn NaN],'.','MarkerSize',0.1)
+%                         title('return plot with spikes outside trial Att In')
+%                         subplot(224)
+%                         loglog([NaN datatmpSilAttOut],[datatmpSilAttOut NaN],'.','MarkerSize',0.1)
+%                         title('return plot with spikes outside trial Att Out')
+                        saveas(gcf,'returnPlotAttLocs.png')
+                        
+                        figure
+                        subplot(211)
+                        edges = linspace(0,4,100);
+                        h = histogram2([NaN log10(datatmpAttIn)],[log10(datatmpAttIn) NaN], edges,edges,'Normalization','probability')
+                        h.FaceColor = 'flat';
+                        h.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.002 .002])
+                        title('return plot with spikes between enter and exit fix Att In')
+                        subplot(212)
+                        edges = linspace(0,4,100);
+                        h = histogram2([NaN log10(datatmpAttOut)],[log10(datatmpAttOut) NaN], edges,edges,'Normalization','probability')
+                        h.FaceColor = 'flat';
+                        h.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.002 .002])
+                        title('return plot with spikes between enter and exit fix Att Out')
+%                         subplot(223)
+%                         s = histogram2([NaN log10(datatmpSilAttIn)],[log10(datatmpSilAttIn) NaN], edges,edges,'Normalization','probability')
+%                         s.FaceColor = 'flat';
+%                         s.DisplayStyle = 'tile';
+%                         view(2)
+%                         xlim([0 4]); ylim([0 4])
+%                         caxis([-.002 .002])
+%                         title('return plot with spikes outside trial Att In')
+%                         subplot(224)
+%                         s = histogram2([NaN log10(datatmpSilAttOut)],[log10(datatmpSilAttOut) NaN], edges,edges,'Normalization','probability')
+%                         s.FaceColor = 'flat';
+%                         s.DisplayStyle = 'tile';
+%                         view(2)
+%                         xlim([0 4]); ylim([0 4])
+%                         caxis([-.002 .002])
+%                         title('return plot with spikes outside trial Att Out')
+                        saveas(gcf,'returnPlotHeatlikemapNormalizedAttLocs.png')
 
-%                         allSpikesGaussSepCueLocked2.window = [1 2]; % seconds before, after
-%                         allSpikesGaussSepCueLocked2 = createdatamatc(allSpikesGaussSep',UE.cueOnset,D.directFs,allSpikesGaussSepCueLocked2.window);
+                        % 200ms post-cue until array onset
+                        arrayOnsetTrialAttOut = UE.arrayOnset(UE.cueLoc == 1) - spikeTimes(1); arrayOnsetTrialAttIn = UE.arrayOnset(UE.cueLoc == 3) - spikeTimes(1);
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.cueLoc == 3) + 0.200 - spikeTimes(1);
+                        
+                        clear datatmp datatmpAttIn datatmpAttOut datatmpSil datatmpSilAttIn datatmpSilAttOut
+                        % heatmap return plot
+                        data = binarySpikeTrain; Fs = 1000;
+                        NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
+                        nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
+                        datatmpAttIn=[];datatmpAttOut=[];
+                        for n=1:NEAttIn;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(arrayOnsetTrialAttIn(n)*Fs);
+                            indx=nEAttIn(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpAttIn=[datatmpAttIn diff(find(data(indx)))];
+                            end
+                        end
+                        for n=1:NEAttOut;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(arrayOnsetTrialAttOut(n)*Fs);
+                            indx=nEAttOut(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
+                            end
+                        end
+                        dataSil = binarySpikeTrain; Fs = 1000;
+                        NEAttIn=length(arrayOnsetTrialAttIn)-1;NEAttOut=length(arrayOnsetTrialAttOut)-1;
+                        nEAttIn=floor(arrayOnsetTrialAttIn*Fs)+1;nEAttOut=floor(arrayOnsetTrialAttOut*Fs)+1;
+                        datatmpSilAttIn=[];datatmpSilAttOut=[];
+                        for n=1:NEAttIn;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(cueOnsetTrialAttIn(n+1)*Fs);
+                            indx=nEAttIn(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpSilAttIn=[datatmpSilAttIn diff(find(dataSil(indx)))];
+                            end
+                        end
+                        for n=1:NEAttOut;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(cueOnsetTrialAttOut(n+1)*Fs);
+                            indx=nEAttOut(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpSilAttOut=[datatmpSilAttOut diff(find(dataSil(indx)))];
+                            end
+                        end
+                        figure
+                        subplot(211)
+                        edges = linspace(0,4,25);
+                        h = histogram2([NaN log10(datatmpAttIn)],[log10(datatmpAttIn) NaN], edges,edges,'Normalization','probability')
+                        h.FaceColor = 'flat';
+                        h.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.04 .04])
+                        title('return plot with spikes 200ms post-cue and array onset Att In')
+                        subplot(212)
+                        h = histogram2([NaN log10(datatmpAttOut)],[log10(datatmpAttOut) NaN], edges,edges,'Normalization','probability')
+                        h.FaceColor = 'flat';
+                        h.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.04 .04])
+                        title('return plot with spikes 200ms post-cue and array onset Att Out')
+                        saveas(gcf,'returnPlotPostCueArrayOnAttLocs.png')
 
+
+                        % 200ms post-cue until TARGET DIM
+                        targetDimTrialAttOut = UE.targetDimByLoc{1} - spikeTimes(1); targetDimTrialAttIn = UE.targetDimByLoc{3} - spikeTimes(1);
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200 - spikeTimes(1);
+                       
+                        clear datatmp datatmpAttIn datatmpAttOut datatmpSil datatmpSilAttIn datatmpSilAttOut
+                        % heatmap return plot
+                        data = binarySpikeTrain; dataGAKS = allSpikesGauss; dataGAKS2 = shuffledSpikesGauss; 
+                        dataGAKSsep = allSpikesGaussSep; dataGAKSsep2 = shuffledSpikesGaussSep;
+                        Fs = 1000;
+                        NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
+                        nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
+                        datatmpAttIn=[];datatmpAttOut=[];
+                        datatmpAttInGAKS=[];datatmpAttOutGAKS=[];
+                        datatmpAttInGAKSsep=[];datatmpAttOutGAKSsep=[];
+                        datatmpShuffledAttInGAKS=[];datatmpShuffledAttOutGAKS=[];
+                        datatmpShuffledAttInGAKSsep=[];datatmpShuffledAttOutGAKSsep=[];
+                        for n=1:NEAttIn;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(targetDimTrialAttIn(n)*Fs);
+                            indx=nEAttIn(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpAttIn=[datatmpAttIn diff(find(data(indx)))];
+                                datatmpAttInGAKS=[datatmpAttInGAKS dataGAKS(indx)];
+                                datatmpAttInGAKSsep=[datatmpAttInGAKSsep dataGAKSsep(indx)];
+                                datatmpShuffledAttInGAKS=[datatmpShuffledAttInGAKS dataGAKS2(indx)];
+                                datatmpShuffledAttInGAKSsep=[datatmpShuffledAttInGAKSsep dataGAKSsep2(indx)];
+                                indx = indx(randperm(length(indx)));
+                                datatmpAttInShuffled=[datatmpAttInShuffled diff(find(data(indx)))];
+                            end
+                        end
+                        for n=1:NEAttOut;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(targetDimTrialAttOut(n)*Fs);
+                            indx=nEAttOut(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
+                                datatmpAttOutGAKS=[datatmpAttOutGAKS dataGAKS(indx)];
+                                datatmpAttOutGAKSsep=[datatmpAttOutGAKSsep dataGAKSsep(indx)];
+                                datatmpShuffledAttOutGAKS=[datatmpShuffledAttOutGAKS dataGAKS2(indx)];
+                                datatmpShuffledAttOutGAKSsep=[datatmpShuffledAttOutGAKSsep dataGAKSsep2(indx)];
+                                indx = indx(randperm(length(indx)));
+                                datatmpAttOutShuffled=[datatmpAttOutShuffled diff(find(data(indx)))];
+                            end
+                        end
+                        figure
+                        subplot(211)
+                        edges = linspace(0,4,25);
+                        h = histogram2([NaN log10(datatmpAttIn)],[log10(datatmpAttIn) NaN], edges,edges,'Normalization','probability')
+                        h.FaceColor = 'flat';
+                        h.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.04 .04])
+                        title('return plot with spikes 200ms post-cue to target Dim Att In')
+                        subplot(212)
+                        h = histogram2([NaN log10(datatmpAttOut)],[log10(datatmpAttOut) NaN], edges,edges,'Normalization','probability')
+                        h.FaceColor = 'flat';
+                        h.DisplayStyle = 'tile';
+                        view(2)
+                        xlim([0 4]); ylim([0 4])
+                        caxis([-.04 .04])
+                        title('return plot with spikes 200ms post-cue to target Dim Att Out')
+                        saveas(gcf,'returnPlotPostCueTargetDimAttLocs.png')
+
+                        % return plot of all spikes between cue onset and
+                        % target dim next to shuffled data for same time
+                        % periods
+                        % create real and shuffled data for all trials
+                        targetDimTrial = UE.targetDim - spikeTimes(1); 
+                        cueOnsetTrial = UE.cueOnset(UE.isHoldTrial) + 0.200 - spikeTimes(1);
+                        data = binarySpikeTrain; dataGAKS = allSpikesGauss; dataGAKS2 = shuffledSpikesGauss;
+                        dataGAKSsep = allSpikesGaussSep; dataGAKSsep2 = shuffledSpikesGaussSep;
+                        Fs = 1000;
+                        NE=length(cueOnsetTrial);
+                        nE=floor(cueOnsetTrial*Fs)+1;
+                        datatmp=[];datatmpShuffled=[];
+                        datatmpGAKS=[];datatmpShuffledGAKS=[];
+                        datatmpGAKSsep=[];datatmpShuffledGAKSsep=[];
+                        for n=1:NE;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(targetDimTrial(n)*Fs);
+                            indx=nE(n):nwinr-1;
+                            if length(indx) >1
+                                datatmp=[datatmp diff(find(data(indx)))];
+                                datatmpGAKS=[datatmpGAKS dataGAKS(indx)];
+                                datatmpGAKSsep=[datatmpGAKSsep dataGAKSsep(indx)];
+                                datatmpShuffledGAKS=[datatmpShuffledGAKS dataGAKS2(indx)];
+                                datatmpShuffledGAKSsep=[datatmpShuffledGAKSsep dataGAKSsep2(indx)];
+                                indx = indx(randperm(length(indx)));
+                                datatmpShuffled=[datatmpShuffled diff(find(data(indx)))];
+                            end
+                        end
+                        figure
+                        subplot(231)
+                        histogram(datatmpAttIn,linspace(0,600,100))
+                        ylim([0 90])
+                        title('real data Att In')
+                        subplot(234)
+                        histogram(datatmpAttInShuffled,linspace(0,600,100))
+                        ylim([0 90])
+                        title('shuffled data Att In')
+                        subplot(232)
+                        histogram(datatmpAttOut,linspace(0,600,100))
+                        ylim([0 130])
+                        title('real data Att Out')
+                        subplot(235)
+                        histogram(datatmpAttOutShuffled,linspace(0,600,100))
+                        ylim([0 130])
+                        title('shuffled data Att Out')
+                        subplot(233)
+                        histogram(datatmp,linspace(0,600,100))
+                        ylim([0 500])
+                        title('real data all')
+                        subplot(236)
+                        histogram(datatmpShuffled,linspace(0,600,100))
+                        ylim([0 500])
+                        title('shuffled data all')
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramISIrealShuffCueTargetDim.png')
+                        
+                        figure
+                        subplot(231)
+                        histogram(datatmpAttInGAKS,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('GAKS real data Att In')
+                        subplot(234)
+                        histogram(datatmpShuffledAttInGAKS,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('GAKS shuffled data Att In')
+                        subplot(232)
+                        histogram(datatmpAttOutGAKS,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('GAKS real data Att Out')
+                        subplot(235)
+                        histogram(datatmpShuffledAttOutGAKS,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('GAKS shuffled data Att Out')
+                        subplot(233)
+                        histogram(datatmpGAKS,linspace(0,.1,10000))
+                        ylim([0 7000])
+                        title('GAKS real data all')
+                        subplot(236)
+                        histogram(datatmpShuffledGAKS,linspace(0,.1,10000))
+                        ylim([0 7000])
+                        title('GAKS shuffled data all')
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramGAKSrealShuffCueTargetDim.png')
+
+                        figure
+                        subplot(231)
+                        histogram(datatmpAttInGAKSsep,linspace(-0.5,1.5,10000))
+                        ylim([0 1400])
+                        title('GAKS real data Att In')
+                        subplot(234)
+                        histogram(datatmpShuffledAttInGAKSsep,linspace(-0.5,1.5,10000))
+                        ylim([0 1400])
+                        title('GAKS shuffled data Att In')
+                        subplot(232)
+                        histogram(datatmpAttOutGAKSsep,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('GAKS real data Att Out')
+                        subplot(235)
+                        histogram(datatmpShuffledAttOutGAKSsep,linspace(0,.1,10000))
+                        ylim([0 1400])
+                        title('GAKS shuffled data Att Out')
+                        subplot(233)
+                        histogram(datatmpGAKSsep,linspace(0,.1,10000))
+                        ylim([0 7000])
+                        title('GAKS real data all')
+                        subplot(236)
+                        histogram(datatmpShuffledGAKSsep,linspace(0,.1,10000))
+                        ylim([0 7000])
+                        title('GAKS shuffled data all')
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramGAKSThresholdedrealShuffCueTargetDim.png')
+                        
+                        % equate spike count for att in and att out
+                        
+
+
+                        
+
+
+                        
+                        
                         allSpikesGaussSepCueLocked.window = [1 2]; % seconds before, after
                         allSpikesGaussSepCueLocked = createEventLockedGAKS(allSpikesGaussSep,UE.cueOnset- spikeTimes(1),D.directFs,allSpikesGaussSepCueLocked.window);
 
@@ -307,8 +663,6 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         caxis([0 1])
                         colormap(gray)
                         title('fixation locked t=1000')
-                        
-
                         hold on
                         cueTimeReltoFix = UE.cueOnset - UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue;
                         timeOnxAxis = linspace(-1,2,size(allSpikesGaussSepFixLocked.eventLockedGAKS,2));
@@ -318,7 +672,66 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         end
                         saveas(gcf,'fixLockedGAKSloose2.png')
 
+                        figure
+                        subplot(121)
+                        imagesc(linspace(-1,2,size(allSpikesGaussSepFixLocked.eventLockedGAKS,2)),1:sum(UE.cueLoc == 1),allSpikesGaussSepFixLocked.eventLockedGAKS(UE.cueLoc == 1,:))
+                        colormap(gray)
+                        title('Fix locked attend away')
+                        subplot(122)
+                        imagesc(linspace(-1,2,size(allSpikesGaussSepFixLocked.eventLockedGAKS,2)),1:sum(UE.cueLoc == 3),allSpikesGaussSepFixLocked.eventLockedGAKS(UE.cueLoc == 3,:))
+                        colormap(gray)
+                        title('Fix locked attend in')
+                        saveas(gcf,'GAKSFixLockedAttLocs.png')
 
+                        figure
+                        subplot(121)
+                        imagesc(linspace(-1,2,size(allSpikesGaussSepCueLocked.eventLockedGAKS,2)),1:sum(UE.cueLoc == 1),allSpikesGaussSepCueLocked.eventLockedGAKS(UE.cueLoc == 1,:))
+                        colormap(gray)
+                        title('Cue locked attend away')
+                        subplot(122)
+                        imagesc(linspace(-1,2,size(allSpikesGaussSepCueLocked.eventLockedGAKS,2)),1:sum(UE.cueLoc == 3),allSpikesGaussSepCueLocked.eventLockedGAKS(UE.cueLoc == 3,:))
+                        colormap(gray)
+                        title('Cue locked attend in')
+                        saveas(gcf,'GAKSCueLockedAttLocs.png')
+
+                        figure
+                        subplot(121)
+                        imagesc(linspace(-1,2,size(allSpikesGaussSepArrayLocked.eventLockedGAKS,2)),1:sum(UE.cueLoc == 1),allSpikesGaussSepArrayLocked.eventLockedGAKS(UE.cueLoc == 1,:))
+                        colormap(gray)
+                        title('Array locked attend away')
+                        subplot(122)
+                        imagesc(linspace(-1,2,size(allSpikesGaussSepArrayLocked.eventLockedGAKS,2)),1:sum(UE.cueLoc == 3),allSpikesGaussSepArrayLocked.eventLockedGAKS(UE.cueLoc == 3,:))
+                        colormap(gray)
+                        title('Array locked attend in')
+                        saveas(gcf,'GAKSArrayLockedAttLocs.png')
+
+                    
+                        % plot fixation-onset aligned GAKS
+                        allSpikesGaussFixLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussFixLocked = createEventLockedGAKS(allSpikesGauss,UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue- spikeTimes(1),D.directFs,allSpikesGaussFixLocked.window);
+                        
+                        figure
+                        subplot(211)
+                        plot(linspace(-1,2,size(allSpikesGaussFixLocked.eventLockedGAKS,2)),mean(allSpikesGaussFixLocked.eventLockedGAKS,1),'LineWidth',2)
+                        hold on
+                        for loci = 1:4
+                            allSpikesGaussFixLockedLoc = [];
+                            allSpikesGaussFixLockedLoc.window = [1 2]; % seconds before, after
+                            allSpikesGaussFixLockedLoc = createEventLockedGAKS(allSpikesGauss,UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(UE.cueLoc==(loci))- spikeTimes(1),D.directFs,allSpikesGaussFixLocked.window);
+                            plot(linspace(-1,2,size(allSpikesGaussFixLocked.eventLockedGAKS,2)),mean(allSpikesGaussFixLockedLoc.eventLockedGAKS,1))
+                        end
+                        title('Fixation locked')
+                        subplot(212)
+                        plot(linspace(-1,2,size(allSpikesGaussFixLocked.eventLockedGAKS,2)),mean(allSpikesGaussCueLocked.eventLockedGAKS,1),'LineWidth',2)
+                        hold on
+                        for loci = 1:4
+                            allSpikesGaussCueLockedLoc = [];
+                            allSpikesGaussCueLockedLoc.window = [1 2]; % seconds before, after
+                            allSpikesGaussCueLockedLoc = createEventLockedGAKS(allSpikesGauss,UE.cueOnset(UE.cueLoc==(loci))- spikeTimes(1),D.directFs,allSpikesGaussCueLocked.window);
+                            plot(linspace(-1,2,size(allSpikesGaussFixLocked.eventLockedGAKS,2)),mean(allSpikesGaussCueLockedLoc.eventLockedGAKS,1))
+                        end
+                        title('Cue locked')
+                        saveas(gcf,'GAKSlineplot.png')
 
                         % plot histogram of gaks
                         figure
@@ -350,6 +763,92 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         saveas(gcf,'HistogramGAKSrealShuff.png')
                         
                         
+
+
+                        
+                        
+                        figure
+                        subplot(231)
+                        histogram(datatmpAttIn,linspace(0,600,100))
+                        ylim([0 90])
+                        title('real data Att In')
+                        subplot(234)
+                        histogram(datatmpAttInShuffled,linspace(0,600,100))
+                        ylim([0 90])
+                        title('shuffled data Att In')
+                        subplot(232)
+                        histogram(datatmpAttOut,linspace(0,600,100))
+                        ylim([0 130])
+                        title('real data Att Out')
+                        subplot(235)
+                        histogram(datatmpAttOutShuffled,linspace(0,600,100))
+                        ylim([0 130])
+                        title('shuffled data Att Out')
+                        subplot(233)
+                        histogram(datatmpGAKS,linspace(0,.04,10000))
+                        ylim([0 5000])
+                        title('real data all GAKS')
+                        subplot(236)
+                        histogram(datatmpShuffledGAKS,linspace(0,.04,10000))
+                        ylim([0 5000])
+                        title('shuffled data all GAKS')
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramISIrealShuffCueTargetDim.png')
+                        
+                        allSpikesGaussFixLocked.window = [1 2]; % seconds before, after
+                        allSpikesGaussFixLocked = createEventLockedGAKS(allSpikesGauss,UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue- spikeTimes(1),D.directFs,allSpikesGaussFixLocked.window);
+                        
+                        figure
+                        subplot(211)
+                        plot(linspace(-1,2,size(allSpikesGaussFixLocked.eventLockedGAKS,2)),mean(allSpikesGaussFixLocked.eventLockedGAKS,1),'LineWidth',2)
+                        hold on
+                        for loci = 1:4
+                            allSpikesGaussFixLockedLoc = [];
+                            allSpikesGaussFixLockedLoc.window = [1 2]; % seconds before, after
+                            allSpikesGaussFixLockedLoc = createEventLockedGAKS(allSpikesGauss,UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(UE.cueLoc==(loci))- spikeTimes(1),D.directFs,allSpikesGaussFixLocked.window);
+                            plot(linspace(-1,2,size(allSpikesGaussFixLocked.eventLockedGAKS,2)),mean(allSpikesGaussFixLockedLoc.eventLockedGAKS,1))
+                        end
+                        title('Fixation locked')
+                        subplot(212)
+                        plot(linspace(-1,2,size(allSpikesGaussFixLocked.eventLockedGAKS,2)),mean(allSpikesGaussCueLocked.eventLockedGAKS,1),'LineWidth',2)
+                        hold on
+                        for loci = 1:4
+                            allSpikesGaussCueLockedLoc = [];
+                            allSpikesGaussCueLockedLoc.window = [1 2]; % seconds before, after
+                            allSpikesGaussCueLockedLoc = createEventLockedGAKS(allSpikesGauss,UE.cueOnset(UE.cueLoc==(loci))- spikeTimes(1),D.directFs,allSpikesGaussCueLocked.window);
+                            plot(linspace(-1,2,size(allSpikesGaussFixLocked.eventLockedGAKS,2)),mean(allSpikesGaussCueLockedLoc.eventLockedGAKS,1))
+                        end
+                        title('Cue locked')
+                        saveas(gcf,'GAKSlineplot.png')
+
+                        % plot histogram of gaks
+                        figure
+                        subplot(131)
+                        histogram(allSpikesGauss,linspace(0,0.12,10000))
+                        title('real data')
+                        ylim([0 700000])
+                        subplot(132)
+                        histogram(allSpikesGauss,linspace(0,0.12,10000))
+                        title('real data')
+                        ylim([0 1000])
+                        subplot(133)
+                        histogram(allSpikesGauss,linspace(0,0.12,10000))
+                        title('real data')
+                        ylim([0 100])
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramGAKSzoomingIn.png')
+                        
+                        figure
+                        subplot(121)
+                        histogram(allSpikesGauss,linspace(0,0.12,10000))
+                        title('real data')
+                        ylim([0 700000])
+                        subplot(122)
+                        histogram(shuffledSpikesGauss,linspace(0,0.12,10000))
+                        title('shuffled data')
+                        ylim([0 700000])
+                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+                        saveas(gcf,'HistogramGAKSrealShuff.png')
 
 % note that histogram lineplot with same edges can only be used when
 % binwidth are specified and equal for both histograms
