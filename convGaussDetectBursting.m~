@@ -574,6 +574,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         Fs = 1000;
                         NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
                         datatmpAttInSCM=[];datatmpAttOutSCM=[];
+                        datatmpAttInShuffledSCM=[];datatmpAttOutShuffledSCM=[];
                         datatmpAttInGAKSSCM=[];datatmpAttOutGAKSSCM=[];
                         datatmpAttInGAKSsepSCM=[];datatmpAttOutGAKSsepSCM=[];
                         datatmpShuffledAttInGAKSSCM=[];datatmpShuffledAttOutGAKSSCM=[];
@@ -606,7 +607,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
                                     datatmpShuffledAttInGAKSSCM=[datatmpShuffledAttInGAKSSCM dataGAKS2(indxAttIn)];
                                     datatmpShuffledAttInGAKSsepSCM=[datatmpShuffledAttInGAKSsepSCM dataGAKSsep2(indxAttIn)];
                                     indxAttIn = indxAttIn(randperm(length(indxAttIn)));
-                                    datatmpAttInShuffled=[datatmpAttInShuffledSCM diff(find(data(indxAttIn)))];
+                                    datatmpAttInShuffledSCM=[datatmpAttInShuffledSCM diff(find(data(indxAttIn)))];
                                     
                                     datatmpAttOutSCM=[datatmpAttOutSCM diff(find(data(indxAttOut)))];
                                     datatmpAttOutGAKSSCM=[datatmpAttOutGAKSSCM dataGAKS(indxAttOut)];
@@ -653,39 +654,211 @@ for sessioni = 31%1:numel(sessionInfo{1})
                             end
                         end
                         figure
-                        subplot(231)
+                        subplot(221)
                         histogram(datatmpAttInGAKSSCM,linspace(0,.1,10000))
                         ylim([0 1400])
-                        title('GAKS real data Att In')
-                        subplot(234)
+                        title('SCM GAKS real data Att In')
+                        subplot(223)
                         histogram(datatmpShuffledAttInGAKSSCM,linspace(0,.1,10000))
                         ylim([0 1400])
-                        title('GAKS shuffled data Att In')
-                        subplot(232)
+                        title('SCM GAKS shuffled data Att In')
+                        subplot(222)
                         histogram(datatmpAttOutGAKSSCM,linspace(0,.1,10000))
                         ylim([0 1400])
-                        title('GAKS real data Att Out')
-                        subplot(235)
+                        title('SCM GAKS real data Att Out')
+                        subplot(224)
                         histogram(datatmpShuffledAttOutGAKSSCM,linspace(0,.1,10000))
                         ylim([0 1400])
-                        title('GAKS shuffled data Att Out')
-                        subplot(233)
-                        histogram(datatmpGAKSSCM,linspace(0,.1,10000))
-                        ylim([0 7000])
-                        title('GAKS real data all')
-                        subplot(236)
-                        histogram(datatmpShuffledGAKSSCM,linspace(0,.1,10000))
-                        ylim([0 7000])
-                        title('GAKS shuffled data all')
+                        title('SCM GAKS shuffled data Att Out')
                         cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
-                        saveas(gcf,'HistogramGAKSrealShuffCueTargetDim.png')
+                        saveas(gcf,'HistogramGAKSrealShuffCueTargetDimSCM.png')
 
-
+                        % Calculate 10ms firing rate for SCM data and slide
+                        % 2ms + repeat GAKS with 10ms Gaussian
+                        targetDimTrialAttOut = UE.targetDimByLoc{1} - spikeTimes(1); targetDimTrialAttIn = UE.targetDimByLoc{3} - spikeTimes(1);
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200 - spikeTimes(1);
+                        data = binarySpikeTrain;
+                        NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
+                        if NEAttIn ~= nTrials 
+                            upsampledTrials = randperm(NEAttIn,diff([NEAttIn,NEAttOut]));
+                            cueOnsetTrialAttIn = [cueOnsetTrialAttIn; cueOnsetTrialAttIn(upsampledTrials)];
+                            targetDimTrialAttIn = [targetDimTrialAttIn; targetDimTrialAttIn(upsampledTrials)];
+                            NEAttIn=length(cueOnsetTrialAttIn);
+                        elseif NEAttOut ~= nTrials 
+                            upsampledTrials = randperm(NEAttOut,diff([NEAttIn,NEAttOut]));
+                            cueOnsetTrialAttOut = [cueOnsetTrialAttOut; cueOnsetTrialAttOut(upsampledTrials)];
+                            targetDimTrialAttOut = [targetDimTrialAttOut; targetDimTrialAttOut(upsampledTrials)];
+                            NEAttOut=length(cueOnsetTrialAttOut);
+                        end
+                        nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
                         
+                        for n = 1:nTrials
+                            nwinrAttIn=round(targetDimTrialAttIn(n)*Fs);
+                            nwinrAttOut=round(targetDimTrialAttOut(n)*Fs);
+                            indxAttIn=nEAttIn(n):nwinrAttIn-1;
+                            indxAttOut=nEAttOut(n):nwinrAttOut-1;
+                            
+                            attInSCMall = movmean(data(indxAttIn),10);
+                            attInSCM(n,:) = attInSCMall(linspace(1,length(indxAttIn),round(length(indxAttIn)/2)));
+                        end
+
+                        % create poisson distribution for the comparison
+                        targetDimTrialAttOut = UE.targetDimByLoc{1} - spikeTimes(1); targetDimTrialAttIn = UE.targetDimByLoc{3} - spikeTimes(1);
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200 - spikeTimes(1);
+                        data = binarySpikeTrain; 
+                        Fs = 1000;
+                        NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
+                        nTrials = max(NEAttIn, NEAttOut);
+                        if NEAttIn ~= nTrials 
+                            upsampledTrials = randperm(NEAttIn,diff([NEAttIn,NEAttOut]));
+                            cueOnsetTrialAttIn = [cueOnsetTrialAttIn; cueOnsetTrialAttIn(upsampledTrials)];
+                            targetDimTrialAttIn = [targetDimTrialAttIn; targetDimTrialAttIn(upsampledTrials)];
+                            NEAttIn=length(cueOnsetTrialAttIn);
+                        elseif NEAttOut ~= nTrials 
+                            upsampledTrials = randperm(NEAttOut,diff([NEAttIn,NEAttOut]));
+                            cueOnsetTrialAttOut = [cueOnsetTrialAttOut; cueOnsetTrialAttOut(upsampledTrials)];
+                            targetDimTrialAttOut = [targetDimTrialAttOut; targetDimTrialAttOut(upsampledTrials)];
+                            NEAttOut=length(cueOnsetTrialAttOut);
+                        end
+                        nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
+                        poissonBinary = []; attInBinary = []; attOutBinary = [];
+                        for n=1:nTrials;
+                        %     nwinl=round(0.200*Fs);
+                            nwinrAttIn=round(targetDimTrialAttIn(n)*Fs);
+                            nwinrAttOut=round(targetDimTrialAttOut(n)*Fs);
+                            indxAttIn=nEAttIn(n):nwinrAttIn-1;
+                            indxAttOut=nEAttOut(n):nwinrAttOut-1;
+                            if length(indxAttIn) >1 && length(indxAttOut) >1
+                                if length(indxAttIn) == length(indxAttOut)
+                                    durationS = targetDimTrialAttIn(n) - cueOnsetTrialAttIn(n); % length of simulation
+                                    spikesPerS = sum(data(indxAttIn))/durationS; % avg firing rate
+                                    timeStepS = 0.001;                  % 1 msec
+                                    times = 0:timeStepS:durationS;	% a vector with each time step		
+                                    vt = rand(size(times)); % use rand to set probobility of spike
+                                    spikes = (spikesPerS*timeStepS) > vt;
+                                    poissonBinary = [poissonBinary spikes];
+                                    attInBinary = [attInBinary data(indxAttIn)];
+                                    attOutBinary = [attOutBinary data(indxAttOut)];
+                                elseif length(indxAttIn) > length(indxAttOut)
+                                    indxAttIn = indxAttIn(randperm(length(indxAttIn),length(indxAttOut)));
+                                    durationS = targetDimTrialAttIn(n) - cueOnsetTrialAttIn(n); % length of simulation
+                                    spikesPerS = sum(data(indxAttIn))/durationS; % avg firing rate
+                                    timeStepS = 0.001;                  % 1 msec
+                                    times = 0:timeStepS:durationS;	% a vector with each time step		
+                                    vt = rand(size(times)); % use rand to set probobility of spike
+                                    spikes = (spikesPerS*timeStepS) > vt;
+                                    poissonBinary = [poissonBinary spikes];
+                                    attInBinary = [attInBinary data(indxAttIn)];
+                                    attOutBinary = [attOutBinary data(indxAttOut)];
+                                elseif length(indxAttOut) > length(indxAttIn)
+                                    indxAttOut = indxAttOut(randperm(length(indxAttOut),length(indxAttIn)));
+                                    indxAttIn = indxAttIn(randperm(length(indxAttIn),length(indxAttOut)));
+                                    durationS = targetDimTrialAttIn(n) - cueOnsetTrialAttIn(n); % length of simulation
+                                    spikesPerS = sum(data(indxAttIn))/durationS; % avg firing rate
+                                    timeStepS = 0.001;                  % 1 msec
+                                    times = 0:timeStepS:durationS;	% a vector with each time step		
+                                    vt = rand(size(times)); % use rand to set probobility of spike
+                                    spikes = (spikesPerS*timeStepS) > vt;
+                                    poissonBinary = [poissonBinary spikes];
+                                    attInBinary = [attInBinary data(indxAttIn)];
+                                    attOutBinary = [attOutBinary data(indxAttOut)];
+                                end
+                            end
+                        end
+                        
+                        % convolve with gaussian
+                        attInSpikesGauss = conv(attInBinary, gaussian,'same');
+                        attOutSpikesGauss = conv(attOutBinary, gaussian,'same');
+                        poissonSpikesGauss = conv(poissonBinary, gaussian,'same');
+                        figure
+                        subplot(231)
+                        loglog([NaN diff(find(attInBinary))],[diff(find(attInBinary)) NaN],'.','MarkerSize',1)
+                        title('returnplot Att In')
+                        xlim([0 10000]); ylim([0 10000]);
+                        subplot(232)
+                        loglog([NaN diff(find(attOutBinary))],[diff(find(attOutBinary)) NaN],'.','MarkerSize',1)
+                        title('returnplot Att Out')
+                        xlim([0 10000]); ylim([0 10000]);
+                        subplot(233)
+                        loglog([NaN diff(find(poissonBinary))],[diff(find(poissonBinary)) NaN],'.','MarkerSize',1)
+                        title('returnplot Poisson')
+                        xlim([0 10000]); ylim([0 10000]);
+                        subplot(234)
+                        histogram(attInSpikesGauss,linspace(0,.1,10000))
+                        title('SCM GAKS Att In')
+                        ylim([0 1400])
+                        subplot(235)
+                        histogram(attOutSpikesGauss,linspace(0,.1,10000))
+                        title('SCM GAKS Att Out')
+                        ylim([0 1400])
+                        subplot(236)
+                        histogram(poissonSpikesGauss,linspace(0,.1,10000))
+                        title('SCM GAKS Poisson')
+                        ylim([0 1400])
+                        saveas(gcf,'RPHistGAKSrealPoissonCueTargetDimSCM.png')
+
+                        % create several poisson distributions
+                        figure
+                        for pi = 1:10
+                            nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
+                            poissonBinary = []; attInBinary = []; attOutBinary = [];
+                            for n=1:nTrials;
+                            %     nwinl=round(0.200*Fs);
+                                nwinrAttIn=round(targetDimTrialAttIn(n)*Fs);
+                                nwinrAttOut=round(targetDimTrialAttOut(n)*Fs);
+                                indxAttIn=nEAttIn(n):nwinrAttIn-1;
+                                indxAttOut=nEAttOut(n):nwinrAttOut-1;
+                                if length(indxAttIn) >1 && length(indxAttOut) >1
+                                    if length(indxAttIn) == length(indxAttOut)
+                                        durationS = targetDimTrialAttIn(n) - cueOnsetTrialAttIn(n); % length of simulation
+                                        spikesPerS = sum(data(indxAttIn))/durationS; % avg firing rate
+                                        timeStepS = 0.001;                  % 1 msec
+                                        times = 0:timeStepS:durationS;	% a vector with each time step		
+                                        vt = rand(size(times)); % use rand to set probobility of spike
+                                        spikes = (spikesPerS*timeStepS) > vt;
+                                        poissonBinary = [poissonBinary spikes];
+                                    elseif length(indxAttIn) > length(indxAttOut)
+                                        indxAttIn = indxAttIn(randperm(length(indxAttIn),length(indxAttOut)));
+                                        durationS = targetDimTrialAttIn(n) - cueOnsetTrialAttIn(n); % length of simulation
+                                        spikesPerS = sum(data(indxAttIn))/durationS; % avg firing rate
+                                        timeStepS = 0.001;                  % 1 msec
+                                        times = 0:timeStepS:durationS;	% a vector with each time step		
+                                        vt = rand(size(times)); % use rand to set probobility of spike
+                                        spikes = (spikesPerS*timeStepS) > vt;
+                                        poissonBinary = [poissonBinary spikes];
+                                    elseif length(indxAttOut) > length(indxAttIn)
+                                        indxAttOut = indxAttOut(randperm(length(indxAttOut),length(indxAttIn)));
+                                        indxAttIn = indxAttIn(randperm(length(indxAttIn),length(indxAttOut)));
+                                        durationS = targetDimTrialAttIn(n) - cueOnsetTrialAttIn(n); % length of simulation
+                                        spikesPerS = sum(data(indxAttIn))/durationS; % avg firing rate
+                                        timeStepS = 0.001;                  % 1 msec
+                                        times = 0:timeStepS:durationS;	% a vector with each time step		
+                                        vt = rand(size(times)); % use rand to set probobility of spike
+                                        spikes = (spikesPerS*timeStepS) > vt;
+                                        poissonBinary = [poissonBinary spikes];
+                                    end
+                                end
+                            end
+
+                            % convolve with gaussian
+                            poissonSpikesGauss = conv(poissonBinary, gaussian,'same');
+                            
+                            subplot(2,10,pi)
+                            loglog([NaN diff(find(poissonBinary))],[diff(find(poissonBinary)) NaN],'.','MarkerSize',1)
+                            xlim([0 10000]); ylim([0 10000]);
+                            subplot(2,10,pi+10)
+                            histogram(poissonSpikesGauss,linspace(0,.05,1000))
+                            title('SCM GAKS Poisson')
+                            ylim([0 8000]);
+                            clear poissonBinary poissonSpikesGauss
+                        end
+                        saveas(gcf,'RPHistGAKSSeveralPoissonCueTargetDimSCM.png')
 
 
-                        
-                        
+
+
+
+
                         allSpikesGaussSepCueLocked.window = [1 2]; % seconds before, after
                         allSpikesGaussSepCueLocked = createEventLockedGAKS(allSpikesGaussSep,UE.cueOnset- spikeTimes(1),D.directFs,allSpikesGaussSepCueLocked.window);
 

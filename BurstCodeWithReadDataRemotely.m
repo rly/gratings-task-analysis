@@ -10,7 +10,7 @@ fclose(fid);
 counterFR = zeros(1,numel(sessionInfo{1}));
 nUnitsPerSession = zeros(1,numel(sessionInfo{1}));
 
-for sessioni = 6:numel(sessionInfo{1})
+for sessioni = 1:numel(sessionInfo{1})
     clearvars -except sessionInfo sessioni outputDir counterFR nUnitsPerSession v
     sessionInd = sessionInfo{1}(sessioni);
     processedDataRootDir = '/Volumes/scratch/rly/gratings-task-analysis/processed_data/';
