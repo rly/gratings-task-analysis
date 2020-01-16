@@ -405,6 +405,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         datatmpAttInGAKSsep=[];datatmpAttOutGAKSsep=[];
                         datatmpShuffledAttInGAKS=[];datatmpShuffledAttOutGAKS=[];
                         datatmpShuffledAttInGAKSsep=[];datatmpShuffledAttOutGAKSsep=[];
+                        datatmpAttInShuffled = []; datatmpAttOutShuffled = [];
                         for n=1:NEAttIn;
                         %     nwinl=round(0.200*Fs);
                             nwinr=round(targetDimTrialAttIn(n)*Fs);
@@ -508,7 +509,98 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         title('shuffled data all')
                         cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
                         saveas(gcf,'HistogramISIrealShuffCueTargetDim.png')
-                        
+
+                        figure
+                        subplot(131)
+                        histogram(datatmpAttIn,'BinWidth',10,'Normalization','probability')
+                        ylim([0 .22])
+                        xlim([-10 500])
+                        title('real data Att In')
+                        subplot(132)
+                        plot(0,0)
+                        hold on
+                        histogram(datatmpAttOut,'BinWidth',10,'Normalization','probability')
+                        ylim([0 .22])
+                        xlim([-10 500])
+                        title('real data Att Out')
+                        subplot(133)
+                        histogram(datatmpAttIn,'BinWidth',10,'Normalization','probability')
+                        hold on
+                        histogram(datatmpAttOut,'BinWidth',10,'Normalization','probability')
+                        title('overlay both conditions')
+                        ylim([0 .22])
+                        xlim([-10 500])
+                        saveas(gcf,'HistogramISIrealCueTargetDim.png')
+
+    % 200ms post-cue until TARGET DIM
+                        arrayOnsetTrialAttOut = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 1) - spikeTimes(1); arrayOnsetTrialAttIn = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 3) - spikeTimes(1);
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200 - spikeTimes(1);
+                       
+                        clear datatmp datatmpAttIn datatmpAttOut datatmpSil datatmpSilAttIn datatmpSilAttOut
+                        % heatmap return plot
+                        data = binarySpikeTrain; dataGAKS = allSpikesGauss; dataGAKS2 = shuffledSpikesGauss; 
+                        dataGAKSsep = allSpikesGaussSep; dataGAKSsep2 = shuffledSpikesGaussSep;
+                        Fs = 1000;
+                        NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
+                        nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
+                        datatmpAttIn=[];datatmpAttOut=[];
+                        datatmpAttInGAKS=[];datatmpAttOutGAKS=[];
+                        datatmpAttInGAKSsep=[];datatmpAttOutGAKSsep=[];
+                        datatmpShuffledAttInGAKS=[];datatmpShuffledAttOutGAKS=[];
+                        datatmpShuffledAttInGAKSsep=[];datatmpShuffledAttOutGAKSsep=[];
+                        datatmpAttInShuffled = []; datatmpAttOutShuffled = [];
+                        for n=1:NEAttIn;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(arrayOnsetTrialAttIn(n)*Fs);
+                            indx=nEAttIn(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpAttIn=[datatmpAttIn diff(find(data(indx)))];
+                                datatmpAttInGAKS=[datatmpAttInGAKS dataGAKS(indx)];
+                                datatmpAttInGAKSsep=[datatmpAttInGAKSsep dataGAKSsep(indx)];
+                                datatmpShuffledAttInGAKS=[datatmpShuffledAttInGAKS dataGAKS2(indx)];
+                                datatmpShuffledAttInGAKSsep=[datatmpShuffledAttInGAKSsep dataGAKSsep2(indx)];
+                                indx = indx(randperm(length(indx)));
+                                datatmpAttInShuffled=[datatmpAttInShuffled diff(find(data(indx)))];
+                            end
+                        end
+                        for n=1:NEAttOut;
+                        %     nwinl=round(0.200*Fs);
+                            nwinr=round(arrayOnsetTrialAttOut(n)*Fs);
+                            indx=nEAttOut(n):nwinr-1;
+                            if length(indx) >1
+                                datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
+                                datatmpAttOutGAKS=[datatmpAttOutGAKS dataGAKS(indx)];
+                                datatmpAttOutGAKSsep=[datatmpAttOutGAKSsep dataGAKSsep(indx)];
+                                datatmpShuffledAttOutGAKS=[datatmpShuffledAttOutGAKS dataGAKS2(indx)];
+                                datatmpShuffledAttOutGAKSsep=[datatmpShuffledAttOutGAKSsep dataGAKSsep2(indx)];
+                                indx = indx(randperm(length(indx)));
+                                datatmpAttOutShuffled=[datatmpAttOutShuffled diff(find(data(indx)))];
+                            end
+                        end
+figure
+subplot(131)
+histogram(datatmpAttIn,'BinWidth',10,'Normalization','probability')
+ylim([0 .22])
+xlim([-10 500])
+title('real data Att In')
+subplot(132)
+plot(0,0)
+hold on
+histogram(datatmpAttOut,'BinWidth',10,'Normalization','probability')
+ylim([0 .22])
+xlim([-10 500])
+title('real data Att Out')
+subplot(133)
+histogram(datatmpAttIn,'BinWidth',10,'Normalization','probability')
+hold on
+histogram(datatmpAttOut,'BinWidth',10,'Normalization','probability')
+title('overlay both conditions')
+ylim([0 .22])
+xlim([-10 500])
+saveas(gcf,'HistogramISIrealCueArrayOnset.png')
+
+
+
                         figure
                         subplot(231)
                         histogram(datatmpAttInGAKS,linspace(0,.1,10000))
@@ -537,33 +629,33 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
                         saveas(gcf,'HistogramGAKSrealShuffCueTargetDim.png')
 
-                        figure
-                        subplot(231)
-                        histogram(datatmpAttInGAKSsep,linspace(-0.5,1.5,10000))
-                        ylim([0 1400])
-                        title('GAKS real data Att In')
-                        subplot(234)
-                        histogram(datatmpShuffledAttInGAKSsep,linspace(-0.5,1.5,10000))
-                        ylim([0 1400])
-                        title('GAKS shuffled data Att In')
-                        subplot(232)
-                        histogram(datatmpAttOutGAKSsep,linspace(0,.1,10000))
-                        ylim([0 1400])
-                        title('GAKS real data Att Out')
-                        subplot(235)
-                        histogram(datatmpShuffledAttOutGAKSsep,linspace(0,.1,10000))
-                        ylim([0 1400])
-                        title('GAKS shuffled data Att Out')
-                        subplot(233)
-                        histogram(datatmpGAKSsep,linspace(0,.1,10000))
-                        ylim([0 7000])
-                        title('GAKS real data all')
-                        subplot(236)
-                        histogram(datatmpShuffledGAKSsep,linspace(0,.1,10000))
-                        ylim([0 7000])
-                        title('GAKS shuffled data all')
-                        cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
-                        saveas(gcf,'HistogramGAKSThresholdedrealShuffCueTargetDim.png')
+%                         figure
+%                         subplot(231)
+%                         histogram(datatmpAttInGAKSsep,linspace(-0.5,1.5,10000))
+% %                         ylim([0 1400])
+%                         title('GAKS real data Att In')
+%                         subplot(234)
+%                         histogram(datatmpShuffledAttInGAKSsep,linspace(-0.5,1.5,10000))
+% %                         ylim([0 1400])
+%                         title('GAKS shuffled data Att In')
+%                         subplot(232)
+%                         histogram(datatmpAttOutGAKSsep,linspace(0,.1,10000))
+% %                         ylim([0 1400])
+%                         title('GAKS real data Att Out')
+%                         subplot(235)
+%                         histogram(datatmpShuffledAttOutGAKSsep,linspace(0,.1,10000))
+% %                         ylim([0 1400])
+%                         title('GAKS shuffled data Att Out')
+%                         subplot(233)
+%                         histogram(datatmpGAKSsep,linspace(0,.1,10000))
+% %                         ylim([0 7000])
+%                         title('GAKS real data all')
+%                         subplot(236)
+%                         histogram(datatmpShuffledGAKSsep,linspace(0,.1,10000))
+% %                         ylim([0 7000])
+%                         title('GAKS shuffled data all')
+%                         cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
+%                         saveas(gcf,'HistogramGAKSThresholdedrealShuffCueTargetDim.png')
                         
                         % equate spike count for att in and att out
                         % heatmap return plot
@@ -656,29 +748,31 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         figure
                         subplot(221)
                         histogram(datatmpAttInGAKSSCM,linspace(0,.1,10000))
-                        ylim([0 1400])
+                        ylim([0 2000])
                         title('SCM GAKS real data Att In')
                         subplot(223)
                         histogram(datatmpShuffledAttInGAKSSCM,linspace(0,.1,10000))
-                        ylim([0 1400])
+                        ylim([0 2000])
                         title('SCM GAKS shuffled data Att In')
                         subplot(222)
                         histogram(datatmpAttOutGAKSSCM,linspace(0,.1,10000))
-                        ylim([0 1400])
+                        ylim([0 2000])
                         title('SCM GAKS real data Att Out')
                         subplot(224)
                         histogram(datatmpShuffledAttOutGAKSSCM,linspace(0,.1,10000))
-                        ylim([0 1400])
+                        ylim([0 2000])
                         title('SCM GAKS shuffled data Att Out')
                         cd('/Users/labmanager/Documents/MATLAB/BurstSep4')
                         saveas(gcf,'HistogramGAKSrealShuffCueTargetDimSCM.png')
 
                         % Calculate 10ms firing rate for SCM data and slide
                         % 2ms + repeat GAKS with 10ms Gaussian
+                        Fs = 1000;
                         targetDimTrialAttOut = UE.targetDimByLoc{1} - spikeTimes(1); targetDimTrialAttIn = UE.targetDimByLoc{3} - spikeTimes(1);
                         cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200 - spikeTimes(1);
                         data = binarySpikeTrain;
                         NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
+                        nTrials = max(NEAttIn, NEAttOut);
                         if NEAttIn ~= nTrials 
                             upsampledTrials = randperm(NEAttIn,diff([NEAttIn,NEAttOut]));
                             cueOnsetTrialAttIn = [cueOnsetTrialAttIn; cueOnsetTrialAttIn(upsampledTrials)];
@@ -692,15 +786,57 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         end
                         nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
                         
+                        attInSCM2plot = [];
+                        attOutSCM2plot = [];
                         for n = 1:nTrials
                             nwinrAttIn=round(targetDimTrialAttIn(n)*Fs);
                             nwinrAttOut=round(targetDimTrialAttOut(n)*Fs);
                             indxAttIn=nEAttIn(n):nwinrAttIn-1;
                             indxAttOut=nEAttOut(n):nwinrAttOut-1;
-                            
-                            attInSCMall = movmean(data(indxAttIn),10);
-                            attInSCM(n,:) = attInSCMall(linspace(1,length(indxAttIn),round(length(indxAttIn)/2)));
+                            if length(indxAttIn) == length(indxAttOut)
+                                attInSCMall = movmean(data(indxAttIn),10);
+                                attInSCM{n} = attInSCMall(1:2:length(indxAttIn));
+                                attOutSCMall = movmean(data(indxAttOut),10);
+                                attOutSCM{n} = attOutSCMall(1:2:length(indxAttOut));
+                                attInSCM2plot = [attInSCM2plot attInSCM{n}];
+                                attOutSCM2plot = [attOutSCM2plot attOutSCM{n}];
+                            elseif length(indxAttIn) > length(indxAttOut)
+                                indxAttIn = indxAttIn(randperm(length(indxAttIn),length(indxAttOut)));
+                                attInSCMall = movmean(data(indxAttIn),10);
+                                attInSCM{n} = attInSCMall(1:2:length(indxAttIn));
+                                attOutSCMall = movmean(data(indxAttOut),10);
+                                attOutSCM{n} = attOutSCMall(1:2:length(indxAttOut));
+                                attInSCM2plot = [attInSCM2plot attInSCM{n}];
+                                attOutSCM2plot = [attOutSCM2plot attOutSCM{n}];
+                            elseif length(indxAttIn) < length(indxAttOut)
+                                indxAttOut = indxAttOut(randperm(length(indxAttOut),length(indxAttIn)));
+                                attInSCMall = movmean(data(indxAttIn),10);
+                                attInSCM{n} = attInSCMall(1:2:length(indxAttIn));
+                                attOutSCMall = movmean(data(indxAttOut),10);
+                                attOutSCM{n} = attOutSCMall(1:2:length(indxAttOut));
+                                attInSCM2plot = [attInSCM2plot attInSCM{n}];
+                                attOutSCM2plot = [attOutSCM2plot attOutSCM{n}];
+                            end
                         end
+
+                        figure
+                        subplot(141)
+                        hAttIn = histogram(attInSCM2plot,linspace(0,0.3,1000))
+                        title('Att In')
+                        subplot(142)
+                        histogram(attInSCM2plot,linspace(0,0.3,1000))
+                        ylim([0 50])
+                        title('Att In Zoomed in')
+                        subplot(143)
+                        hAttOut = histogram(attOutSCM2plot,linspace(0,0.3,1000))
+                        title('Att Out')
+                        subplot(144)
+                        histogram(attOutSCM2plot,linspace(0,0.3,1000))
+                        ylim([0 50])
+                        title('Att Out Zoomed in')
+                        saveas(gcf,'movMean10msAttInAttOutSCM.png')
+                        hAttIn.Values(find(hAttIn.Values>0))
+                        hAttOut.Values(find(hAttOut.Values>0))
 
                         % create poisson distribution for the comparison
                         targetDimTrialAttOut = UE.targetDimByLoc{1} - spikeTimes(1); targetDimTrialAttIn = UE.targetDimByLoc{3} - spikeTimes(1);
