@@ -142,8 +142,10 @@ for sessioni = 1:numel(sessionInfo{1})
                         binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
 
                         % 200ms post-cue until TARGET DIM
-                        targetDimTrialAttOut = UE.targetDimByLoc{1} - spikeTimes(1); targetDimTrialAttIn = UE.targetDimByLoc{3} - spikeTimes(1);
-                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200 - spikeTimes(1);
+                        targetDimTrialAttOut = UE.targetDimByLoc{1};% - spikeTimes(1); 
+                        targetDimTrialAttIn = UE.targetDimByLoc{3};% - spikeTimes(1);
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200;% - spikeTimes(1); 
+                        cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200;% - spikeTimes(1);
                        
                         clear datatmp datatmpAttIn datatmpAttOut datatmpSil datatmpSilAttIn datatmpSilAttOut
                         % heatmap return plot
@@ -250,8 +252,10 @@ for sessioni = 1:numel(sessionInfo{1})
 
                         
                         % 200ms post-cue until ARRAY ONSET
-                        arrayOnsetTrialAttOut = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 1) - spikeTimes(1); arrayOnsetTrialAttIn = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 3) - spikeTimes(1);
-                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200 - spikeTimes(1); cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200 - spikeTimes(1);
+                        arrayOnsetTrialAttOut = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 1);% - spikeTimes(1); 
+                        arrayOnsetTrialAttIn = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 3);% - spikeTimes(1);
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200;% - spikeTimes(1); 
+                        cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200;% - spikeTimes(1);
                        
                         clear datatmp datatmpAttIn datatmpAttOut datatmpSil datatmpSilAttIn datatmpSilAttOut
                         % heatmap return plot
