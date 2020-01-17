@@ -136,29 +136,41 @@ for sessioni = 1:numel(sessionInfo{1})
                         end
                             
                         spikeTimes = spikeTimes(spikeTimes >= startTime & spikeTimes <= endTime);
+                        targetDimTrialAttOut = UE.targetDimByLoc{1};
+                        targetDimTrialAttOut = targetDimTrialAttOut(targetDimTrialAttOut >= startTime & targetDimTrialAttOut <= endTime);
+                        targetDimTrialAttOut = targetDimTrialAttOut - spikeTimes(1); 
+
+                        targetDimTrialAttIn = UE.targetDimByLoc{3};
+                        targetDimTrialAttIn = targetDimTrialAttIn(targetDimTrialAttIn >= startTime & targetDimTrialAttIn <= endTime);
+                        targetDimTrialAttIn = targetDimTrialAttIn - spikeTimes(1); 
+    
+                        arrayOnsetTrialAttOut = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 1);
+                        arrayOnsetTrialAttOut = arrayOnsetTrialAttOut(arrayOnsetTrialAttOut >= startTime & arrayOnsetTrialAttOut <= endTime);
+                        arrayOnsetTrialAttOut = arrayOnsetTrialAttOut - spikeTimes(1); 
+
+                        arrayOnsetTrialAttIn = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 3);
+                        arrayOnsetTrialAttIn = arrayOnsetTrialAttIn(arrayOnsetTrialAttIn >= startTime & arrayOnsetTrialAttIn <= endTime);
+                        arrayOnsetTrialAttIn = arrayOnsetTrialAttIn - spikeTimes(1); 
+                        
+                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200;
+                        cueOnsetTrialAttOut = cueOnsetTrialAttOut(cueOnsetTrialAttOut >= startTime & cueOnsetTrialAttOut <= endTime);
+                        cueOnsetTrialAttOut = cueOnsetTrialAttOut - spikeTimes(1); 
+
+                        cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200;
+                        cueOnsetTrialAttIn = cueOnsetTrialAttIn(cueOnsetTrialAttIn >= startTime & cueOnsetTrialAttIn <= endTime);
+                        cueOnsetTrialAttIn = cueOnsetTrialAttIn - spikeTimes(1); 
+                        
                         spikeTimes2use = (spikeTimes - spikeTimes(1))';
                         data_pts = round(spikeTimes2use(1),3):1/1000:round(spikeTimes2use(end),3);
                         binarySpikeTrain = zeros(1,length(data_pts)); 
                         binarySpikeTrain(ismembertol(data_pts,round(spikeTimes2use,3),.00000001)) = 1;
 
-                        % 200ms post-cue until TARGET DIM
-                        targetDimTrialAttOut = UE.targetDimByLoc{1};% - spikeTimes(1); 
-                        targetDimTrialAttIn = UE.targetDimByLoc{3};% - spikeTimes(1);
-                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200;% - spikeTimes(1); 
-                        cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200;% - spikeTimes(1);
-                       
-                        clear datatmp datatmpAttIn datatmpAttOut datatmpSil datatmpSilAttIn datatmpSilAttOut
-                        % heatmap return plot
+                        % 200ms post-cue until TARGET DIM                      
                         data = binarySpikeTrain; 
                         Fs = 1000;
                         NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
                         nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
                         datatmpAttIn=[];datatmpAttOut=[];
-                        datatmpAttInGAKS=[];datatmpAttOutGAKS=[];
-                        datatmpAttInGAKSsep=[];datatmpAttOutGAKSsep=[];
-                        datatmpShuffledAttInGAKS=[];datatmpShuffledAttOutGAKS=[];
-                        datatmpShuffledAttInGAKSsep=[];datatmpShuffledAttOutGAKSsep=[];
-                        datatmpAttInShuffled = []; datatmpAttOutShuffled = [];
                         for n=1:NEAttIn;
                         %     nwinl=round(0.200*Fs);
                             nwinr=round(targetDimTrialAttIn(n)*Fs);
@@ -178,6 +190,11 @@ for sessioni = 1:numel(sessionInfo{1})
                             end
                         end
                         
+%                         sum(datatmpAttIn(find(datatmpAttIn(1:end-1)>=100) + 1) <= 5) * 100 / size(datatmpAttIn,2)
+%                         sum(datatmpAttOut(find(datatmpAttOut(1:end-1)>=100) + 1) <= 5) * 100 / size(datatmpAttOut,2)
+%                         sum(datatmpAttIn(find(datatmpAttIn(1:end-1)>=50) + 1) <= 5) * 100 / size(datatmpAttIn,2)
+%                         sum(datatmpAttOut(find(datatmpAttOut(1:end-1)>=50) + 1) <= 5) * 100 / size(datatmpAttOut,2)
+
                         figure
                         subplot(131)
                         histogram(datatmpAttIn,'BinWidth',10,'Normalization','probability')
@@ -252,23 +269,11 @@ for sessioni = 1:numel(sessionInfo{1})
 
                         
                         % 200ms post-cue until ARRAY ONSET
-                        arrayOnsetTrialAttOut = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 1);% - spikeTimes(1); 
-                        arrayOnsetTrialAttIn = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 3);% - spikeTimes(1);
-                        cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200;% - spikeTimes(1); 
-                        cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200;% - spikeTimes(1);
-                       
-                        clear datatmp datatmpAttIn datatmpAttOut datatmpSil datatmpSilAttIn datatmpSilAttOut
-                        % heatmap return plot
                         data = binarySpikeTrain; 
                         Fs = 1000;
                         NEAttIn=length(cueOnsetTrialAttIn);NEAttOut=length(cueOnsetTrialAttOut);
                         nEAttIn=floor(cueOnsetTrialAttIn*Fs)+1;nEAttOut=floor(cueOnsetTrialAttOut*Fs)+1;
                         datatmpAttIn=[];datatmpAttOut=[];
-                        datatmpAttInGAKS=[];datatmpAttOutGAKS=[];
-                        datatmpAttInGAKSsep=[];datatmpAttOutGAKSsep=[];
-                        datatmpShuffledAttInGAKS=[];datatmpShuffledAttOutGAKS=[];
-                        datatmpShuffledAttInGAKSsep=[];datatmpShuffledAttOutGAKSsep=[];
-                        datatmpAttInShuffled = []; datatmpAttOutShuffled = [];
                         for n=1:NEAttIn;
                         %     nwinl=round(0.200*Fs);
                             nwinr=round(arrayOnsetTrialAttIn(n)*Fs);
