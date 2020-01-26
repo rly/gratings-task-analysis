@@ -178,7 +178,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
                                 binarySTarrayLocked2plot(n,:) = zeros(1,2400);
                                 allSpikes = find(binarySTarrayLocked(n,:));
                                 tenmsISI = find(diff(find(binarySTarrayLocked(n,:)))<=10);
-                                hundredmsISI = find(diff(find(binarySTarrayLocked(n,:)))>10 & diff(find(binarySTarrayLocked(n,:))) <= 50);
+                                hundredmsISI = find(diff(find(binarySTarrayLocked(n,:)))>10 & diff(find(binarySTarrayLocked(n,:))) <= 100);
                                 for isi = 1:length(tenmsISI)
                                     binarySTarrayLocked2plot(n,allSpikes(tenmsISI(isi)):allSpikes(tenmsISI(isi)+1)-1) = 1;
                                 end
@@ -202,7 +202,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
                                 binarySTarrayLocked2plotAttOut(n,:) = zeros(1,2400);
                                 allSpikes = find(binarySTarrayLockedAttOut(n,:));
                                 tenmsISI = find(diff(find(binarySTarrayLockedAttOut(n,:)))<=10);
-                                hundredmsISI = find(diff(find(binarySTarrayLockedAttOut(n,:)))>10 & diff(find(binarySTarrayLockedAttOut(n,:))) <= 50);
+                                hundredmsISI = find(diff(find(binarySTarrayLockedAttOut(n,:)))>10 & diff(find(binarySTarrayLockedAttOut(n,:))) <= 100);
                                 for isi = 1:length(tenmsISI)
                                     binarySTarrayLocked2plotAttOut(n,allSpikes(tenmsISI(isi)):allSpikes(tenmsISI(isi)+1)-1) = 1;
                                 end
@@ -219,18 +219,9 @@ for sessioni = 31%1:numel(sessionInfo{1})
                         timeaxis = -1200:1199;
                         subplot(121)
                         imagesc(timeaxis,1:size(binarySTarrayLocked2plot,1),binarySTarrayLocked2plot)
-                        title('Attend In')
+                        title(
                         subplot(122)
                         imagesc(timeaxis,1:size(binarySTarrayLocked2plotAttOut,1),binarySTarrayLocked2plotAttOut)
-                        title('Attend Out')
-% cmap = [0 0 0; 0.7 0.7 0.7; 0.3 0.3 0.3; 1 0 0];
-% colormap(cmap)
-                        % white indicates short ISIs of <10ms
-                        % light gray are ISIs of tonic spiking >10ms and
-                        % <100ms
-                        % dark gray are ISIs of quiet periods >100ms
-                        % black indicates time before 200ms post-cue and
-                        % after target dim
 
                         saveas(gcf,['trialHeatmapISI' unitStruct.name '_sessioni' num2str(sessioni) ...
                             '_uniti' num2str(uniti) '.png'])
