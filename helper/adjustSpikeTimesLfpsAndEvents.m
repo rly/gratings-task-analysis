@@ -26,12 +26,6 @@ if isfield(D, 'allMUAStructs')
     end
 end
 
-if isfield(D, 'allUnitStructs')
-    for i = 1:numel(D.allUnitStructs)
-        D.allUnitStructs{i}.ts = D.allUnitStructs{i}.ts - firstBlockStartTime;
-    end
-end
-
 if isfield(D, 'adjLfps')
     D.adjLfps(:,ceil(lastBlockStopTime * D.lfpFs):end) = [];
     D.adjLfps(:,1:floor(firstBlockStartTime * D.lfpFs)) = [];
