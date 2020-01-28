@@ -3,7 +3,7 @@ function [eventOnsetClean,isEventOutlier] = detectOutlierLfpEvents(channelData, 
         processedDataDir, plotFileNamePrefix, rfMappingMode, v)
 
 doOutlierCheckPlot = 1;
-outlierMaxSDStep2 = 6; % second-pass threshold after LPF
+outlierMaxSDStep2 = 8; % second-pass threshold after LPF
 
 nEvents = numel(eventOnset);
 nChannels = size(channelData, 1);

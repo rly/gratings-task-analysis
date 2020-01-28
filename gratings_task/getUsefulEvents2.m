@@ -63,10 +63,25 @@ end
 [cueOnset,trialsToKeep] = removeHandStartedTrials(D, cueOnset, firstJuiceEvent);
 firstJuiceEvent = firstJuiceEvent(trialsToKeep);
 trialParamsAllCorrect = trialParamsAllCorrect(trialsToKeep,:);
-fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), numel(trialsToKeep));
-
 trialStructsCorrect = trialStructsCorrect(trialsToKeep);
 arrayShapesCorrect = arrayShapesCorrect(trialsToKeep);
+fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), numel(trialsToKeep));
+
+%%
+cueLoc = trialParamsAllCorrect(:,4);
+isHoldTrial = trialParamsAllCorrect(:,7) ~= -1;
+
+% fixationAndLeverTimes = [];
+% if isfield(D, 'adjDirects') && ~isempty(D.adjDirects)
+    fprintf('Determining fixation and lever event times around each trial.\n');
+    [fixationAndLeverTimes,isMissingData] = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc);
+% end
+cueOnset = cueOnset(~isMissingData);
+firstJuiceEvent = firstJuiceEvent(~isMissingData);
+trialParamsAllCorrect = trialParamsAllCorrect(~isMissingData,:);
+trialStructsCorrect = trialStructsCorrect(~isMissingData);
+arrayShapesCorrect = arrayShapesCorrect(~isMissingData);
+fprintf('Removed %d/%d trials with missing matching lever/fixation data.\n', sum(isMissingData), numel(isMissingData));
 
 %%
 isRelBal = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect);
@@ -79,9 +94,8 @@ isCorrectHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsCorrect, arraySh
 % TODO get only trials that are not repeats
 % notRepeatLogical = trialParamsAllCorrect(:,3) == 1;
 % juiceEvent = juiceEvent(notRepeatLogical,:);
-trialParams = trialParamsAllCorrect;%(notRepeatLogical,:);
+trialParams = trialParamsAllCorrect;
 % numNonRptCorrectTrials = size(trialParams, 1);
-
 cueLoc = trialParams(:,4);
 cueTargetDelayDur = trialParams(:,6);
 targetDimDelayDur = trialParams(:,7);
@@ -113,12 +127,12 @@ for i = 1:numel(firstJuiceEvent)
 end
 
 % split release and hold shapes - not the best way, but works for now
-maxArrayOnsetToJuiceTimeReleaseShape = 0.925;
-isHoldTrial = firstJuiceEvent - arrayOnset >= maxArrayOnsetToJuiceTimeReleaseShape;
-assert(all(isHoldTrial == (trialParams(:,7) ~= -1)));
+% maxArrayOnsetToJuiceTimeReleaseShape = 0.925;
+% isHoldTrial = firstJuiceEvent - arrayOnset >= maxArrayOnsetToJuiceTimeReleaseShape;
+isHoldTrial = trialParams(:,7) ~= -1;
+% assert(all(isHoldTrial == (trialParams(:,7) ~= -1)));
 assert(all(isHoldTrial == isCorrectHoldTrialLog));
 assert(all(~isHoldTrial == isCorrectRelTrialLog));
-
 % arrayOnsetRel = arrayOnset(~isHoldTrial);
 % arrayOnsetHold = arrayOnset(isHoldTrial);
 
@@ -189,13 +203,6 @@ for i = 1:nLoc
             cueLoc == i & targetDimDelayDur < holdDurMid & isHoldBal);
     targetDimLongHoldBalByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
             cueLoc == i & targetDimDelayDur >= holdDurMid & isHoldBal);
-end
-
-%%
-fixationAndLeverTimes = [];
-if isfield(D, 'adjDirects') && ~isempty(D.adjDirects)
-    fprintf('Determining fixation and lever event times around each trial.\n');
-    fixationAndLeverTimes = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc);
 end
 
 %% check rt match across logs and event timing

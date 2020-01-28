@@ -3,6 +3,7 @@ function quickSpdfAllVisualEvents(ES, blockName, ...
 
 unitName = unitStruct.name;
 nTrials = numel(ES.UE.cueOnset);
+nValidTrials = numel(ES.cueOnset.validEventTimes);
 cols = lines(4);
 
 %%
@@ -14,7 +15,7 @@ set(gcf, 'renderer', 'painters');
 axBig = axes('Position', [0.04 0.045 0.92 0.91], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on')
 
-modTitle = sprintf('Gratings Attention Task: %s (%d trials)', unitName, nTrials);
+modTitle = sprintf('Gratings Attention Task: %s (%d/%d trials)', unitName, nValidTrials, nTrials);
 if isZeroDistractors
     modTitle = [modTitle ' (0 Distractors)'];
 end
@@ -387,7 +388,7 @@ text(axBig, -0.03, infoText2Top, {...
         sprintf('Blocks: %s', blockName), ...
         sprintf('Num Randomizations: %d', ES.numRandomizations), ...
         '', ...
-        sprintf('{\\color[rgb]{%f,%f,%f}InRF: %d} ({\\color[rgb]{%f,%f,%f}mn: %d}, {\\color[rgb]{%f,%f,%f}pk: %d}, {\\color[rgb]{%f,%f,%f}ext: %d})', ...
+        sprintf('{\\color[rgb]{%f,%f,%f}InRF: %d} ({\\color[rgb]{%f,%f,%f}mean: %d}, {\\color[rgb]{%f,%f,%f}max: %d}, {\\color[rgb]{%f,%f,%f}ext: %d})', ...
             cols(ES.inRFLoc,:), ES.inRFLoc, ...
             cols(ES.inRFLocByMean,:), ES.inRFLocByMean, ...
             cols(ES.inRFLocByMax,:), ES.inRFLocByMax, ...
@@ -452,7 +453,7 @@ text(axBig, -0.03, infoText2Top, {...
         textParams{:});
 
 %% save
-% if ~isempty(plotFileName)
-%     fprintf('\tSaving figure to file %s...\n', plotFileName);
-%     export_fig(plotFileName, '-nocrop');
-% end
+if ~isempty(plotFileName)
+    fprintf('\tSaving figure to file %s...\n', plotFileName);
+    export_fig(plotFileName, '-nocrop');
+end

@@ -9,16 +9,8 @@ function lfpRFMappingNewMode1(processedDataRootDir, dataDirRoot, muaDataDirRoot,
 % computationally intensive: shuffle trials
 % easier: shuffle conditions around map
 
-% sessionInd = 28;
-% channelsToLoad = 33:64;%1:32;
-% recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
-% processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';%'Y:/rly/gratings-task-analysis/processed_data/';
-% dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data';%'Z:/ryanly/McCartney/originals/';
-% muaDataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\M20170608';%'Y:/rly/simple-mua-detection/processed_data/';
-% rfMappingNewInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/rfMappingNewInfo.csv';
-
 %% setup and load data
-v = 11;
+v = 14;
 rfMappingNewMode = 1;
 tic;
 
@@ -26,9 +18,9 @@ fprintf('\n-------------------------------------------------------\n');
 fprintf('RF Mapping Analysis - LFP\n');
 fprintf('RF Mapping Mode: %d\n', rfMappingNewMode);
 fprintf('Session index: %d\n', sessionInd);
-fprintf('LFP Channel to Load: %d\n', channelsToLoad);
+fprintf('LFP Channels to Load: %d\n', channelsToLoad);
 fprintf('Recording info file name: %s\n', recordingInfoFileName);
-fprintf('RF Mapping New Info file name: %s\n', rfMappingNewInfoFileName);
+fprintf('RF Mapping info file name: %s\n', rfMappingNewInfoFileName);
 fprintf('Processed data root dir: %s\n', processedDataRootDir);
 fprintf('Data root dir: %s\n', dataDirRoot);
 fprintf('MUA data root dir: %s\n', muaDataDirRoot);
@@ -36,8 +28,7 @@ fprintf('Version: %d\n', v);
 fprintf('------------------------\n');
 
 %% input check
-% assert(numel(channelsToLoad) == 1);
-assert(numel(channelsToLoad) > 1);
+assert(numel(channelsToLoad) == 32);
 
 %% load recording information
 [R, D, processedDataDir, blockName] = loadRecordingData(...
@@ -47,19 +38,6 @@ sessionName = R.sessionName;
 areaName = R.areaName;
 
 plotFileNamePrefix = sprintf('%s-ind%d-%s-ch%d-ch%d-%s', sessionName, sessionInd, areaName, channelsToLoad([1 end]), blockName);
-
-%%
-doOutlierCheckPlot = 0;
-
-periFlashWindowOffset = [-0.25 0.3]; % ms around flash
-baselineWindowOffset = [-0.2 0]; % ms - 200ms minimum between flashes and before first flash
-expandedPlotWindowOffset = [-0.3 1.6]; % ms - 150ms minimum between flashes and before first flash
-
-% currently no outlier detection
-maxAbsYNonOutlier = 1000;%0.25;
-outlierMaxSDStep1 = 6;
-outlierMaxSDStep2 = 4.5;
-outlierCheckWindowOffset = periFlashWindowOffset; 
     
 %%
 trialStructs = loadjson(sprintf('%s/%s', R.rfmResultsRootDir, R.rfmResultsFileNames{1})); % for now, just the first file
@@ -89,7 +67,6 @@ end
 % flashStats(i,3) = gratingAngles(gratingAngleBinaryCode + 1);
 % flashStats(i,4:6) = [distBinaryCode + 1 polarAngleBinaryCode gratingAngleBinaryCode + 1];
 
-
 %%
 simultSignalTol = 0.001; % tolerance level for simultaneous signals --
 % if two events are within this number of  seconds from each other, they 
@@ -116,7 +93,7 @@ for i = 1:numel(flashEventTimes)
         end
     end
     if ~isFoundEvt
-        fprintf('huh... no event 9-16 (flash info) corresponding to event 6 (flash onset) for flash #%d\n', i);
+        fprintf('huh... no START event 9-16 (flash info) corresponding to event 6 (flash onset) for flash event #%d\n', i);
         continue;
     end
 
@@ -133,6 +110,7 @@ for i = 1:numel(flashEventTimes)
     assert(all(diff(allFoundEvtTimes) < simultSignalTol));
     flashOnset = allFoundEvtTimes(1);
     
+    % for confirmation:
     % there should be a second event (in events 9-16) marking the flash
     % offset, indicating the trial was not aborted mid-flash
     isFoundEndEvt = 0;
@@ -151,7 +129,7 @@ for i = 1:numel(flashEventTimes)
         end
     end
     if ~isFoundEndEvt
-        fprintf('huh huh... no event 9-16 (flash info) corresponding to event 6 (flash onset) for flash #%d\n', i);
+        fprintf('huh... no END event 9-16 (flash info) corresponding to event 6 (flash onset) for flash event #%d\n', i);
         continue;
     end
     allFoundEndEvtTimes = [allEventTimes{9}(foundEndEvts{9}); 
@@ -177,16 +155,33 @@ fprintf('Skipping %d flashes due to missing events.\n', sum(flashesToSkip));
 %% quick hack
 fpStimIDs = cell2mat({flashParams.stimId});
 fpCount = numel(fpStimIDs);
-% for i = numel(stimIDs):-1:1
-%     if stimIDs(i) == fpStimIDs(fpCount)
-%         fpCount = fpCount - 1;
-%         continue;
-%     end
-%     if stimIDs(i) == fpStimIDs(fpCount - 1)
-%         flashParams(fpCount) = [];
-%         fpCount = fpCount - 2;
-%     end
-% end
+
+nGoodStimIDs = numel(stimIDs(~flashesToSkip));
+if nGoodStimIDs < fpCount
+    warning('Extra entry/entries in flashParams (JSON) not found in EVT06');
+    stimIDsPlus = nan(fpCount,1);
+    stimIDsPlus(1:nGoodStimIDs) = stimIDs(~flashesToSkip);
+    [(1:fpCount)' stimIDsPlus fpStimIDs'] % print
+    
+    % remove extra entries in flashParams
+    for i = numel(stimIDs):-1:1
+        if stimIDs(i) == fpStimIDs(fpCount)
+            fpCount = fpCount - 1;
+            continue;
+        end
+        if stimIDs(i) == fpStimIDs(fpCount - 1)
+            flashParams(fpCount) = [];
+            fpCount = fpCount - 2;
+        end
+    end
+    fpStimIDs = cell2mat({flashParams.stimId});
+    fpCount = numel(fpStimIDs);
+
+elseif nGoodStimIDs > fpCount
+    fpStimIDsPlus = nan(nGoodStimIDs, 1);
+    fpStimIDsPlus(1:fpCount) = fpStimIDs;
+    [(1:nGoodStimIDs)' stimIDs(~flashesToSkip) fpStimIDsPlus] % print
+end
 
 fprintf('Found %d flash event times and %d flashParam stimIDs.\n', ...
         numel(flashEventTimes) - sum(flashesToSkip), fpCount);
@@ -203,11 +198,11 @@ nChannels = D.nLfpCh;
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
 hiCutoffFreq = 10;
-[channelDataCARNorm,channelDataNorm,commonAverageNorm,isNoisyChannel] = preprocessLfps(...
+[channelDataCARNorm,~,~,isNoisyChannel] = preprocessLfps(...
         D.adjLfpsClean, Fs, D.lfpNames, processedDataDir, plotFileNamePrefix, hiCutoffFreq, 1, v);
 D.adjLfpsClean = [];
 
-channelDataBIPNorm = channelDataCARNorm(2:end,:) - channelDataCARNorm(1:end-1,:);
+% channelDataBIPNorm = channelDataCARNorm(2:end,:) - channelDataCARNorm(1:end-1,:);
 % note channelDataCARNorm, channelDataNorm, and channelDataBIPNorm are HUGE
 
 outlierCheckWindowOffset = [-0.25 0.3];
@@ -221,36 +216,42 @@ polarAngles = cell2mat({flashParamsClean.polarAngle});
 diameters = cell2mat({flashParamsClean.diameter});
 assert(numel(flashEventsClean) == numel(flashParamsClean));
 
+distsToFixUnique = sort(unique(distsToFix));
+polarAnglesUnique = sort(unique(polarAngles));
+
 %% process RF for each channel
+periEventWindowOffset = [-0.25 0.25];
+analysisWindowOffset = [0.025 0.2];
+baselineWindowOffset = [-0.175 0];
+
+% set time vector and logical vector for baseline and analysis windows
+t = periEventWindowOffset(1):1/Fs:periEventWindowOffset(2)-1/Fs;
+analysisWindowLogical = getTimeLogicalWithTolerance(t, analysisWindowOffset);
+baselineWindowLogical = getTimeLogicalWithTolerance(t, baselineWindowOffset);
+
+nTime = numel(t);
+nEcc = numel(distsToFixUnique);
+nPolarAngle = numel(polarAnglesUnique);
+
 for j = 1:nChannels
 
 channelName = D.lfpNames{j};
 fprintf('Processing %s (%d/%d = %d%%)... \n', channelName, j, ...
         nChannels, round(j/nChannels*100));
 
-periEventWindowOffset = [-0.25 0.25];
-t = periEventWindowOffset(1):1/Fs:periEventWindowOffset(2)-1/Fs;
-nTime = numel(t);
+% initialize matrices
+averageFlashResponse = zeros(nEcc, nPolarAngle, nTime);
+averageFlashResponseNorm = zeros(nEcc, nPolarAngle, nTime);
+meanMeanBaselineResponse = nan(nEcc, nPolarAngle);
+sdMeanBaselineResponse = nan(nEcc, nPolarAngle);
+flashResponseMetric = zeros(nEcc, nPolarAngle);
+baselineResponseMetric = zeros(nEcc, nPolarAngle);
+trialCounts = zeros(nEcc, nPolarAngle);
 
-analysisWindowOffset = [0.025 0.2];
-analysisWindowLogical = t >= analysisWindowOffset(1) & t < analysisWindowOffset(2); % TODO use getTimeLogicalWithTol fcn
-
-baselineWindowOffset = [-0.175 0]; % window size should be the same as above
-baselineWindowLogical = t >= baselineWindowOffset(1) & t < baselineWindowOffset(2);
-
-distsToFixUnique = sort(unique(distsToFix));
-polarAnglesUnique = sort(unique(polarAngles));
-
-averageFlashResponse = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), nTime);
-averageFlashResponseNorm = zeros(numel(distsToFixUnique), numel(polarAnglesUnique), nTime);
-meanMeanBaselineResponse = nan(numel(distsToFixUnique), numel(polarAnglesUnique));
-sdMeanBaselineResponse = nan(numel(distsToFixUnique), numel(polarAnglesUnique));
-flashResponseMetric = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
-baselineResponseMetric = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
-trialCounts = zeros(numel(distsToFixUnique), numel(polarAnglesUnique));
-
-for k = 1:numel(distsToFixUnique)
-    for l = 1:numel(polarAnglesUnique)
+for k = 1:nEcc
+    for l = 1:nPolarAngle
+        % pull all flash events with this eccentricity and polar 
+        % angle, regardless of orientation
         theseFlashOnsets = flashEventsClean(distsToFix == distsToFixUnique(k) & polarAngles == polarAnglesUnique(l));
         trialCounts(k,l) = numel(theseFlashOnsets);
         if isempty(theseFlashOnsets)
@@ -275,7 +276,8 @@ for k = 1:numel(distsToFixUnique)
         % per-condition z-score normalization of LFP
         averageFlashResponseNorm(k,l,:) = (averageFlashResponse(k,l,:) - meanMeanBaselineResponse(k,l)) / sdMeanBaselineResponse(k,l);
         
-        % response metric: max - min in window
+        % RESPONSE METRIC: max - min in window
+        % alts: mean(abs(x)), power(x) at some freq
         flashResponseMetric(k,l) = max(averageFlashResponseNorm(k,l,analysisWindowLogical)) - ...
                 min(averageFlashResponseNorm(k,l,analysisWindowLogical));
         baselineResponseMetric(k,l) = max(averageFlashResponseNorm(k,l,baselineWindowLogical)) - ...
@@ -283,6 +285,7 @@ for k = 1:numel(distsToFixUnique)
     end
 end
 
+%% extract all raw signals regardless of flash parameters
 rawSignalsAll = nan(numel(flashEventsClean), nTime);
 % convert flash time to lfp variable index
 % slightly more accurate than createdatamatc b/c of rounding after offset
@@ -312,31 +315,22 @@ titleParams = {'Interpreter', 'None', 'FontWeight', 'bold'};
 title(modTitle, 'FontSize', 14, titleParams{:});
 
 %% location params
-waveformW = 0.1;
-rasterByTimeW = 0.1;
-rawW = 0.11;
+exampleLfpsByTimeW = 0.1;
+meanLfpsGroupedW = 0.11;
 heatW = 0.6;
-% miniHeatW = 0.18;
-waveformH = 0.15;
-rasterByTimeH = 0.35;
-rawH = 0.85;
+exampleLfpsByTimeH = 0.5;
+meanLfpsGroupedH = 0.85;
 heatH = 0.85;
-% miniHeatH = 0.385;
 
-waveformLeft1 = 0.05;
-rasterByTimeLeft1 = waveformLeft1;
-rawLeft1 = rasterByTimeLeft1 + rasterByTimeW + 0.03;
-rawLeft2 = rawLeft1 + rawW + 0.02;
-heatLeft = rawLeft2 + rawW;
-% miniHeatLeft1 = heatLeft + heatW + 0.005;
-% miniHeatLeft2 = miniHeatLeft1 + miniHeatW + 0.01;
+exampleLfpsByTimeLeft1 = 0.05;
+meanLfpsGroupedLeft1 = exampleLfpsByTimeLeft1 + exampleLfpsByTimeW + 0.03;
+meanLfpsGroupedLeft2 = meanLfpsGroupedLeft1 + meanLfpsGroupedW + 0.02;
+heatLeft = meanLfpsGroupedLeft2 + meanLfpsGroupedW;
 btm = 0.07;
-rasterByTimeBtm = btm + 0.25;
-waveformBtm = rasterByTimeBtm + rasterByTimeH + 0.1;
-% miniHeatBtm2 = btm + miniHeatH + 0.08;
+exampleLfpsByTimeBtm = btm + 0.25;
 
-%% plot a select subset of trials regardless of condition, offset
-axes('Position', [rasterByTimeLeft1 rasterByTimeBtm rasterByTimeW rasterByTimeH]); 
+%% plot example raw data around flash onset for N flashes
+axes('Position', [exampleLfpsByTimeLeft1 exampleLfpsByTimeBtm exampleLfpsByTimeW exampleLfpsByTimeH]); 
 hold on;
 
 nRawToShow = 20;
@@ -358,69 +352,73 @@ ylim(yBounds);
 set(gca, 'YDir', 'reverse');
 xlabel('Time from flash onset (s)'); 
 ylabel('Flash number');
-titleH = title('Example LFPs by time', 'Interpreter', 'None');
-set(gca, 'Layer', 'top');
-
+title('Example LFPs by time');
 
 %% info
 textParams = {'Units', 'normalized', 'FontSize', 8, 'Interpreter', 'none'};
 text(axBig, -0.03, 0.11, {''}, ...
         textParams{:});
 
-%% plot b
-axes('Position', [rawLeft1 btm rawW rawH]); 
-hold on;
-channelSep = 1;
-groupSep = (numel(polarAnglesUnique) - 1) / (numel(distsToFixUnique) - 1) * 2;
-count1 = 1;
-yScale = 0.25;
-cols = lines(numel(polarAnglesUnique));
-for k = 1:numel(distsToFixUnique)
-    for l = 1:numel(polarAnglesUnique)
-        count1 = count1 + channelSep;
-        plot(t, squeeze(averageFlashResponseNorm(k,l,:))*yScale + count1, 'Color', cols(l,:));
+%% plot mean evoked potentials organized by eccentricity
+if nEcc > 1
+    axes('Position', [meanLfpsGroupedLeft1 btm meanLfpsGroupedW meanLfpsGroupedH]); 
+    hold on;
+    channelSep = 1;
+    groupSep = (nPolarAngle - 1) / (nEcc - 1) * 2;
+    count1 = 1;
+    yScale = 0.25;
+    cols = lines(nPolarAngle);
+    for k = 1:nEcc
+        for l = 1:nPolarAngle
+            count1 = count1 + channelSep;
+            plot(t, squeeze(averageFlashResponseNorm(k,l,:))*yScale + count1, 'Color', cols(l,:));
+        end
+        if k < nEcc
+            count1 = count1 + groupSep;
+        end
     end
-    if k < numel(distsToFixUnique)
-        count1 = count1 + groupSep;
-    end
+    count1 = count1 + 2;
+    plot([0 0], [0 count1], '-', 'Color', [0.3 0.3 0.3]);
+    plot([analysisWindowOffset(1) analysisWindowOffset(1)], [0 count1], '-', 'Color', [0 0.7 0]);
+    plot([analysisWindowOffset(2) analysisWindowOffset(2)], [0 count1], '-', 'Color', [0 0.7 0]);
+    xlim([-0.1 0.25]);
+    ylim([0 count1]);
+    set(gca, 'YTickLabel', {});
+    xlabel('Time from flash onset (s)');
+    title('VEP by eccentricity');
 end
-count1 = count1 + 2;
-plot([0 0], [0 count1], '-', 'Color', [0.3 0.3 0.3]);
-plot([analysisWindowOffset(1) analysisWindowOffset(1)], [0 count1], '-', 'Color', [0 0.7 0]);
-plot([analysisWindowOffset(2) analysisWindowOffset(2)], [0 count1], '-', 'Color', [0 0.7 0]);
-xlim([-0.1 0.25]);
-ylim([0 count1]);
-set(gca, 'YTickLabel', {});
-xlabel('Time from flash onset (s)');
-title('VEP by eccentricity');
 
-%%
-axes('Position', [rawLeft2 btm rawW rawH]); 
-hold on;
-channelSep = 1;
-groupSep = 2;
-count2 = 1;
-yScale = 0.25;
-cols = lines(numel(polarAnglesUnique));
-for l = 1:numel(polarAnglesUnique)
-    for k = 1:numel(distsToFixUnique)
-        count2 = count2 + channelSep;
-        plot(t, squeeze(averageFlashResponseNorm(k,l,:))*yScale + count2, 'Color', cols(l,:));
+%% plot mean evoked potentials organized by polar angle
+if nPolarAngle > 1
+    axes('Position', [meanLfpsGroupedLeft2 btm meanLfpsGroupedW meanLfpsGroupedH]); 
+    hold on;
+    channelSep = 1;
+    groupSep = 2;
+    count2 = 1;
+    yScale = 0.25;
+    cols = lines(nPolarAngle);
+    for l = 1:nPolarAngle
+        for k = 1:nEcc
+            count2 = count2 + channelSep;
+            plot(t, squeeze(averageFlashResponseNorm(k,l,:))*yScale + count2, 'Color', cols(l,:));
+        end
+        if l < nPolarAngle
+            count2 = count2 + groupSep;
+        end
     end
-    if l < numel(polarAnglesUnique)
-        count2 = count2 + groupSep;
+    count2 = count2 + 2;
+    plot([0 0], [0 count2], '-', 'Color', [0.3 0.3 0.3]);
+    plot([analysisWindowOffset(1) analysisWindowOffset(1)], [0 count2], '-', 'Color', [0 0.7 0]);
+    plot([analysisWindowOffset(2) analysisWindowOffset(2)], [0 count2], '-', 'Color', [0 0.7 0]);
+    xlim([-0.1 0.25]);
+    ylim([0 count2]);
+    set(gca, 'YTickLabel', {});
+    % xlabel('Time from flash onset (s)');
+    title('VEP by polar angle');
+    if nEcc > 1
+        assert(count1 == count2); % i.e. the y axes are the same for the two raw plots
     end
 end
-count2 = count2 + 2;
-plot([0 0], [0 count2], '-', 'Color', [0.3 0.3 0.3]);
-plot([analysisWindowOffset(1) analysisWindowOffset(1)], [0 count2], '-', 'Color', [0 0.7 0]);
-plot([analysisWindowOffset(2) analysisWindowOffset(2)], [0 count2], '-', 'Color', [0 0.7 0]);
-xlim([-0.1 0.25]);
-ylim([0 count2]);
-set(gca, 'YTickLabel', {});
-% xlabel('Time from flash onset (s)');
-title('VEP by polar angle');
-assert(count1 == count2); % i.e. the y axes are the same for the two raw plots
 
 %% make heatmap
 mapScale = 1/10;
@@ -447,8 +445,8 @@ threshold = 0;
 thresholdName = 'Response == Baseline';
 
 gaussianFilterExtent = mapDim;
-gaussianFiltersByDistToFix = cell(numel(distsToFixUnique), 1);
-for k = 1:numel(distsToFixUnique)
+gaussianFiltersByDistToFix = cell(nEcc, 1);
+for k = 1:nEcc
     % maintain separate maps for each distsToFix because
     % each distToFix has a unique diameter
     matchingDiameters = diameters(distsToFix == distsToFixUnique(k));
@@ -481,8 +479,9 @@ for k = 1:numel(distsToFixUnique)
 %     figure; imagesc(noisyEdgeUniformFilter3); colorbar;
 %     figure; plot(noisyEdgeUniformFilter3(floor(size(noisyEdgeUniformFilter3, 1)/2)+1,:))
 end
-for k = 1:numel(distsToFixUnique)
-    for l = 1:numel(polarAnglesUnique)
+
+for k = 1:nEcc
+    for l = 1:nPolarAngle
         if trialCounts(k,l) > 0
             flashX = distsToFixUnique(k) * cos(polarAnglesUnique(l));
             flashY = distsToFixUnique(k) * sin(polarAnglesUnique(l));
@@ -505,11 +504,11 @@ nRandomizations = 2;
 nullDistPeakSmoothMapValues = nan(nRandomizations, 1);
 fprintf('Generating null distribution...\n');
 for m = 1:nRandomizations
-    randpermk = randperm(numel(distsToFixUnique));
-    randperml = randperm(numel(polarAnglesUnique));
+    randpermk = randperm(nEcc);
+    randperml = randperm(nPolarAngle);
     rfmapSmoothAllRand = zeros(mapDim, mapDim);
-    for k = 1:numel(distsToFixUnique)
-        for l = 1:numel(polarAnglesUnique)
+    for k = 1:nEcc
+        for l = 1:nPolarAngle
             if trialCounts(k,l) > 0
                 flashX = distsToFixUnique(randpermk(k)) * cos(polarAnglesUnique(randperml(l)));
                 flashY = distsToFixUnique(randpermk(k)) * sin(polarAnglesUnique(randperml(l)));
@@ -530,12 +529,11 @@ end
 fprintf('\tP-value of seeing peak = %0.2f given null distribution (N=%d): %0.3f\n', ...
         peakSmoothMapValue, nRandomizations, sum(nullDistPeakSmoothMapValues > peakSmoothMapValue) / nRandomizations);
 
-%% plot smoothed heatmap for all and individual orientations
-
-% start with all orientations together
+%% plot smoothed heatmap for all grating orientations combined
 heatAx = axes('Position', [heatLeft btm heatW heatH]);
 hold on;
-plotRfMapSmooth(rfmapSmoothAll, rfmapCount, numPixelsPerDegree, mapScale, mapDim, mapXOffset, mapYOffset);
+plotRfMapSmooth(rfmapSmoothAll, rfmapCount, numPixelsPerDegree, mapScale);
+
 title(sprintf('VEP Heatmap (%d-%d ms after flash onset; all orientations)', round(analysisWindowOffset * 1000)), 'Interpreter', 'none');
 textParams = {'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]};
 text(0.02, 0.1, sprintf('Threshold: %s', thresholdName), textParams{:});
@@ -543,15 +541,18 @@ text(0.02, 0.08, sprintf('Baseline diff, SD across cond: %0.2f', sdBaselineRespo
 text(0.02, 0.06, sprintf('Response diff norm, mean across cond: %0.2f', meanAllFlashResponsesNorm), textParams{:});
 text(0.02, 0.04, sprintf('Response diff norm, SD across cond: %0.2f', sdAllFlashResponsesNorm), textParams{:});
 text(0.02, 0.02, sprintf('Max response diff norm: %0.2f', maxAllFlashResponsesNorm), textParams{:});
-axis(heatAx, 'square'); % shouldn't do much if i set the dims properly
+axis(heatAx, 'square'); % shouldn't do much if dims were set properly
 colorbar;
-caxis([0 30]);%6*sdAllFlashResponses]); 
 
-%%
+% set heatmap scale
+caxis([0 35]);%6*sdAllFlashResponses]); 
+
+%% if channel has outlier SD, make background red
 if isNoisyChannel(j)
-    set(gcf, 'Color', [1 0.5 0.5]); % make background red
+    set(gcf, 'Color', [1 0.5 0.5]);
 end
 
+%% save
 plotFileName = sprintf('%s/%s-%s-rfm_mode%d_v%d.png', processedDataDir, channelName, blockName, rfMappingNewMode, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');

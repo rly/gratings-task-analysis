@@ -6,9 +6,10 @@ function [cueOnsetClean,trialsToKeep] = removeHandStartedTrials(D, cueOnset, fir
 % look at voltages -1.0 seconds to -0.5 seconds from first juice event
 % should not be contaminated with fixation breaks or lever releases
 direct3LockedToJuice = createdatamatc(D.adjDirects(3,:)', firstJuiceEvent, D.directFs, [1 -0.5]);
+direct3LockedToJuice(direct3LockedToJuice < 0) = NaN;
 
-leverPressedVoltage = mean(direct3LockedToJuice(:));
-rangeLeverPressedVoltage = max(4, 15*std(direct3LockedToJuice(:))); % could make smaller or bigger
+leverPressedVoltage = nanmean(direct3LockedToJuice(:));
+rangeLeverPressedVoltage = max(4, 15*nanstd(direct3LockedToJuice(:))); % could make smaller or bigger
 
 directFs = D.directFs;
 removeEdgeTime = 0.5;
@@ -31,10 +32,10 @@ for i = 1:numel(leverPressInds)
 end
 
 leverPressTimes = leverPressInds(~badLeverPress) / directFs; % assume starting at 1
-    
+
 %%
 isLeverPressTimesFirstPreCue = false(size(leverPressTimes));
-maxLeverPressTimesToCueOnset = 5;
+maxLeverPressTimesToCueOnset = 10;
 minLeverPressTimesToCueOnset = 0.35;
 trialsToKeep = true(size(cueOnset));
 for i = 1:numel(cueOnset)

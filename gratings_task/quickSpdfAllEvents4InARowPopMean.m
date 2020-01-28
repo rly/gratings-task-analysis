@@ -49,7 +49,7 @@ spdfArrayOnsetLeft = spdfCueOnsetLeft + spdfW + 0.015;
 spdfTargetDimLeft = spdfArrayOnsetLeft + spdfW + 0.015;
 spdfExitFixationLeft = spdfTargetDimLeft + spdfW + 0.015;
 
-btm = 0.16;
+btm = 0.18;
 
 %% spdf for cue onset
 axCueOnsetSpdf = axes('Position', [spdfCueOnsetLeft btm spdfW spdfH]); 
@@ -78,7 +78,7 @@ if isShowLabels
 end
 set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
-set(gca, 'FontName', 'Calibri');
+set(gca, 'FontName', 'Arial');
 set(gca, 'LineWidth', 2);
 
 %% spdf for array onset
@@ -108,7 +108,7 @@ if isShowLabels
 end
 set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
-set(gca, 'FontName', 'Calibri');
+set(gca, 'FontName', 'Arial');
 set(gca, 'YTickLabel', []);
 set(gca, 'LineWidth', 2);
 
@@ -140,7 +140,7 @@ if isShowLabels
 end
 set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
-set(gca, 'FontName', 'Calibri');
+set(gca, 'FontName', 'Arial');
 set(gca, 'YTickLabel', []);
 set(gca, 'LineWidth', 2);
 
@@ -172,7 +172,7 @@ if isShowLabels
 end
 set(gca, 'FontSize', 16);
 set(gca, 'XTick', -0.5:0.25:0.5);
-set(gca, 'FontName', 'Calibri');
+set(gca, 'FontName', 'Arial');
 set(gca, 'YTickLabel', []);
 set(gca, 'LineWidth', 2);
 

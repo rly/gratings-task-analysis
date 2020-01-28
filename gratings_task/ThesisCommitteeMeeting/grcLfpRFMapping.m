@@ -1,16 +1,33 @@
-function lfpRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad)
+% function lfpRFMapping(processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, isEighthsOnly)
 % LFP RF Mapping, all channels on a probe
 % can't really do one channel at a time because of Common Average
 % Referencing
 % for a couple of sessions and blocks, I used big stimuli in eighths of 
 % the screen to do RF mapping 
 
-%%
-% TODO look into where isEighthsOnly should be defined for these sessions
-isEighthsOnly = false;
-
 %% setup and load data
-v = 14;
+clear;
+v = 12;
+sessionName = 'M20170201';
+sessionInd = 3;
+processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
+dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\';
+muaDataDirRoot = ['C:\Users\Ryan\Documents\MATLAB\gratings-task-data\' sessionName];
+suaMuaDataDirRoot = muaDataDirRoot;
+recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+channelsToLoad = 1:32;
+muaChannelsToLoad = 1:32;
+lfpChannelsToLoad = 1:32;
+lfpChannels = lfpChannelsToLoad;
+isZeroDistractors = 0;
+numRandomizations = 2;
+isLoadSortedSua = 0;
+isLoadMua = 1;
+isEighthsOnly = 0;
+
+channelsToProcess = 26:32;
+outputDir = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-analysis\processed_data\GRC';
+
 tic;
 
 fprintf('\n-------------------------------------------------------\n');
@@ -36,7 +53,7 @@ else
 end
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, 'LFP_RFM', 0, 1, 1, 0);
+        sessionInd, channelsToLoad, taskName, 'LFP_RFM', isLoadSortedSua, isLoadMua, 1);
 sessionName = R.sessionName;
 areaName = R.areaName;
 
@@ -85,11 +102,11 @@ nChannels = D.nLfpCh;
 D.adjLfpsClean = interpolateLfpOverSpikeTimes(D.adjLfps, channelsToLoad, Fs, D.allMUAStructs);
 
 hiCutoffFreq = 10;
-[channelDataCARNorm,~,~,isNoisyChannel] = preprocessLfps(...
+[channelDataCARNorm,channelDataNorm,commonAverageNorm,isNoisyChannel] = preprocessLfps(...
         D.adjLfpsClean, Fs, D.lfpNames, processedDataDir, plotFileNamePrefix, hiCutoffFreq, 1, v);
 D.adjLfpsClean = [];
 
-% channelDataBIPNorm = channelDataCARNorm(2:end,:) - channelDataCARNorm(1:end-1,:);
+channelDataBIPNorm = channelDataCARNorm(2:end,:) - channelDataCARNorm(1:end-1,:);
 % note channelDataCARNorm, channelDataNorm, and channelDataBIPNorm are HUGE
 
 outlierCheckWindowOffset = [-0.25 0.3];
@@ -101,7 +118,20 @@ flashParamsClean = flashParams(~isEventOutlier,:);
 assert(numel(flashEventsClean) == size(flashParamsClean, 1));
 
 %% process RF for each channel
-for j = 1:nChannels
+thresh = 8;
+
+f = figure_tr_inch(3.5, 3.5); 
+clf;
+set(gcf, 'Color', 'white');
+set(gcf, 'renderer', 'painters');
+
+heatAx = axes('Position', [0.08 0.08 0.84 0.84]); 
+hold on;
+
+cols = hsv(numel(channelsToProcess));
+
+for i = 1:numel(channelsToProcess)
+    j = channelsToProcess(i);
 
 channelName = D.lfpNames{j};
 fprintf('Processing %s (%d/%d = %d%%)... \n', channelName, j, ...
@@ -198,143 +228,8 @@ for n = 1:numel(flashEventsClean)
     rawSignals(n,:) = channelDataCARNorm(j,startIndices(n):endIndices(n));
 end
 
-%%
-% figure TODOs
-% add separate colorbars for big and for mini, or use same color axis?
-% merge x axis for raw data
-% label groups of raw data
-% y tick off
-f = figure_tr_inch(13, 7.5); clf
-set(gcf, 'Color', 'white');
-set(gcf, 'renderer', 'painters');
-
-%% make main title
-axBig = axes('Position', [0.04 0.045 0.92 0.91], 'Visible', 'off');
-set(get(axBig,'Title'), 'Visible', 'on')
-
-modTitle = sprintf('%s (%d flashes)', channelName, nFlashes);
-titleParams = {'Interpreter', 'None', 'FontWeight', 'bold'};
-title(modTitle, 'FontSize', 14, titleParams{:});
-
-%% location params
-waveformW = 0.1;
-rasterByTimeW = 0.1;
-rawW = 0.11;
-heatW = 0.6;
-% miniHeatW = 0.18;
-waveformH = 0.15;
-rasterByTimeH = 0.35;
-rawH = 0.85;
-heatH = 0.85;
-% miniHeatH = 0.385;
-
-waveformLeft1 = 0.05;
-rasterByTimeLeft1 = waveformLeft1;
-rawLeft1 = rasterByTimeLeft1 + rasterByTimeW + 0.03;
-rawLeft2 = rawLeft1 + rawW + 0.02;
-heatLeft = rawLeft2 + rawW;
-% miniHeatLeft1 = heatLeft + heatW + 0.005;
-% miniHeatLeft2 = miniHeatLeft1 + miniHeatW + 0.01;
-btm = 0.07;
-rasterByTimeBtm = btm + 0.25;
-waveformBtm = rasterByTimeBtm + rasterByTimeH + 0.1;
-% miniHeatBtm2 = btm + miniHeatH + 0.08;
-
-%%
-axes('Position', [rasterByTimeLeft1 rasterByTimeBtm rasterByTimeW rasterByTimeH]); 
-hold on;
-
-nRawToShow = 20;
-indRawToShow = round(linspace(1, size(rawSignals, 1), nRawToShow));
-rasterY = 0;
-yScale = 0.5;
-lineParams = {'Color', [0 0 0], 'LineWidth', 1};
-for k = 1:numel(indRawToShow)
-    rasterY = rasterY + 1;
-    plot(t, rawSignals(indRawToShow(k),:)*yScale + rasterY, lineParams{:});
-end
-
-yBounds = [0 rasterY+1];
-plot([0 0], yBounds, 'k');
-plot([analysisWindowOffset(1) analysisWindowOffset(1)], yBounds, '-', 'Color', [0 0.7 0]);
-plot([analysisWindowOffset(2) analysisWindowOffset(2)], yBounds, '-', 'Color', [0 0.7 0]);
-xlim([-0.1 0.25]);
-ylim(yBounds);
-set(gca, 'YDir', 'reverse');
-xlabel('Time from flash onset (s)'); 
-ylabel('Flash number');
-titleH = title('Example LFPs by time', 'Interpreter', 'None');
-set(gca, 'Layer', 'top');
-
-
-%% info
-textParams = {'Units', 'normalized', 'FontSize', 8, 'Interpreter', 'none'};
-text(axBig, -0.03, 0.11, {''}, ...
-        textParams{:});
-
-%% plot mean evoked potentials organized by eccentricity
-if numel(distsToFixUnique) > 1
-    axes('Position', [rawLeft1 btm rawW rawH]); 
-    hold on;
-    channelSep = 1;
-    groupSep = (numel(polarAnglesUnique) - 1) / (numel(distsToFixUnique) - 1) * 2;
-    count1 = 1;
-    yScale = 1;
-    cols = lines(numel(polarAnglesUnique));
-    for k = 1:numel(distsToFixUnique)
-        for l = 1:numel(polarAnglesUnique)
-            count1 = count1 + channelSep;
-            plot(t, squeeze(averageFlashResponse(k,l,m2,:))*yScale + count1, 'Color', cols(l,:));
-        end
-        if numel(polarAnglesUnique) > 1 && k < numel(distsToFixUnique)
-            count1 = count1 + groupSep;
-        end
-    end
-    count1 = count1 + 2;
-    plot([0 0], [0 count1], '-', 'Color', [0.3 0.3 0.3]);
-    plot([analysisWindowOffset(1) analysisWindowOffset(1)], [0 count1], '-', 'Color', [0 0.7 0]);
-    plot([analysisWindowOffset(2) analysisWindowOffset(2)], [0 count1], '-', 'Color', [0 0.7 0]);
-    xlim([-0.1 0.25]);
-    ylim([0 count1]);
-    set(gca, 'YTickLabel', {});
-    xlabel('Time from flash onset (s)');
-    title('VEP by eccentricity');
-end
-
-%% plot mean evoked potentials organized by polar angle
-if numel(polarAnglesUnique) > 1
-    axes('Position', [rawLeft2 btm rawW rawH]); 
-    hold on;
-    channelSep = 1;
-    groupSep = 2;
-    count2 = 1;
-    yScale = 1;
-    cols = lines(numel(polarAnglesUnique));
-    for l = 1:numel(polarAnglesUnique)
-        for k = 1:numel(distsToFixUnique)
-            count2 = count2 + channelSep;
-            plot(t, squeeze(averageFlashResponse(k,l,m2,:))*yScale + count2, 'Color', cols(l,:));
-        end
-        if numel(distsToFixUnique) > 1 && l < numel(polarAnglesUnique)
-            count2 = count2 + groupSep;
-        end
-    end
-    count2 = count2 + 2;
-    plot([0 0], [0 count2], '-', 'Color', [0.3 0.3 0.3]);
-    plot([analysisWindowOffset(1) analysisWindowOffset(1)], [0 count2], '-', 'Color', [0 0.7 0]);
-    plot([analysisWindowOffset(2) analysisWindowOffset(2)], [0 count2], '-', 'Color', [0 0.7 0]);
-    xlim([-0.1 0.25]);
-    ylim([0 count2]);
-    set(gca, 'YTickLabel', {});
-    % xlabel('Time from flash onset (s)');
-    title('VEP by polar angle');
-    if numel(distsToFixUnique) > 1
-        assert(count1 == count2); % i.e. the y axes are the same for the two raw plots
-    end
-end
-
 %% make heatmap
-mapScale = 1/10;
+mapScale = 1/2;
 mapDim = round(800 * mapScale) + 1; % x and y: -400 to 400 
 rfmapByOri = zeros(numel(distsToFixUnique), numel(gratingAnglesUnique)+1, mapDim, mapDim); % extra dim uses all trials
 rfmapByOriCount = zeros(numel(distsToFixUnique), numel(gratingAnglesUnique)+1, mapDim, mapDim);
@@ -396,9 +291,9 @@ for k = 1:numel(distsToFixUnique)
         rfmapByOriCount(k,m2,mapX,mapY) = trialCounts(k,l,m2); 
     end
     % maintain separate smooth maps for each distsToFix
-    for m = 1:numel(gratingAnglesUnique) + 1
-        rfmapSmoothByOri(k,m,:,:) = imfilter(squeeze(rfmapByOri(k,m,:,:)), gaussianFilter, 'replicate');
-    end
+%     for m = 1:numel(gratingAnglesUnique) + 1
+        rfmapSmoothByOri(k,m2,:,:) = imfilter(squeeze(rfmapByOri(k,m2,:,:)), gaussianFilter, 'replicate');
+%     end
 end
 
 % rfmapAllOri = squeeze(sum(rfmapByOri(:,m2,:,:), 1));
@@ -408,52 +303,47 @@ rfmapAllOriCount = squeeze(sum(rfmapByOriCount(:,m2,:,:), 1));
 % rfmapByOriCountAll = squeeze(sum(rfmapByOriCount, 1)); % sum over the different smooth maps for each distsToFix
 rfmapAllSmoothByOriAll = squeeze(sum(rfmapSmoothByOri(:,m2,:,:), 1));
 
-%%
-% flatFilterSize = 4;
-% flatFilter = ones(flatFilterSize, flatFilterSize);
-% figure;
-% hold on;
-% rfmapSmooth = conv2(rfmapAllOri, flatFilter, 'same');
-% imagesc(((1:mapDim) - mapXOffset) / numPixelsPerDegree, ...
-%         ((1:mapDim) - mapYOffset) / numPixelsPerDegree, rfmapSmooth');
-% xlim(([1 mapDim] - mapXOffset) / numPixelsPerDegree);
-% ylim(([1 mapDim] - mapYOffset) / numPixelsPerDegree);
-% xlabel('Degrees horizontal');
-% ylabel('Degrees vertical');
-% colorbar;
-% 
-% title(sprintf('%s - Response Heatmap (20-220ms after flash onset)', spkVarName), 'Interpreter', 'none');
-
 %% plot smoothed heatmap for all and individual orientations
 
 % start with all orientations together
-heatAx = axes('Position', [heatLeft btm heatW heatH]); 
 hold on;
-plotRfMapSmooth(rfmapAllSmoothByOriAll, rfmapAllOriCount, numPixelsPerDegree, mapScale, mapDim, mapXOffset, mapYOffset);
-title(sprintf('VEP Heatmap (%d-%d ms after flash onset; all orientations)', round(analysisWindowOffset * 1000)), 'Interpreter', 'none');
-textParams = {'Units', 'normalized', 'FontSize', 8, 'Color', [1 1 1]};
-text(0.02, 0.1, sprintf('Threshold: %s', thresholdName), textParams{:});
-text(0.02, 0.08, sprintf('Baseline diff, SD across cond: %0.2f', sdBaselineResponses), textParams{:});
-text(0.02, 0.06, sprintf('Response diff norm, mean across cond: %0.2f', meanAllFlashResponsesNorm), textParams{:});
-text(0.02, 0.04, sprintf('Response diff norm, SD across cond: %0.2f', sdAllFlashResponsesNorm), textParams{:});
-text(0.02, 0.02, sprintf('Max response diff norm: %0.2f', maxAllFlashResponsesNorm), textParams{:});
-axis(heatAx, 'square'); % shouldn't do much if i set the dims properly
-colorbar;
-
-if hiCutoffFreq == 10
-    caxis([0 25]);
-else
-    caxis([0 15]); % heatmap scale
+% plotRfMapSmooth(rfmapAllSmoothByOriAll, rfmapAllOriCount, numPixelsPerDegree, mapScale, mapDim, mapXOffset, mapYOffset);
+threshGroups = bwlabel(rfmapAllSmoothByOriAll > thresh, 4);
+threshBoundaries = bwboundaries(threshGroups);
+x = ((1:mapDim) - mapXOffset) / numPixelsPerDegree / mapScale;
+y = ((1:mapDim) - mapYOffset) / numPixelsPerDegree / mapScale;
+for k = 1:length(threshBoundaries)
+   boundary = threshBoundaries{k};
+   plot(x(boundary(:,1)), y(boundary(:,2)), 'Color', cols(i,:), 'LineWidth', 2)
 end
 
-%%
-if isNoisyChannel(j)
-    set(gcf, 'Color', [1 0.5 0.5]); % make background red
+xlim(([1 mapDim] - mapXOffset) / numPixelsPerDegree / mapScale);
+ylim(([1 mapDim] - mapYOffset) / numPixelsPerDegree / mapScale);
+
+set(gca, 'XTickLabel', []);
+set(gca, 'yTickLabel', []);
+set(gca, 'box', 'on');
+set(gca, 'LineWidth', 1);
+set(gca, 'Color', 0.5*ones(3, 1));
+axis(gca, 'square')
+drawnow;
+
 end
 
-plotFileName = sprintf('%s/%s-%s-v%d.png', processedDataDir, channelName, blockName, v);
+% draw sampled points
+[rfmapX, rfmapY] = find(rfmapAllOriCount > 0);
+h = plot((rfmapX - mapXOffset) / numPixelsPerDegree / mapScale, ...
+        (rfmapY - mapYOffset) / numPixelsPerDegree / mapScale, ...
+        '.', 'Color', [0 0 0], 'MarkerSize', 10);
+uistack(h, 'bottom');
+
+% draw fixation point
+fixW = 1.8;
+fixH = fixW;
+rectangle('Position', [-fixW/2 -fixH/2 fixW fixH], 'FaceColor', [1 1 1], 'EdgeColor', [1 1 1]);
+
+
+%% save
+plotFileName = sprintf('%s/%s-ch%d-ch%d-%s-v%d.png', outputDir, sessionName, channelsToProcess([1 end]), blockName, v);
 fprintf('Saving to %s...\n', plotFileName);
 export_fig(plotFileName, '-nocrop');
-close;
-
-end

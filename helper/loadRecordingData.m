@@ -1,6 +1,7 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, rfMappingNewInfoFileName, rfMappingNewMode, isLoadAllSpikes)
+        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, ...
+        rfMappingNewInfoFileName, rfMappingNewMode, isLoadAllSpikes)
 % loads MUA data and eyetracking/lever data into D struct and recording
 % metadata into R struct
 
@@ -17,7 +18,12 @@ pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
 
 %% load recording data
 isLoadSpkc = 0;
-isLoadDirect = 1;
+
+if strcmp(taskName, 'GRATINGS') || strcmp(taskName, 'GRATINGS_0D')
+    isLoadDirect = 1;
+else
+    isLoadDirect = 0;
+end
 
 if ~isempty(channelsToLoad)
     R.spikeChannelsToLoad = channelsToLoad;
@@ -36,7 +42,8 @@ end
 
 tic;
 if isLoadMetaDataOnly
-    R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
+    R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', ...
+            processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
     fprintf('Loading metadata %s...\n', R.metaDataFilePath);
     MD = load(R.metaDataFilePath);
     D = MD.MD;
@@ -48,6 +55,7 @@ end
 fprintf('... done (%0.2f s).\n', toc);
 
 %% get block indices
+fprintf('%d block names specified, %d entries in block start times.\n', numel(R.blockNames), numel(D.blockStartTimes));
 assert(numel(R.blockNames) == numel(D.blockStartTimes));
 if strcmp(taskName, 'GRATINGS')
     R.blockIndices = R.gratingsTask3DIndices;
