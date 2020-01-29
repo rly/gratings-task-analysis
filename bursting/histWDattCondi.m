@@ -1,5 +1,7 @@
-function [percentageBurst, percBurstWMAttCT, cueTargetAttDiff, percBurstWMAttCA, cueArrayAttDiff] = histWMattCondi(spikeTimes2use, startTime, endTime, UE, binWidth4hist,firstSpikeTimes, structName, plotOutput)
-
+function [percentageBurst, percBurstWMAttCT, cueTargetAttDiff, percBurstWMAttCA,...
+ cueArrayAttDiff, cueTargetPoisson, cueArrayPoisson, percBurstWMPoissonCT,...
+ percBurstWMPoissonCA] = histWDattCondi(spikeTimes2use, startTime, endTime, UE, binWidth4hist,firstSpikeTimes, structName, plotOutput)
+%structName = nUnits(uniti).name
 unitStruct.name = structName(19:end-4);
 
 % calculate percentage of spikes >= 200 Hz firing rate
@@ -64,37 +66,38 @@ for n=1:NEAttOut;
     if length(indx) >1 && indx(end) < size(data,2)
         datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
         nSpikesAttOutPerTrial(n) = sum(data(indx));
+        clear indx
     end
 end
 
 if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
-    if plotOutput
-        figure
-        subplot(131)
-        histogram(datatmpAttIn,'BinWidth',binWidth4hist,'Normalization','probability')
-        ylimsub1 = ylim;
-        xlim([-10 500])
-        title('real data Att In')
-        subplot(132)
-        plot(0,0)
-        hold on
-        histogram(datatmpAttOut,'BinWidth',binWidth4hist,'Normalization','probability')
-        ylimsub2 = ylim;
-        xlim([-10 500])
-        title('real data Att Out')
-        subplot(133)
-        histogram(datatmpAttIn,'BinWidth',binWidth4hist,'Normalization','probability')
-        hold on
-        histogram(datatmpAttOut,'BinWidth',binWidth4hist,'Normalization','probability')
-        title('overlay both conditions')
-        xlim([-10 500])
-        subplot(131)
-        ylim([0 max([ylimsub1 ylimsub2])])
-        subplot(132)
-        ylim([0 max([ylimsub1 ylimsub2])])
-        subplot(133)
-       ylim([0 max([ylimsub1 ylimsub2])])
-    end
+%     if plotOutput
+%         figure
+%         subplot(131)
+%         histogram(datatmpAttIn,'BinWidth',binWidth4hist,'Normalization','probability')
+%         ylimsub1 = ylim;
+%         xlim([-10 500])
+%         title('real data Att In')
+%         subplot(132)
+%         plot(0,0)
+%         hold on
+%         histogram(datatmpAttOut,'BinWidth',binWidth4hist,'Normalization','probability')
+%         ylimsub2 = ylim;
+%         xlim([-10 500])
+%         title('real data Att Out')
+%         subplot(133)
+%         histogram(datatmpAttIn,'BinWidth',binWidth4hist,'Normalization','probability')
+%         hold on
+%         histogram(datatmpAttOut,'BinWidth',binWidth4hist,'Normalization','probability')
+%         title('overlay both conditions')
+%         xlim([-10 500])
+%         subplot(131)
+%         ylim([0 max([ylimsub1 ylimsub2])])
+%         subplot(132)
+%         ylim([0 max([ylimsub1 ylimsub2])])
+%         subplot(133)
+%        ylim([0 max([ylimsub1 ylimsub2])])
+%     end
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %   Repeat but with trial based SCM
@@ -104,6 +107,7 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
     nSpikesAttOut = length(datatmpAttOut);
     counter = 0;
     if nSpikesAttIn > nSpikesAttOut
+        AttInMore = 1;
         trialSel = randperm(NEAttIn);
         while nSpikesAttIn + mean(nSpikesAttInPerTrial) / 2 > nSpikesAttOut
             counter = counter + 1;
@@ -122,6 +126,7 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
             datatmpAttIn = [];
         end
     elseif nSpikesAttOut > nSpikesAttIn
+        AttInMore = 0;
         trialSel = randperm(NEAttOut);
         while nSpikesAttOut + mean(nSpikesAttOutPerTrial) / 2 > nSpikesAttIn
             counter = counter + 1;
@@ -148,9 +153,18 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
         datatmpAttOut2use = datatmpAttOut;
     end
     
+    % create Poisson data for comparison
+    if AttInMore; nTrials = NEAttOut; else nTrials = NEAttIn; end
+    datatmpPoisson = []; 
+    if ~AttInMore
+        [~,datatmpPoisson] = calcPoisson(nTrials,nEAttIn,targetDimTrialAttIn,cueOnsetTrialAttIn,Fs,data);
+    else
+        [~,datatmpPoisson] = calcPoisson(nTrials,nEAttOut,targetDimTrialAttOut,cueOnsetTrialAttOut,Fs,data);
+    end
+     
     totalAttConds = [datatmpAttIn2use datatmpAttOut2use];
     percBurstWMAttCT = sum(totalAttConds <= 5) * 100 / size(totalAttConds,2);
-    
+    percBurstWMPoissonCT = sum(datatmpPoisson <= 5) * 100 / size(datatmpPoisson,2);
 
     figure
     subplot(131)
@@ -169,6 +183,7 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
     attIn4statsCT = histogram(datatmpAttIn2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
     hold on
     attOut4statsCT = histogram(datatmpAttOut2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+    poisson4statsCT = histogram(datatmpPoisson,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
     title('overlay both conditions')
     xlim([-10 500])
     subplot(131)
@@ -181,13 +196,16 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
         {sprintf('Womelsdorf method (200Hz) \n burst %%: %0.2f', percentageBurst),...
         sprintf('Cue target (200Hz) \n burst %%: %0.2f', percBurstWMAttCT),...
         sprintf('First bin %d ms \n AttIn %0.4f - AttOut %0.4f \n = %0.4f', ...
-        binWidth4hist, attIn4statsCT.Values(1), attOut4statsCT.Values(1), attIn4statsCT.Values(1) - attOut4statsCT.Values(1))});
+        binWidth4hist, attIn4statsCT.Values(1), attOut4statsCT.Values(1), attIn4statsCT.Values(1) - attOut4statsCT.Values(1)),...
+        sprintf('Poisson %0.4f', poisson4statsCT.Values(1))});
     if plotOutput
         cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
         saveas(gcf,['HistogramISIrealCueTargetDimSCM' unitStruct.name '_' num2str(binWidth4hist) 'ms.png'])
         cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')
     end
     cueTargetAttDiff = attIn4statsCT.Values(1) - attOut4statsCT.Values(1);
+    cueTargetPoisson = poisson4statsCT.Values(1);
+    clear datatmpPoisson
 else
     percentageBurst  = nan;
     percBurstWMAttCT = nan;
@@ -223,33 +241,33 @@ for n=1:NEAttOut;
     end
 end
 if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
-    if plotOutput
-        figure
-        subplot(131)
-        histogram(datatmpAttIn,'BinWidth',binWidth4hist,'Normalization','probability')
-        ylimsub1 = ylim;
-        xlim([-10 500])
-        title('real data Att In')
-        subplot(132)
-        plot(0,0)
-        hold on
-        histogram(datatmpAttOut,'BinWidth',binWidth4hist,'Normalization','probability')
-        ylimsub2 = ylim;
-        xlim([-10 500])
-        title('real data Att Out')
-        subplot(133)
-        histogram(datatmpAttIn,'BinWidth',binWidth4hist,'Normalization','probability')
-        hold on
-        histogram(datatmpAttOut,'BinWidth',binWidth4hist,'Normalization','probability')
-        title('overlay both conditions')
-        xlim([-10 500])
-        subplot(131)
-        ylim([0 max([ylimsub1 ylimsub2])])
-        subplot(132)
-        ylim([0 max([ylimsub1 ylimsub2])])
-        subplot(133)
-        ylim([0 max([ylimsub1 ylimsub2])])
-    end
+%     if plotOutput
+%         figure
+%         subplot(131)
+%         histogram(datatmpAttIn,'BinWidth',binWidth4hist,'Normalization','probability')
+%         ylimsub1 = ylim;
+%         xlim([-10 500])
+%         title('real data Att In')
+%         subplot(132)
+%         plot(0,0)
+%         hold on
+%         histogram(datatmpAttOut,'BinWidth',binWidth4hist,'Normalization','probability')
+%         ylimsub2 = ylim;
+%         xlim([-10 500])
+%         title('real data Att Out')
+%         subplot(133)
+%         histogram(datatmpAttIn,'BinWidth',binWidth4hist,'Normalization','probability')
+%         hold on
+%         histogram(datatmpAttOut,'BinWidth',binWidth4hist,'Normalization','probability')
+%         title('overlay both conditions')
+%         xlim([-10 500])
+%         subplot(131)
+%         ylim([0 max([ylimsub1 ylimsub2])])
+%         subplot(132)
+%         ylim([0 max([ylimsub1 ylimsub2])])
+%         subplot(133)
+%         ylim([0 max([ylimsub1 ylimsub2])])
+%     end
     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     %   Repeat but with trial based SCM
@@ -258,6 +276,7 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
     nSpikesAttOut = length(datatmpAttOut);
     counter = 0;
     if nSpikesAttIn > nSpikesAttOut
+        AttInMore = 1;
         trialSel = randperm(NEAttIn);
         while nSpikesAttIn + mean(nSpikesAttInPerTrial) / 2 > nSpikesAttOut
             counter = counter + 1;
@@ -276,6 +295,7 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
             datatmpAttIn = [];
         end
     elseif nSpikesAttOut > nSpikesAttIn
+        AttInMore = 0;
         trialSel = randperm(NEAttOut);
         while nSpikesAttOut + mean(nSpikesAttOutPerTrial) / 2 > nSpikesAttIn
             counter = counter + 1;
@@ -301,9 +321,19 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
         datatmpAttOut2use = datatmpAttOut;
     end
 
+    % create Poisson data for comparison
+    if AttInMore; nTrials = NEAttOut; else nTrials = NEAttIn; end
+    datatmpPoisson = []; 
+    if ~AttInMore
+        [~,datatmpPoisson] = calcPoisson(nTrials,nEAttIn,arrayOnsetTrialAttIn,cueOnsetTrialAttIn,Fs,data);
+    else
+        [~,datatmpPoisson] = calcPoisson(nTrials,nEAttOut,arrayOnsetTrialAttOut,cueOnsetTrialAttOut,Fs,data);
+    end
+
     totalAttConds = [datatmpAttIn2use datatmpAttOut2use];
     percBurstWMAttCA = sum(totalAttConds <= 5) * 100 / size(totalAttConds,2);
-    
+    percBurstWMPoissonCA = sum(datatmpPoisson <= 5) * 100 / size(datatmpPoisson,2);
+
     figure
     subplot(131)
     histogram(datatmpAttIn2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
@@ -321,6 +351,7 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
     attIn4statsCA = histogram(datatmpAttIn2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
     hold on
     attOut4statsCA = histogram(datatmpAttOut2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+    poisson4statsCA = histogram(datatmpPoisson,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
     title('overlay both conditions')
     xlim([-10 500])
     subplot(131)
@@ -333,7 +364,8 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
         {sprintf('Womelsdorf method (200Hz) \n burst %%: %0.2f', percentageBurst),...
         sprintf('Cue array (200Hz) \n burst %%: %0.2f', percBurstWMAttCA),...
         sprintf('First bin %d ms \n AttIn %0.4f - AttOut %0.4f \n = %0.4f', ...
-        binWidth4hist, attIn4statsCA.Values(1), attOut4statsCA.Values(1), attIn4statsCA.Values(1) - attOut4statsCA.Values(1))});
+        binWidth4hist, attIn4statsCA.Values(1), attOut4statsCA.Values(1), attIn4statsCA.Values(1) - attOut4statsCA.Values(1)),...
+        sprintf('Poisson %0.4f', poisson4statsCA.Values(1))});
     if plotOutput
         cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
         saveas(gcf,['HistogramISIrealCueArrayOnsetSCM' unitStruct.name '_' num2str(binWidth4hist) 'ms.png'])
@@ -341,6 +373,8 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
     end
 
     cueArrayAttDiff = attIn4statsCA.Values(1) - attOut4statsCA.Values(1);
+    cueArrayPoisson = poisson4statsCA.Values(1);
+    clear datatmpPoisson
 else
     percentageBurst  = nan;
     percBurstWMAttCT = nan;
