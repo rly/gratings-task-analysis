@@ -56,6 +56,7 @@ for n=1:NEAttIn;
     if length(indx) >1 && indx(end) < size(data,2)
         datatmpAttIn=[datatmpAttIn diff(find(data(indx)))];
         nSpikesAttInPerTrial(n) = sum(data(indx));
+        attIn(n).spikeTimes=find(data(indx));
         clear indx
     end
 end
@@ -66,6 +67,7 @@ for n=1:NEAttOut;
     if length(indx) >1 && indx(end) < size(data,2)
         datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
         nSpikesAttOutPerTrial(n) = sum(data(indx));
+        attOut(n).spikeTimes=find(data(indx));
         clear indx
     end
 end
@@ -120,6 +122,7 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
                 if length(indx) >1 && indx(end) < size(data,2)
                     datatmpAttIn=[datatmpAttIn diff(find(data(indx)))];
                 end
+                clear indx
             end
             datatmpAttIn2use = datatmpAttIn;
             nSpikesAttIn = length(datatmpAttIn2use);
@@ -139,10 +142,17 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
                 if length(indx) >1 && indx(end) < size(data,2)
                     datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
                 end
+                clear indx
             end
             datatmpAttOut2use = datatmpAttOut;
             nSpikesAttOut = length(datatmpAttOut2use);
             datatmpAttOut = [];
+        end
+    elseif nSpikesAttOut == nSpikesAttIn
+        if targetDimTrialAttIn(end) > targetDimTrialAttOut(end)
+            AttInMore = 1;
+        elseif targetDimTrialAttIn(end) < targetDimTrialAttOut(end)
+            AttInMore = 0;
         end
     end
     
@@ -160,6 +170,9 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
         [~,datatmpPoisson] = calcPoisson(nTrials,nEAttIn,targetDimTrialAttIn,cueOnsetTrialAttIn,Fs,data);
     else
         [~,datatmpPoisson] = calcPoisson(nTrials,nEAttOut,targetDimTrialAttOut,cueOnsetTrialAttOut,Fs,data);
+%         for triali = 1:length(trialSel)-counter
+%             attIn(trialSel(triali)).spikeTimes
+%         end
     end
      
     totalAttConds = [datatmpAttIn2use datatmpAttOut2use];
@@ -207,11 +220,15 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
     cueTargetPoisson = poisson4statsCT.Values(1);
     clear datatmpPoisson
 else
-    percentageBurst  = nan;
-    percBurstWMAttCT = nan;
-    cueTargetAttDiff = nan;
-    percBurstWMAttCA = nan;
-    cueArrayAttDiff  = nan;
+    percentageBurst     = nan;
+    percBurstWMAttCT    = nan;
+    cueTargetAttDiff    = nan;
+    percBurstWMAttCA    = nan;
+    cueArrayAttDiff     = nan;
+    cueTargetPoisson    = nan;
+    cueArrayPoisson     = nan;
+    percBurstWMPoissonCT= nan;
+    percBurstWMPoissonCA= nan;
 end
 
 %% repeat for array onset
@@ -313,6 +330,12 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
             nSpikesAttOut = length(datatmpAttOut2use);
             datatmpAttOut = [];
         end
+    elseif nSpikesAttOut == nSpikesAttIn
+        if targetDimTrialAttIn(end) > targetDimTrialAttOut(end)
+            AttInMore = 1;
+        elseif targetDimTrialAttIn(end) < targetDimTrialAttOut(end)
+            AttInMore = 0;
+        end
     end
     if exist('datatmpAttIn2use','var') == 0
         datatmpAttIn2use = datatmpAttIn;
@@ -376,11 +399,15 @@ if ~isempty(datatmpAttIn) & ~isempty(datatmpAttOut)
     cueArrayPoisson = poisson4statsCA.Values(1);
     clear datatmpPoisson
 else
-    percentageBurst  = nan;
-    percBurstWMAttCT = nan;
-    cueTargetAttDiff = nan;
-    percBurstWMAttCA = nan;
-    cueArrayAttDiff  = nan;
+    percentageBurst     = nan;
+    percBurstWMAttCT    = nan;
+    cueTargetAttDiff    = nan;
+    percBurstWMAttCA    = nan;
+    cueArrayAttDiff     = nan;
+    cueTargetPoisson    = nan;
+    cueArrayPoisson     = nan;
+    percBurstWMPoissonCT= nan;
+    percBurstWMPoissonCA= nan;
 end
 
 

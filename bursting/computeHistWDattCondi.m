@@ -4,7 +4,7 @@ cd('/Users/labmanager/Documents/MATLAB/Data locally')
 nUnits = dir('spikeTimes2use*');
 
 binWidth4hist = 10;
-plotOutput = 0;
+plotOutput = 1;
 
 percentageBurst  = nan(length(nUnits),1);
 percBurstWMAttCT = nan(length(nUnits),1);
@@ -23,10 +23,12 @@ for uniti = 1:length(nUnits)
 end
 
 cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
-data = [percentageBurst, percBurstWMAttCT, cueTargetAttDiff, percBurstWMAttCA, cueArrayAttDiff];
-dataTbl = array2table(data);dataTbl.Properties.VariableNames = {'wdAll' 'wdCueTarg' 'cueTargDiff' 'wdCueArray' 'cueArrayDiff'};
+data = [percentageBurst, percBurstWMAttCT, cueTargetAttDiff, percBurstWMAttCA,...
+ cueArrayAttDiff,cueTargetP, cueArrayP, percBurstWMPoissonCT,percBurstWMPoissonCA];
+dataTbl = array2table(data);dataTbl.Properties.VariableNames = {'wdAll' 'wdCueTarg'...
+ 'cueTargDiff' 'wdCueArray' 'cueArrayDiff' 'cueTargetP' 'cueArrayP' 'wdPoissonCT' 'wdPoissonCA'};
 
-save(['AttInMinusAttOutNw_' num2str(binWidth4hist) 'ms'],'data','dataTbl')
+save(['AttInMinusAttOutNw2_' num2str(binWidth4hist) 'ms'],'data','dataTbl')
 
 % [~,sortedBC] = sort(data(:,1))
 % figure

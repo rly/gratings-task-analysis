@@ -12,9 +12,8 @@ for n=1:nTrials;
 %     nwinl=round(0.200*Fs);
     nwinrAttIn=round(eventEnd(n)*Fs);
     indxAttIn=spikeTimesInEvents(n):nwinrAttIn-1;
-    if indxAttIn(end) > size(data,2)
-        indxAttIn = indxAttIn(1:sum(indxAttIn<=size(data,2)));
-    end
+    if indxAttIn > size(data)
+        indxAttIn = indxAttIn(1:sum(indxAttIn<=size(data,2)))
     durationS = eventEnd(n) - eventStart(n); % length of simulation
     spikesPerS = sum(data(indxAttIn))/durationS; % avg firing rate
     timeStepS = 0.001;                  % 1 msec
