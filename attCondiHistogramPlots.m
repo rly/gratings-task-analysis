@@ -10,7 +10,7 @@ fclose(fid);
 counterFR = zeros(1,numel(sessionInfo{1}));
 nUnitsPerSession = zeros(1,numel(sessionInfo{1}));
 
-binWidth4hist = 10; % bin width of histograms in ms
+binWidth4hist = 5; % bin width of histograms in ms
 idx = 1;
 
 for sessioni = 1:numel(sessionInfo{1})
@@ -82,7 +82,9 @@ for sessioni = 1:numel(sessionInfo{1})
     
     for uniti = 1:nUnits
         clear spikeTimes binarySpikeTrain targetDimTrialAtt targetDimTrialAttOut ...
-            arrayOnsetTrialAttIn arrayOnsetTrialAttOut cueOnsetTrialAttIn cueOnsetTrialAttOut
+            arrayOnsetTrialAttIn arrayOnsetTrialAttOut cueOnsetTrialAttIn cueOnsetTrialAttOut...
+            cueArrayAttDiff cueTargetAttDiff attIn4statsAll attOut4statsAll attIn4statsCTAll...
+            attOut4statsCTAll wdPercentageAll
         unitStruct = D.allUnitStructs{uniti};
         unitName = unitStruct.name;
         fprintf('-----------------------------\n');
@@ -135,7 +137,7 @@ for sessioni = 1:numel(sessionInfo{1})
                     targetDimTrialAttOut = targetDimTrialAttOut - spikeTimes(1);
                     targetDimTrialAttOut = targetDimTrialAttOut(targetDimTrialAttOut>0);
 
-                    targetDimTrialAttIn = UE.targetDimByLoc{3};
+                    targetDimTrialAttIn = UE.targetDim(UE.cueLoc(UE.isHoldTrial) == 3);
                     targetDimTrialAttIn = targetDimTrialAttIn(targetDimTrialAttIn >= startTime & targetDimTrialAttIn <= endTime);
                     targetDimTrialAttIn = targetDimTrialAttIn - spikeTimes(1);
                     targetDimTrialAttIn = targetDimTrialAttIn(targetDimTrialAttIn>0);
@@ -402,6 +404,32 @@ for sessioni = 1:numel(sessionInfo{1})
     end
 end
 
-save(['AttInMinusAttOut_' num2str(binWidth4hist) 'ms'],'cueArrayAttDiff','cueTargetAttDiff')
+save(['AttInMinusAttOut_' num2str(binWidth4hist) 'ms'],'cueArrayAttDiff','cueTargetAttDiff',...
+    'attIn4statsAll', 'attOut4statsAll', 'attIn4statsCTAll', 'attOut4statsCTAll',...
+    'wdPercentageAll')
 [H,P,CI,STATS] = ttest(cueArrayAttDiff)
 [H,P,CI,STATS] = ttest(cueTargetAttDiff)
+
+% [~,indices] = sort(attIn4statsAll(end).Values)
+% [~,indicesCT] = sort(attIn4statsCTAll(end).Values)
+% figure
+% subplot(121)
+% plot(attIn4statsAll(end).Values(indices),'.')%(attIn4statsAll(end).Values>0))
+% hold on
+% plot(attOut4statsAll(end).Values(indices),'.')%(attOut4statsAll(end).Values>0))
+% subplot(122)
+% plot(attIn4statsCTAll(end).Values(indicesCT),'.')%(attIn4statsAll(end).Values>0))
+% hold on
+% plot(attOut4statsCTAll(end).Values(indicesCT),'.')%(attOut4statsAll(end).Values>0))
+
+figure
+histogram(cueArrayAttDiff)
+hold on
+histogram(cueTargetAttDiff)
+
+
+
+
+
+
+% eof

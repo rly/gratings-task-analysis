@@ -10,7 +10,7 @@ fclose(fid);
 counterFR = zeros(1,numel(sessionInfo{1}));
 nUnitsPerSession = zeros(1,numel(sessionInfo{1}));
 
-binWidth4hist = 10; % bin width of histograms in ms
+binWidth4hist = 5; % bin width of histograms in ms
 idx = 1;
 
 for sessioni = 1:numel(sessionInfo{1})
@@ -386,7 +386,12 @@ for sessioni = 1:numel(sessionInfo{1})
                     
                         cueArrayAttDiff(idx) = attIn4stats.Values(1) - attOut4stats.Values(1);
 
-                        attIn4statsAll.Values = attIn4stats.Values
+                        attIn4statsAll(idx).Values = attIn4stats.Values;
+                        attOut4statsAll(idx).Values = attOut4stats.Values;
+                        attIn4statsCTAll(idx).Values = attIn4statsCT.Values;
+                        attOut4statsCTAll(idx).Values = attOut4statsCT.Values;
+                        wdPercentageAll(idx) = percentageBurst;
+
                         idx = idx + 1;
                         close all
                     end
@@ -397,6 +402,8 @@ for sessioni = 1:numel(sessionInfo{1})
     end
 end
 
-save(['AttInMinusAttOut_' num2str(binWidth4hist) 'ms'],'cueArrayAttDiff','cueTargetAttDiff')
+save(['AttInMinusAttOut_' num2str(binWidth4hist) 'ms'],'cueArrayAttDiff','cueTargetAttDiff',...
+    'attIn4statsAll', 'attOut4statsAll', 'attIn4statsCTAll', 'attOut4statsCTAll',...
+    'wdPercentageAll')
 [H,P,CI,STATS] = ttest(cueArrayAttDiff)
 [H,P,CI,STATS] = ttest(cueTargetAttDiff)
