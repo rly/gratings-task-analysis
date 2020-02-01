@@ -3,8 +3,8 @@ close all
 outputDir = '/Users/labmanager/Documents/MATLAB/BurstSep4/';
 v = 14;
 
-fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigMcCartney.csv.bak');
-% fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigFerdy.csv.bak');
+% fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigMcCartney.csv.bak');
+fid = fopen('pulvinarRecordingInfoByProbeAndArrayConfigFerdy.csv.bak');
 sessionInfo = textscan(fid, '%d8%s%s', 'Delimiter', ',', 'HeaderLines' ,1-1, 'ReturnOnError', false, 'EndOfLine', '\r\n');
 fclose(fid);
 counterFR = zeros(1,numel(sessionInfo{1}));
@@ -13,19 +13,19 @@ nUnitsPerSession = zeros(1,numel(sessionInfo{1}));
 binWidth4hist = 5; % bin width of histograms in ms
 idx = 1;
 
-for sessioni = 1:numel(sessionInfo{1})
+for sessioni = 2%:numel(sessionInfo{1})
     clearvars -except sessionInfo sessioni outputDir counterFR ...
         nUnitsPerSession v burstsession burstunit cueArrayAttDiff...
         binWidth4hist cueTargetAttDiff idx
     sessionInd = sessionInfo{1}(sessioni);
     processedDataRootDir = '/Volumes/scratch/rly/gratings-task-analysis/processed_data/';
-    dataDirRoot = '/Volumes/kastner/ryanly/McCartney/merged';
-    %     dataDirRoot = '/Volumes/kastner/ryanly/Ferdy/merged';
+%     dataDirRoot = '/Volumes/kastner/ryanly/McCartney/merged';
+    dataDirRoot = '/Volumes/kastner/ryanly/Ferdy/merged';
     muaDataDirRoot = '/Volumes/scratch/rly/simple-mua-detection/processed_data/';
     suaMuaDataDirRoot = muaDataDirRoot;
     recordingInfoFileName = '/Users/labmanager/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
     channels = strsplit(sessionInfo{3}{sessioni},'-');
-    channelsToLoad = str2double(channels{1}):str2double(channels{2});
+    channelsToLoad = 1;%str2double(channels{1}):str2double(channels{2});
     muaChannelsToLoad = channelsToLoad;
     lfpChannelsToLoad = str2double(channels{1}):str2double(channels{2});
     lfpChannels = lfpChannelsToLoad;

@@ -2,9 +2,9 @@ function [poissonBinary,datatmpPoisson] = calcPoisson(nTrials,spikeTimesInEvents
 % create Poisson distributed interspike intervals or binary data 
 
 % for debugging:
-%     spikeTimesInEvents = nEAttOut;
-%     eventEnd = targetDimTrialAttOut;
-%     eventStart = cueOnsetTrialAttOut;
+%     spikeTimesInEvents = nEAttIn;
+%     eventEnd = targetDimTrialAttIn;
+%     eventStart = cueOnsetTrialAttIn;
 
 poissonBinary = [];
 datatmpPoisson = [];
