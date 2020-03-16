@@ -75,6 +75,16 @@ D.adjLfpsClean = [];
 outlierCheckWindowOffset = [-0.2 0.2];
 flashEventsClean = detectOutlierLfpEvents(channelDataCARNorm, Fs, D.lfpNames, origFlashEvents, ...
         outlierCheckWindowOffset, processedDataDir, [], 1, []);
+    
+% further subselect flashes based on accompanying enter and exit fixation
+% events
+flashEventsInTrial = [];
+for fixi = 1:length(fixationAndLeverTimes.firstEnterFixationTimesPreCue)
+    fixOnset = fixationAndLeverTimes.firstEnterFixationTimesPreCue(fixi); fixBreak = fixationAndLeverTimes.firstExitFixationTimesAroundJuice(fixi);
+    flashEventstmp = flashEventsClean(flashEventsClean>=fixOnset & flashEventsClean<=fixBreak);
+    flashEventsInTrial = [flashEventsInTrial; flashEventstmp];
+    clear flashEventstmp
+end
 nFlashes = numel(flashEventsClean);
 startIndicesStim = round((flashEventsClean + periFlashWindowOffset(1)) * Fs); % time to index conversion
 endIndicesStim = startIndicesStim + round(diff(periFlashWindowOffset) * Fs) - 1;
