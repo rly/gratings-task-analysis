@@ -36,7 +36,7 @@ ylabel('Standard Deviation of LFP (mV)');
 plotFileName = sprintf('%s/%s-allFP-rfmMode%d-CARdata-SDByChannel-v%d.png', ...
         processedDataDir, plotFileNamePrefix, rfMappingMode, v);
 fprintf('Saving SD by channel plot to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
+%export_fig(plotFileName, '-nocrop');
 close;
 
 %% plot and mark channel data if SD abnormally high
@@ -56,8 +56,8 @@ for j = 1:nChannels
             plotFileName = sprintf('%s/%s-rfmMode%d-%s-CARdata-v%d.png', ...
                     processedDataDir, plotFileNamePrefix, rfMappingMode, channelNames{j}, v);
             fprintf('\tSaving channel %s data (CAR) plot to %s...\n', channelNames{j}, plotFileName);
-            export_fig(plotFileName, '-nocrop');
-            savefig([plotFileName(1:end-3) 'fig']);
+            %export_fig(plotFileName, '-nocrop');
+            %savefig([plotFileName(1:end-3) 'fig']);
             close;
         end
     end

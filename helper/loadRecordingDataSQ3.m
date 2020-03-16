@@ -1,4 +1,4 @@
-function [R, D, processedDataDir, blockName] = loadRecordingData(...
+function [R, D, processedDataDir, blockName] = loadRecordingDataSQ3(...
         processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
         sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, ...
         rfMappingNewInfoFileName, rfMappingNewMode, isLoadAllSpikes)
@@ -19,11 +19,11 @@ pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
 %% load recording data
 isLoadSpkc = 0;
 
-% if strcmp(taskName, 'GRATINGS') || strcmp(taskName, 'GRATINGS_0D')
+if strcmp(taskName, 'GRATINGS') || strcmp(taskName, 'GRATINGS_0D')
     isLoadDirect = 1;
-% else
-%     isLoadDirect = 0;
-% end
+else
+    isLoadDirect = 0;
+end
 
 if ~isempty(channelsToLoad)
     R.spikeChannelsToLoad = channelsToLoad;
@@ -49,7 +49,7 @@ if isLoadMetaDataOnly
     D = MD.MD;
 else
     fprintf('Loading data %s...\n', pl2FilePath);
-    D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
+    D = loadPL2SQ3(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
             R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
 end
 fprintf('... done (%0.2f s).\n', toc);

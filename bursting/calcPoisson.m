@@ -1,17 +1,20 @@
-function [poissonBinary,datatmpPoisson] = calcPoisson(nTrials,spikeTimesInEvents,eventEnd,eventStart,Fs,data)
+function [poissonBinary,datatmpPoisson] = calcPoisson(nTrials,eventEnd,eventStart,Fs,data)
 % create Poisson distributed interspike intervals or binary data 
 
 % for debugging:
-%     spikeTimesInEvents = nEAttIn;
-%     eventEnd = targetDimTrialAttIn;
-%     eventStart = cueOnsetTrialAttIn;
+% nTrials = NEAttInNw;
+% eventEnd = endTimeAttInNw;
+% eventStart = startTimeAttInNw;
+% nTrials = NEAttOutNw;
+% eventEnd = endTimeAttOutNw;
+% eventStart = startTimeAttOutNw;
 
 poissonBinary = [];
 datatmpPoisson = [];
 for n=1:nTrials;
 %     nwinl=round(0.200*Fs);
     nwinrAttIn=round(eventEnd(n)*Fs);
-    indxAttIn=spikeTimesInEvents(n):nwinrAttIn-1;
+    indxAttIn=round(eventStart(n)*Fs):nwinrAttIn-1;
     if indxAttIn(end) > size(data,2)
         indxAttIn = indxAttIn(1:sum(indxAttIn<=size(data,2)));
     end
@@ -21,6 +24,6 @@ for n=1:nTrials;
     times = 0:timeStepS:durationS;	% a vector with each time step		
     vt = rand(size(times)); % use rand to set probobility of spike
     spikes = (spikesPerS*timeStepS) > vt;
-    poissonBinary = [poissonBinary spikes];
+    poissonBinary(n).binData = spikes;
     datatmpPoisson=[datatmpPoisson diff(find(spikes))];
 end

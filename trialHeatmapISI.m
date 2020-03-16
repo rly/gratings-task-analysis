@@ -26,7 +26,7 @@ burstunit = [0 0 7;
     0 0 6;
     0 0 2;
     0 0 3];
-for sessioni = 31%1:numel(sessionInfo{1})
+for sessioni = 15%31%1:numel(sessionInfo{1})
     if ismember(sessioni,burstsession)
         clearvars -except sessionInfo sessioni outputDir counterFR nUnitsPerSession v burstsession burstunit
         sessionInd = sessionInfo{1}(sessioni);
@@ -92,7 +92,7 @@ for sessioni = 31%1:numel(sessionInfo{1})
         
         
         
-        for uniti = 2%1:nUnits
+        for uniti = 1:nUnits
             [~,iidx] = ismember(sessioni,burstsession);
             if ismember(uniti,burstunit(iidx,:))
                 

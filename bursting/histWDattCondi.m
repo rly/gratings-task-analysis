@@ -201,6 +201,11 @@ shuffledAttOut = attOut4statsSHUFCT.Values(1);
 poissonAttIn = attIn4statsCTPoisson.Values(1);
 poissonAttOut = attOut4statsCTPoisson.Values(1);
 
+cd('/Users/labmanager/Documents/MATLAB/BurstSep4all/data')
+save(saveFileName(1:end-4),'attIn4statsCT','attOut4statsCT','attIn4statsSHUFCT',...
+    'attOut4statsSHUFCT','attIn4statsCTPoisson','attOut4statsCTPoisson')
+cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')
+
 end
 
 

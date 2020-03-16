@@ -87,7 +87,7 @@ xlabel('Time from Pre-Flashes Marker (s)');
 title('Mean Baseline Activity on Each Channel (CAR)');
 
 plotFileName = sprintf('%s/%s-CAR-baseline-v%d.png', processedDataDir, plotFileNamePrefix, v);
-export_fig(plotFileName, '-nocrop');
+%export_fig(plotFileName, '-nocrop');
 
 %% plot baseline responses overlaid, CAR
 figure_tr_inch(6, 5, 6, 0);
@@ -97,7 +97,7 @@ xlabel('Time from Pre-Flashes Marker (s)');
 title('Mean Baseline Activity on Each Channel (CAR)');
 
 plotFileName = sprintf('%s/%s-CAR-baselineOverlaid-v%d.png', processedDataDir, plotFileNamePrefix, v);
-export_fig(plotFileName, '-nocrop');
+%export_fig(plotFileName, '-nocrop');
 
 %% plot flash responses expanded range overlaid, RAW
 [tBaselineExp,averageBaselineResponsesExp] = computeResponsesInWindow(channelDataNorm, preFlashesEvents, ...
@@ -110,7 +110,7 @@ xlabel('Time from Pre-Flashes Marker (s)');
 title('Mean Baseline Activity on Each Channel (RAW)');
 
 plotFileName = sprintf('%s/%s-RAW-baselineExpandedOverlaid-v%d.png', processedDataDir, plotFileNamePrefix, v);
-export_fig(plotFileName, '-nocrop');
+%export_fig(plotFileName, '-nocrop');
 
 %% plot flash responses expanded range overlaid, CAR
 [tBaselineExp,averageBaselineResponsesExpCAR] = computeResponsesInWindow(channelDataCARNorm, preFlashesEvents, ...
@@ -123,7 +123,7 @@ xlabel('Time from Pre-Flashes Marker (s)');
 title('Mean Baseline Activity on Each Channel (CAR)');
 
 plotFileName = sprintf('%s/%s-CAR-baselineExpandedOverlaid-v%d.png', processedDataDir, plotFileNamePrefix, v);
-export_fig(plotFileName, '-nocrop');
+%export_fig(plotFileName, '-nocrop');
 
 %% plot expanded range around trial onset after cross-channel BIP
 [tBaselineExp,averageBaselineResponsesExpBIP] = computeResponsesInWindow(channelDataBIPNorm, preFlashesEvents, ...
@@ -136,7 +136,7 @@ xlabel('Time from Pre-Flashes Marker (s)');
 title('Mean Baseline Activity on Each Channel (BIP)');
 
 plotFileName = sprintf('%s/%s-BIP-baselineExpandedOverlaid-v%d.png', processedDataDir, plotFileNamePrefix, v);
-export_fig(plotFileName, '-nocrop');
+%export_fig(plotFileName, '-nocrop');
 
 %% make plots for each reference type
 refs = {'RAW', 'CAR', 'BIP'};
@@ -232,7 +232,7 @@ for r = 1:numel(refs)
     text(0.050, minYLim+1, '35-45 ms', 'Color', 'm');
     
     plotFileName = sprintf('%s/%s-%s-lfpLines-v%d.png', processedDataDir, plotFileNamePrefix, ref, v);
-    export_fig(plotFileName, '-nocrop');
+    %export_fig(plotFileName, '-nocrop');
 
     %% staggered channel color plot of average visually evoked LFP
     figure_tr_inch(8, 10);
@@ -262,7 +262,7 @@ for r = 1:numel(refs)
     text(0.050, nChannels, '35-45 ms', 'Color', 'm');
 
     plotFileName = sprintf('%s/%s-%s-lfpColor-v%d.png', processedDataDir, plotFileNamePrefix, ref, v);
-    export_fig(plotFileName, '-nocrop');
+    %export_fig(plotFileName, '-nocrop');
 
     %% plot boxes around areas abs() > thresh over last plot and re-save
     boxAbsThresh = 0.25;
@@ -279,7 +279,7 @@ for r = 1:numel(refs)
     end
 
     plotFileName = sprintf('%s/%s-%s-lfpColorBounds-v%d.png', processedDataDir, plotFileNamePrefix, ref, v);
-    export_fig(plotFileName, '-nocrop');
+    %export_fig(plotFileName, '-nocrop');
 
     %% plot vertical line plot of mean activity between 35 and 45 ms after flash
     % TODO mark which ones are more than 2 SDs from baseline for that channel
@@ -304,7 +304,7 @@ for r = 1:numel(refs)
     title(sprintf('%s %s - Mean Early Response (%s)', sessionName, areaName, ref));
 
     plotFileName = sprintf('%s/%s-%s-meanEarlyResponse-v%d.png', processedDataDir, plotFileNamePrefix, ref, v);
-    export_fig(plotFileName, '-nocrop');
+    %export_fig(plotFileName, '-nocrop');
     
     
     
@@ -338,5 +338,5 @@ for r = 1:numel(refs)
     text(0.050, nChannels, '35-45 ms', 'Color', 'm');
 
     plotFileName = sprintf('%s/%s-%s-lfpColor-v%d.png', processedDataDir, plotFileNamePrefix, ref, v);
-    export_fig(plotFileName, '-nocrop');
+    %export_fig(plotFileName, '-nocrop');
 end

@@ -1,4 +1,4 @@
-function [fixationAndLeverTimes,isMissingData] = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc)
+function [fixationAndLeverTimes,isMissingData] = getFixationAndLeverTimesVEP(D, cueOnset, firstJuiceEvent)
 
 %% find mean fixation and lever voltage
 % look at voltages -1.5 seconds to -0.5 seconds from first juice event
@@ -204,63 +204,12 @@ end
 
 assert(all([numel(firstEnterFixationTimesPreCue) ...
         numel(firstLeverPressTimesPreCue) ...
-        numel(firstExitFixationTimesAroundJuice) ...
-        numel(firstLeverReleaseTimesAroundJuice)] == numel(cueLoc)));
+        numel(firstExitFixationTimesAroundJuice)]));
     
-cueLoc = cueLoc(~isMissingData);
 firstEnterFixationTimesPreCue = firstEnterFixationTimesPreCue(~isMissingData);
 firstLeverPressTimesPreCue = firstLeverPressTimesPreCue(~isMissingData);
 firstExitFixationTimesAroundJuice = firstExitFixationTimesAroundJuice(~isMissingData);
 firstLeverReleaseTimesAroundJuice = firstLeverReleaseTimesAroundJuice(~isMissingData);
-isHoldTrial = isHoldTrial(~isMissingData);
-
-firstEnterFixationHoldTimesPreCue = firstEnterFixationTimesPreCue(isHoldTrial);
-firstEnterFixationRelTimesPreCue = firstEnterFixationTimesPreCue(~isHoldTrial);
-firstExitFixationHoldTimesAroundJuice = firstExitFixationTimesAroundJuice(isHoldTrial);
-firstExitFixationRelTimesAroundJuice = firstExitFixationTimesAroundJuice(~isHoldTrial);
-% disp(sum(any(isnan(firstExitFixationVector))))
-% disp(find(isnan(firstExitFixationTimesAroundJuice)))
-% disp(find(isnan(firstExitFixationVector(:,1))))
-% firstExitFixationVector = firstExitFixationVector(~isMissingData,:);
-% firstExitFixationPolarAngle = firstExitFixationPolarAngle(~isMissingData);
-% disp(sum(any(isnan(firstExitFixationVector))))
-% 
-% assert(~any(any(isnan(firstExitFixationVector))));
-% firstExitFixationVector = firstExitFixationVector ./ sqrt(sum(firstExitFixationVector.^2, 2)); % normalize
-% 
-% leftPolarAngleBounds = [-5*pi/8 5*pi/8];
-% rightPolarAngleBounds = [-3*pi/8 3*pi/8];
-% isExitFixationLeft = firstExitFixationPolarAngle < leftPolarAngleBounds(1) | firstExitFixationPolarAngle > leftPolarAngleBounds(2);
-% isExitFixationRight = firstExitFixationPolarAngle > rightPolarAngleBounds(1) & firstExitFixationPolarAngle < rightPolarAngleBounds(2);
-% firstExitFixationLeftTimesAroundJuice = firstExitFixationTimesAroundJuice(isExitFixationLeft);
-% firstExitFixationRightTimesAroundJuice = firstExitFixationTimesAroundJuice(isExitFixationRight);
-
-firstEnterFixationTimesPreCueByLoc = cell(nLoc, 1);
-firstLeverPressTimesPreCueByLoc = cell(nLoc, 1);
-firstExitFixationTimesAroundJuiceByLoc = cell(nLoc, 1);
-firstLeverReleaseTimesAroundJuiceByLoc = cell(nLoc, 1);
-firstExitFixationVectorByLoc = cell(nLoc, 1);
-firstExitFixationPolarAngleByLoc = cell(nLoc, 1);
-firstExitFixationLeftTimesAroundJuiceByLoc = cell(nLoc, 1);
-firstExitFixationRightTimesAroundJuiceByLoc = cell(nLoc, 1);
-firstEnterFixationHoldTimesPreCueByLoc = cell(nLoc, 1);
-firstEnterFixationRelTimesPreCueByLoc = cell(nLoc, 1);
-firstExitFixationHoldTimesAroundJuiceByLoc = cell(nLoc, 1);
-firstExitFixationRelTimesAroundJuiceByLoc = cell(nLoc, 1);
-for i = 1:nLoc
-    firstEnterFixationTimesPreCueByLoc{i} = firstEnterFixationTimesPreCue(cueLoc == i);
-    firstLeverPressTimesPreCueByLoc{i} = firstLeverPressTimesPreCue(cueLoc == i);
-    firstExitFixationTimesAroundJuiceByLoc{i} = firstExitFixationTimesAroundJuice(cueLoc == i);
-    firstLeverReleaseTimesAroundJuiceByLoc{i} = firstLeverReleaseTimesAroundJuice(cueLoc == i);
-%     firstExitFixationVectorByLoc = firstExitFixationVector(cueLoc == i,:);
-%     firstExitFixationPolarAngleByLoc = firstExitFixationPolarAngle(cueLoc == i,:);
-%     firstExitFixationLeftTimesAroundJuiceByLoc{i} = firstExitFixationTimesAroundJuice(cueLoc == i & isExitFixationLeft);
-%     firstExitFixationRightTimesAroundJuiceByLoc{i} = firstExitFixationTimesAroundJuice(cueLoc == i  & isExitFixationRight);
-    firstEnterFixationHoldTimesPreCueByLoc{i} = firstEnterFixationTimesPreCue(cueLoc == i & isHoldTrial);
-    firstEnterFixationRelTimesPreCueByLoc{i} = firstEnterFixationTimesPreCue(cueLoc == i  & ~isHoldTrial);
-    firstExitFixationHoldTimesAroundJuiceByLoc{i} = firstExitFixationTimesAroundJuice(cueLoc == i & isHoldTrial);
-    firstExitFixationRelTimesAroundJuiceByLoc{i} = firstExitFixationTimesAroundJuice(cueLoc == i  & ~isHoldTrial);
-end
 
 %%
 voltages = var2struct(fixationXVoltage, fixationYVoltage, leverPressedVoltage, ...
@@ -270,25 +219,5 @@ fixationAndLeverTimes = var2struct(firstEnterFixationTimesPreCue, otherEnterFixa
         firstExitFixationTimesAroundJuice, otherExitFixationTimes, ...
         firstLeverPressTimesPreCue, otherLeverPressTimes, ...
         firstLeverReleaseTimesAroundJuice, otherLeverReleaseTimes, ...
-        firstEnterFixationHoldTimesPreCue, ...
-        firstEnterFixationRelTimesPreCue, ...
-        firstExitFixationHoldTimesAroundJuice, ...
-        firstExitFixationRelTimesAroundJuice, ...
-        firstEnterFixationTimesPreCueByLoc, ...
-        firstLeverPressTimesPreCueByLoc, ...
-        firstExitFixationTimesAroundJuiceByLoc, ...
-        firstLeverReleaseTimesAroundJuiceByLoc, ...
-        firstEnterFixationHoldTimesPreCueByLoc, ...
-        firstEnterFixationRelTimesPreCueByLoc, ...
-        firstExitFixationHoldTimesAroundJuiceByLoc, ...
-        firstExitFixationRelTimesAroundJuiceByLoc, ...
         isMissingData, ...
         voltages);
-    %         firstExitFixationVector, ...
-%         firstExitFixationVectorByLoc, ...
-%         firstExitFixationPolarAngle, ...
-%         firstExitFixationPolarAngleByLoc, ...
-%         firstExitFixationLeftTimesAroundJuice, ...
-%         firstExitFixationRightTimesAroundJuice, ...
-%         firstExitFixationLeftTimesAroundJuiceByLoc, ...
-%         firstExitFixationRightTimesAroundJuiceByLoc, ...
