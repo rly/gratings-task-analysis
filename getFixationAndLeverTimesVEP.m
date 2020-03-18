@@ -20,8 +20,8 @@ leverPressedVoltage = nanmean(direct3LockedToJuice(:));
 % rangeFixationXVoltage = max(abs(fixationXVoltage - direct1LockedToJuice(:))) + 2; % could make smaller or bigger
 % rangeFixationYVoltage = max(abs(fixationYVoltage - direct2LockedToJuice(:))) + 2; % could make smaller or bigger
 % rangeLeverPressedVoltage = max(abs(leverPressedVoltage - direct3LockedToJuice(:))) + 1; % could make smaller or bigger
-rangeFixationXVoltage = min(6, 5*nanstd(direct1LockedToJuice(:))); % could make smaller or bigger
-rangeFixationYVoltage = min(6, 5*nanstd(direct2LockedToJuice(:))); % could make smaller or bigger
+rangeFixationXVoltage = min(10, 5*nanstd(direct1LockedToJuice(:))); % could make smaller or bigger
+rangeFixationYVoltage = min(10, 5*nanstd(direct2LockedToJuice(:))); % could make smaller or bigger
 rangeLeverPressedVoltage = max(4, 15*nanstd(direct3LockedToJuice(:))); % could make smaller or bigger
 
 fprintf('\tX, Y bounds: %0.2f +/- %0.2f, %0.2f +/- %0.2f\n', ...
@@ -32,6 +32,18 @@ fprintf('\tLever bounds: %0.2f +/- %0.2f\n', ...
 
 directFs = D.directFs;
 removeEdgeTime = 0.5;
+
+%%
+direct1AtPresentationEnterFixation = nan(numel(D.events{2}), 1);
+direct2AtPresentationEnterFixation = nan(numel(D.events{2}), 1);
+for i = 1:numel(D.events{2})
+    direct1AtPresentationEnterFixation(i) = D.adjDirects(1,round(D.events{2}(i)*1000-325));
+    direct2AtPresentationEnterFixation(i) = D.adjDirects(2,round(D.events{2}(i)*1000-325));
+end
+figure
+histogram(direct1AtPresentationEnterFixation)
+figure
+histogram(direct2AtPresentationEnterFixation)
 
 %% find times of start fixation and exit fixation
 holdFixationMin = 0.3;
@@ -97,8 +109,9 @@ leverReleaseTimes = leverReleaseInds(~badLeverRelease) / directFs; % assume star
 assert(numel(cueOnset) == numel(firstJuiceEvent))
 
 %% find enter/exit fixation times around trial start/juice
+cueOnset = D.events{2}
 maxEnterFixationTimesToCueOnset = 4.05;
-minEnterFixationTimesToCueOnset = 0.35;
+minEnterFixationTimesToCueOnset = 0.325;
 isEnterFixationTimesFirstPreCue = false(size(enterFixationTimes));
 firstEnterFixationTimesPreCue = nan(size(cueOnset)); % use precue marker for flash mapping
 for i = 1:numel(cueOnset)

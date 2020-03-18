@@ -27,43 +27,10 @@ end
 %[fixationAndLeverTimes,isMissingData] = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc)
 
 %%
-periFlashWindowOffset = [0 0.2]; % seconds around flash
-baselineWindowOffset = [-0.2 0]; % seconds - 200ms minimum between flashes and before first flash
-% expandedPlotWindowOffset = [-0.5 1.5]; % seconds - 150ms minimum between flashes and before first flash
-
-% get time windows for fixation onset
-% need to get juice event times first
-juiceEvent = D.events{8};
-firstJuiceEvent = nan(1, 1);
-count = 0;
-diffJuiceEvent = diff(juiceEvent);
-maxDiffJuiceEventSameTrial = 1; % seconds
-for i = 1:numel(juiceEvent)
-    if i >= 2 && diffJuiceEvent(i-1) < maxDiffJuiceEventSameTrial
-        continue;
-    end
-    count = count + 1;
-    firstJuiceEvent(count) = juiceEvent(i);
-end
-firstJuiceEvent = firstJuiceEvent';
-
-maxCueOnsetToJuiceTime = 5; % seconds
-cueOnset = nan(numel(firstJuiceEvent), 1);
-for i = 1:numel(firstJuiceEvent)  
-    prevCueOnsetInd = find((firstJuiceEvent(i) - preFlashesEvents < maxCueOnsetToJuiceTime) & ...
-            (firstJuiceEvent(i) - preFlashesEvents > 0), 1, 'last');
-    if ~isempty(prevCueOnsetInd)
-        cueOnset(i) = preFlashesEvents(prevCueOnsetInd);
-    else
-        warning('Juice event without a corresponding cue onset event: %d, %f', i, firstJuiceEvent(i));
-    end
-end
-[cueOnset,trialsToKeep] = removeHandStartedTrials(D, cueOnset, firstJuiceEvent);
-firstJuiceEvent = firstJuiceEvent(trialsToKeep);
-cueOnset = cueOnset(trialsToKeep);
-fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), numel(trialsToKeep));
-
-[fixationAndLeverTimes,isMissingData] = getFixationAndLeverTimesVEP(D, cueOnset, firstJuiceEvent);
+% flash related activity 200ms windows
+postFlashWindowOffset = [0.025 0.225]; % seconds after flash
+baselineWindowOffset = [-.175 .025]; % seconds around preflashevent
+saccadeWindowOffset = [-.425 -.225]; % fixation onset at 325ms before preflashevent
 
 % preprocess LFPs
 Fs = D.lfpFs;
@@ -72,40 +39,42 @@ hiCutoffFreq = 100;
 [channelDataCARNorm,channelDataNorm,commonAverageNorm,isNoisyChannel] = preprocessLfps(...
         D.adjLfpsClean, Fs, D.lfpNames, processedDataDir, [], hiCutoffFreq, 1, []);
 D.adjLfpsClean = [];
-outlierCheckWindowOffset = [-0.2 0.2];
 flashEventsClean = detectOutlierLfpEvents(channelDataCARNorm, Fs, D.lfpNames, origFlashEvents, ...
-        outlierCheckWindowOffset, processedDataDir, [], 1, []);
-    
-% further subselect flashes based on accompanying enter and exit fixation
-% events
-flashEventsInTrial = [];
-for fixi = 1:length(fixationAndLeverTimes.firstEnterFixationTimesPreCue)
-    fixOnset = fixationAndLeverTimes.firstEnterFixationTimesPreCue(fixi); fixBreak = fixationAndLeverTimes.firstExitFixationTimesAroundJuice(fixi);
-    flashEventstmp = flashEventsClean(flashEventsClean>=fixOnset & flashEventsClean<=fixBreak);
-    flashEventsInTrial = [flashEventsInTrial; flashEventstmp];
-    clear flashEventstmp
-end
+        postFlashWindowOffset, processedDataDir, [], 1, []);
+preFlashEventsCleanWindowOffset = [min([baselineWindowOffset saccadeWindowOffset]) max([baselineWindowOffset saccadeWindowOffset])];
+preFlashEventsClean = detectOutlierLfpEvents(channelDataCARNorm, Fs, D.lfpNames, preFlashesEvents, ...
+        preFlashEventsCleanWindowOffset, processedDataDir, [], 1, []);
+   
 nFlashes = numel(flashEventsClean);
-startIndicesStim = round((flashEventsClean + periFlashWindowOffset(1)) * Fs); % time to index conversion
-endIndicesStim = startIndicesStim + round(diff(periFlashWindowOffset) * Fs) - 1;
-startIndicesBl = round((flashEventsClean + baselineWindowOffset(1)) * Fs); % time to index conversion
+nTrials = numel(preFlashEventsClean);
+startIndicesStim = round((flashEventsClean + postFlashWindowOffset(1)) * Fs); % time to index conversion
+endIndicesStim = startIndicesStim + round(diff(postFlashWindowOffset) * Fs) - 1;
+startIndicesBl = round((preFlashEventsClean + baselineWindowOffset(1)) * Fs); % time to index conversion
 endIndicesBl = startIndicesBl + round(diff(baselineWindowOffset) * Fs) - 1;
-t = periFlashWindowOffset(1):1/Fs:periFlashWindowOffset(2)-1/Fs;
+startIndicesSac = round((preFlashEventsClean + saccadeWindowOffset(1)) * Fs); % time to index conversion
+endIndicesSac = startIndicesSac + round(diff(saccadeWindowOffset) * Fs) - 1;
+t = postFlashWindowOffset(1):1/Fs:postFlashWindowOffset(2)-1/Fs;
 nTime = numel(t);
 % assert(all(nTime == (endIndicesStim - startIndicesStim + 1)));
 
+nChannels = length(channelsToLoad);
 responses = nan(nChannels, nTime, nFlashes);
-baseline = responses;
+baseline = nan(nChannels, nTime, nTrials);
+saccade = nan(nChannels, nTime, nTrials);
 for j = 1:nChannels
     % can vectorize???
     for i = 1:nFlashes
         responses(j,:,i) = channelDataCARNorm(j,startIndicesStim(i):endIndicesStim(i));
-        baseline(j,:,i) = channelDataCARNorm(j,startIndicesBl(i):endIndicesBl(i));
+    end
+    for k = 1:nTrials
+        baseline(j,:,k) = channelDataCARNorm(j,startIndicesBl(k):endIndicesBl(k));
+        saccade(j,:,k) = channelDataCARNorm(j,startIndicesSac(k):endIndicesSac(k));
     end
 end
+allResponses = cat(3,responses,saccade);
 
 % create covariance matrices
-responsesCont = reshape(responses, nChannels, []);
+responsesCont = reshape(allResponses, nChannels, []);
 responsesCont = bsxfun(@minus, responsesCont, mean(responsesCont,2));
 responsesCov = (responsesCont*responsesCont') / size(responsesCont,2);
 baselineCont = reshape(baseline, nChannels, []);
@@ -115,14 +84,22 @@ baselineCov = (baselineCont*baselineCont') / size(baselineCont,2);
 [~,eigidx] = sort(diag(evals));
 evecs = evecs(:,eigidx);
 
-responsesGed = reshape( (responsesCont' * evecs(:,1))',1,nTime,nFlashes);
+responsesGed = reshape( (responsesCont' * evecs)',nChannels,nTime,nFlashes+nTrials);
 responsesGedCompMaps = reshape( (responsesCov' * evecs(:,1))',1,nChannels,1);
 responsesGedCompMaps2 = reshape( (responsesCov' * evecs(:,2))',1,nChannels,1);
 
-baselineGed = reshape( (baselineCont' * evecs(:,1))',1,nTime,nFlashes);
+figure;
+plot(responsesGedCompMaps,1:32)
+set(gca, 'YDir', 'reverse');
+
+figure;
+plot(responsesGedCompMaps2,1:32)
+set(gca, 'YDir', 'reverse');
+
+baselineGed = reshape( (baselineCont' * evecs)',nChannels,nTime,nTrials);
 
 % plot it
-averageResponse = mean(responses, 3); % average across flashes
+averageResponse = mean(allResponses, 3); % average across flashes
 averageResponseGED = mean(responsesGed, 3); % average across flashes
 responsePlotYOffset = 1;
 responsePlotYScale = 5/max(max(abs(averageResponse)));
@@ -199,8 +176,8 @@ averageResponse = mean(responses, 3); % average across flashes
 flashBaselineWindowOffset = [-0.1 0];
 
 % TODO make so that baseline can have arbitrary end time
-indexFlashTime = -round(periFlashWindowOffset(1) * Fs);
-indexStartBaselineFlashTime = -round((periFlashWindowOffset(1) - flashBaselineWindowOffset(1)) * Fs) + 1;
+indexFlashTime = -round(postFlashWindowOffset(1) * Fs);
+indexStartBaselineFlashTime = -round((postFlashWindowOffset(1) - flashBaselineWindowOffset(1)) * Fs) + 1;
 for j = 1:nChannels
     averageResponse(j,:) = averageResponse(j,:) - mean(averageResponse(j,indexStartBaselineFlashTime:indexFlashTime));
 end
@@ -223,7 +200,7 @@ for j = 1:nChannels
         minYLim = min([minYLim min(responsePlotYScale*averageResponse(j,:) - j*responsePlotYOffset) - 1]);
     end
 end
-xlim(periFlashWindowOffset);
+xlim(postFlashWindowOffset);
 set(gca, 'YTickMode', 'manual');
 set(gca, 'YTick', -1*nChannels:-1);
 set(gca, 'YTickLabelMode', 'manual');
