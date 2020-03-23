@@ -324,7 +324,9 @@ figure
 bar(sort(diag(evals),'descend'))
 
 % permutation test
-nPerm = 500; permCov = cat(1,stimulusCovAll,baselineCovAll); nBaseline = size(baselineCovAll,1);
+nPerm = 500; 
+permCov = cat(1,stimulusCovAll,baselineCovAll); 
+nBaseline = size(baselineCovAll,1);
 permEvals = nan(nPerm,nChannels);
 for permi = 1:nPerm
     permCovShuffled = permCov(randperm(size(permCov,1)),:,:); 
@@ -333,12 +335,37 @@ for permi = 1:nPerm
     [evecsShuffled, evalsShuffled] = eig(stimulusCovShuffled,baselineCovShuffled);
     permEvals(permi,:) = sort(diag(evalsShuffled),'descend')';
 end
-figure;
-plot(sort(real(permEvals(:,1))))
+% figure;
+% plot(sort(real(permEvals(:,1))))
+% figure
+% histogram(real(permEvals(:,1)),'BinWidth',0.1,'Normalization','probability')
+% figure
+% bar(sortedPermEvals)
+
+% try permutation test with downsampling of stimulus condition
+nPerm = 500; 
+stimulusCovSubTmp = stimulusCovAll(randperm(size(stimulusCovAll,1)),:,:);
+stimulusCovSub = stimulusCovSubTmp(1:nBaseline,:,:);
+permCov2 = cat(1,stimulusCovSub,baselineCovAll); 
+permEvals2 = nan(nPerm,nChannels);
+for permi = 1:nPerm
+    permCovShuffled = permCov2(randperm(size(permCov2,1)),:,:); 
+    baselineCovShuffled = squeeze(mean(permCovShuffled(1:nBaseline,:,:),1));
+    stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
+    [evecsShuffled, evalsShuffled] = eig(stimulusCovShuffled,baselineCovShuffled);
+    permEvals2(permi,:) = sort(diag(evalsShuffled),'descend')';
+    if permEvals2(permi,1) == Inf
+        break
+    end
+end
 figure
-histogram(real(permEvals(:,1)),'BinWidth',0.1,'Normalization','probability')
-figure
-bar(sorterPermEvals)
+bar(sort(permEvals2(:,1)))
+
+figure; 
+subplot(131); 
+imagesc(baselineCovShuffled); caxis([-0.5 1]); 
+subplot(132); imagesc(stimulusCovShuffled); caxis([-0.5 1]); 
+subplot(133); imagesc(baselineCovShuffled - stimulusCovShuffled)
 
 % compare GED applied on 1st and 4th flash
 for n = 1:size(responses(:,:,fourthFlashes),3)
