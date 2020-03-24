@@ -59,18 +59,31 @@ t = postFlashWindowOffset(1):1/Fs:postFlashWindowOffset(2)-1/Fs;
 nTime = numel(t);
 % assert(all(nTime == (endIndicesStim - startIndicesStim + 1)));
 
+adjLfps = D.adjLfps;
+isNanOrig = isnan(adjLfps);
+bFirLowPass = fir1(3*fix(Fs/hiCutoffFreq), hiCutoffFreq/(Fs/2), 'low');
+adjLfps(isnan(adjLfps)) = 0; % zero out nans
+adjLfpsLP = filtfilt(bFirLowPass, 1, adjLfps')';
+adjLfpsLP(isNanOrig) = NaN; % set missing vals back to nan
+
 nChannels = length(channelsToLoad);
 responses = nan(nChannels, nTime, nFlashes);
 baseline = nan(nChannels, nTime, nTrials);
 saccade = nan(nChannels, nTime, nTrials);
+responsesRaw = nan(nChannels, nTime, nFlashes);
+baselineRaw = nan(nChannels, nTime, nTrials);
+saccadeRaw = nan(nChannels, nTime, nTrials);
 for j = 1:nChannels
     % can vectorize???
     for i = 1:nFlashes
         responses(j,:,i) = channelDataCARNorm(j,startIndicesStim(i):endIndicesStim(i));
+        responsesRaw(j,:,i) = adjLfpsLP(j,startIndicesStim(i):endIndicesStim(i));
     end
     for k = 1:nTrials
         baseline(j,:,k) = channelDataCARNorm(j,startIndicesBl(k):endIndicesBl(k));
         saccade(j,:,k) = channelDataCARNorm(j,startIndicesSac(k):endIndicesSac(k));
+        baselineRaw(j,:,k) = adjLfpsLP(j,startIndicesBl(k):endIndicesBl(k));
+        saccadeRaw(j,:,k) = adjLfpsLP(j,startIndicesSac(k):endIndicesSac(k));
     end
 end
 allResponses = cat(3,responses,saccade);
@@ -323,20 +336,60 @@ figure; plot(mean(stimulusGed(end,:,:),3)) % CHECK WITH RYAN!!!!!!!!!!!!
 figure
 bar(sort(diag(evals),'descend'))
 
+% permutation test on raw data
+% first extract covariance matrices on stimulus and baseline epochs with
+% raw data
+saccadeCovAllRaw = nan(size(saccadeRaw,3),nChannels,nChannels);
+for n = 1:size(saccadeRaw,3)
+    saccadeCovAllRaw(n,:,:) = saccadeRaw(:,:,(n))*saccadeRaw(:,:,(n))' / (size(saccadeRaw(:,:,(n)),2)-1);
+end
+saccadeCovRaw = squeeze(mean(saccadeCovAllRaw,1));
+allFlashesCovAllRaw = nan(size(responsesRaw,3),nChannels,nChannels);
+for n = 1:size(responsesRaw,3)
+    allFlashesCovAllRaw(n,:,:) = responsesRaw(:,:,n)*responsesRaw(:,:,n)' / (size(responsesRaw(:,:,n),2)-1);
+end
+stimulusCovAllRaw = cat(1,allFlashesCovAllRaw,saccadeCovAllRaw);
+stimulusCovRaw = squeeze(mean(stimulusCovAllRaw,1));
+baselineCovAllRaw = nan(size(baselineRaw,3),nChannels,nChannels);
+for n = 1:size(baselineRaw,3)
+    baselineCovAllRaw(n,:,:) = baselineRaw(:,:,(n))*baselineRaw(:,:,(n))' / (size(baselineRaw(:,:,(n)),2)-1);
+end
+baselineCovRaw = squeeze(mean(baselineCovAllRaw,1));
+
 % permutation test
 nPerm = 500; 
+permCovRaw = cat(1,stimulusCovAllRaw,baselineCovAllRaw); 
+nBaseline = size(baselineCovAllRaw,1);
+permEvalsRaw = nan(nPerm,nChannels);
+for permi = 1:nPerm
+    permCovShuffled = permCovRaw(randperm(size(permCovRaw,1)),:,:); 
+    baselineCovShuffled = squeeze(mean(permCovShuffled(1:nBaseline,:,:),1));
+    stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
+    [evecsShuffled, evalsShuffled] = eig(stimulusCovShuffled,baselineCovShuffled);
+    permEvalsRaw(permi,:) = sort(diag(evalsShuffled),'descend')';
+end
+figure
+bar(sort(permEvalsRaw(:,1)))
+
+% permutation test
+nPerm = 1000; 
 permCov = cat(1,stimulusCovAll,baselineCovAll); 
 nBaseline = size(baselineCovAll,1);
 permEvals = nan(nPerm,nChannels);
+epsilon = 1e-10;
 for permi = 1:nPerm
     permCovShuffled = permCov(randperm(size(permCov,1)),:,:); 
     baselineCovShuffled = squeeze(mean(permCovShuffled(1:nBaseline,:,:),1));
     stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
-    [evecsShuffled, evalsShuffled] = eig(stimulusCovShuffled,baselineCovShuffled);
+    [evecsShuffled, evalsShuffled] = eigs(stimulusCovShuffled,baselineCovShuffled+epsilon.*eye(32),nChannels);
     permEvals(permi,:) = sort(diag(evalsShuffled),'descend')';
 end
-% figure;
-% plot(sort(real(permEvals(:,1))))
+sortedPermEvals = sort(permEvals(:,1));
+figure;
+bar(sortedPermEvals)
+hold on;
+plot(find(sortedPermEvals > evals(eigidx(end),eigidx(end)),1,'first'),evals(eigidx(end),eigidx(end)),'*')
+
 % figure
 % histogram(real(permEvals(:,1)),'BinWidth',0.1,'Normalization','probability')
 % figure
@@ -352,11 +405,13 @@ for permi = 1:nPerm
     permCovShuffled = permCov2(randperm(size(permCov2,1)),:,:); 
     baselineCovShuffled = squeeze(mean(permCovShuffled(1:nBaseline,:,:),1));
     stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
-    [evecsShuffled, evalsShuffled] = eig(stimulusCovShuffled,baselineCovShuffled);
-    permEvals2(permi,:) = sort(diag(evalsShuffled),'descend')';
+    epsilon = 0.0000000001;
+    [evecsShuffled, evalsShuffled] = eigs(stimulusCovShuffled,baselineCovShuffled+epsilon.*eye(32),nChannels);%,[]ance',1e-18,'MaxIterations',1000);
+    permEvals2(permi,:) = sort(real(diag(evalsShuffled)),'descend')';
     if permEvals2(permi,1) == Inf
         break
     end
+    % clear evecsShuffled evalsShuffled
 end
 figure
 bar(sort(permEvals2(:,1)))
@@ -366,6 +421,31 @@ subplot(131);
 imagesc(baselineCovShuffled); caxis([-0.5 1]); 
 subplot(132); imagesc(stimulusCovShuffled); caxis([-0.5 1]); 
 subplot(133); imagesc(baselineCovShuffled - stimulusCovShuffled)
+
+subplot(131); title('Baseline')
+subplot(132); title('Stimulus')
+subplot(133); title(['Difference - EV = ' num2str(permEvals2(permi,1))])%sprintf('\\infty')])
+
+% check permutation test with random data instead of real data
+nPerm = 500; 
+%stimulusCovSubTmp = stimulusCovAll(randperm(size(stimulusCovAll,1)),:,:);
+stimulusCovRandom = rand(size(baselineCovAll,1),nChannels,nChannels);
+baselineCovRandom = rand(size(baselineCovAll,1),nChannels,nChannels);
+permCov2 = cat(1,stimulusCovRandom,baselineCovRandom); 
+permEvals2 = nan(nPerm,nChannels-1);
+for permi = 1:nPerm
+    permCovShuffled = permCov2(randperm(size(permCov2,1)),:,:); 
+    baselineCovShuffled = squeeze(mean(permCovShuffled(1:nBaseline,:,:),1));
+    stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
+    [evecsShuffled, evalsShuffled] = eigs(stimulusCovShuffled,baselineCovShuffled,nChannels-1);
+    permEvals2(permi,:) = sort(real(diag(evalsShuffled)),'descend')';
+    if permEvals2(permi,1) == Inf
+        break
+    end
+    % clear evecsShuffled evalsShuffled
+end
+figure
+bar(sort(permEvals2(:,1)))
 
 % compare GED applied on 1st and 4th flash
 for n = 1:size(responses(:,:,fourthFlashes),3)
