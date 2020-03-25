@@ -18,6 +18,10 @@ channelsToLoad = 33:64;
 sessionName = R.sessionName;
 areaName = R.areaName;
 
+[Raud, Daud, processedDataDirAud, blockNameAud] = loadRecordingData(...
+        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
+        sessionInd, channelsToLoad, 'AEPM', 'LFP_AEPM', 0, 0, 1, 0);
+
 if strcmp(sessionName, 'M20170127') || strcmp(sessionName, 'M20170130') || strcmp(sessionName, 'M20170201')
     origFlashEvents = D.events{6};
     preFlashesEvents = D.events{5};
@@ -26,6 +30,9 @@ else
     preFlashesEvents = D.events{2};
 end
 
+origAudioEvents = Daud.events{3};
+preAudioEvents = Daud.events{2};
+
 %[fixationAndLeverTimes,isMissingData] = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc)
 
 %%
@@ -33,6 +40,7 @@ end
 postFlashWindowOffset = [0.025 0.225]; % seconds after flash
 baselineWindowOffset = [-.175 .025]; % seconds around preflashevent
 saccadeWindowOffset = [-.425 -.225]; % fixation onset at 325ms before preflashevent
+postAudioWindowOffset = postFlashWindowOffset;
 
 % preprocess LFPs
 Fs = D.lfpFs;
@@ -46,7 +54,17 @@ flashEventsClean = detectOutlierLfpEvents(channelDataCARNorm, Fs, D.lfpNames, or
 preFlashEventsCleanWindowOffset = [min([baselineWindowOffset saccadeWindowOffset]) max([baselineWindowOffset saccadeWindowOffset])];
 preFlashEventsClean = detectOutlierLfpEvents(channelDataCARNorm, Fs, D.lfpNames, preFlashesEvents, ...
         preFlashEventsCleanWindowOffset, processedDataDir, [], 1, []);
-   
+
+Daud.adjLfpsClean = Daud.adjLfps; 
+[channelDataCARNormAud,channelDataNormAud,commonAverageNormAud,isNoisyChannelAud] = preprocessLfps(...
+        Daud.adjLfpsClean, Fs, Daud.lfpNames, processedDataDir, [], hiCutoffFreq, 1, []);
+Daud.adjLfpsClean = [];
+audioEventsClean = detectOutlierLfpEvents(channelDataCARNormAud, Fs, Daud.lfpNames, origAudioEvents, ...
+        postAudioWindowOffset, processedDataDir, [], 1, []);
+preAudioEventsCleanWindowOffset = baselineWindowOffset;
+preAudioEventsClean = detectOutlierLfpEvents(channelDataCARNormAud, Fs, Daud.lfpNames, preAudioEvents, ...
+        preAudioEventsCleanWindowOffset, processedDataDir, [], 1, []);
+      
 nFlashes = numel(flashEventsClean);
 nTrials = numel(preFlashEventsClean);
 startIndicesStim = round((flashEventsClean + postFlashWindowOffset(1)) * Fs); % time to index conversion
@@ -59,12 +77,13 @@ t = postFlashWindowOffset(1):1/Fs:postFlashWindowOffset(2)-1/Fs;
 nTime = numel(t);
 % assert(all(nTime == (endIndicesStim - startIndicesStim + 1)));
 
-adjLfps = D.adjLfps;
-isNanOrig = isnan(adjLfps);
-bFirLowPass = fir1(3*fix(Fs/hiCutoffFreq), hiCutoffFreq/(Fs/2), 'low');
-adjLfps(isnan(adjLfps)) = 0; % zero out nans
-adjLfpsLP = filtfilt(bFirLowPass, 1, adjLfps')';
-adjLfpsLP(isNanOrig) = NaN; % set missing vals back to nan
+% to look at Raw data
+% adjLfps = D.adjLfps;
+% isNanOrig = isnan(adjLfps);
+% bFirLowPass = fir1(3*fix(Fs/hiCutoffFreq), hiCutoffFreq/(Fs/2), 'low');
+% adjLfps(isnan(adjLfps)) = 0; % zero out nans
+% adjLfpsLP = filtfilt(bFirLowPass, 1, adjLfps')';
+% adjLfpsLP(isNanOrig) = NaN; % set missing vals back to nan
 
 nChannels = length(channelsToLoad);
 responses = nan(nChannels, nTime, nFlashes);
@@ -77,17 +96,91 @@ for j = 1:nChannels
     % can vectorize???
     for i = 1:nFlashes
         responses(j,:,i) = channelDataCARNorm(j,startIndicesStim(i):endIndicesStim(i));
-        responsesRaw(j,:,i) = adjLfpsLP(j,startIndicesStim(i):endIndicesStim(i));
+%         responsesRaw(j,:,i) = adjLfpsLP(j,startIndicesStim(i):endIndicesStim(i));
     end
     for k = 1:nTrials
         baseline(j,:,k) = channelDataCARNorm(j,startIndicesBl(k):endIndicesBl(k));
         saccade(j,:,k) = channelDataCARNorm(j,startIndicesSac(k):endIndicesSac(k));
-        baselineRaw(j,:,k) = adjLfpsLP(j,startIndicesBl(k):endIndicesBl(k));
-        saccadeRaw(j,:,k) = adjLfpsLP(j,startIndicesSac(k):endIndicesSac(k));
+%         baselineRaw(j,:,k) = adjLfpsLP(j,startIndicesBl(k):endIndicesBl(k));
+%         saccadeRaw(j,:,k) = adjLfpsLP(j,startIndicesSac(k):endIndicesSac(k));
     end
 end
 allResponses = cat(3,responses,saccade);
 
+%% collapse across stimulus conditions
+% first calculate GED for saccade activity
+saccadeCovAll = nan(size(saccade,3),nChannels,nChannels);
+for n = 1:size(saccade,3)
+    saccadeCovAll(n,:,:) = saccade(:,:,(n))*saccade(:,:,(n))' / (size(saccade(:,:,(n)),2)-1);
+end
+allFlashesCovAll = nan(size(responses,3),nChannels,nChannels);
+for n = 1:size(responses,3)
+    allFlashesCovAll(n,:,:) = responses(:,:,n)*responses(:,:,n)' / (size(responses(:,:,n),2)-1);
+end
+baselineCovAll = nan(size(baseline,3),nChannels,nChannels);
+for n = 1:size(baseline,3)
+    baselineCovAll(n,:,:) = baseline(:,:,(n))*baseline(:,:,(n))' / (size(baseline(:,:,(n)),2)-1);
+end
+baselineCov = squeeze(mean(baselineCovAll,1));
+stimulusCovAll = cat(1,allFlashesCovAll,saccadeCovAll);
+stimulusCov = squeeze(mean(stimulusCovAll,1));
+% get GED
+[evecs, evals] = eig(stimulusCov,baselineCov);
+[~,eigidx] = sort(diag(evals));
+evecs = evecs(:,eigidx);
+figure; 
+subplot(141); imagesc(stimulusCov); title('covariance matrix S')
+%caxis1 = caxis;
+caxis([-0.5 0.5])
+subplot(142); imagesc(evecs); title('eigen vectors');
+caxis([-1 1])
+subplot(143); imagesc(evals(eigidx,eigidx)); title(['eigen values' sprintf('\\lambda')])
+subplot(144); imagesc(baselineCov); title('covariance matrix R')
+%caxis2 = caxis;
+caxis([-0.5 0.5])
+%caxisMin = min([caxis1 caxis2]); caxisMax = max([caxis1 caxis2]);
+colorbar
+colormap(getCoolWarmMap());
+% subplot(141)
+% caxis([caxisMin caxisMax])
+% subplot(144)
+% caxis([caxisMin caxisMax])
+
+stimulusGed = reshape( (reshape(responses,nChannels,size(responses,2)*size(responses,3))' * evecs)',...
+    nChannels,nTime,size(responses,3));
+stimulusGedCompMaps = reshape( (stimulusCov' * evecs(:,end))',1,nChannels,1);
+figure; 
+plot(stimulusGedCompMaps,1:32); set(gca, 'YDir', 'reverse');
+title(['Eigen value: ' num2str(evals(eigidx(end),eigidx(end)))])
+findchangepts(stimulusGedCompMaps,'Statistic','mean','MinThreshold',.05)
+figure; plot(mean(stimulusGed(end,:,:),3)) % CHECK WITH RYAN!!!!!!!!!!!!
+
+figure
+bar(sort(diag(evals),'descend'))
+
+% permutation test
+nPerm = 1000; 
+permCov = cat(1,stimulusCovAll,baselineCovAll); 
+nBaseline = size(baselineCovAll,1);
+permEvals = nan(nPerm,nChannels);
+epsilon = 1e-10;
+for permi = 1:nPerm
+    permCovShuffled = permCov(randperm(size(permCov,1)),:,:); 
+    baselineCovShuffled = squeeze(mean(permCovShuffled(1:nBaseline,:,:),1));
+    stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
+    [evecsShuffled, evalsShuffled] = eigs(stimulusCovShuffled,baselineCovShuffled+epsilon.*eye(32),nChannels);
+    permEvals(permi,:) = sort(diag(evalsShuffled),'descend')';
+end
+sortedPermEvals = sort(permEvals(:,1));
+figure;
+bar(sortedPermEvals)
+hold on;
+plot(find(sortedPermEvals > evals(eigidx(end),eigidx(end)),1,'first'),evals(eigidx(end),eigidx(end)),'*')
+legend({'permuted Evals' 'observed Eval'})
+title(['99% cut-off ' num2str(sortedPermEvals(990)) '. Observed eVal ' num2str(evals(eigidx(end),eigidx(end)))])
+
+
+%%
 % find first flahses, interflash time is typically 400ms (of which 100ms
 % stim presentation)
 firstFlashesTmp = [1; find(diff(startIndicesStim)>500)]; 
@@ -296,46 +389,6 @@ title(['Eigen value: ' num2str(evalsSacc(end,end))])
 findchangepts(saccadeGedCompMaps,'Statistic','mean','MinThreshold',.05)
 figure; plot(mean(saccadeGed(end,:,:),3))
 
-%% collapse across stimulus conditions
-for n = 1:size(responses,3)
-    allFlashesCovAll(n,:,:) = responses(:,:,n)*responses(:,:,n)' / (size(responses(:,:,n),2)-1);
-end
-stimulusCovAll = cat(1,allFlashesCovAll,saccadeCovAll);
-stimulusCov = squeeze(mean(stimulusCovAll,1));
-% get GED
-[evecs, evals] = eig(stimulusCov,baselineCov);
-[~,eigidx] = sort(diag(evals));
-evecs = evecs(:,eigidx);
-figure; 
-subplot(141); imagesc(stimulusCov); title('covariance matrix S')
-%caxis1 = caxis;
-caxis([-0.5 0.5])
-subplot(142); imagesc(evecs); title('eigen vectors');
-caxis([-1 1])
-subplot(143); imagesc(evals(eigidx,eigidx)); title(['eigen values' sprintf('\\lambda')])
-subplot(144); imagesc(baselineCov); title('covariance matrix R')
-%caxis2 = caxis;
-caxis([-0.5 0.5])
-%caxisMin = min([caxis1 caxis2]); caxisMax = max([caxis1 caxis2]);
-colorbar
-colormap(getCoolWarmMap());
-% subplot(141)
-% caxis([caxisMin caxisMax])
-% subplot(144)
-% caxis([caxisMin caxisMax])
-
-stimulusGed = reshape( (reshape(responses,nChannels,size(responses,2)*size(responses,3))' * evecs)',...
-    nChannels,nTime,size(responses,3));
-stimulusGedCompMaps = reshape( (stimulusCov' * evecs(:,end))',1,nChannels,1);
-figure; 
-plot(stimulusGedCompMaps,1:32); set(gca, 'YDir', 'reverse');
-title(['Eigen value: ' num2str(evals(eigidx(end),eigidx(end)))])
-findchangepts(stimulusGedCompMaps,'Statistic','mean','MinThreshold',.05)
-figure; plot(mean(stimulusGed(end,:,:),3)) % CHECK WITH RYAN!!!!!!!!!!!!
-
-figure
-bar(sort(diag(evals),'descend'))
-
 % permutation test on raw data
 % first extract covariance matrices on stimulus and baseline epochs with
 % raw data
@@ -371,24 +424,6 @@ end
 figure
 bar(sort(permEvalsRaw(:,1)))
 
-% permutation test
-nPerm = 1000; 
-permCov = cat(1,stimulusCovAll,baselineCovAll); 
-nBaseline = size(baselineCovAll,1);
-permEvals = nan(nPerm,nChannels);
-epsilon = 1e-10;
-for permi = 1:nPerm
-    permCovShuffled = permCov(randperm(size(permCov,1)),:,:); 
-    baselineCovShuffled = squeeze(mean(permCovShuffled(1:nBaseline,:,:),1));
-    stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
-    [evecsShuffled, evalsShuffled] = eigs(stimulusCovShuffled,baselineCovShuffled+epsilon.*eye(32),nChannels);
-    permEvals(permi,:) = sort(diag(evalsShuffled),'descend')';
-end
-sortedPermEvals = sort(permEvals(:,1));
-figure;
-bar(sortedPermEvals)
-hold on;
-plot(find(sortedPermEvals > evals(eigidx(end),eigidx(end)),1,'first'),evals(eigidx(end),eigidx(end)),'*')
 
 % figure
 % histogram(real(permEvals(:,1)),'BinWidth',0.1,'Normalization','probability')

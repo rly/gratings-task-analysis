@@ -37,7 +37,7 @@ if exist(processedDataDirPre, 'dir') == 0
 end
 processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
 if exist(processedDataDir, 'dir') == 0
-    mkdir(processedDataDir);
+%     mkdir(processedDataDir);
 end
 
 tic;
@@ -68,6 +68,8 @@ elseif strcmp(taskName, 'GRATINGS_0D')
     end
 elseif strcmp(taskName, 'VEPM')
     R.blockIndices = R.vepmIndices;
+elseif strcmp(taskName, 'AEPM')
+    R.blockIndices = R.aepmIndices;
 elseif strcmp(taskName, 'RFM_OLD')
     R.blockIndices = R.rfmOldIndices;
     if isnan(R.blockIndices)
