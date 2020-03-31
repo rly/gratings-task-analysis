@@ -89,9 +89,9 @@ nChannels = length(channelsToLoad);
 responses = nan(nChannels, nTime, nFlashes);
 baseline = nan(nChannels, nTime, nTrials);
 saccade = nan(nChannels, nTime, nTrials);
-responsesRaw = nan(nChannels, nTime, nFlashes);
-baselineRaw = nan(nChannels, nTime, nTrials);
-saccadeRaw = nan(nChannels, nTime, nTrials);
+% responsesRaw = nan(nChannels, nTime, nFlashes);
+% baselineRaw = nan(nChannels, nTime, nTrials);
+% saccadeRaw = nan(nChannels, nTime, nTrials);
 for j = 1:nChannels
     % can vectorize???
     for i = 1:nFlashes
@@ -107,22 +107,109 @@ for j = 1:nChannels
 end
 allResponses = cat(3,responses,saccade);
 
+% repeat for auditory task
+nAudio = numel(audioEventsClean);
+nTrialsAud = numel(preAudioEventsClean);
+startIndicesStimAud = round((audioEventsClean + postAudioWindowOffset(1)) * Fs); % time to index conversion
+endIndicesStimAud = startIndicesStimAud + round(diff(postAudioWindowOffset) * Fs) - 1;
+startIndicesBlAud = round((preAudioEventsClean + baselineWindowOffset(1)) * Fs); % time to index conversion
+endIndicesBlAud = startIndicesBlAud + round(diff(baselineWindowOffset) * Fs) - 1;
+startIndicesSacAud = round((preAudioEventsClean + saccadeWindowOffset(1)) * Fs); % time to index conversion
+endIndicesSacAud = startIndicesSacAud + round(diff(saccadeWindowOffset) * Fs) - 1;
+tAud = postAudioWindowOffset(1):1/Fs:postAudioWindowOffset(2)-1/Fs;
+nTimeAud = numel(tAud);
+
+nChannels = length(channelsToLoad);
+responsesAud = nan(nChannels, nTimeAud, nAudio);
+baselineAud = nan(nChannels, nTimeAud, nTrialsAud);
+saccadeAud = nan(nChannels, nTimeAud, nTrialsAud);
+for j = 1:nChannels
+    % can vectorize???
+    for i = 1:nAudio
+        responsesAud(j,:,i) = channelDataCARNormAud(j,startIndicesStimAud(i):endIndicesStimAud(i));
+    end
+    for k = 1:nTrialsAud
+        baselineAud(j,:,k) = channelDataCARNormAud(j,startIndicesBlAud(k):endIndicesBlAud(k));
+        saccadeAud(j,:,k) = channelDataCARNormAud(j,startIndicesSacAud(k):endIndicesSacAud(k));
+    end
+end
+% allResponses = cat(3,responses,saccade);
+
+baselineAll = cat(3,baseline,baselineAud);
+stimulusAll = cat(3,responses,responsesAud);
+saccadeAll = cat(3,saccade,saccadeAud);
+
+figure
+subplot(231)
+imagesc(mean(baseline,3))
+caxis([-1 1])
+title('BL flashes')
+subplot(232)
+imagesc(mean(baselineAud,3))
+caxis([-1 1])
+title('BL audio')
+subplot(233)
+imagesc(mean(baseline,3) - mean(baselineAud,3))
+caxis([-0.3 0.3])
+title('BL diff')
+subplot(234)
+imagesc(mean(saccade,3))
+caxis([-1 1])
+title('S flashes')
+subplot(235)
+imagesc(mean(saccadeAud,3))
+caxis([-1 1])
+title('S audio')
+subplot(236)
+imagesc(mean(saccade,3) - mean(saccadeAud,3))
+caxis([-0.3 0.3])
+title('S diff')
+
+for chani = 1:nChannels
+   pValsSignrank(chani) = signrank(median(baseline(chani,:,:),3),median(baselineAud(chani,:,:),3));
+   pValsSignrankS(chani) = signrank(median(saccade(chani,:,:),3),median(saccadeAud(chani,:,:),3));
+end
+sum(pValsSignrank<(.01/nChannels))
+sum(pValsSignrankS<(.01/nChannels))
+
+figure
+ax(1) = subplot(221);
+imagesc(mean(baseline,3) - mean(baselineAud,3))
+caxis([-0.3 0.3])
+colormap(ax(1),getCoolWarmMap());
+title('BL diff')
+ax(2) = subplot(222);
+imagesc((pValsSignrank<(.01/nChannels))')
+colormap(ax(2),'gray')
+colorbar
+title('Sign. diff channels')
+ax(3) = subplot(223);
+imagesc(mean(saccade,3) - mean(saccadeAud,3))
+caxis([-0.3 0.3])
+colormap(ax(3),getCoolWarmMap());
+title('S diff')
+ax(4) = subplot(224);
+imagesc((pValsSignrankS<(.01/nChannels))')
+colormap(ax(4),'gray')
+colorbar
+title('Sign. diff channels')
+
 %% collapse across stimulus conditions
 % first calculate GED for saccade activity
-saccadeCovAll = nan(size(saccade,3),nChannels,nChannels);
-for n = 1:size(saccade,3)
-    saccadeCovAll(n,:,:) = saccade(:,:,(n))*saccade(:,:,(n))' / (size(saccade(:,:,(n)),2)-1);
+saccadeCovAll = nan(size(saccadeAll,3),nChannels,nChannels);
+for n = 1:size(saccadeAll,3)
+    saccadeCovAll(n,:,:) = saccadeAll(:,:,(n))*saccadeAll(:,:,(n))' / (size(saccadeAll(:,:,(n)),2)-1);
 end
-allFlashesCovAll = nan(size(responses,3),nChannels,nChannels);
-for n = 1:size(responses,3)
-    allFlashesCovAll(n,:,:) = responses(:,:,n)*responses(:,:,n)' / (size(responses(:,:,n),2)-1);
+allStimCovAll = nan(size(stimulusAll,3),nChannels,nChannels);
+for n = 1:size(stimulusAll,3)
+    allStimCovAll(n,:,:) = stimulusAll(:,:,n)*stimulusAll(:,:,n)' / (size(stimulusAll(:,:,n),2)-1);
 end
-baselineCovAll = nan(size(baseline,3),nChannels,nChannels);
-for n = 1:size(baseline,3)
-    baselineCovAll(n,:,:) = baseline(:,:,(n))*baseline(:,:,(n))' / (size(baseline(:,:,(n)),2)-1);
+baselineCovAll = nan(size(baselineAll,3),nChannels,nChannels);
+for n = 1:size(baselineAll,3)
+    baselineCovAll(n,:,:) = baselineAll(:,:,(n))*baselineAll(:,:,(n))' / (size(baselineAll(:,:,(n)),2)-1);
 end
 baselineCov = squeeze(mean(baselineCovAll,1));
-stimulusCovAll = cat(1,allFlashesCovAll,saccadeCovAll);
+stimulusCovAll = cat(1,allStimCovAll,saccadeCovAll);
 stimulusCov = squeeze(mean(stimulusCovAll,1));
 % get GED
 [evecs, evals] = eig(stimulusCov,baselineCov);
@@ -146,8 +233,8 @@ colormap(getCoolWarmMap());
 % subplot(144)
 % caxis([caxisMin caxisMax])
 
-stimulusGed = reshape( (reshape(responses,nChannels,size(responses,2)*size(responses,3))' * evecs)',...
-    nChannels,nTime,size(responses,3));
+stimulusGed = reshape( (reshape(stimulusAll,nChannels,size(stimulusAll,2)*size(stimulusAll,3))' * evecs)',...
+    nChannels,nTime,size(stimulusAll,3));
 stimulusGedCompMaps = reshape( (stimulusCov' * evecs(:,end))',1,nChannels,1);
 figure; 
 plot(stimulusGedCompMaps,1:32); set(gca, 'YDir', 'reverse');
@@ -159,7 +246,7 @@ figure
 bar(sort(diag(evals),'descend'))
 
 % permutation test
-nPerm = 1000; 
+nPerm = 10000; 
 permCov = cat(1,stimulusCovAll,baselineCovAll); 
 nBaseline = size(baselineCovAll,1);
 permEvals = nan(nPerm,nChannels);
@@ -170,6 +257,9 @@ for permi = 1:nPerm
     stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
     [evecsShuffled, evalsShuffled] = eigs(stimulusCovShuffled,baselineCovShuffled+epsilon.*eye(32),nChannels);
     permEvals(permi,:) = sort(diag(evalsShuffled),'descend')';
+%     if permEvals(permi,1) == Inf
+%         break
+%     end
 end
 sortedPermEvals = sort(permEvals(:,1));
 figure;
@@ -177,7 +267,8 @@ bar(sortedPermEvals)
 hold on;
 plot(find(sortedPermEvals > evals(eigidx(end),eigidx(end)),1,'first'),evals(eigidx(end),eigidx(end)),'*')
 legend({'permuted Evals' 'observed Eval'})
-title(['99% cut-off ' num2str(sortedPermEvals(990)) '. Observed eVal ' num2str(evals(eigidx(end),eigidx(end)))])
+title(['99% cut-off ' num2str(sortedPermEvals((nPerm/100)*99)) '. Observed eVal ' num2str(evals(eigidx(end),eigidx(end)))])
+
 
 
 %%
