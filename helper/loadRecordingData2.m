@@ -11,11 +11,11 @@ requiredFields = {'processedDataRootDir', 'dataDirRoot', 'suaMuaDataDirRoot', 'r
 optionalFields = {'rfMappingNewInfoFileName', 'rfMappingNewMode', 'isLoadAllSpikes'}; %#ok<NASGU>
 fn = fieldnames(paramsStruct);
 for i = 1:numel(requiredFields)
-    if ~ismember(requiredFields(i), fn)
-        error(['loadRecordingData2 input struct is missing field "' requiredFields(i) '"'])
+    if ~ismember(requiredFields{i}, fn)
+        error(['loadRecordingData2 input struct is missing field "' requiredFields{i} '"'])
     end
 end
-struct2var(paramsStruct)
+struct2varfn(paramsStruct)
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
