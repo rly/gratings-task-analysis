@@ -1,9 +1,21 @@
-function [R, D, processedDataDir, blockName] = loadRecordingDataSQ3(...
-        processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, ...
-        rfMappingNewInfoFileName, rfMappingNewMode, isLoadAllSpikes)
+function [R, D, processedDataDir, blockName] = loadRecordingData2(paramsStruct)
 % loads MUA data and eyetracking/lever data into D struct and recording
 % metadata into R struct
+
+%% check params struct for all required fields
+% the fields in paramsStruct will be unpacked into the workspace
+requiredFields = ['processedDataRootDir', 'dataDirRoot', 'suaMuaDataDirRoot', 'recordingInfoFileName', ...
+        'sessionInd', 'channelsToLoad', 'taskName', 'scriptName', 'isLoadSortedSua', 'isLoadMua', 'isLoadLfp', ...
+        'isLoadMetaDataOnly', 'minSuaSepQuality'];
+% certain fields are used only for loading certain data
+optionalFields = ['rfMappingNewInfoFileName', 'rfMappingNewMode', 'isLoadAllSpikes']; %#ok<NASGU>
+fn = fieldnames(paramsStruct);
+for i = 1:numel(requiredFields)
+    if ~ismember(requiredFields(i), fn)
+        error(['loadRecordingData2 input struct is missing field "' requiredFields(i) '"'])
+    end
+end
+struct2var(paramsStruct)
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
@@ -19,11 +31,11 @@ pl2FilePath = sprintf('%s/%s/%s', dataDirRoot, sessionName, R.pl2FileName);
 %% load recording data
 isLoadSpkc = 0;
 
-if strcmp(taskName, 'GRATINGS') || strcmp(taskName, 'GRATINGS_0D')
+% if strcmp(taskName, 'GRATINGS') || strcmp(taskName, 'GRATINGS_0D')
     isLoadDirect = 1;
-else
-    isLoadDirect = 0;
-end
+% else
+%     isLoadDirect = 0;
+% end
 
 if ~isempty(channelsToLoad)
     R.spikeChannelsToLoad = channelsToLoad;
@@ -49,8 +61,9 @@ if isLoadMetaDataOnly
     D = MD.MD;
 else
     fprintf('Loading data %s...\n', pl2FilePath);
-    D = loadPL2SQ3(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-            R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
+    D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, ...
+            isLoadSpkc, isLoadDirect, R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, ...
+            R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad, minSuaSepQuality); 
 end
 fprintf('... done (%0.2f s).\n', toc);
 
@@ -68,6 +81,8 @@ elseif strcmp(taskName, 'GRATINGS_0D')
     end
 elseif strcmp(taskName, 'VEPM')
     R.blockIndices = R.vepmIndices;
+elseif strcmp(taskName, 'AEPM')
+    R.blockIndices = R.aepmIndices;
 elseif strcmp(taskName, 'RFM_OLD')
     R.blockIndices = R.rfmOldIndices;
     if isnan(R.blockIndices)
