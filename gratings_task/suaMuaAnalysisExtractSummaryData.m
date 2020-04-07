@@ -109,6 +109,10 @@ for j = 1:nUnits
         saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
                 processedDataDir, unitName, blockName, v);
         fprintf('Processing %s...\n', saveFileName);
+        if exist(saveFileName, 'file') == 0
+            warning('File not found. Was there evoked spiking? Skipping...');
+            continue;
+        end
 
         ES = load(saveFileName);
 
