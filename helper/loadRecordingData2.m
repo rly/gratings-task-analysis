@@ -54,8 +54,8 @@ end
 
 tic;
 if isLoadMetaDataOnly
-    R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', ...
-            processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
+    R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-minsq%d-mua%d-gratings-metadata.mat', ...
+            processedDataDir, sessionName, sessionInd, isLoadSortedSua, minSuaSepQuality, isLoadMua);
     fprintf('Loading metadata %s...\n', R.metaDataFilePath);
     MD = load(R.metaDataFilePath);
     D = MD.MD;
