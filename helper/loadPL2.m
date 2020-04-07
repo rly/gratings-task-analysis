@@ -141,7 +141,7 @@ if isLoadSortedSua
             if isempty(unitEndTime)
                 unitEndTime = D.blockStopTimes(end);
             end
-            sortComments = sortQualityNotesText(:,2);
+            sortComments = sortQualityNotesText(qualityNotesMatchInd,2);
             
             unitInd = unitInd + 1;
             unitMatch = suaData(:,2) == j;
