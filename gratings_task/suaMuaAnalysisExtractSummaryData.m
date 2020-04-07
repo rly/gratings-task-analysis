@@ -79,9 +79,14 @@ end
 taskName = 'GRATINGS';
 scriptName = 'SUA_MUA_GRATINGS';
 isZeroDistractors = 0;
-[R, D, processedDataDir, blockName] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 1, 0);
+isLoadLfp = 0;
+isLoadMetaDataOnly = 1;
+minSuaSepQuality = 3;
+paramsStruct = var2struct(processedDataRootDir, ...
+        dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ...
+        taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, minSuaSepQuality);
+
+[R, D, processedDataDir, blockName] = loadRecordingData2(paramsStruct);
 sessionName = R.sessionName;
 areaName = R.areaName;
 
