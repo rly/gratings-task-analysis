@@ -254,17 +254,17 @@ for j = 1:nUnits
             % note: targetDimDelayLongWindowOffset = [-0.4 0];
             
             rtRelInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isRelBal);
-            rtRelInRF = rtRelInRF(ES.arrayOnsetRelBal.trialIndicesByLoc{inRFLoc});
+            rtRelInRF = rtRelInRF(ES.arrayOnsetRelBal.validEventsByLoc{inRFLoc});
             rtRelExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isRelBal);
-            rtRelExRF = rtRelExRF(ES.arrayOnsetRelBal.trialIndicesByLoc{exRFLoc});
+            rtRelExRF = rtRelExRF(ES.arrayOnsetRelBal.validEventsByLoc{exRFLoc});
             rtHoldInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
-            rtHoldInRF = rtHoldInRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{inRFLoc});
+            rtHoldInRF = rtHoldInRF(ES.arrayOnsetHoldBal.validEventsByLoc{inRFLoc});
             rtHoldExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
-            rtHoldExRF = rtHoldExRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{exRFLoc});
+            rtHoldExRF = rtHoldExRF(ES.arrayOnsetHoldBal.validEventsByLoc{exRFLoc});
             targetDimInRF = ES.UE.targetDimMatch(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
-            targetDimInRF = targetDimInRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{inRFLoc});
+            targetDimInRF = targetDimInRF(ES.arrayOnsetHoldBal.validEventsByLoc{inRFLoc});
             targetDimExRF = ES.UE.targetDimMatch(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
-            targetDimExRF = targetDimExRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{exRFLoc});
+            targetDimExRF = targetDimExRF(ES.arrayOnsetHoldBal.validEventsByLoc{exRFLoc});
 
             % use long balanced trials only
             cueTargetDelayRelInRFRate = ES.averageFiringRatesByCount.cueTargetDelayRelBalLong.trialRateByLoc{inRFLoc};
