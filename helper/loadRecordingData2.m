@@ -4,11 +4,11 @@ function [R, D, processedDataDir, blockName] = loadRecordingData2(paramsStruct)
 
 %% check params struct for all required fields
 % the fields in paramsStruct will be unpacked into the workspace
-requiredFields = ['processedDataRootDir', 'dataDirRoot', 'suaMuaDataDirRoot', 'recordingInfoFileName', ...
+requiredFields = {'processedDataRootDir', 'dataDirRoot', 'suaMuaDataDirRoot', 'recordingInfoFileName', ...
         'sessionInd', 'channelsToLoad', 'taskName', 'scriptName', 'isLoadSortedSua', 'isLoadMua', 'isLoadLfp', ...
-        'isLoadMetaDataOnly', 'minSuaSepQuality'];
+        'isLoadMetaDataOnly', 'minSuaSepQuality'};
 % certain fields are used only for loading certain data
-optionalFields = ['rfMappingNewInfoFileName', 'rfMappingNewMode', 'isLoadAllSpikes']; %#ok<NASGU>
+optionalFields = {'rfMappingNewInfoFileName', 'rfMappingNewMode', 'isLoadAllSpikes'}; %#ok<NASGU>
 fn = fieldnames(paramsStruct);
 for i = 1:numel(requiredFields)
     if ~ismember(requiredFields(i), fn)
