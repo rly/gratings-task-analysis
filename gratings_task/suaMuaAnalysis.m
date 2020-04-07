@@ -54,7 +54,7 @@ paramsStruct = var2struct(processedDataRootDir, ...
         dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ...
         taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, minSuaSepQuality);
 
-[R, D, processedDataDir, blockName] = loadRecordingData(paramsStruct);
+[R, D, processedDataDir, blockName] = loadRecordingData2(paramsStruct);
 sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);
