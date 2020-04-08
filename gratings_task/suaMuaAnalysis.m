@@ -39,7 +39,6 @@ nLoc = 4;
 assert(numel(channelsToLoad) == 1);
 
 %% load recording information
-
 if isZeroDistractors
     scriptName = 'SUA_MUA_GRATINGS_0D';
     taskName = 'GRATINGS_0D';
@@ -48,9 +47,14 @@ else
     taskName = 'GRATINGS';
 end
 
-[R, D, processedDataDir, blockName] = loadRecordingData(processedDataRootDir, ...
+isLoadLfp = 0;
+isLoadMetaDataOnly = 0;
+minSuaSepQuality = 3;
+paramsStruct = var2struct(processedDataRootDir, ...
         dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ...
-        taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 0);
+        taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, minSuaSepQuality);
+
+[R, D, processedDataDir, blockName] = loadRecordingData2(paramsStruct);
 sessionName = R.sessionName;
 
 fprintf('Processing %s...\n', sessionName);

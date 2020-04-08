@@ -79,9 +79,14 @@ end
 taskName = 'GRATINGS';
 scriptName = 'SUA_MUA_GRATINGS';
 isZeroDistractors = 0;
-[R, D, processedDataDir, blockName] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 1, 0);
+isLoadLfp = 0;
+isLoadMetaDataOnly = 1;
+minSuaSepQuality = 3;
+paramsStruct = var2struct(processedDataRootDir, ...
+        dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ...
+        taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, minSuaSepQuality);
+
+[R, D, processedDataDir, blockName] = loadRecordingData2(paramsStruct);
 sessionName = R.sessionName;
 areaName = R.areaName;
 
@@ -104,6 +109,10 @@ for j = 1:nUnits
         saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
                 processedDataDir, unitName, blockName, v);
         fprintf('Processing %s...\n', saveFileName);
+        if exist(saveFileName, 'file') == 0
+            warning('File not found. Was there evoked spiking? Skipping...');
+            continue;
+        end
 
         ES = load(saveFileName);
 
@@ -249,17 +258,17 @@ for j = 1:nUnits
             % note: targetDimDelayLongWindowOffset = [-0.4 0];
             
             rtRelInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isRelBal);
-            rtRelInRF = rtRelInRF(ES.arrayOnsetRelBal.trialIndicesByLoc{inRFLoc});
+            rtRelInRF = rtRelInRF(ES.arrayOnsetRelBal.validEventsByLoc{inRFLoc});
             rtRelExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isRelBal);
-            rtRelExRF = rtRelExRF(ES.arrayOnsetRelBal.trialIndicesByLoc{exRFLoc});
+            rtRelExRF = rtRelExRF(ES.arrayOnsetRelBal.validEventsByLoc{exRFLoc});
             rtHoldInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
-            rtHoldInRF = rtHoldInRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{inRFLoc});
+            rtHoldInRF = rtHoldInRF(ES.arrayOnsetHoldBal.validEventsByLoc{inRFLoc});
             rtHoldExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
-            rtHoldExRF = rtHoldExRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{exRFLoc});
+            rtHoldExRF = rtHoldExRF(ES.arrayOnsetHoldBal.validEventsByLoc{exRFLoc});
             targetDimInRF = ES.UE.targetDimMatch(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
-            targetDimInRF = targetDimInRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{inRFLoc});
+            targetDimInRF = targetDimInRF(ES.arrayOnsetHoldBal.validEventsByLoc{inRFLoc});
             targetDimExRF = ES.UE.targetDimMatch(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
-            targetDimExRF = targetDimExRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{exRFLoc});
+            targetDimExRF = targetDimExRF(ES.arrayOnsetHoldBal.validEventsByLoc{exRFLoc});
 
             % use long balanced trials only
             cueTargetDelayRelInRFRate = ES.averageFiringRatesByCount.cueTargetDelayRelBalLong.trialRateByLoc{inRFLoc};

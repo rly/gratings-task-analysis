@@ -1,12 +1,23 @@
-function MD = loadRecordingDataIntoSpikeMetaData(...
-        processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, isLoadSortedSua, isLoadMua)
+function MD = loadRecordingDataIntoSpikeMetaData(paramsStruct)
 % read SUA/MUA data from PL2 file, trim the spike times based on the blocks
 % of interest, and save only the cell array of unit structs and the block
 % start and stop times
 %
 % do this once to save time loading the full POL2 file for the sua/mua
 % analysis extract summary script and other summary scripts
+%% check params struct for all required fields
+% the fields in paramsStruct will be unpacked into the workspace
+requiredFields = {'processedDataRootDir', 'dataDirRoot', 'suaMuaDataDirRoot', 'recordingInfoFileName', ...
+        'sessionInd', 'channelsToLoad', 'isLoadSortedSua', 'isLoadMua', 'minSuaSepQuality'};
+% certain fields are used only for loading certain data
+fn = fieldnames(paramsStruct);
+for i = 1:numel(requiredFields)
+    if ~ismember(requiredFields{i}, fn)
+        error(['loadRecordingDataIntoSpikeMetaData input struct is missing field "' requiredFields{i} '"'])
+    end
+end
+struct2varfn(paramsStruct)
+
 taskName = 'GRATINGS';
 scriptName = 'SUA_MUA_GRATINGS';
 
@@ -44,8 +55,9 @@ end
 
 tic;
 fprintf('Loading data %s...\n', pl2FilePath);
-D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadSpkc, isLoadDirect, ...
-        R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad); 
+D = loadPL2(pl2FilePath, suaMuaDataDirRoot, sessionName, R.areaName, isLoadSortedSua, isLoadMua, isLoadLfp, ...
+            isLoadSpkc, isLoadDirect, R.spikeChannelPrefix, R.spikeChannelsToLoad, R.muaChannelsToLoad, ...
+            R.lfpChannelsToLoad, R.spkcChannelsToLoad, R.directChannelsToLoad, minSuaSepQuality);  
 fprintf('... done (%0.2f s).\n', toc);
 
 %% get block indices
@@ -75,6 +87,7 @@ if isLoadLfp
 end
 
 %% save meta data into smaller file
-R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
+R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-minsq%d-mua%d-gratings-metadata.mat', ...
+        processedDataDir, sessionName, sessionInd, isLoadSortedSua, minSuaSepQuality, isLoadMua);
 fprintf('Writing metadata %s...\n', R.metaDataFilePath);
 MD = createMetaDataFile(D, R.metaDataFilePath);
