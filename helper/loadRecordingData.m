@@ -33,7 +33,7 @@ end
 
 processedDataDirPre = sprintf('%s/%s', processedDataRootDir, sessionName);
 if exist(processedDataDirPre, 'dir') == 0
-    mkdir(processedDataDirPre);
+%    mkdir(processedDataDirPre);
 end
 processedDataDir = sprintf('%s/%s', processedDataDirPre, scriptName);
 if exist(processedDataDir, 'dir') == 0

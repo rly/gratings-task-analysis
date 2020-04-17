@@ -10,7 +10,7 @@ processedDataRootDir = '/Volumes/scratch/rly/gratings-task-analysis/processed_da
 dataDirRoot = '/Volumes/kastner/ryanly/McCartney/merged';
 muaDataDirRoot = '/Volumes/scratch/rly/simple-mua-detection/processed_data/';
 recordingInfoFileName = '/Users/labmanager/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
-sessionInd = 15; %12 18
+sessionInd = 22; %12 18 15 22
 channelsToLoad = 33:64;
 [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
@@ -140,59 +140,148 @@ stimulusAll = cat(3,responses,responsesAud);
 saccadeAll = cat(3,saccade,saccadeAud);
 
 figure
-subplot(231)
+subplot(331)
 imagesc(mean(baseline,3))
 caxis([-1 1])
 title('BL flashes')
-subplot(232)
+subplot(332)
 imagesc(mean(baselineAud,3))
 caxis([-1 1])
 title('BL audio')
-subplot(233)
+subplot(333)
 imagesc(mean(baseline,3) - mean(baselineAud,3))
 caxis([-0.3 0.3])
 title('BL diff')
-subplot(234)
+subplot(334)
 imagesc(mean(saccade,3))
 caxis([-1 1])
 title('S flashes')
-subplot(235)
+subplot(335)
 imagesc(mean(saccadeAud,3))
 caxis([-1 1])
 title('S audio')
-subplot(236)
+subplot(336)
 imagesc(mean(saccade,3) - mean(saccadeAud,3))
 caxis([-0.3 0.3])
 title('S diff')
+subplot(337)
+imagesc(mean(responses,3))
+caxis([-1 1])
+title('Flashes')
+subplot(338)
+imagesc(mean(responsesAud,3))
+caxis([-1 1])
+title('Audio')
+subplot(339)
+imagesc(mean(responses,3) - mean(responsesAud,3))
+caxis([-0.3 0.3])
+title('Diff')
 
 for chani = 1:nChannels
    pValsSignrank(chani) = signrank(median(baseline(chani,:,:),3),median(baselineAud(chani,:,:),3));
    pValsSignrankS(chani) = signrank(median(saccade(chani,:,:),3),median(saccadeAud(chani,:,:),3));
+   pValsSignrankStim(chani) = signrank(median(responses(chani,:,:),3),median(responsesAud(chani,:,:),3));
 end
 sum(pValsSignrank<(.01/nChannels))
 sum(pValsSignrankS<(.01/nChannels))
+sum(pValsSignrankStim<(.01/nChannels))
 
 figure
-ax(1) = subplot(221);
+ax(1) = subplot(321);
 imagesc(mean(baseline,3) - mean(baselineAud,3))
 caxis([-0.3 0.3])
 colormap(ax(1),getCoolWarmMap());
 title('BL diff')
-ax(2) = subplot(222);
+ax(2) = subplot(322);
 imagesc((pValsSignrank<(.01/nChannels))')
 colormap(ax(2),'gray')
 colorbar
 title('Sign. diff channels')
-ax(3) = subplot(223);
+ax(3) = subplot(323);
 imagesc(mean(saccade,3) - mean(saccadeAud,3))
 caxis([-0.3 0.3])
 colormap(ax(3),getCoolWarmMap());
 title('S diff')
-ax(4) = subplot(224);
+ax(4) = subplot(324);
 imagesc((pValsSignrankS<(.01/nChannels))')
 colormap(ax(4),'gray')
 colorbar
 title('Sign. diff channels')
+ax(5) = subplot(325);
+imagesc(mean(responses,3) - mean(responsesAud,3))
+caxis([-0.3 0.3])
+colormap(ax(5),getCoolWarmMap());
+title('Stim diff')
+ax(6) = subplot(326);
+imagesc((pValsSignrankStim<(.01/nChannels))')
+colormap(ax(6),'gray')
+colorbar
+title('Sign. diff channels')
+
+figure
+subplot(231)
+plot(squeeze(baseline(1,:,:)))
+hold on
+plot(squeeze(mean(baseline(1,:,:),3)),'k','lineWidth',2)
+ylim([-5 5])
+title('baseline chan1')
+subplot(232)
+plot(squeeze(saccade(1,:,:)))
+hold on
+plot(squeeze(mean(saccade(1,:,:),3)),'k','lineWidth',2)
+ylim([-5 5])
+title('saccade chan1')
+subplot(233)
+plot(squeeze(responses(1,:,:)))
+hold on
+plot(squeeze(mean(responses(1,:,:),3)),'k','lineWidth',2)
+ylim([-5 5])
+title('flashes chan1')
+subplot(234)
+plot(squeeze(baselineAud(1,:,:)))
+hold on
+plot(squeeze(mean(baselineAud(1,:,:),3)),'k','lineWidth',2)
+ylim([-5 5])
+title('baselineAud chan1')
+subplot(235)
+plot(squeeze(saccadeAud(1,:,:)))
+hold on
+plot(squeeze(mean(saccadeAud(1,:,:),3)),'k','lineWidth',2)
+ylim([-5 5])
+title('saccadeAud chan1')
+subplot(236)
+plot(squeeze(responsesAud(1,:,:)))
+hold on
+plot(squeeze(mean(responsesAud(1,:,:),3)),'k','lineWidth',2)
+ylim([-5 5])
+title('audio chan1')
+
+addpath('/Users/labmanager/Documents/MATLAB/kakearney-boundedline-pkg-50f7e4b/boundedline/')
+figure
+subplot(311)
+meanBaseline = squeeze(mean(baseline(1,:,:),3));
+stdBaseline = std(baseline(1,:,:),[],3);% / size(baseline,3);
+meanBaselineAud = squeeze(mean(baselineAud(1,:,:),3));
+stdBaselineAud = std(baselineAud(1,:,:),[],3);% / size(baseline,3);
+boundedline(1:nTime,meanBaseline,stdBaseline,'alpha')
+hold on
+boundedline(1:nTime,meanBaselineAud,stdBaselineAud,'r','alpha')
+subplot(312)
+meanSaccade = squeeze(mean(saccade(1,:,:),3));
+stdSaccade = std(saccade(1,:,:),[],3);% / size(baseline,3);
+meanSaccadeAud = squeeze(mean(saccadeAud(1,:,:),3));
+stdSaccadeAud = std(saccadeAud(1,:,:),[],3);% / size(baseline,3);
+boundedline(1:nTime,meanSaccade,stdSaccade,'alpha')
+hold on
+boundedline(1:nTime,meanSaccadeAud,stdSaccadeAud,'r','alpha')
+subplot(313)
+meanResponses = squeeze(mean(responses(1,:,:),3));
+stdResponses = std(responses(1,:,:),[],3);% / size(baseline,3);
+meanResponsesAud = squeeze(mean(responsesAud(1,:,:),3));
+stdResponsesAud = std(responsesAud(1,:,:),[],3);% / size(baseline,3);
+boundedline(1:nTime,meanResponses,stdResponses,'alpha')
+hold on
+boundedline(1:nTime,meanResponsesAud,stdResponsesAud,'r','alpha')
 
 %% collapse across stimulus conditions
 % first calculate GED for saccade activity
@@ -242,6 +331,13 @@ title(['Eigen value: ' num2str(evals(eigidx(end),eigidx(end)))])
 findchangepts(stimulusGedCompMaps,'Statistic','mean','MinThreshold',.05)
 figure; plot(mean(stimulusGed(end,:,:),3)) % CHECK WITH RYAN!!!!!!!!!!!!
 
+stimulusGedCompMaps2 = reshape( (stimulusCov' * evecs(:,end-1))',1,nChannels,1);
+figure; 
+plot(stimulusGedCompMaps2,1:32); set(gca, 'YDir', 'reverse');
+title(['Eigen value: ' num2str(evals(eigidx(end-1),eigidx(end-1)))])
+findchangepts(stimulusGedCompMaps2,'Statistic','mean','MinThreshold',.05)
+figure; plot(mean(stimulusGed(end,:,:),3)) % CHECK WITH RYAN!!!!!!!!!!!!
+
 figure
 bar(sort(diag(evals),'descend'))
 
@@ -255,11 +351,11 @@ for permi = 1:nPerm
     permCovShuffled = permCov(randperm(size(permCov,1)),:,:); 
     baselineCovShuffled = squeeze(mean(permCovShuffled(1:nBaseline,:,:),1));
     stimulusCovShuffled = squeeze(mean(permCovShuffled(nBaseline+1:end,:,:),1));
-    [evecsShuffled, evalsShuffled] = eigs(stimulusCovShuffled,baselineCovShuffled+epsilon.*eye(32),nChannels);
+    [evecsShuffled, evalsShuffled] = eig(stimulusCovShuffled,baselineCovShuffled);%+epsilon.*eye(32),nChannels);
     permEvals(permi,:) = sort(diag(evalsShuffled),'descend')';
-%     if permEvals(permi,1) == Inf
-%         break
-%     end
+    if permEvals(permi,1) == Inf
+        break
+    end
 end
 sortedPermEvals = sort(permEvals(:,1));
 figure;
