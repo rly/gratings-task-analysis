@@ -163,8 +163,15 @@ if isLoadSortedSua
             spikeStruct.threshold = nanmean(muaData.thresholdParams.thresholds); % mV
             spikeStruct.thresholdTime = muaData.thresholdParams.nPreThresholdSamples / spikeFs;
             spikeStruct.thresholdParams = muaData.thresholdParams;
-            spikeStruct.wf = suaData(unitMatch,4:end) / 1000; % now in millivolts
-            spikeStruct.ts = suaData(unitMatch,3); % seconds
+            
+            spikeChannel = dataInfo.SpikeChannels{i}; % as in Rujia's code
+            origSpikeVarName = spikeChannel.Name; % as in Rujia's code
+            waveInfo = PL2Waves(fileName, origSpikeVarName, j);% as in Rujia's code 
+            spikeStruct.wf = waveInfo.Waves; % as in Rujia's code
+            spikeStruct.ts = waveInfo.Ts; % as in Rujia's code
+%             
+%             spikeStruct.wf = suaData(unitMatch,4:end) / 1000; % now in millivolts
+%             spikeStruct.ts = suaData(unitMatch,3); % seconds
             if isempty(spikeStruct.ts) % don't add more information if there are no waveforms
                 D.allSpikeStructs{unitInd} = spikeStruct;
                 continue;

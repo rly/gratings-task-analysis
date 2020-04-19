@@ -1,14 +1,14 @@
 clc
 clear all 
 close all
-cd('/Users/labmanager/Documents/MATLAB/Data locally')
+cd('/Users/labmanager/Documents/MATLAB/Data locally SQ3')
 nUnits = dir('spikeTimes2use*');
-javaaddpath(which('MatlabGarbageCollector.jar'))
+%javaaddpath(which('MatlabGarbageCollector.jar'))
 binWidth4hist = 5;
 plotOutput = 0;
 
 for stati = 1:50%:100
-    jheapcl
+    %jheapcl
     tic
     percentageBurst= nan(length(nUnits),1);
     percBurstWMAttCA= nan(length(nUnits),1);
@@ -47,42 +47,38 @@ for stati = 1:50%:100
     cueTargetshuffledAttOutSCM= nan(length(nUnits),1);
     cueTargetpoissonAttInSCM= nan(length(nUnits),1);
     cueTargetpoissonAttOutSCM= nan(length(nUnits),1);
-    for uniti = 16:length(nUnits)
-        if uniti == 21
-            continue
-        end
-        cd('/Users/labmanager/Documents/MATLAB/Data locally')
+    for uniti = 1:length(nUnits)
+%         if uniti == 21
+%             continue
+%         end
+        cd('/Users/labmanager/Documents/MATLAB/Data locally SQ3')
         load(nUnits(uniti).name)
         cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')
 
         targetDimTrialAttOut = UE.targetDim(UE.cueLoc(UE.isHoldTrial) == 1);
         targetDimTrialAttOut = targetDimTrialAttOut(targetDimTrialAttOut >= startTime & targetDimTrialAttOut <= endTime);
         targetDimTrialAttOut = targetDimTrialAttOut - firstSpikeTimes;
-        targetDimTrialAttOut = targetDimTrialAttOut(targetDimTrialAttOut>0);
-
         targetDimTrialAttIn = UE.targetDim(UE.cueLoc(UE.isHoldTrial) == 3);
         targetDimTrialAttIn = targetDimTrialAttIn(targetDimTrialAttIn >= startTime & targetDimTrialAttIn <= endTime);
         targetDimTrialAttIn = targetDimTrialAttIn - firstSpikeTimes;
-        targetDimTrialAttIn = targetDimTrialAttIn(targetDimTrialAttIn>0);
-
         arrayOnsetTrialAttOut = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 1);
         arrayOnsetTrialAttOut = arrayOnsetTrialAttOut(arrayOnsetTrialAttOut >= startTime & arrayOnsetTrialAttOut <= endTime);
         arrayOnsetTrialAttOut = arrayOnsetTrialAttOut - firstSpikeTimes;
-        arrayOnsetTrialAttOut = arrayOnsetTrialAttOut(arrayOnsetTrialAttOut>0);
-
         arrayOnsetTrialAttIn = UE.arrayOnset(UE.isHoldTrial & UE.cueLoc == 3);
         arrayOnsetTrialAttIn = arrayOnsetTrialAttIn(arrayOnsetTrialAttIn >= startTime & arrayOnsetTrialAttIn <= endTime);
         arrayOnsetTrialAttIn = arrayOnsetTrialAttIn - firstSpikeTimes;
-        arrayOnsetTrialAttIn = arrayOnsetTrialAttIn(arrayOnsetTrialAttIn>0);
-
         cueOnsetTrialAttOut = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 1) + 0.200;
         cueOnsetTrialAttOut = cueOnsetTrialAttOut(cueOnsetTrialAttOut >= startTime & cueOnsetTrialAttOut <= endTime);
         cueOnsetTrialAttOut = cueOnsetTrialAttOut - firstSpikeTimes;
-        cueOnsetTrialAttOut = cueOnsetTrialAttOut(cueOnsetTrialAttOut>0);
-
         cueOnsetTrialAttIn = UE.cueOnset(UE.isHoldTrial & UE.cueLoc == 3) + 0.200;
         cueOnsetTrialAttIn = cueOnsetTrialAttIn(cueOnsetTrialAttIn >= startTime & cueOnsetTrialAttIn <= endTime);
         cueOnsetTrialAttIn = cueOnsetTrialAttIn - firstSpikeTimes;
+        
+        targetDimTrialAttOut = targetDimTrialAttOut(cueOnsetTrialAttOut>0);
+        targetDimTrialAttIn = targetDimTrialAttIn(cueOnsetTrialAttIn>0);
+        arrayOnsetTrialAttOut = arrayOnsetTrialAttOut(cueOnsetTrialAttOut>0);
+        arrayOnsetTrialAttIn = arrayOnsetTrialAttIn(cueOnsetTrialAttIn>0);
+        cueOnsetTrialAttOut = cueOnsetTrialAttOut(cueOnsetTrialAttOut>0);
         cueOnsetTrialAttIn = cueOnsetTrialAttIn(cueOnsetTrialAttIn>0);
 
         saveFileName = ['HistogramISIrealCueArrayDim' nUnits(uniti).name(19:end-4) '_' num2str(binWidth4hist) 'ms.png'];
@@ -106,11 +102,12 @@ for stati = 1:50%:100
             cueOnsetTrialAttIn cueOnsetTrialAttOut arrayOnsetTrialAttIn ...
             arrayOnsetTrialAttOut targetDimTrialAttIn targetDimTrialAttOut
         close all
+        fprintf(['Unit: ' num2str(uniti) ' from ' num2str(length(nUnits)) ' total Units\n'])
     end
 
 
 cd('/Users/labmanager/Documents/MATLAB/BurstSep4all/data')
-save(['StatRunMcCartney' num2str(stati) '_AttNw3_' num2str(binWidth4hist) 'ms'],'cueArray*',...
+save(['StatRunMcCartney' num2str(stati) '_AttNwApril_' num2str(binWidth4hist) 'ms'],'cueArray*',...
     'cueTarget*','perc*')
 
 % look at first bin of 200ms post-cue until array onset
@@ -146,7 +143,7 @@ cueTargetDiffShuffledSCM = cueTargetshuffledAttInSCM(percBurstWMAttCTSCM>1) - cu
 [~,PCTSCM(stati),~,~] = ttest(cueTargetDiffSCM);
 toc
 sprintf(['statRun: ' num2str(stati)])
-save(['pValues_McCartney_' num2str(binWidth4hist) 'ms'],'PCAP','PCAS','PCA','PCAPSCM','PCASSCM','PCASCM','PCTP',...
+save(['pValues_McCartney_April' num2str(binWidth4hist) 'ms'],'PCAP','PCAS','PCA','PCAPSCM','PCASSCM','PCASCM','PCTP',...
     'PCTS','PCT','PCTPSCM','PCTSSCM','PCTSCM')
 end
 

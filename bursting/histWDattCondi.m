@@ -42,165 +42,183 @@ for n=1:NEAttOut;
 end
 NEAttIn = length(attIn); NEAttOut = length(attOut);
 
-% create Poisson data for comparison
-[~,datatmpPoissonAttIn] = calcPoisson(NEAttIn,nEAttIn,endTimeAttIn,cueOnsetTrialAttIn,Fs,data);
-[~,datatmpPoissonAttOut] = calcPoisson(NEAttOut,nEAttOut,endTimeAttOut,cueOnsetTrialAttOut,Fs,data);
-spikeTimesAllTrials = [];
-for triali = 1:NEAttOut
-    nSpikesPerTrial(triali) = length(attOut(triali).spikeTimes);
-    spikeTimesAllTrials = [spikeTimesAllTrials attOut(triali).spikeTimes];
-end
-nSpikesPerTrialAttOut = nSpikesPerTrial;
-spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
-% make sure that there are no neighboring spikes with the same
-% spiketimes
-while sum(diff(spikeTimesAllTrials2use)==0) ~= 0
-    spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
-end
-% reconstruct trials and extract interspike intervals
-for triali = 1:NEAttOut
-    if triali == 1
-        if nSpikesPerTrial(triali) ~= 0
-            nspike2use = spikeTimesAllTrials2use(1:nSpikesPerTrial(1));
-            idx = nSpikesPerTrial(1) + 1;
-        else
-            idx = 1;
-            continue
-        end
-    else
-        if nSpikesPerTrial(triali) ~= 0
-            nspike2use = spikeTimesAllTrials2use(idx:idx+nSpikesPerTrial(triali)-1);
-            idx = nSpikesPerTrial(triali) + idx;
-        else
-            attOutRandomized(triali).spikeTimes = [];
-            continue
-        end
+if NEAttIn > 5 && NEAttOut > 5
+    % create Poisson data for comparison
+    [~,datatmpPoissonAttIn] = calcPoisson(NEAttIn,endTimeAttIn,cueOnsetTrialAttIn,Fs,data);
+    [~,datatmpPoissonAttOut] = calcPoisson(NEAttOut,endTimeAttOut,cueOnsetTrialAttOut,Fs,data);
+    spikeTimesAllTrials = [];
+    for triali = 1:NEAttOut
+        nSpikesPerTrial(triali) = length(attOut(triali).spikeTimes);
+        spikeTimesAllTrials = [spikeTimesAllTrials attOut(triali).spikeTimes];
     end
-    attOutRandomized(triali).spikeTimes = sort(nspike2use);
-    clear nspike2use
-end
-% finally get the interspike intervals of the shuffled data
-datatmpShuffledAttOut = [];
-for n = 1:length(attOutRandomized)
-    datatmpShuffledAttOut = [datatmpShuffledAttOut diff(attOutRandomized(n).spikeTimes)];
-end
-
-clear spikeTimesAllTrials2use nSpikesPerTrial
-spikeTimesAllTrials = [];
-for triali = 1:NEAttIn
-    nSpikesPerTrial(triali) = length(attIn(triali).spikeTimes);
-    spikeTimesAllTrials = [spikeTimesAllTrials attIn(triali).spikeTimes];
-end
-nSpikesPerTrialAttIn = nSpikesPerTrial;
-spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
-% make sure that there are no neighboring spikes with the same
-% spiketimes
-while sum(diff(spikeTimesAllTrials2use)==0) ~= 0
+    nSpikesPerTrialAttOut = nSpikesPerTrial;
     spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
-end
-% reconstruct trials and extract interspike intervals
-for triali = 1:NEAttIn
-    if triali == 1
-        if nSpikesPerTrial(triali) ~= 0
-            nspike2use = spikeTimesAllTrials2use(1:nSpikesPerTrial(1));
-            idx = nSpikesPerTrial(1) + 1;
-        else
-            idx = 1;
-            continue
-        end
-    else
-        if nSpikesPerTrial(triali) ~= 0
-            nspike2use = spikeTimesAllTrials2use(idx:idx+nSpikesPerTrial(triali)-1);
-            idx = nSpikesPerTrial(triali) + idx;
-        else
-            attInRandomized(triali).spikeTimes = [];
-            continue
-        end
+    % make sure that there are no neighboring spikes with the same
+    % spiketimes
+    while sum(diff(spikeTimesAllTrials2use)==0) ~= 0
+        spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
     end
-    attInRandomized(triali).spikeTimes = sort(nspike2use);
-    clear nspike2use
+    % reconstruct trials and extract interspike intervals
+    for triali = 1:NEAttOut
+        if triali == 1
+            if nSpikesPerTrial(triali) ~= 0
+                nspike2use = spikeTimesAllTrials2use(1:nSpikesPerTrial(1));
+                idx = nSpikesPerTrial(1) + 1;
+            else
+                idx = 1;
+                continue
+            end
+        else
+            if nSpikesPerTrial(triali) ~= 0
+                nspike2use = spikeTimesAllTrials2use(idx:idx+nSpikesPerTrial(triali)-1);
+                idx = nSpikesPerTrial(triali) + idx;
+            else
+                attOutRandomized(triali).spikeTimes = [];
+                continue
+            end
+        end
+        attOutRandomized(triali).spikeTimes = sort(nspike2use);
+        clear nspike2use
+    end
+    % finally get the interspike intervals of the shuffled data
+    datatmpShuffledAttOut = [];
+    for n = 1:length(attOutRandomized)
+        datatmpShuffledAttOut = [datatmpShuffledAttOut diff(attOutRandomized(n).spikeTimes)];
+    end
+
+    clear spikeTimesAllTrials2use nSpikesPerTrial
+    spikeTimesAllTrials = [];
+    for triali = 1:NEAttIn
+        nSpikesPerTrial(triali) = length(attIn(triali).spikeTimes);
+        spikeTimesAllTrials = [spikeTimesAllTrials attIn(triali).spikeTimes];
+    end
+    nSpikesPerTrialAttIn = nSpikesPerTrial;
+    spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
+    % make sure that there are no neighboring spikes with the same
+    % spiketimes
+    while sum(diff(spikeTimesAllTrials2use)==0) ~= 0
+        spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
+    end
+    % reconstruct trials and extract interspike intervals
+    for triali = 1:NEAttIn
+        if triali == 1
+            if nSpikesPerTrial(triali) ~= 0
+                nspike2use = spikeTimesAllTrials2use(1:nSpikesPerTrial(1));
+                idx = nSpikesPerTrial(1) + 1;
+            else
+                idx = 1;
+                continue
+            end
+        else
+            if nSpikesPerTrial(triali) ~= 0
+                nspike2use = spikeTimesAllTrials2use(idx:idx+nSpikesPerTrial(triali)-1);
+                idx = nSpikesPerTrial(triali) + idx;
+            else
+                attInRandomized(triali).spikeTimes = [];
+                continue
+            end
+        end
+        attInRandomized(triali).spikeTimes = sort(nspike2use);
+        clear nspike2use
+    end
+    % finally get the interspike intervals of the shuffled data
+    datatmpShuffledAttIn = [];
+    for n = 1:length(attInRandomized)
+        datatmpShuffledAttIn = [datatmpShuffledAttIn diff(attInRandomized(n).spikeTimes)];
+    end
+
+    totalAttConds = [datatmpAttIn datatmpAttOut];
+    percBurstWMAttCT = sum(totalAttConds <= 5) * 100 / size(totalAttConds,2);
+    totalAttShuffledConds = [datatmpShuffledAttIn datatmpShuffledAttOut];
+    percBurstWMAttShuffledCT = sum(totalAttShuffledConds <= 5) * 100 / size(totalAttShuffledConds,2);
+    datatmpPoisson = [datatmpPoissonAttIn datatmpPoissonAttOut];
+    percBurstWMPoissonCT = sum(datatmpPoisson <= 5) * 100 / size(datatmpPoisson,2);
+
+    figure
+    subplot(141)
+    histogram(datatmpAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
+    hold on
+    plot(0,0)
+    attIn4statsCTPoisson = histogram(datatmpPoissonAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+    ylimsub1 = ylim;
+    xlim([-10 500])
+    title('real data Att In')
+    subplot(142)
+    plot(0,0)
+    hold on
+    histogram(datatmpAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
+    attOut4statsCTPoisson = histogram(datatmpPoissonAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+    ylimsub2 = ylim;
+    xlim([-10 500])
+    title('real data Att Out')
+    subplot(143)
+    attIn4statsCT = histogram(datatmpAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+    hold on
+    attOut4statsCT = histogram(datatmpAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+    xlim([-10 500])
+    title('overlay both condi + Poisson')
+    ylimsub3 = ylim;
+    subplot(144)
+    attIn4statsSHUFCT = histogram(datatmpShuffledAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+    hold on
+    attOut4statsSHUFCT = histogram(datatmpShuffledAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+    title('overlay shuffled data')
+    ylimsub4 = ylim;
+    xlim([-10 500])
+    subplot(141)
+    ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
+    text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
+        {sprintf('First bin %d ms \n AttIn %0.4f', binWidth4hist, attIn4statsCT.Values(1)),...
+        sprintf('AttIn Poisson %0.4f', attIn4statsCTPoisson.Values(1))}, 'FontSize',6);
+    subplot(142)
+    ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
+    text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
+        {sprintf('First bin %d ms \n AttOut %0.4f', binWidth4hist, attOut4statsCT.Values(1)),...
+        sprintf('AttOut Poisson %0.4f', attOut4statsCTPoisson.Values(1))}, 'FontSize',6);
+    subplot(143)
+    ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
+    text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
+        {sprintf('Womelsdorf method \n (200Hz) burst %%: %0.2f', percentageBurst),...
+        sprintf('Cue target (200Hz) \n burst %%: %0.2f', percBurstWMAttCT),...
+        sprintf('First bin %d ms \n Real difference = %0.4f', ...
+        binWidth4hist, attIn4statsCT.Values(1) - attOut4statsCT.Values(1)),...
+        sprintf('Poisson difference = %0.4f', attIn4statsCTPoisson.Values(1) - attOut4statsCTPoisson.Values(1))}, 'FontSize',6);
+    subplot(144)
+    ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
+    text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
+        {sprintf('Cue target \n (200Hz) burst %%: %0.2f', percBurstWMAttShuffledCT),...
+        sprintf('First bin %d ms \n AttIn %0.4f - \n AttOut %0.4f \n = %0.4f', ...
+        binWidth4hist, attIn4statsSHUFCT.Values(1), attOut4statsSHUFCT.Values(1), attIn4statsSHUFCT.Values(1) - attOut4statsSHUFCT.Values(1))}, 'FontSize',6);
+    if plotOutput
+        cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
+        saveas(gcf,saveFileName)
+        cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')
+    end
+
+    realAttIn = attIn4statsCT.Values(1);
+    realAttOut = attOut4statsCT.Values(1);
+    shuffledAttIn = attIn4statsSHUFCT.Values(1);
+    shuffledAttOut = attOut4statsSHUFCT.Values(1);
+    poissonAttIn = attIn4statsCTPoisson.Values(1);
+    poissonAttOut = attOut4statsCTPoisson.Values(1);
+else
+    attIn4statsCT.Values(1) = NaN;
+    attOut4statsCT.Values(1) = NaN;
+    attIn4statsSHUFCT.Values(1) = NaN;
+    attOut4statsSHUFCT.Values(1) = NaN;
+    attIn4statsCTPoisson.Values(1) = NaN;
+    attOut4statsCTPoisson.Values(1) = NaN;
+
+    realAttIn = attIn4statsCT.Values(1);
+    realAttOut = attOut4statsCT.Values(1);
+    shuffledAttIn = attIn4statsSHUFCT.Values(1);
+    shuffledAttOut = attOut4statsSHUFCT.Values(1);
+    poissonAttIn = attIn4statsCTPoisson.Values(1);
+    poissonAttOut = attOut4statsCTPoisson.Values(1);
+    percBurstWMAttCT = NaN;
+    percBurstWMPoissonCT = NaN;
+    
 end
-% finally get the interspike intervals of the shuffled data
-datatmpShuffledAttIn = [];
-for n = 1:length(attInRandomized)
-    datatmpShuffledAttIn = [datatmpShuffledAttIn diff(attInRandomized(n).spikeTimes)];
-end
-
-totalAttConds = [datatmpAttIn datatmpAttOut];
-percBurstWMAttCT = sum(totalAttConds <= 5) * 100 / size(totalAttConds,2);
-totalAttShuffledConds = [datatmpShuffledAttIn datatmpShuffledAttOut];
-percBurstWMAttShuffledCT = sum(totalAttShuffledConds <= 5) * 100 / size(totalAttShuffledConds,2);
-datatmpPoisson = [datatmpPoissonAttIn datatmpPoissonAttOut];
-percBurstWMPoissonCT = sum(datatmpPoisson <= 5) * 100 / size(datatmpPoisson,2);
-
-figure
-subplot(141)
-histogram(datatmpAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
-hold on
-plot(0,0)
-attIn4statsCTPoisson = histogram(datatmpPoissonAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-ylimsub1 = ylim;
-xlim([-10 500])
-title('real data Att In')
-subplot(142)
-plot(0,0)
-hold on
-histogram(datatmpAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
-attOut4statsCTPoisson = histogram(datatmpPoissonAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-ylimsub2 = ylim;
-xlim([-10 500])
-title('real data Att Out')
-subplot(143)
-attIn4statsCT = histogram(datatmpAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-hold on
-attOut4statsCT = histogram(datatmpAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-xlim([-10 500])
-title('overlay both condi + Poisson')
-ylimsub3 = ylim;
-subplot(144)
-attIn4statsSHUFCT = histogram(datatmpShuffledAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-hold on
-attOut4statsSHUFCT = histogram(datatmpShuffledAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-title('overlay shuffled data')
-ylimsub4 = ylim;
-xlim([-10 500])
-subplot(141)
-ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
-text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
-    {sprintf('First bin %d ms \n AttIn %0.4f', binWidth4hist, attIn4statsCT.Values(1)),...
-    sprintf('AttIn Poisson %0.4f', attIn4statsCTPoisson.Values(1))}, 'FontSize',6);
-subplot(142)
-ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
-text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
-    {sprintf('First bin %d ms \n AttOut %0.4f', binWidth4hist, attOut4statsCT.Values(1)),...
-    sprintf('AttOut Poisson %0.4f', attOut4statsCTPoisson.Values(1))}, 'FontSize',6);
-subplot(143)
-ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
-text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
-    {sprintf('Womelsdorf method \n (200Hz) burst %%: %0.2f', percentageBurst),...
-    sprintf('Cue target (200Hz) \n burst %%: %0.2f', percBurstWMAttCT),...
-    sprintf('First bin %d ms \n Real difference = %0.4f', ...
-    binWidth4hist, attIn4statsCT.Values(1) - attOut4statsCT.Values(1)),...
-    sprintf('Poisson difference = %0.4f', attIn4statsCTPoisson.Values(1) - attOut4statsCTPoisson.Values(1))}, 'FontSize',6);
-subplot(144)
-ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
-text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
-    {sprintf('Cue target \n (200Hz) burst %%: %0.2f', percBurstWMAttShuffledCT),...
-    sprintf('First bin %d ms \n AttIn %0.4f - \n AttOut %0.4f \n = %0.4f', ...
-    binWidth4hist, attIn4statsSHUFCT.Values(1), attOut4statsSHUFCT.Values(1), attIn4statsSHUFCT.Values(1) - attOut4statsSHUFCT.Values(1))}, 'FontSize',6);
-if plotOutput
-    cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
-    saveas(gcf,saveFileName)
-    cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')
-end
-
-realAttIn = attIn4statsCT.Values(1);
-realAttOut = attOut4statsCT.Values(1);
-shuffledAttIn = attIn4statsSHUFCT.Values(1);
-shuffledAttOut = attOut4statsSHUFCT.Values(1);
-poissonAttIn = attIn4statsCTPoisson.Values(1);
-poissonAttOut = attOut4statsCTPoisson.Values(1);
-
 cd('/Users/labmanager/Documents/MATLAB/BurstSep4all/data')
 save(saveFileName(1:end-4),'attIn4statsCT','attOut4statsCT','attIn4statsSHUFCT',...
     'attOut4statsSHUFCT','attIn4statsCTPoisson','attOut4statsCTPoisson')

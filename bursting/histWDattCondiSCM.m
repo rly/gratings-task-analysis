@@ -47,254 +47,287 @@ clear datatmpAttOut2use datatmpAttIn2use
 nSpikesAttIn = length(datatmpAttIn);
 nSpikesAttOut = length(datatmpAttOut);
 counter = 0;
-if nSpikesAttIn > nSpikesAttOut
-    datatmpAttInOld = datatmpAttIn;
-    trialSel = randperm(NEAttIn);
-    while nSpikesAttIn + mean(nSpikesAttInPerTrial) / 2 > nSpikesAttOut
-        counter = counter + 1;
-        NEAttInNw = NEAttIn - counter;
-        nEAttInNw = nEAttIn(trialSel(1:NEAttInNw)); endTimeAttInNw = endTimeAttIn(trialSel(1:NEAttInNw));
-        for n=1:NEAttInNw;
-            %     nwinl=round(0.200*Fs);
-            nwinr=round(endTimeAttInNw(n)*Fs);
-            indx=nEAttInNw(n):nwinr-1;
-            if length(indx) >1 && indx(end) < size(data,2)
-                datatmpAttIn=[datatmpAttIn diff(find(data(indx)))];
-                attInNw(n).spikeTimes=find(data(indx));
+if nSpikesAttIn > 10 && nSpikesAttOut > 10
+    if nSpikesAttIn > nSpikesAttOut
+        datatmpAttInOld = datatmpAttIn;
+        trialSel = randperm(NEAttIn);
+        while nSpikesAttIn + mean(nSpikesAttInPerTrial) / 2 > nSpikesAttOut
+            counter = counter + 1;
+            NEAttInNw = NEAttIn - counter;
+            nEAttInNw = nEAttIn(trialSel(1:NEAttInNw)); endTimeAttInNw = endTimeAttIn(trialSel(1:NEAttInNw));
+            for n=1:NEAttInNw;
+                %     nwinl=round(0.200*Fs);
+                nwinr=round(endTimeAttInNw(n)*Fs);
+                indx=nEAttInNw(n):nwinr-1;
+                if length(indx) >1 && indx(end) < size(data,2)
+                    datatmpAttIn=[datatmpAttIn diff(find(data(indx)))];
+                    attInNw(n).spikeTimes=find(data(indx));
+                end
+                clear indx
             end
-            clear indx
+            datatmpAttIn2use = datatmpAttIn;
+            nSpikesAttIn = length(datatmpAttIn2use);
+            datatmpAttIn = [];
         end
-        datatmpAttIn2use = datatmpAttIn;
-        nSpikesAttIn = length(datatmpAttIn2use);
-        datatmpAttIn = [];
-    end
-elseif nSpikesAttOut > nSpikesAttIn
-    datatmpAttOutOld = datatmpAttOut; datatmpAttOut = [];
-    trialSel = randperm(NEAttOut);
-    while nSpikesAttOut + mean(nSpikesAttOutPerTrial) / 2 > nSpikesAttIn
-        counter = counter + 1;
-        NEAttOutNw = NEAttOut - counter;
-        nEAttOutNw = nEAttOut(trialSel(1:NEAttOutNw)); endTimeAttOutNw = endTimeAttOut(trialSel(1:NEAttOutNw));
-        for n=1:NEAttOutNw;
-            %     nwinl=round(0.200*Fs);
-            nwinr=round(endTimeAttOutNw(n)*Fs);
-            indx=nEAttOutNw(n):nwinr-1;
-            if length(indx) >1 && indx(end) < size(data,2)
-                datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
-                attOutNw(n).spikeTimes=find(data(indx));
+    elseif nSpikesAttOut > nSpikesAttIn
+        datatmpAttOutOld = datatmpAttOut; datatmpAttOut = [];
+        trialSel = randperm(NEAttOut);
+        while nSpikesAttOut + mean(nSpikesAttOutPerTrial) / 2 > nSpikesAttIn
+            counter = counter + 1;
+            NEAttOutNw = NEAttOut - counter;
+            nEAttOutNw = nEAttOut(trialSel(1:NEAttOutNw)); endTimeAttOutNw = endTimeAttOut(trialSel(1:NEAttOutNw));
+            for n=1:NEAttOutNw;
+                %     nwinl=round(0.200*Fs);
+                nwinr=round(endTimeAttOutNw(n)*Fs);
+                indx=nEAttOutNw(n):nwinr-1;
+                if length(indx) >1 && indx(end) < size(data,2)
+                    datatmpAttOut=[datatmpAttOut diff(find(data(indx)))];
+                    attOutNw(n).spikeTimes=find(data(indx));
+                end
+                clear indx
             end
-            clear indx
+            datatmpAttOut2use = datatmpAttOut;
+            nSpikesAttOut = length(datatmpAttOut2use);
+            datatmpAttOut = [];
         end
-        datatmpAttOut2use = datatmpAttOut;
-        nSpikesAttOut = length(datatmpAttOut2use);
-        datatmpAttOut = [];
     end
-end
+    if nSpikesAttOut > 10 && nSpikesAttIn > 10
+        if exist('datatmpAttIn2use','var') == 0 && exist('datatmpAttOut2use','var') == 1
+            datatmpAttIn2use = datatmpAttIn;
+            endTimeAttInNw = endTimeAttIn;
+            nEAttInNw = nEAttIn; NEAttInNw = NEAttIn;
+            if exist('trialSel','var') == 0
+                cueOnsetTrialAttOutNw = cueOnsetTrialAttOut(1:NEAttOutNw);
+            else
+                cueOnsetTrialAttOutNw = cueOnsetTrialAttOut(trialSel(1:NEAttOutNw));
+            end
+            cueOnsetTrialAttInNw = cueOnsetTrialAttIn;
+            attInNw = attIn;
+        elseif exist('datatmpAttIn2use','var') == 1 && exist('datatmpAttOut2use','var') == 0
+            datatmpAttOut2use = datatmpAttOut;
+            endTimeAttOutNw = endTimeAttOut;
+            nEAttOutNw = nEAttOut; NEAttOutNw = NEAttOut;
+            if exist('trialSel','var') == 0
+                cueOnsetTrialAttInNw = cueOnsetTrialAttIn(1:NEAttInNw);
+            else
+                cueOnsetTrialAttInNw = cueOnsetTrialAttIn(trialSel(1:NEAttInNw));
+            end
+            cueOnsetTrialAttOutNw = cueOnsetTrialAttOut;
+            attOutNw = attOut;
+        else
+            datatmpAttIn2use = datatmpAttIn;
+            endTimeAttInNw = endTimeAttIn;
+            nEAttInNw = nEAttIn; NEAttInNw = NEAttIn;
+            datatmpAttOut2use = datatmpAttOut;
+            endTimeAttOutNw = endTimeAttOut;
+            nEAttOutNw = nEAttOut; NEAttOutNw = NEAttOut;
+            if exist('trialSel','var') == 0
+                cueOnsetTrialAttOutNw = cueOnsetTrialAttOut(1:NEAttOutNw);
+            else
+                cueOnsetTrialAttOutNw = cueOnsetTrialAttOut(trialSel(1:NEAttOutNw));
+            end
+            cueOnsetTrialAttInNw = cueOnsetTrialAttIn;
+            attInNw = attIn;
+            if exist('trialSel','var') == 0
+                cueOnsetTrialAttInNw = cueOnsetTrialAttIn(1:NEAttInNw);
+            else
+                cueOnsetTrialAttInNw = cueOnsetTrialAttIn(trialSel(1:NEAttInNw));
+            end
+            cueOnsetTrialAttOutNw = cueOnsetTrialAttOut;
+            attOutNw = attOut;
+        end
 
-if exist('datatmpAttIn2use','var') == 0 && exist('datatmpAttOut2use','var') == 1
-    datatmpAttIn2use = datatmpAttIn;
-    endTimeAttInNw = endTimeAttIn;
-    nEAttInNw = nEAttIn; NEAttInNw = NEAttIn;
-    if exist('trialSel','var') == 0
-        cueOnsetTrialAttOutNw = cueOnsetTrialAttOut(1:NEAttOutNw);
+        % create Poisson data for comparison
+        [~,datatmpPoissonAttIn] = calcPoisson(NEAttInNw,endTimeAttInNw,cueOnsetTrialAttInNw,Fs,data);
+        [~,datatmpPoissonAttOut] = calcPoisson(NEAttOutNw,endTimeAttOutNw,cueOnsetTrialAttOutNw,Fs,data);
+
+        spikeTimesAllTrials = [];
+        for triali = 1:NEAttOutNw
+            nSpikesPerTrial(triali) = length(attOutNw(triali).spikeTimes);
+            spikeTimesAllTrials = [spikeTimesAllTrials attOutNw(triali).spikeTimes];
+        end
+        nSpikesPerTrialAttOut = nSpikesPerTrial;
+        spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
+        % make sure that there are no neighboring spikes with the same
+        % spiketimes
+        while sum(diff(spikeTimesAllTrials2use)==0) ~= 0
+            spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
+        end
+        % reconstruct trials and extract interspike intervals
+        for triali = 1:NEAttOutNw
+            if triali == 1
+                if nSpikesPerTrial(triali) ~= 0
+                    nspike2use = spikeTimesAllTrials2use(1:nSpikesPerTrial(1));
+                    idx = nSpikesPerTrial(1) + 1;
+                else
+                    idx = 1;
+                    continue
+                end
+            else
+                if nSpikesPerTrial(triali) ~= 0
+                    nspike2use = spikeTimesAllTrials2use(idx:idx+nSpikesPerTrial(triali)-1);
+                    idx = nSpikesPerTrial(triali) + idx;
+                else
+                    attOutRandomized(triali).spikeTimes = [];
+                    continue
+                end
+            end
+            attOutRandomized(triali).spikeTimes = sort(nspike2use);
+            clear nspike2use
+        end
+        % finally get the interspike intervals of the shuffled data
+        datatmpShuffledAttOut = [];
+        for n = 1:length(attOutRandomized)
+            datatmpShuffledAttOut = [datatmpShuffledAttOut diff(attOutRandomized(n).spikeTimes)];
+        end
+
+        clear spikeTimesAllTrials2use nSpikesPerTrial
+        spikeTimesAllTrials = [];
+        for triali = 1:NEAttInNw
+            nSpikesPerTrial(triali) = length(attInNw(triali).spikeTimes);
+            spikeTimesAllTrials = [spikeTimesAllTrials attInNw(triali).spikeTimes];
+        end
+        nSpikesPerTrialAttIn = nSpikesPerTrial;
+        spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
+        % make sure that there are no neighboring spikes with the same
+        % spiketimes
+        while sum(diff(spikeTimesAllTrials2use)==0) ~= 0
+            spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
+        end
+        % reconstruct trials and extract interspike intervals
+        for triali = 1:NEAttInNw
+            if triali == 1
+                if nSpikesPerTrial(triali) ~= 0
+                    nspike2use = spikeTimesAllTrials2use(1:nSpikesPerTrial(1));
+                    idx = nSpikesPerTrial(1) + 1;
+                else
+                    idx = 1;
+                    continue
+                end
+            else
+                if nSpikesPerTrial(triali) ~= 0
+                    nspike2use = spikeTimesAllTrials2use(idx:idx+nSpikesPerTrial(triali)-1);
+                    idx = nSpikesPerTrial(triali) + idx;
+                else
+                    attInRandomized(triali).spikeTimes = [];
+                    continue
+                end
+            end
+            attInRandomized(triali).spikeTimes = sort(nspike2use);
+            clear nspike2use
+        end
+        % finally get the interspike intervals of the shuffled data
+        datatmpShuffledAttIn = [];
+        for n = 1:length(attInRandomized)
+            datatmpShuffledAttIn = [datatmpShuffledAttIn diff(attInRandomized(n).spikeTimes)];
+        end
+
+        totalAttConds = [datatmpAttIn2use datatmpAttOut2use];
+        percBurstWMAttCT = sum(totalAttConds <= 5) * 100 / size(totalAttConds,2);
+        totalAttShuffledConds = [datatmpShuffledAttIn datatmpShuffledAttOut];
+        percBurstWMAttShuffledCT = sum(totalAttShuffledConds <= 5) * 100 / size(totalAttShuffledConds,2);
+        datatmpPoisson = [datatmpPoissonAttIn datatmpPoissonAttOut];
+        percBurstWMPoissonCT = sum(datatmpPoisson <= 5) * 100 / size(datatmpPoisson,2);
+
+        figure
+        subplot(141)
+        histogram(datatmpAttIn2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
+        hold on
+        plot(0,0)
+        attIn4statsCTPoisson = histogram(datatmpPoissonAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+        ylimsub1 = ylim;
+        xlim([-10 500])
+        title('real data Att In')
+        subplot(142)
+        plot(0,0)
+        hold on
+        histogram(datatmpAttOut2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
+        attOut4statsCTPoisson = histogram(datatmpPoissonAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+        ylimsub2 = ylim;
+        xlim([-10 500])
+        title('real data Att Out')
+        subplot(143)
+        attIn4statsCT = histogram(datatmpAttIn2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+        hold on
+        attOut4statsCT = histogram(datatmpAttOut2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+        xlim([-10 500])
+        title('overlay both condi + Poisson')
+        ylimsub3 = ylim;
+        subplot(144)
+        attIn4statsSHUFCT = histogram(datatmpShuffledAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+        hold on
+        attOut4statsSHUFCT = histogram(datatmpShuffledAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
+        title('overlay shuffled data')
+        ylimsub4 = ylim;
+        xlim([-10 500])
+        subplot(141)
+        ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
+        text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
+            {sprintf('First bin %d ms \n AttIn %0.4f', binWidth4hist, attIn4statsCT.Values(1)),...
+            sprintf('AttIn Poisson %0.4f', attIn4statsCTPoisson.Values(1))}, 'FontSize',6);
+        subplot(142)
+        ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
+        text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
+            {sprintf('First bin %d ms \n AttOut %0.4f', binWidth4hist, attOut4statsCT.Values(1)),...
+            sprintf('AttOut Poisson %0.4f', attOut4statsCTPoisson.Values(1))}, 'FontSize',6);
+        subplot(143)
+        ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
+        text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
+            {sprintf('Womelsdorf method \n (200Hz) burst %%: %0.2f', percentageBurst),...
+            sprintf('Cue target (200Hz) \n burst %%: %0.2f', percBurstWMAttCT),...
+            sprintf('First bin %d ms \n Real difference = %0.4f', ...
+            binWidth4hist, attIn4statsCT.Values(1) - attOut4statsCT.Values(1)),...
+            sprintf('Poisson difference = %0.4f', attIn4statsCTPoisson.Values(1) - attOut4statsCTPoisson.Values(1))}, 'FontSize',6);
+        subplot(144)
+        ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
+        text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
+            {sprintf('Cue target \n (200Hz) burst %%: %0.2f', percBurstWMAttShuffledCT),...
+            sprintf('First bin %d ms \n AttIn %0.4f - \n AttOut %0.4f \n = %0.4f', ...
+            binWidth4hist, attIn4statsSHUFCT.Values(1), attOut4statsSHUFCT.Values(1), attIn4statsSHUFCT.Values(1) - attOut4statsSHUFCT.Values(1))}, 'FontSize',6);
+        if plotOutput
+            cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
+            saveas(gcf,saveFileName)
+            cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')
+        end
+
+        realAttIn = attIn4statsCT.Values(1);
+        realAttOut = attOut4statsCT.Values(1);
+        shuffledAttIn = attIn4statsSHUFCT.Values(1);
+        shuffledAttOut = attOut4statsSHUFCT.Values(1);
+        poissonAttIn = attIn4statsCTPoisson.Values(1);
+        poissonAttOut = attOut4statsCTPoisson.Values(1);
     else
-        cueOnsetTrialAttOutNw = cueOnsetTrialAttOut(trialSel(1:NEAttOutNw));
+        attIn4statsCT = NaN;
+        attOut4statsCT = NaN;
+        attIn4statsSHUFCT = NaN;
+        attOut4statsSHUFCT = NaN;
+        attIn4statsCTPoisson = NaN;
+        attOut4statsCTPoisson = NaN;
+        percBurstWMAttCT = NaN;
+        percBurstWMPoissonCT = NaN;
+        realAttIn = NaN;
+        realAttOut = NaN;
+        shuffledAttIn = NaN;
+        shuffledAttOut = NaN;
+        poissonAttIn = NaN;
+        poissonAttOut = NaN;
     end
-    cueOnsetTrialAttInNw = cueOnsetTrialAttIn;
-    attInNw = attIn;
-elseif exist('datatmpAttIn2use','var') == 1 && exist('datatmpAttOut2use','var') == 0
-    datatmpAttOut2use = datatmpAttOut;
-    endTimeAttOutNw = endTimeAttOut;
-    nEAttOutNw = nEAttOut; NEAttOutNw = NEAttOut;
-    if exist('trialSel','var') == 0
-        cueOnsetTrialAttInNw = cueOnsetTrialAttIn(1:NEAttInNw);
-    else
-        cueOnsetTrialAttInNw = cueOnsetTrialAttIn(trialSel(1:NEAttInNw));
-    end
-    cueOnsetTrialAttOutNw = cueOnsetTrialAttOut;
-    attOutNw = attOut;
 else
-    datatmpAttIn2use = datatmpAttIn;
-    endTimeAttInNw = endTimeAttIn;
-    nEAttInNw = nEAttIn; NEAttInNw = NEAttIn;
-    datatmpAttOut2use = datatmpAttOut;
-    endTimeAttOutNw = endTimeAttOut;
-    nEAttOutNw = nEAttOut; NEAttOutNw = NEAttOut;
-    if exist('trialSel','var') == 0
-        cueOnsetTrialAttOutNw = cueOnsetTrialAttOut(1:NEAttOutNw);
-    else
-        cueOnsetTrialAttOutNw = cueOnsetTrialAttOut(trialSel(1:NEAttOutNw));
-    end
-    cueOnsetTrialAttInNw = cueOnsetTrialAttIn;
-    attInNw = attIn;
-    if exist('trialSel','var') == 0
-        cueOnsetTrialAttInNw = cueOnsetTrialAttIn(1:NEAttInNw);
-    else
-        cueOnsetTrialAttInNw = cueOnsetTrialAttIn(trialSel(1:NEAttInNw));
-    end
-    cueOnsetTrialAttOutNw = cueOnsetTrialAttOut;
-    attOutNw = attOut;
+    attIn4statsCT = NaN;
+    attOut4statsCT = NaN;
+    attIn4statsSHUFCT = NaN;
+    attOut4statsSHUFCT = NaN;
+    attIn4statsCTPoisson = NaN;
+    attOut4statsCTPoisson = NaN;
+    percBurstWMAttCT = NaN;
+    percBurstWMPoissonCT = NaN;
+    realAttIn = NaN;
+    realAttOut = NaN;
+    shuffledAttIn = NaN;
+    shuffledAttOut = NaN;
+    poissonAttIn = NaN;
+    poissonAttOut = NaN;
 end
-
-% create Poisson data for comparison
-[~,datatmpPoissonAttIn] = calcPoisson(NEAttInNw,nEAttInNw,endTimeAttInNw,cueOnsetTrialAttInNw,Fs,data);
-[~,datatmpPoissonAttOut] = calcPoisson(NEAttOutNw,nEAttOutNw,endTimeAttOutNw,cueOnsetTrialAttOutNw,Fs,data);
-
-spikeTimesAllTrials = [];
-for triali = 1:NEAttOutNw
-    nSpikesPerTrial(triali) = length(attOutNw(triali).spikeTimes);
-    spikeTimesAllTrials = [spikeTimesAllTrials attOutNw(triali).spikeTimes];
-end
-nSpikesPerTrialAttOut = nSpikesPerTrial;
-spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
-% make sure that there are no neighboring spikes with the same
-% spiketimes
-while sum(diff(spikeTimesAllTrials2use)==0) ~= 0
-    spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
-end
-% reconstruct trials and extract interspike intervals
-for triali = 1:NEAttOutNw
-    if triali == 1
-        if nSpikesPerTrial(triali) ~= 0
-            nspike2use = spikeTimesAllTrials2use(1:nSpikesPerTrial(1));
-            idx = nSpikesPerTrial(1) + 1;
-        else
-            idx = 1;
-            continue
-        end
-    else
-        if nSpikesPerTrial(triali) ~= 0
-            nspike2use = spikeTimesAllTrials2use(idx:idx+nSpikesPerTrial(triali)-1);
-            idx = nSpikesPerTrial(triali) + idx;
-        else
-            attOutRandomized(triali).spikeTimes = [];
-            continue
-        end
-    end
-    attOutRandomized(triali).spikeTimes = sort(nspike2use);
-    clear nspike2use
-end
-% finally get the interspike intervals of the shuffled data
-datatmpShuffledAttOut = [];
-for n = 1:length(attOutRandomized)
-    datatmpShuffledAttOut = [datatmpShuffledAttOut diff(attOutRandomized(n).spikeTimes)];
-end
-
-clear spikeTimesAllTrials2use nSpikesPerTrial
-spikeTimesAllTrials = [];
-for triali = 1:NEAttInNw
-    nSpikesPerTrial(triali) = length(attInNw(triali).spikeTimes);
-    spikeTimesAllTrials = [spikeTimesAllTrials attInNw(triali).spikeTimes];
-end
-nSpikesPerTrialAttIn = nSpikesPerTrial;
-spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
-% make sure that there are no neighboring spikes with the same
-% spiketimes
-while sum(diff(spikeTimesAllTrials2use)==0) ~= 0
-    spikeTimesAllTrials2use = spikeTimesAllTrials(randperm(length(spikeTimesAllTrials)));
-end
-% reconstruct trials and extract interspike intervals
-for triali = 1:NEAttInNw
-    if triali == 1
-        if nSpikesPerTrial(triali) ~= 0
-            nspike2use = spikeTimesAllTrials2use(1:nSpikesPerTrial(1));
-            idx = nSpikesPerTrial(1) + 1;
-        else
-            idx = 1;
-            continue
-        end
-    else
-        if nSpikesPerTrial(triali) ~= 0
-            nspike2use = spikeTimesAllTrials2use(idx:idx+nSpikesPerTrial(triali)-1);
-            idx = nSpikesPerTrial(triali) + idx;
-        else
-            attInRandomized(triali).spikeTimes = [];
-            continue
-        end
-    end
-    attInRandomized(triali).spikeTimes = sort(nspike2use);
-    clear nspike2use
-end
-% finally get the interspike intervals of the shuffled data
-datatmpShuffledAttIn = [];
-for n = 1:length(attInRandomized)
-    datatmpShuffledAttIn = [datatmpShuffledAttIn diff(attInRandomized(n).spikeTimes)];
-end
-
-totalAttConds = [datatmpAttIn2use datatmpAttOut2use];
-percBurstWMAttCT = sum(totalAttConds <= 5) * 100 / size(totalAttConds,2);
-totalAttShuffledConds = [datatmpShuffledAttIn datatmpShuffledAttOut];
-percBurstWMAttShuffledCT = sum(totalAttShuffledConds <= 5) * 100 / size(totalAttShuffledConds,2);
-datatmpPoisson = [datatmpPoissonAttIn datatmpPoissonAttOut];
-percBurstWMPoissonCT = sum(datatmpPoisson <= 5) * 100 / size(datatmpPoisson,2);
-
-figure
-subplot(141)
-histogram(datatmpAttIn2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
-hold on
-plot(0,0)
-attIn4statsCTPoisson = histogram(datatmpPoissonAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-ylimsub1 = ylim;
-xlim([-10 500])
-title('real data Att In')
-subplot(142)
-plot(0,0)
-hold on
-histogram(datatmpAttOut2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability')
-attOut4statsCTPoisson = histogram(datatmpPoissonAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-ylimsub2 = ylim;
-xlim([-10 500])
-title('real data Att Out')
-subplot(143)
-attIn4statsCT = histogram(datatmpAttIn2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-hold on
-attOut4statsCT = histogram(datatmpAttOut2use,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-xlim([-10 500])
-title('overlay both condi + Poisson')
-ylimsub3 = ylim;
-subplot(144)
-attIn4statsSHUFCT = histogram(datatmpShuffledAttIn,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-hold on
-attOut4statsSHUFCT = histogram(datatmpShuffledAttOut,'BinWidth',binWidth4hist,'BinLimits',[0 800],'Normalization','probability');
-title('overlay shuffled data')
-ylimsub4 = ylim;
-xlim([-10 500])
-subplot(141)
-ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
-text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
-    {sprintf('First bin %d ms \n AttIn %0.4f', binWidth4hist, attIn4statsCT.Values(1)),...
-    sprintf('AttIn Poisson %0.4f', attIn4statsCTPoisson.Values(1))}, 'FontSize',6);
-subplot(142)
-ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
-text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
-    {sprintf('First bin %d ms \n AttOut %0.4f', binWidth4hist, attOut4statsCT.Values(1)),...
-    sprintf('AttOut Poisson %0.4f', attOut4statsCTPoisson.Values(1))}, 'FontSize',6);
-subplot(143)
-ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
-text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
-    {sprintf('Womelsdorf method \n (200Hz) burst %%: %0.2f', percentageBurst),...
-    sprintf('Cue target (200Hz) \n burst %%: %0.2f', percBurstWMAttCT),...
-    sprintf('First bin %d ms \n Real difference = %0.4f', ...
-    binWidth4hist, attIn4statsCT.Values(1) - attOut4statsCT.Values(1)),...
-    sprintf('Poisson difference = %0.4f', attIn4statsCTPoisson.Values(1) - attOut4statsCTPoisson.Values(1))}, 'FontSize',6);
-subplot(144)
-ylim([0 max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])])
-text(40,max([ylimsub1 ylimsub2 ylimsub3 ylimsub4])*0.9, ...
-    {sprintf('Cue target \n (200Hz) burst %%: %0.2f', percBurstWMAttShuffledCT),...
-    sprintf('First bin %d ms \n AttIn %0.4f - \n AttOut %0.4f \n = %0.4f', ...
-    binWidth4hist, attIn4statsSHUFCT.Values(1), attOut4statsSHUFCT.Values(1), attIn4statsSHUFCT.Values(1) - attOut4statsSHUFCT.Values(1))}, 'FontSize',6);
-if plotOutput
-    cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
-    saveas(gcf,saveFileName)
-    cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')
-end
-
-realAttIn = attIn4statsCT.Values(1);
-realAttOut = attOut4statsCT.Values(1);
-shuffledAttIn = attIn4statsSHUFCT.Values(1);
-shuffledAttOut = attOut4statsSHUFCT.Values(1);
-poissonAttIn = attIn4statsCTPoisson.Values(1);
-poissonAttOut = attOut4statsCTPoisson.Values(1);
 
 cd('/Users/labmanager/Documents/MATLAB/BurstSep4all/data')
 save(saveFileName(1:end-4),'attIn4statsCT','attOut4statsCT','attIn4statsSHUFCT',...
