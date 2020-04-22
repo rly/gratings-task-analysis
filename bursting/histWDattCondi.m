@@ -190,7 +190,8 @@ if NEAttIn > 5 && NEAttOut > 5
         sprintf('First bin %d ms \n AttIn %0.4f - \n AttOut %0.4f \n = %0.4f', ...
         binWidth4hist, attIn4statsSHUFCT.Values(1), attOut4statsSHUFCT.Values(1), attIn4statsSHUFCT.Values(1) - attOut4statsSHUFCT.Values(1))}, 'FontSize',6);
     if plotOutput
-        cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
+        %cd('/Users/labmanager/Documents/MATLAB/BurstSep4all')
+        cd('/Volumes/HDD1/BurstSep4allHDD/')
         saveas(gcf,saveFileName)
         cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')
     end
@@ -219,7 +220,8 @@ else
     percBurstWMPoissonCT = NaN;
     
 end
-cd('/Users/labmanager/Documents/MATLAB/BurstSep4all/data')
+%cd('/Users/labmanager/Documents/MATLAB/BurstSep4all/data')
+cd('/Volumes/HDD1/BurstSep4allHDD/')
 save(saveFileName(1:end-4),'attIn4statsCT','attOut4statsCT','attIn4statsSHUFCT',...
     'attOut4statsSHUFCT','attIn4statsCTPoisson','attOut4statsCTPoisson')
 cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis/bursting')

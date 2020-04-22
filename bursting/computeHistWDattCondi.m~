@@ -7,7 +7,10 @@ nUnits = dir('spikeTimes2use*');
 binWidth4hist = 5;
 plotOutput = 0;
 
-for stati = 1:50%:100
+%cd('/Users/labmanager/Documents/MATLAB/BurstSep4all/data')
+cd('/Volumes/HDD1/BurstSep4allHDD/')
+statDone = dir('StatRunMcCartney*_AttNwApril*');
+for stati = numel(statDone):50%:100
     %jheapcl
     tic
     percentageBurst= nan(length(nUnits),1);
@@ -102,7 +105,7 @@ for stati = 1:50%:100
             cueOnsetTrialAttIn cueOnsetTrialAttOut arrayOnsetTrialAttIn ...
             arrayOnsetTrialAttOut targetDimTrialAttIn targetDimTrialAttOut
         close all
-        sprintf(['Units: ' num2str(uniti) ' from ' num2str(nUnits) '])
+        fprintf(['Unit: ' num2str(uniti) ' from ' num2str(length(nUnits)) ' total Units\n'])
     end
 
 
