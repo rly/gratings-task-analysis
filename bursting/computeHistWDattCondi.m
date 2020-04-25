@@ -2,7 +2,7 @@ clc
 clear all 
 close all
 cd('/Users/labmanager/Documents/MATLAB/Data locally SQ3')
-nUnits = dir('spikeTimes2use*');
+nUnits = [dir('spikeTimes2use_UE_F*'); dir('spikeTimes2use_UE_M*')];
 %javaaddpath(which('MatlabGarbageCollector.jar'))
 binWidth4hist = 5;
 plotOutput = 0;
