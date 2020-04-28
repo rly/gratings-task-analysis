@@ -583,16 +583,16 @@ for j = 1:nUnits
             end
             
             %%
-            plotFileName = sprintf('%s/%s-%s-rtVsFiringScatter-v%d.png', processedDataDir, unitName, blockName, v);
-            plotRTFiringRateCorrelation(cueTargetDelayRelInRFRate, ...
-                    cueTargetDelayRelExRFRate, ...
-                    cueTargetDelayHoldInRFRate, ...
-                    targetDimDelayHoldInRFRate, ...
-                    cueTargetDelayHoldExRFRate, ...
-                    targetDimDelayHoldExRFRate, ...
-                    rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
-                    rtFiringRateStruct(unitCount), unitName, isZeroDistractors, plotFileName);
-            close;
+%             plotFileName = sprintf('%s/%s-%s-rtVsFiringScatter-v%d.png', processedDataDir, unitName, blockName, v);
+%             plotRTFiringRateCorrelation(cueTargetDelayRelInRFRate, ...
+%                     cueTargetDelayRelExRFRate, ...
+%                     cueTargetDelayHoldInRFRate, ...
+%                     targetDimDelayHoldInRFRate, ...
+%                     cueTargetDelayHoldExRFRate, ...
+%                     targetDimDelayHoldExRFRate, ...
+%                     rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
+%                     rtFiringRateStruct(unitCount), unitName, isZeroDistractors, plotFileName);
+%             close;
             
             %%
             % note there may be different numbers of trials in each 
@@ -767,25 +767,25 @@ end
 nUnitsUsed = unitCount;
 
 %% plot pre-saccade slopes
-figure_tr_inch(15, 5);
-subaxis(1, 3, 1);
-plot(earlyPreExitFixationSlope, latePreExitFixationSlope, '.', 'MarkerSize', 20);
-xlabel('Early pre-saccade slope');
-ylabel('Late pre-saccade slope');
-
-subaxis(1, 3, 2);
-bar(1:nUnitsUsed, earlyPreExitFixationSlope);
-xlabel('Early pre-saccade slope');
-ylim([-300 300]);
-
-subaxis(1, 3, 3);
-bar(1:nUnitsUsed, latePreExitFixationSlope);
-xlabel('Late pre-saccade slope');
-ylim([-300 300]);
-
-plotFileName = sprintf('%s/%s-sessionInd%d-preSaccadicSlopes-v%d.png', outputDir, sessionName, sessionInd, v);
-fprintf('Saving to %s...\n', plotFileName);
-export_fig(plotFileName, '-nocrop');
+% figure_tr_inch(15, 5);
+% subaxis(1, 3, 1);
+% plot(earlyPreExitFixationSlope, latePreExitFixationSlope, '.', 'MarkerSize', 20);
+% xlabel('Early pre-saccade slope');
+% ylabel('Late pre-saccade slope');
+% 
+% subaxis(1, 3, 2);
+% bar(1:nUnitsUsed, earlyPreExitFixationSlope);
+% xlabel('Early pre-saccade slope');
+% ylim([-300 300]);
+% 
+% subaxis(1, 3, 3);
+% bar(1:nUnitsUsed, latePreExitFixationSlope);
+% xlabel('Late pre-saccade slope');
+% ylim([-300 300]);
+% 
+% plotFileName = sprintf('%s/%s-sessionInd%d-preSaccadicSlopes-v%d.png', outputDir, sessionName, sessionInd, v);
+% fprintf('Saving to %s...\n', plotFileName);
+% export_fig(plotFileName, '-nocrop');
 
 %% compute single trial population latency by combining spikes across recordings on a probe
 % correlate population latency with RT
