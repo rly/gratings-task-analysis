@@ -123,10 +123,10 @@ if isLoadSortedSua
             separationQuality = sortQualityNotesNums(qualityNotesMatchInd,4);
             
             % INCLUDE ONLY UNITS WITH TYPICAL WAVEFORM SHAPE AND GOOD SEPARATION QUALITY        
-            if ~hasTypicalWaveformShape
-                fprintf('\tChannel %d, unit %d does not have typical somatic waveform shape. Skipping.\n', i, j);
-                continue;
-            end
+%             if ~hasTypicalWaveformShape
+%                 fprintf('\tChannel %d, unit %d does not have typical somatic waveform shape. Skipping.\n', i, j);
+%                 continue;
+%             end
             if separationQuality < minSuaSepQuality
                 fprintf('\tChannel %d, unit %d has poor separation quality (%d). Skipping.\n', i, j, separationQuality);
                 continue;
