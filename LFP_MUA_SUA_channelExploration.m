@@ -1,31 +1,168 @@
 clear all; close all
 processedDataRootDir = '/Volumes/scratch/rly/gratings-task-analysis/processed_data/';
-dataDirRoot = '/Volumes/kastner/ryanly/McCartney/merged';
+dataDirRoot = '/Volumes/kastner/ryanly/Ferdy/merged';
 muaDataDirRoot = '/Volumes/scratch/rly/simple-mua-detection/processed_data/';
 recordingInfoFileName = '/Users/labmanager/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
-sessionInd = 14; %12 18 15 22
-channelsToLoad = 33:64;
-[R, D, processedDataDir, blockName] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, 'VEPM', 'LFP_VEPM', 1, 1, 1, 0);
-sessionName = R.sessionName;
-areaName = R.areaName;
+recordingInfo = readRecordingInfo(recordingInfoFileName);
 
-[Raud, Daud, processedDataDirAud, blockNameAud] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, 'AEPM', 'LFP_AEPM', 1, 1, 1, 0);
+for sessioni = 38:numel(recordingInfo)
+    sessionInd = sessioni; %12 18 15 22
+    if ~isnan(recordingInfo(sessioni).aepmIndices)        
+        channelsToLoad = recordingInfo(sessioni).spikeChannelsToLoad;
+        [Raud, Daud, processedDataDirAud, blockNameAud] = loadRecordingData(...
+                processedDataRootDir, dataDirRoot, muaDataDirRoot, recordingInfoFileName, ...
+                sessionInd, channelsToLoad, 'AEPM', 'LFP_AEPM', 1, 1, 1, 0);
+        origAudioEvents = Daud.events{3};
+        preAudioEvents = Daud.events{2};
+        
+        sessionName = Raud.sessionName;
+        areaName = Raud.areaName;
+        
+        periAudioWindowOffset = [-0.25 0.3]; % seconds around sound
+        hiCutoffFreq = 100;
 
-if strcmp(sessionName, 'M20170127') || strcmp(sessionName, 'M20170130') || strcmp(sessionName, 'M20170201')
-    origFlashEvents = D.events{6};
-    preFlashesEvents = D.events{5};
-else
-    origFlashEvents = D.events{3};
-    preFlashesEvents = D.events{2};
+        Fs = Daud.lfpFs;
+        Daud.adjLfpsClean = Daud.adjLfps; 
+        [channelDataCARNormAud,channelDataNormAud,commonAverageNormAud,isNoisyChannelAud] = preprocessLfps(...
+                Daud.adjLfpsClean, Fs, Daud.lfpNames, processedDataDirAud, [], hiCutoffFreq, 1, []);
+        Daud.adjLfpsClean = [];
+        audioEventsClean = detectOutlierLfpEvents(channelDataCARNormAud, Fs, Daud.lfpNames, origAudioEvents, ...
+                periAudioWindowOffset, processedDataDirAud, [], 1, []);
+        
+        nAudio = numel(audioEventsClean);
+        
+        ref = 'CAR';
+        fprintf('\nExtracting sound-aligned responses, ref: %s...\n', ref);
+
+        startIndices = round((audioEventsClean + periAudioWindowOffset(1)) * Fs); % time to index conversion
+        endIndices = startIndices + round(diff(periAudioWindowOffset) * Fs) - 1;
+        t = periAudioWindowOffset(1):1/Fs:periAudioWindowOffset(2)-1/Fs;
+        nTime = numel(t);
+        assert(all(nTime == (endIndices - startIndices + 1)));
+        
+        nChannels = 32;
+        responses = nan(nChannels, nTime, nAudio);
+        for j = 1:nChannels
+            % can vectorize???
+            for i = 1:nAudio
+                if strcmp(ref, 'RAW')
+                    responses(j,:,i) = channelDataNorm(j,startIndices(i):endIndices(i));
+                elseif strcmp(ref, 'CAR')
+                    responses(j,:,i) = channelDataCARNormAud(j,startIndices(i):endIndices(i));
+                elseif strcmp(ref, 'BIP')
+                    responses(j,:,i) = channelDataBIPNorm(j,startIndices(i):endIndices(i));
+                end            
+            end
+        end
+        %% subtract out baseline
+        % units are standard deviations from baselined mean
+        averageResponse = mean(responses, 3); % average across flashes
+
+        % subtract mean baseline activity (-0.1, 0] seconds before audio
+        audioBaselineWindowOffset = [-0.1 0];
+
+        % TODO make so that baseline can have arbitrary end time
+        indexAudioTime = -round(periAudioWindowOffset(1) * Fs);
+        indexStartBaselineAudioTime = -round((periAudioWindowOffset(1) - audioBaselineWindowOffset(1)) * Fs) + 1;
+        for j = 1:nChannels
+            averageResponse(j,:) = averageResponse(j,:) - mean(averageResponse(j,indexStartBaselineAudioTime:indexAudioTime));
+        end
+
+        %% staggered channel line plot of average visually evoked LFP
+        xBounds = [-0.1 0.3];
+
+        responsePlotYOffset = 1;
+        responsePlotYScale = 5/max(max(abs(averageResponse)));
+
+        figure_tr_inch(8, 10);
+        hold on;
+        maxYLim = 3;
+        minYLim = -(nChannels + 2);
+        for j = 1:nChannels
+            plot(t, responsePlotYScale*averageResponse(j,:) - j*responsePlotYOffset);
+            if j == 1
+                maxYLim = max([maxYLim max(responsePlotYScale*averageResponse(j,:) - j*responsePlotYOffset) + 1]);
+            elseif j == nChannels
+                minYLim = min([minYLim min(responsePlotYScale*averageResponse(j,:) - j*responsePlotYOffset) - 1]);
+            end
+        end
+        xlim(periAudioWindowOffset);
+        set(gca, 'YTickMode', 'manual');
+        set(gca, 'YTick', -1*nChannels:-1);
+        set(gca, 'YTickLabelMode', 'manual');
+        set(gca, 'YTickLabel', nChannels:-1:1);
+        set(gca, 'FontSize', 16);
+        ax = ancestor(gca, 'axes');
+        ax.YAxis.FontSize = 8; % change y tick font size without changing x tick
+        ylabel('Channel Number (1 = topmost)', 'FontSize', 16);
+        xlabel('Time from Sound Onset (s)');
+        title(sprintf('%s %s - Response to Audio Mapping (N=%d) (%s)', sessionName, areaName, nAudio, ref));
+
+        origYLim = [minYLim maxYLim]; % ylim();
+        plot([0 0], [-1000 1000], '-', 'Color', 0.3*ones(3, 1));
+        xlim(xBounds);
+        ylim(origYLim);
+
+        % plot early latency line at 35 ms, 45 ms
+        plot([0.035 0.035], [-1000 1000], 'm-');
+        plot([0.045 0.045], [-1000 1000], 'm-');
+        text(0.050, minYLim+1, '35-45 ms', 'Color', 'm');
+
+         plotFileName = sprintf('%s-%s-%s-AEPMlfpLines.png', recordingInfo(sessioni).sessionName, sessioni, ref);
+        
+        cd('/Users/labmanager/Documents/MATLAB/aepm_lfp')
+        saveas(gcf,plotFileName,'jpg')
+        cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis')
+        
+        %% staggered channel color plot of average visually evoked LFP
+        figure_tr_inch(8, 10);
+        subaxis(1, 1, 1, 'ML', 0.1);
+        hold on;
+        imagesc(t, 1:nChannels, averageResponse);
+        set(gca, 'YDir', 'reverse');
+        plot([0 0], [0 nChannels + 1], '-', 'Color', 0.3*ones(3, 1));
+        xlim(xBounds);
+        ylim([0.5 nChannels+0.5]);
+        xlabel('Time from Sound Onset (s)');
+        ylabel('Channel Number (1 = topmost)');
+        title(sprintf('%s %s - Response to Audio Mapping (N=%d) (%s)', sessionName, areaName, nAudio, ref));
+        maxCAxis = max(abs(caxis));
+        caxis([-maxCAxis maxCAxis]);
+        colormap(getCoolWarmMap());
+        colorbar;
+        set(gca, 'FontSize', 16);
+
+        if (nChannels > 31 && strcmp(ref, 'BIP')) || (nChannels > 32 && strcmp(ref, 'CAR'))
+            plot(xlim(), [nChannels/2+0.5 nChannels/2+0.5], 'Color', 0.3*ones(3, 1));
+        end
+
+        % plot early latency line at 35 ms, 45 ms
+        plot([0.035 0.035], [-1000 1000], 'm-');
+        plot([0.045 0.045], [-1000 1000], 'm-');
+        text(0.050, nChannels, '35-45 ms', 'Color', 'm');
+
+        %% plot boxes around areas abs() > thresh over last plot and re-save
+        boxAbsThresh = 0.25;
+        strongResponseGroups = bwlabel(abs(averageResponse) > boxAbsThresh, 4);
+        strongResponseGroupBoundaries = bwboundaries(strongResponseGroups);
+        for k = 1:length(strongResponseGroupBoundaries)
+           boundary = strongResponseGroupBoundaries{k};
+           plot(t(boundary(:,2)), boundary(:,1), 'Color', 0.3*ones(3, 1), 'LineWidth', 2)
+
+           minBY = min(boundary(:,1));
+           maxBY = max(boundary(:,1));
+           text(-0.01, minBY, sprintf('%d', minBY), 'Color', 0.3*ones(3, 1), 'HorizontalAlignment', 'right');
+           text(-0.01, maxBY, sprintf('%d', maxBY), 'Color', 0.3*ones(3, 1), 'HorizontalAlignment', 'right');
+        end
+
+        plotFileName = sprintf('%s-%s-%s-AEPMlfpColorBounds.png', recordingInfo(sessioni).sessionName, sessioni, ref);
+        
+        cd('/Users/labmanager/Documents/MATLAB/aepm_lfp')
+        saveas(gcf,plotFileName,'jpg')
+        cd('/Users/labmanager/Documents/MATLAB/gratings-task-analysis')
+
+    end
 end
-
-origAudioEvents = Daud.events{3};
-preAudioEvents = Daud.events{2};
-
 %[fixationAndLeverTimes,isMissingData] = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc)
 
 %%
