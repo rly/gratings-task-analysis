@@ -99,3 +99,37 @@ headers = {'pl2FileName', 'sessionName', 'areaName', 'blockNames', 'gratingsTask
         'pldChannels', 'plvChannels', 'pmChannels', 'piChannels', 'vPulChannels', 'dPulChannels'};
 recordingInfo = cell2struct(info, headers, 2);
 
+%% Sanity check
+% just need to run this once on the whole file, not every time this script gets called
+for i = 1:numel(recordingInfo)
+    % check that all channel indices are part of spikeChannelsToLoad
+    assert(all(ismember(dPulChannels{i}, spikeChannelsToLoad{i})));
+    assert(all(ismember(vPulChannels{i}, spikeChannelsToLoad{i})));
+    assert(all(ismember(pldChannels{i}, spikeChannelsToLoad{i})));
+    assert(all(ismember(plvChannels{i}, spikeChannelsToLoad{i})));
+    assert(all(ismember(pmChannels{i}, spikeChannelsToLoad{i})));
+    assert(all(ismember(piChannels{i}, spikeChannelsToLoad{i})));
+    
+    assert(isempty(intersect(dPulChannels{i}, vPulChannels{i})))
+
+    % check that task indices are all unique
+    allBlockIndices = [gratingsTask3DIndices, gratingsTask0DIndices, vepmIndices, aepmIndices, rfmOldIndices, rfmEighthsIndices];
+    allBlockIndices = horzcat(allBlockIndices{i,:});
+    allBlockIndices(isnan(allBlockIndices)) = [];
+    assert(numel(unique(allBlockIndices)) == numel(allBlockIndices));
+    
+    % check that task indices have the correct block name string pattern
+    gValidIndices = [gratingsTask3DIndices{i}, gratingsTask0DIndices{i}];
+    assert(sum(isnan(gratingsTask3DIndices{i})) == 0);
+    gValidIndices(isnan(gValidIndices)) = [];
+    rfmValidIndices = [rfmOldIndices{i}, rfmEighthsIndices{i}];
+    rfmValidIndices(isnan(rfmValidIndices)) = [];
+    vepmValidIndices = vepmIndices{i};
+    assert(sum(isnan(vepmValidIndices)) == 0);
+    aepmValidIndices = aepmIndices{i};
+    aepmValidIndices(isnan(aepmValidIndices)) = [];
+    assert(all(ismember(gValidIndices, find(cellfun(@(x) ~isempty(regexp(x, 'g\d', 'ONCE')), blockNames{i,:})))));
+    assert(all(ismember(vepmValidIndices, find(cellfun(@(x) ~isempty(regexp(x, 'vepm\d', 'ONCE')), blockNames{i,:})))));
+    assert(all(ismember(aepmValidIndices, find(cellfun(@(x) ~isempty(regexp(x, 'aepm\d', 'ONCE')), blockNames{i,:})))));
+    assert(all(ismember(rfmValidIndices, find(cellfun(@(x) ~isempty(regexp(x, 'rfm\d', 'ONCE')), blockNames{i,:})))));
+end
