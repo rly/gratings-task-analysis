@@ -1,11 +1,11 @@
 clear all; close all
 processedDataRootDir = '/Volumes/scratch/rly/gratings-task-analysis/processed_data/';
-dataDirRoot = '/Volumes/kastner/ryanly/Ferdy/merged';
+dataDirRoot = '/Volumes/kastner/ryanly/McCartney/merged';
 muaDataDirRoot = '/Volumes/scratch/rly/simple-mua-detection/processed_data/';
 recordingInfoFileName = '/Users/labmanager/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
 recordingInfo = readRecordingInfo(recordingInfoFileName);
 
-for sessioni = 38:numel(recordingInfo)
+for sessioni = 1:37% 38:numel(recordingInfo)
     sessionInd = sessioni; %12 18 15 22
     if ~isnan(recordingInfo(sessioni).aepmIndices)        
         channelsToLoad = recordingInfo(sessioni).spikeChannelsToLoad;
@@ -108,7 +108,7 @@ for sessioni = 38:numel(recordingInfo)
         plot([0.045 0.045], [-1000 1000], 'm-');
         text(0.050, minYLim+1, '35-45 ms', 'Color', 'm');
 
-         plotFileName = sprintf('%s-%s-%s-AEPMlfpLines.png', recordingInfo(sessioni).sessionName, sessioni, ref);
+         plotFileName = sprintf('%s-%s-%s-AEPMlfpLines.png', recordingInfo(sessioni).sessionName, num2str(sessioni), ref);
         
         cd('/Users/labmanager/Documents/MATLAB/aepm_lfp')
         saveas(gcf,plotFileName,'jpg')
@@ -155,7 +155,7 @@ for sessioni = 38:numel(recordingInfo)
            text(-0.01, maxBY, sprintf('%d', maxBY), 'Color', 0.3*ones(3, 1), 'HorizontalAlignment', 'right');
         end
 
-        plotFileName = sprintf('%s-%s-%s-AEPMlfpColorBounds.png', recordingInfo(sessioni).sessionName, sessioni, ref);
+        plotFileName = sprintf('%s-%s-%s-AEPMlfpColorBounds.png', recordingInfo(sessioni).sessionName, num2str(sessioni), ref);
         
         cd('/Users/labmanager/Documents/MATLAB/aepm_lfp')
         saveas(gcf,plotFileName,'jpg')
