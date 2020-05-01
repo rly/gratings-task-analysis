@@ -1,10 +1,13 @@
 % function suaMuaAnalysisSummary(processedDataRootDir, recordingInfoFileName, sessionInds)
 
 clear;
-readDataLocally;
-sessionInds = 39:57; % temp. 38 probably not in pulvinar
+processedDataRootDir = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/';
+dataDirRoot = 'C:\Users\Ryan\Documents\MATLAB\gratings-task-data\';
+recordingInfoFileName = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/recordingInfo2.csv';
+% sessionInds = [1:37 39:57]; % 38 probably not in pulvinar
+sessionInds = [1:16 19:20 23:37 39:57]; % 38 probably not in pulvinar
 
-v = 13;
+v = 15;
 
 %% load recording information
 recordingInfo = readRecordingInfo(recordingInfoFileName);
@@ -12,10 +15,6 @@ recordingInfo = readRecordingInfo(recordingInfoFileName);
 summaryDataDir = sprintf('%s/%s/', processedDataRootDir, 'SUA_MUA_GRATINGS_SUMMARY'); % THIS IS THE KEY DIFFERENCE
 if ~exist(summaryDataDir, 'dir')
     error('No directory %s\n', summaryDataDir);
-end
-
-if isempty(sessionInds)
-    sessionInds = 1:numel(recordingInfo);
 end
 
 nSessions = numel(sessionInds);
@@ -520,7 +519,7 @@ plot(tWf, meanWfs');
 title(sprintf('Mean Waveforms (ALL; N=%d)', size(meanWfs, 1)));
 grid on;
 
-precondition = true(size(isSignificantCueResponseInc));%isInPulvinar & isSignificantCueResponseInc;
+precondition = true(size(isSignificantCueResponseInc & isInPulvinar));
 % figure_tr_inch(6, 6);
 % plot(tWf, meanWfs(precondition,:)');
 % title(sprintf('Mean Waveforms (N=%d)', size(meanWfs(precondition,:), 1)));
@@ -562,7 +561,7 @@ for i = 1:size(meanWfSub, 1)
     end
 end
 % plot([0.351 0.351], [-0.2 0.15], 'k--');
-title(sprintf('BS Waveforms (N=%d)', sum(strcmp(physClassSub, 'Narrow-Spiking'))));
+title(sprintf('NS Waveforms (N=%d)', sum(strcmp(physClassSub, 'Narrow-Spiking'))));
 grid on;
 set(gca, 'XTick', -0.4:0.1:1);
 ylabel('Voltage (mV)');
@@ -591,7 +590,8 @@ fprintf('NS in Pul w/ Sig Cue+ Resp: %d cells\n', sum(strcmp(physClassSub, 'Narr
 fprintf('BS in Pul w/ Sig Cue+ Resp: %d cells\n', sum(strcmp(physClassSub, 'Broad-Spiking')));
 
 %%
-precondition = strcmp(physClassSub, 'Narrow-Spiking') | strcmp(physClassSub, 'Broad-Spiking');%isInPulvinar & isSignificantCueResponseInc;
+precondition = strcmp(physClassSub, 'Narrow-Spiking') | strcmp(physClassSub, 'Broad-Spiking');
+precondition = precondition & isInPulvinar & isSignificantCueResponseInc;
 unitStructsSub = unitStructs(precondition);
 troughToPeakTime = nan(size(unitStructsSub, 1), 1);
 for i = 1:size(unitStructsSub, 1)

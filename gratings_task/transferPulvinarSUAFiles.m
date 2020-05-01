@@ -1,6 +1,6 @@
 readDataRemotely;
 sessionInds = 1:37;
-v = 13;
+v = 15;
 
 processedDataRootDirLocal = 'C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/PUL_SUA_GRATINGS_ALL/';
 mkdir(processedDataRootDirLocal);

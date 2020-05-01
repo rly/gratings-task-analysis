@@ -13,6 +13,7 @@ unitStructs = cell(nUnitsApprox, 1);
 meanWfs = cell(nUnitsApprox, 1);
 physClass = cell(nUnitsApprox, 1);
 isSignificantResponseVsBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
+isStronglySignificantResponseHemiRFVsBaseline = false(nUnitsApprox, 1); 
 isSignificantResponseVsPreviousPeriod = false(nUnitsApprox, 4);
 isSignificantResponseVsBootstrapBaseline = false(nUnitsApprox, 6); % 6 periods > baseline
 isSignificantResponseVsBootstrapPreviousPeriod = false(nUnitsApprox, 4);

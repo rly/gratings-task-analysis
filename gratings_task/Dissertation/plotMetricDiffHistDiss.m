@@ -36,6 +36,8 @@ box off;
 set(gca, 'FontSize', 18);
 set(gca, 'LineWidth', 1);
 set(gca, 'TickDir', 'out');
+text(gca, 1, 1, sprintf('N=%d', numel(mDiff)), 'Units', 'normalized', 'FontSize', 14, ...
+        'VerticalAlignment', 'top', 'HorizontalAlignment', 'right'); 
 
 if origYLim(2) == 2
     set(gca, 'YTick', 0:2);
