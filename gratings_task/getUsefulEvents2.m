@@ -1,5 +1,9 @@
 function usefulEvents = getUsefulEvents2(logDir, logIndices, nLoc, D, blockName)
 
+logDir = gratingsTaskLogDir;
+logIndices = R.gratingsTaskLogIndices;
+nLoc = 4;
+
 holdDurMid = 850; % ms; for splitting short vs long hold
 
 % cueP3Event = D.events{2};
@@ -413,6 +417,12 @@ for i = 1:nLoc
     cueOnsetRelBalErrorByLoc{i} = cueOnsetError(~isHoldTrialError & cueLocError == i & isRelBalError);
     cueOnsetHoldBalErrorByLoc{i} = cueOnsetError(~isHoldTrialError & cueLocError == i & isHoldBalError);
 end 
+
+%% process pre array eye movements
+% TVV added eye movements during trials
+isEyeErrorPreArray = strcmp(trialResults, 'pre-array-eye-error');
+eyeErrorPreArrayTimes = errorTimesAll(isEyeErrorPreArray(~isCorrect));
+assert(all(eventCode(isEyeErrorPreArray(~isCorrect)) == 1))
 
 %% TODO fixation and lever times and RT for errors
 
