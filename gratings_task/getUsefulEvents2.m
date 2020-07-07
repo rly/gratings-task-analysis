@@ -424,6 +424,79 @@ isEyeErrorPreArray = strcmp(trialResults, 'pre-array-eye-error');
 eyeErrorPreArrayTimes = errorTimesAll(isEyeErrorPreArray(~isCorrect));
 assert(all(eventCode(isEyeErrorPreArray(~isCorrect)) == 1))
 
+trialStructsEyeErrorPreArray = trialStructs(isEyeErrorPreArray);
+arrayShapesEyeErrorPreArray = arrayShapes(isEyeErrorPreArray);
+cueLocEyeErrorPreArray = cellfun(@(x) x.cueLoc, trialStructsEyeErrorPreArray);
+cueTargetDelayDurEyeErrorPreArray = cellfun(@(x) x.cueArrayDelayDuration, trialStructsEyeErrorPreArray);
+
+% get cue onsets corresponding to pre array eye movements trials only
+maxCueOnsetToErrorTime = 5; % seconds
+cueOnsetEyeErrorPreArray = nan(numel(eyeErrorPreArrayTimes), 1);
+for i = 1:numel(eyeErrorPreArrayTimes)  
+    prevCueOnsetInd = find((eyeErrorPreArrayTimes(i) - cueOnsetEvent < maxCueOnsetToErrorTime) & ...
+            (eyeErrorPreArrayTimes(i) - cueOnsetEvent > 0), 1, 'last');
+    if ~isempty(prevCueOnsetInd)
+        cueOnsetEyeErrorPreArray(i) = cueOnsetEvent(prevCueOnsetInd);
+    else
+        warning('Eye error pre-array event without a corresponding cue onset event: %d, %f', i, eyeErrorPreArrayTimes(i));
+    end
+end
+
+isRelBalEyeErrorPreArray = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesEyeErrorPreArray);
+isHoldBalEyeErrorPreArray = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesEyeErrorPreArray);
+
+isEyeErrorPreArrayHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsEyeErrorPreArray, arrayShapesEyeErrorPreArray);
+%assert(all(isEyeErrorPreArrayHoldTrialLog == isErrorEarlyResponseHold));
+
+% get cue onset events corresponding to correct trials only
+cueOnsetEyeErrorPreArrayByLoc = cell(nLoc, 1);
+for i = 1:nLoc
+    cueOnsetEyeErrorPreArrayByLoc{i} = cueOnsetEyeErrorPreArray(cueLoc == i);
+end    
+
+% get array onsets corresponding to correct trials only
+maxArrayOnsetToJuiceTime = 2.5; % seconds
+arrayOnsetEyeErrorPreArray = nan(numel(eyeErrorPreArrayTimes), 1);
+allArrayOnsetEvents = [arrayOnsetHoldEvent; arrayOnsetReleaseEvent];
+for i = 1:numel(eyeErrorPreArrayTimes) 
+    prevArrayOnsetInd = find((eyeErrorPreArrayTimes(i) - allArrayOnsetEvents < maxArrayOnsetToJuiceTime) & ...
+            (eyeErrorPreArrayTimes(i) - allArrayOnsetEvents > 0), 1, 'last');
+    if ~isempty(prevArrayOnsetInd)
+        arrayOnsetEyeErrorPreArray(i) = allArrayOnsetEvents(prevArrayOnsetInd);
+    else
+        warning('Error event without a corresponding array onset event: %d, %f', i, eyeErrorPreArrayTimes(i));
+    end
+end
+isHoldTrialEyeErrorPreArray = isEyeErrorPreArrayHoldTrialLog;
+
+arrayOnsetRelBalEyeErrorPreArray = arrayOnsetEyeErrorPreArray(~isHoldTrialEyeErrorPreArray & isRelBalEyeErrorPreArray);
+arrayOnsetHoldBalEyeErrorPreArray = arrayOnsetEyeErrorPreArray(isHoldTrialEyeErrorPreArray & isHoldBalEyeErrorPreArray);
+
+arrayOnsetEyeErrorPreArrayByLoc = cell(nLoc, 1);
+arrayOnsetRelBalEyeErrorPreArrayByLoc = cell(nLoc, 1);
+arrayOnsetHoldBalEyeErrorPreArrayByLoc = cell(nLoc, 1);
+
+for i = 1:nLoc
+    arrayOnsetEyeErrorPreArrayByLoc{i} = arrayOnsetEyeErrorPreArray(cueLocEyeErrorPreArray == i);
+    arrayOnsetRelBalEyeErrorPreArrayByLoc{i} = arrayOnsetEyeErrorPreArray(~isHoldTrialEyeErrorPreArray & cueLocEyeErrorPreArray == i & isRelBalEyeErrorPreArray);
+    arrayOnsetHoldBalEyeErrorPreArrayByLoc{i} = arrayOnsetEyeErrorPreArray(isHoldTrialEyeErrorPreArray & cueLocEyeErrorPreArray == i & isHoldBalEyeErrorPreArray);
+end
+
+% split cue events and info by whether the trial is a hold trial or not
+cueLocRelBalEyeErrorPreArray = cueLocEyeErrorPreArray(~isHoldTrialEyeErrorPreArray & isRelBalEyeErrorPreArray);
+cueLocHoldBalEyeErrorPreArray = cueLocEyeErrorPreArray(isHoldTrialEyeErrorPreArray & isHoldBalEyeErrorPreArray);
+
+cueOnsetRelBalEyeErrorPreArray = cueOnsetEyeErrorPreArray(~isHoldTrialEyeErrorPreArray & isRelBalEyeErrorPreArray);
+cueOnsetHoldBalEyeErrorPreArray = cueOnsetEyeErrorPreArray(isHoldTrialEyeErrorPreArray & isHoldBalEyeErrorPreArray);
+
+cueOnsetRelBalEyeErrorPreArrayByLoc = cell(nLoc, 1);
+cueOnsetHoldBalEyeErrorPreArrayByLoc = cell(nLoc, 1);
+for i = 1:nLoc
+    cueOnsetRelBalEyeErrorPreArrayByLoc{i} = cueOnsetEyeErrorPreArray(~isHoldTrialEyeErrorPreArray & cueLocEyeErrorPreArray == i & isRelBalEyeErrorPreArray);
+    cueOnsetHoldBalEyeErrorPreArrayByLoc{i} = cueOnsetEyeErrorPreArray(~isHoldTrialEyeErrorPreArray & cueLocEyeErrorPreArray == i & isHoldBalEyeErrorPreArray);
+end 
+
+
 %% TODO fixation and lever times and RT for errors
 
 
@@ -449,17 +522,17 @@ usefulEvents = var2struct(...
         fixationAndLeverTimes, firstJuiceEvent, targetDimMatch, ...
         isHoldTrial, isRelBal, isHoldBal, ...
         cueOnsetError, ...
-        cueOnsetErrorByLoc, ...
-        cueOnsetRelBalError, cueOnsetHoldBalError, ...
-        cueOnsetRelBalErrorByLoc, cueOnsetHoldBalErrorByLoc, ...
-        arrayOnsetError, ...
-        arrayOnsetErrorByLoc, ...
-        arrayOnsetRelBalError, arrayOnsetHoldBalError, ...
-        arrayOnsetRelBalErrorByLoc, arrayOnsetHoldBalErrorByLoc, ...
-        cueLocError, cueLocHoldBalError, cueLocRelBalError, ...
-        cueTargetDelayDurError, ...
-        isHoldTrialError, isRelBalError, isHoldBalError, ...
+        cueOnsetErrorByLoc, cueOnsetEyeErrorPreArrayByLoc,...
+        cueOnsetRelBalError, cueOnsetRelBalEyeErrorPreArray, cueOnsetHoldBalError, cueOnsetHoldBalEyeErrorPreArray, ...
+        cueOnsetRelBalErrorByLoc, cueOnsetRelBalEyeErrorPreArrayByLoc, cueOnsetHoldBalErrorByLoc, cueOnsetHoldBalEyeErrorPreArrayByLoc, ...
+        arrayOnsetError, arrayOnsetEyeErrorPreArray, ...
+        arrayOnsetErrorByLoc, arrayOnsetEyeErrorPreArrayByLoc, ...
+        arrayOnsetRelBalError, arrayOnsetRelBalEyeErrorPreArray, arrayOnsetHoldBalError, arrayOnsetHoldBalEyeErrorPreArray, ...
+        arrayOnsetRelBalErrorByLoc, arrayOnsetRelBalEyeErrorPreArrayByLoc, arrayOnsetHoldBalErrorByLoc, arrayOnsetHoldBalEyeErrorPreArrayByLoc, ...
+        cueLocError, cueLocHoldBalError, cueLocHoldBalEyeErrorPreArray, cueLocRelBalError, cueLocRelBalEyeErrorPreArray, cueLocEyeErrorPreArray, ...
+        cueTargetDelayDurError, cueTargetDelayDurEyeErrorPreArray, ...
+        isHoldTrialError, isHoldTrialEyeErrorPreArray, isRelBalError, isRelBalEyeErrorPreArray, isHoldBalError, isHoldBalEyeErrorPreArray, ...
         isErrorEarlyResponseHold, isErrorLateResponseRel, ...
-        arrayShapes, arrayShapesCorrect, arrayShapesError);
+        arrayShapes, arrayShapesCorrect, arrayShapesError, arrayShapesEyeErrorPreArray);
 
 
