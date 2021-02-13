@@ -281,6 +281,7 @@ if isLoadSortedSua
         % load sorted SUA data
         % indexing of offline sorter starts at 0
         suaFilePath = sprintf('%s/%s-SUA_%03d.mat', suaMuaDataDirRoot, sessionName, i-1);
+        fprintf('Loading SUA data: %s.\n', suaFilePath);
         suaData = load(suaFilePath, sprintf('wfData%d', i-1));
         suaData = suaData.(sprintf('wfData%d', i-1));
         % suaData should have waveform x data where
@@ -291,24 +292,31 @@ if isLoadSortedSua
         assert(all(suaData(:,1) == i));
         
         muaFilePath = sprintf('%s/%s-SPKC%03d-MUA.mat', suaMuaDataDirRoot, sessionName, i);
+        fprintf('Loading MUA data: %s.\n', muaFilePath);
         muaData = load(muaFilePath); % for getting threshold data
         
         nUnitsThisCh = max(suaData(:,2));
+        fprintf('\tProcessing %d single units...\n', nUnitsThisCh);
         for j = 1:nUnitsThisCh
             qualityNotesMatchInd = strcmp(sortQualityNotesText(:,1), sessionName) & ...
                     sortQualityNotesNums(:,1) == i & ...
                     sortQualityNotesNums(:,2) == j;
             if ~any(qualityNotesMatchInd)
-                warning('No matches in SUA quality notes for session %s, channel %d, unit %d\n', sessionName, i, j);
+                warning('\tNo matches in SUA quality notes for session %s, channel %d, unit %d\n', sessionName, i, j);
             elseif sum(qualityNotesMatchInd) > 1
-                warning('Too many matches in SUA quality notes for session %s, channel %d, unit %d\n', sessionName, i, j);
+                warning('\tToo many matches in SUA quality notes for session %s, channel %d, unit %d\n', sessionName, i, j);
             end
             assert(sum(qualityNotesMatchInd) == 1);
             hasTypicalWaveformShape = (sortQualityNotesNums(qualityNotesMatchInd,3) == 1);
             separationQuality = sortQualityNotesNums(qualityNotesMatchInd,4);
             % INCLUDE ONLY UNITS WITH TYPICAL WAVEFORM SHAPE AND GOOD
             % SEPARATION QUALITY FOR NOW
-            if ~(hasTypicalWaveformShape && separationQuality >= 3)
+            if ~hasTypicalWaveformShape
+                fprintf('\tChannel %d, unit %d does not have typical somatic waveform shape. Skipping.\n', i, j);
+                continue;
+            end
+            if separationQuality < 3
+                fprintf('\tChannel %d, unit %d has poor separation quality (%d). Skipping.\n', i, j, separationQuality);
                 continue;
             end
             
@@ -325,8 +333,7 @@ if isLoadSortedSua
             unitInd = unitInd + 1;
             unitMatch = suaData(:,2) == j;
             spikeStruct = struct();
-            spikeStruct.name = sprintf('%s_%s_%d%c', ...
-                    sessionName, areaName, i, 'a'+j-1);
+            spikeStruct.name = sprintf('%s_%s_%d%c', sessionName, areaName, i, 'a'+j-1);
             spikeStruct.sessionName = sessionName;
             spikeStruct.areaName = areaName;
             spikeStruct.channelID = i;
@@ -479,6 +486,8 @@ if isLoadSortedSua
     end
     fprintf('\tRemoving %d units due to lack of spikes.\n', sum(toRemove));
     D.allSpikeStructs(toRemove == 1) = [];
+    
+    fprintf('\tKeeping %d single units.\n', numel(D.allSpikeStructs))
     
     D.allUnitStructs(1:numel(D.allSpikeStructs)) = D.allSpikeStructs;
     

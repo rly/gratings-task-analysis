@@ -1,4 +1,4 @@
-function data=createdatamatpt(data,E,win)
+function [data,all_indx]=createdatamatpt(data,E,win)
 % Helper function to create an event triggered matrix from a single
 % channel of spike times. 
 % Usage:  data=createdatamatpt(data,E,win)
@@ -24,10 +24,12 @@ NE=length(E);
 winl=win(1);
 winr=win(2);
 data2(1:NE)=struct('times',[]);
+all_indx = [];
 for n=1:NE,
     indx=find(dtmp > E(n)-winl & dtmp<= E(n)+winr);
     if ~isempty(indx)
        data2(n).times=dtmp(indx)-E(n)+winl;
+       all_indx = [all_indx; indx];
     else
        data2(n).times=[];
     end

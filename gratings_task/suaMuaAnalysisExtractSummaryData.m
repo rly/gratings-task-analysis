@@ -1,7 +1,7 @@
 function suaMuaAnalysisExtractSummaryData(processedDataRootDir, dataDirRoot, ...
         suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, isLoadSortedSua, isLoadMua)
 
-v = 13;
+v = 15;
 
 % for preallocation. make sure this is an underestimate or equal to actual
 % number of units saved
@@ -249,12 +249,18 @@ for j = 1:nUnits
             % note: targetDimDelayLongWindowOffset = [-0.4 0];
             
             rtRelInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isRelBal);
+            rtRelInRF = rtRelInRF(ES.arrayOnsetRelBal.trialIndicesByLoc{inRFLoc});
             rtRelExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isRelBal);
+            rtRelExRF = rtRelExRF(ES.arrayOnsetRelBal.trialIndicesByLoc{exRFLoc});
             rtHoldInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
+            rtHoldInRF = rtHoldInRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{inRFLoc});
             rtHoldExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
+            rtHoldExRF = rtHoldExRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{exRFLoc});
             targetDimInRF = ES.UE.targetDimMatch(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
+            targetDimInRF = targetDimInRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{inRFLoc});
             targetDimExRF = ES.UE.targetDimMatch(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
-            
+            targetDimExRF = targetDimExRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{exRFLoc});
+
             % use long balanced trials only
             cueTargetDelayRelInRFRate = ES.averageFiringRatesByCount.cueTargetDelayRelBalLong.trialRateByLoc{inRFLoc};
             cueTargetDelayRelExRFRate = ES.averageFiringRatesByCount.cueTargetDelayRelBalLong.trialRateByLoc{exRFLoc};
@@ -292,42 +298,41 @@ for j = 1:nUnits
             rfLocsUsed = false(nLoc, 1);
             rfLocsUsed([inRFLoc exRFLoc]) = 1;
             
-            % slowest RTs
-            targetDimByLocSlowThirdRT = cell(nLoc, 1);
-            targetDimByLocSlowThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(topThirdIndicesHoldInRF));
-            targetDimByLocSlowThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(topThirdIndicesHoldExRF));
-            targetDimSlowThirdRT.window = ES.targetDimBal.window;
-            targetDimSlowThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
-            targetDimSlowThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocSlowThirdRT, targetDimSlowThirdRT, ES.kernelSigma);
-            targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, rfLocsUsed);
-            
-            % fastest RTs
-            targetDimByLocFastThirdRT = cell(nLoc, 1);
-            targetDimByLocFastThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(bottomThirdIndicesHoldInRF));
-            targetDimByLocFastThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(bottomThirdIndicesHoldExRF));
-            targetDimFastThirdRT.window = ES.targetDimBal.window;
-            targetDimFastThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
-            targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
-            targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, rfLocsUsed);
-
-            fprintf('5a\n');
-            % InRF only
-            diffTargetDimLatencySplitThirdsRT(unitCount) = targetDimSlowThirdRT.latencyInfoByLoc{inRFLoc}.latency - ...
-                    targetDimFastThirdRT.latencyInfoByLoc{inRFLoc}.latency;
-            if ~isnan(diffTargetDimLatencySplitThirdsRT(unitCount))
-                figure_tr_inch(6, 5);
-                hold on;
-                targetDimT = targetDimSlowThirdRT.t - targetDimSlowThirdRT.window(1);
-                plot(targetDimT, targetDimSlowThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
-                plot(targetDimT, targetDimFastThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
-                xlabel('Time from Target Dimming (s)');
-                ylabel('Estimated Firing Rate (Hz)');
-                title(sprintf('%s Target Dim InRF - Slow vs Fast RTs', unitName), 'Interpreter', 'none');
-                legend({'Slow Third of RTs', 'Fast Third of RTs'});
-                plotFileName = sprintf('%s/%s-%s-targetDimSlowVsFastRT-v%d.png', processedDataDir, unitName, blockName, v);
-                fprintf('\tSaving figure to file %s...\n', plotFileName);
-                export_fig(plotFileName, '-nocrop');
-            end
+%             % slowest RTs
+%             targetDimByLocSlowThirdRT = cell(nLoc, 1);
+%             targetDimByLocSlowThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(topThirdIndicesHoldInRF));
+%             targetDimByLocSlowThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(topThirdIndicesHoldExRF));
+%             targetDimSlowThirdRT.window = ES.targetDimBal.window;
+%             targetDimSlowThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
+%             targetDimSlowThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocSlowThirdRT, targetDimSlowThirdRT, ES.kernelSigma);
+%             targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, rfLocsUsed);
+%             
+%             % fastest RTs
+%             targetDimByLocFastThirdRT = cell(nLoc, 1);
+%             targetDimByLocFastThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(bottomThirdIndicesHoldInRF));
+%             targetDimByLocFastThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(bottomThirdIndicesHoldExRF));
+%             targetDimFastThirdRT.window = ES.targetDimBal.window;
+%             targetDimFastThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
+%             targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
+%             targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, rfLocsUsed);
+% 
+%             % InRF only
+%             diffTargetDimLatencySplitThirdsRT(unitCount) = targetDimSlowThirdRT.latencyInfoByLoc{inRFLoc}.latency - ...
+%                     targetDimFastThirdRT.latencyInfoByLoc{inRFLoc}.latency;
+%             if ~isnan(diffTargetDimLatencySplitThirdsRT(unitCount))
+%                 figure_tr_inch(6, 5);
+%                 hold on;
+%                 targetDimT = targetDimSlowThirdRT.t - targetDimSlowThirdRT.window(1);
+%                 plot(targetDimT, targetDimSlowThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
+%                 plot(targetDimT, targetDimFastThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
+%                 xlabel('Time from Target Dimming (s)');
+%                 ylabel('Estimated Firing Rate (Hz)');
+%                 title(sprintf('%s Target Dim InRF - Slow vs Fast RTs', unitName), 'Interpreter', 'none');
+%                 legend({'Slow Third of RTs', 'Fast Third of RTs'});
+%                 plotFileName = sprintf('%s/%s-%s-targetDimSlowVsFastRT-v%d.png', processedDataDir, unitName, blockName, v);
+%                 fprintf('\tSaving figure to file %s...\n', plotFileName);
+%                 export_fig(plotFileName, '-nocrop');
+%             end
             
             % algorithm:
             % sort trials according to firing rate during each delay period
@@ -695,19 +700,19 @@ for j = 1:nUnits
                     ES.targetDimBal.spdfByLoc(exRFLoc,concatTargetDimWindowIndices) ...
                     ES.exitFixation.spdfByLoc(exRFLoc,concatExitFixationWindowIndices)];
             
-            for k = 1:numel(ES.isLocUsed)
-                if ES.isLocUsed(k)
-                    if unitCount > 1
-                        arrayOnsetRelBalSpikeTimesByLoc{k}(unitCount,:) = ES.arrayOnsetRelBal.spikeTimesByLoc{k};
-                        arrayOnsetHoldBalSpikeTimesByLoc{k}(unitCount,:) = ES.arrayOnsetHoldBal.spikeTimesByLoc{k};
-                        targetDimBalSpikeTimesByLoc{k}(unitCount,:) = ES.targetDimBal.spikeTimesByLoc{k};
-                    else
-                        arrayOnsetRelBalSpikeTimesByLoc{k} = ES.arrayOnsetRelBal.spikeTimesByLoc{k};
-                        arrayOnsetHoldBalSpikeTimesByLoc{k} = ES.arrayOnsetHoldBal.spikeTimesByLoc{k};
-                        targetDimBalSpikeTimesByLoc{k} = ES.targetDimBal.spikeTimesByLoc{k};
-                    end
-                end
-            end
+%             for k = 1:numel(ES.isLocUsed)
+%                 if ES.isLocUsed(k)
+%                     if unitCount > 1
+%                         arrayOnsetRelBalSpikeTimesByLoc{k}(unitCount,:) = ES.arrayOnsetRelBal.spikeTimesByLoc{k};
+%                         arrayOnsetHoldBalSpikeTimesByLoc{k}(unitCount,:) = ES.arrayOnsetHoldBal.spikeTimesByLoc{k};
+%                         targetDimBalSpikeTimesByLoc{k}(unitCount,:) = ES.targetDimBal.spikeTimesByLoc{k};
+%                     else
+%                         arrayOnsetRelBalSpikeTimesByLoc{k} = ES.arrayOnsetRelBal.spikeTimesByLoc{k};
+%                         arrayOnsetHoldBalSpikeTimesByLoc{k} = ES.arrayOnsetHoldBal.spikeTimesByLoc{k};
+%                         targetDimBalSpikeTimesByLoc{k} = ES.targetDimBal.spikeTimesByLoc{k};
+%                     end
+%                 end
+%             end
             inRFLocs(unitCount) = inRFLoc;
             exRFLocs(unitCount) = exRFLoc;
             
@@ -783,26 +788,26 @@ export_fig(plotFileName, '-nocrop');
 
 %% compute spike count correlations between pairs ("noise correlations")
 % TODO control for rate differences
-cueTargetDelayNoiseCorr = nan(nUnitsUsed, nUnitsUsed, nLoc);
-arrayResponseHoldMidNoiseCorr = nan(nUnitsUsed, nUnitsUsed, nLoc);
-arrayResponseHoldLateNoiseCorr = nan(nUnitsUsed, nUnitsUsed, nLoc);
-targetDimDelayNoiseCorr = nan(nUnitsUsed, nUnitsUsed, nLoc);
-for i = 1:nUnitsUsed
-    for j = (i+1):nUnitsUsed
-        for k = 1:nLoc
-            if isLocUsed(k)
-                cueTargetDelayNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.cueTargetDelay(i).trialCountByLoc{k}, ...
-                        averageFiringRatesByCount.cueTargetDelay(j).trialCountByLoc{k});
-                arrayResponseHoldMidNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.arrayResponseHoldMidBal(i).trialCountByLoc{k}, ...
-                        averageFiringRatesByCount.arrayResponseHoldMidBal(j).trialCountByLoc{k});
-                arrayResponseHoldLateNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.arrayResponseHoldLateBal(i).trialCountByLoc{k}, ...
-                        averageFiringRatesByCount.arrayResponseHoldLateBal(j).trialCountByLoc{k});
-                targetDimDelayNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.targetDimDelayBal(i).trialCountByLoc{k}, ...
-                        averageFiringRatesByCount.targetDimDelayBal(j).trialCountByLoc{k});
-            end
-        end
-    end
-end
+% cueTargetDelayNoiseCorr = nan(nUnitsUsed, nUnitsUsed, nLoc);
+% arrayResponseHoldMidNoiseCorr = nan(nUnitsUsed, nUnitsUsed, nLoc);
+% arrayResponseHoldLateNoiseCorr = nan(nUnitsUsed, nUnitsUsed, nLoc);
+% targetDimDelayNoiseCorr = nan(nUnitsUsed, nUnitsUsed, nLoc);
+% for i = 1:nUnitsUsed
+%     for j = (i+1):nUnitsUsed
+%         for k = 1:nLoc
+%             if isLocUsed(k)
+%                 cueTargetDelayNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.cueTargetDelay(i).trialCountByLoc{k}, ...
+%                         averageFiringRatesByCount.cueTargetDelay(j).trialCountByLoc{k});
+%                 arrayResponseHoldMidNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.arrayResponseHoldMidBal(i).trialCountByLoc{k}, ...
+%                         averageFiringRatesByCount.arrayResponseHoldMidBal(j).trialCountByLoc{k});
+%                 arrayResponseHoldLateNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.arrayResponseHoldLateBal(i).trialCountByLoc{k}, ...
+%                         averageFiringRatesByCount.arrayResponseHoldLateBal(j).trialCountByLoc{k});
+%                 targetDimDelayNoiseCorr(i,j,k) = corr(averageFiringRatesByCount.targetDimDelayBal(i).trialCountByLoc{k}, ...
+%                         averageFiringRatesByCount.targetDimDelayBal(j).trialCountByLoc{k});
+%             end
+%         end
+%     end
+% end
     
 %% correlate target dim delay activity (rank trial within unit) with rt (rank trial)
 % not enough variance within target dim delay activity across trials
@@ -926,8 +931,9 @@ save(saveFileName, ...
         'inRFCountNormFactor', ...
         'exRFCountNormFactor', ...
         'inRFLocs', ...
-        'exRFLocs', ...
-        'cueTargetDelayNoiseCorr', ...
-        'arrayResponseHoldMidNoiseCorr', ...
-        'arrayResponseHoldLateNoiseCorr', ...
-        'targetDimDelayNoiseCorr');
+        'exRFLocs');
+%         'cueTargetDelayNoiseCorr', ...
+%         'arrayResponseHoldMidNoiseCorr', ...
+%         'arrayResponseHoldLateNoiseCorr', ...
+%         'targetDimDelayNoiseCorr'...
+        

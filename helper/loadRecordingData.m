@@ -1,6 +1,7 @@
 function [R, D, processedDataDir, blockName] = loadRecordingData(...
         processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, rfMappingNewInfoFileName, rfMappingNewMode)
+        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, ...
+        rfMappingNewInfoFileName, rfMappingNewMode, isLoadAllSpikes)
 % loads MUA data and eyetracking/lever data into D struct and recording
 % metadata into R struct
 
@@ -41,9 +42,8 @@ end
 
 tic;
 if isLoadMetaDataOnly
-    R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
-%     R.metaDataFilePath = sprintf('C:/Users/Ryan/Documents/MATLAB/gratings-task-analysis/processed_data/PUL_SUA_GRATINGS_ALL/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', ...
-%             sessionName, sessionInd, isLoadSortedSua, isLoadMua);
+    R.metaDataFilePath = sprintf('%s/%s-sessionInd%d-sua%d-mua%d-gratings-metadata.mat', ...
+            processedDataDir, sessionName, sessionInd, isLoadSortedSua, isLoadMua);
     fprintf('Loading metadata %s...\n', R.metaDataFilePath);
     MD = load(R.metaDataFilePath);
     D = MD.MD;
@@ -100,3 +100,20 @@ if ~isLoadMetaDataOnly
         D = adjustSpikeTimesLfpsAndEvents(D, R.blockIndices);
     end
 end
+% %% remove spike and event times not during task to save memory
+% % meta data already had spike times adjusted
+% if ~isLoadMetaDataOnly 
+%     if isLoadAllSpikes
+%         DallSpikes = D;
+%         [D, spikesToKeep] = trimSpikeTimesAndEvents(D, R.blockIndices, isLoadAllSpikes);
+%         for uniti = 1:numel(DallSpikes.allUnitStructs)
+%             D.allUnitStructs{uniti}.tsAll = DallSpikes.allUnitStructs{uniti}.ts;
+%             D.spikesToKeep = spikesToKeep;
+%         end
+%     else
+%         [D, spikesToKeep] = trimSpikeTimesAndEvents(D, R.blockIndices, isLoadAllSpikes);
+%     end
+%     if isLoadLfp
+%         D = adjustSpikeTimesLfpsAndEvents(D, R.blockIndices);
+%     end
+% end

@@ -1,4 +1,4 @@
-function D = trimSpikeTimesAndEvents(D, blockInds)
+function [D, spikesToKeep] = trimSpikeTimesAndEvents(D, blockInds, isLoadAllSpikes)
 
 % determine which spike times to keep from each block, and logical OR them
 % together
@@ -31,6 +31,7 @@ if isfield(D, 'adjDirects')
     directIndicesToKeep = false(1, size(D.adjDirects, 2));
 end
 
+
 for j = 1:numel(blockInds)
     blockStartTime = D.blockStartTimes(blockInds(j));
     blockStopTime = D.blockStopTimes(blockInds(j));
@@ -41,7 +42,7 @@ for j = 1:numel(blockInds)
     end
     if isfield(D, 'allSpikeStructs')
         for i = 1:numel(D.allSpikeStructs)
-            spikesToKeep{i} = spikesToKeep{i} | (D.allSpikeStructs{i}.ts >= blockStartTime & D.allSpikeStructs{i}.ts <= blockStopTime);
+            spikesToKeep{i} = spikesToKeep{i} | (D.allSpikeStructs{i}.ts >= blockStartTime & D.allSpikeStructs{i}.ts <= blockStopTime); 
         end
     end
     if isfield(D, 'allMUAStructs')
@@ -63,6 +64,7 @@ for j = 1:numel(blockInds)
         directIndicesToKeep(blockDirectIndices) = true;
     end
 end
+
 
 % remove the non-marked events and spikes
 for i = 1:numel(D.events)
@@ -100,3 +102,4 @@ if isfield(D, 'adjDirects')
     % TODO special case for adjDirects -- make the matrix smaller and adjust
     % the event times accordingly
 end
+

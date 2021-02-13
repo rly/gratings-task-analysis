@@ -3,6 +3,7 @@ function quickSpdfAllVisualEventsError(ES, blockName, ...
 
 unitName = unitStruct.name;
 nTrials = numel(ES.UE.cueOnset);
+nValidTrials = numel(ES.cueOnset.validEventTimes);
 cols = lines(4);
 
 %%
@@ -14,7 +15,7 @@ set(gcf, 'renderer', 'painters');
 axBig = axes('Position', [0.04 0.045 0.92 0.91], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on')
 
-modTitle = sprintf('Gratings Attention Task: %s (%d trials)', unitName, nTrials);
+modTitle = sprintf('Gratings Attention Task: %s (%d/%d trials)', unitName, nValidTrials, nTrials);
 if isZeroDistractors
     modTitle = [modTitle ' (0 Distractors)'];
 end

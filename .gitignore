@@ -34,6 +34,7 @@ $RECYCLE.BIN/
 
 # MATLAB
 *.asv
+*.m~
 
 # temp and backup files
 *.bak
