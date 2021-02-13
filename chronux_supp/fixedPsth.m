@@ -35,18 +35,18 @@ function [R,t,E,RR] = fixedPsth(data,sig,err,t)
 if nargin <1 ; error('I need data!');end
 if isempty(data) % TEMP
     if nargin == 4
-        R = nan(size(t)); E = nan(size(t));
+        R = nan(size(t)); E = nan(size(t)); RR = nan(size(t));
     else
-        R = []; t = []; E = [];
+        R = []; t = []; E = []; RR = [];
     end
     return;
 end
 data=padNaN2(data); % create a zero padded data matrix from input structural array  
 if isempty(data)
     if nargin == 4
-        R = zeros(size(t)); E = zeros(size(t));
+        R = zeros(size(t)); E = zeros(size(t)); RR = zeros(size(t));
     else
-        R = []; t = []; E = [];
+        R = []; t = []; E = []; RR = [];
     end
     return;
 end

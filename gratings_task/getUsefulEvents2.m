@@ -1,5 +1,9 @@
 function usefulEvents = getUsefulEvents2(logDir, logIndices, nLoc, D, blockName)
 
+% logDir = gratingsTaskLogDir;
+% logIndices = R.gratingsTaskLogIndices;
+% nLoc = 4;
+
 holdDurMid = 850; % ms; for splitting short vs long hold
 
 % cueP3Event = D.events{2};
@@ -63,10 +67,25 @@ end
 [cueOnset,trialsToKeep] = removeHandStartedTrials(D, cueOnset, firstJuiceEvent);
 firstJuiceEvent = firstJuiceEvent(trialsToKeep);
 trialParamsAllCorrect = trialParamsAllCorrect(trialsToKeep,:);
-fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), numel(trialsToKeep));
-
 trialStructsCorrect = trialStructsCorrect(trialsToKeep);
 arrayShapesCorrect = arrayShapesCorrect(trialsToKeep);
+fprintf('Removed %d/%d putative hand-started trials.\n', sum(~trialsToKeep), numel(trialsToKeep));
+
+%%
+cueLoc = trialParamsAllCorrect(:,4);
+isHoldTrial = trialParamsAllCorrect(:,7) ~= -1;
+
+% fixationAndLeverTimes = [];
+% if isfield(D, 'adjDirects') && ~isempty(D.adjDirects)
+    fprintf('Determining fixation and lever event times around each trial.\n');
+    [fixationAndLeverTimes,isMissingData] = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc);
+% end
+cueOnset = cueOnset(~isMissingData);
+firstJuiceEvent = firstJuiceEvent(~isMissingData);
+trialParamsAllCorrect = trialParamsAllCorrect(~isMissingData,:);
+trialStructsCorrect = trialStructsCorrect(~isMissingData);
+arrayShapesCorrect = arrayShapesCorrect(~isMissingData);
+fprintf('Removed %d/%d trials with missing matching lever/fixation data.\n', sum(isMissingData), numel(isMissingData));
 
 %%
 isRelBal = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesCorrect);
@@ -79,9 +98,8 @@ isCorrectHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsCorrect, arraySh
 % TODO get only trials that are not repeats
 % notRepeatLogical = trialParamsAllCorrect(:,3) == 1;
 % juiceEvent = juiceEvent(notRepeatLogical,:);
-trialParams = trialParamsAllCorrect;%(notRepeatLogical,:);
+trialParams = trialParamsAllCorrect;
 % numNonRptCorrectTrials = size(trialParams, 1);
-
 cueLoc = trialParams(:,4);
 cueTargetDelayDur = trialParams(:,6);
 targetDimDelayDur = trialParams(:,7);
@@ -113,12 +131,12 @@ for i = 1:numel(firstJuiceEvent)
 end
 
 % split release and hold shapes - not the best way, but works for now
-maxArrayOnsetToJuiceTimeReleaseShape = 0.925;
-isHoldTrial = firstJuiceEvent - arrayOnset >= maxArrayOnsetToJuiceTimeReleaseShape;
-assert(all(isHoldTrial == (trialParams(:,7) ~= -1)));
+% maxArrayOnsetToJuiceTimeReleaseShape = 0.925;
+% isHoldTrial = firstJuiceEvent - arrayOnset >= maxArrayOnsetToJuiceTimeReleaseShape;
+isHoldTrial = trialParams(:,7) ~= -1;
+% assert(all(isHoldTrial == (trialParams(:,7) ~= -1)));
 assert(all(isHoldTrial == isCorrectHoldTrialLog));
 assert(all(~isHoldTrial == isCorrectRelTrialLog));
-
 % arrayOnsetRel = arrayOnset(~isHoldTrial);
 % arrayOnsetHold = arrayOnset(isHoldTrial);
 
@@ -189,13 +207,6 @@ for i = 1:nLoc
             cueLoc == i & targetDimDelayDur < holdDurMid & isHoldBal);
     targetDimLongHoldBalByLoc{i} = targetDimMatch(~isnan(targetDimMatch) & ...
             cueLoc == i & targetDimDelayDur >= holdDurMid & isHoldBal);
-end
-
-%%
-fixationAndLeverTimes = [];
-if isfield(D, 'adjDirects') && ~isempty(D.adjDirects)
-    fprintf('Determining fixation and lever event times around each trial.\n');
-    fixationAndLeverTimes = getFixationAndLeverTimes(D, cueOnset, firstJuiceEvent, cueLoc, isHoldTrial, nLoc);
 end
 
 %% check rt match across logs and event timing
@@ -407,6 +418,57 @@ for i = 1:nLoc
     cueOnsetHoldBalErrorByLoc{i} = cueOnsetError(~isHoldTrialError & cueLocError == i & isHoldBalError);
 end 
 
+%% process pre array eye movements
+% TVV added eye movements during trials
+isEyeErrorPreArray = strcmp(trialResults, 'pre-array-eye-error');
+eyeErrorPreArrayTimes = errorTimesAll(isEyeErrorPreArray(~isCorrect));
+assert(all(eventCode(isEyeErrorPreArray(~isCorrect)) == 1))
+
+trialStructsEyeErrorPreArray = trialStructs(isEyeErrorPreArray);
+arrayShapesEyeErrorPreArray = arrayShapes(isEyeErrorPreArray);
+cueLocEyeErrorPreArray = cellfun(@(x) x.cueLoc, trialStructsEyeErrorPreArray);
+cueTargetDelayDurEyeErrorPreArray = cellfun(@(x) x.cueArrayDelayDuration, trialStructsEyeErrorPreArray);
+
+% get cue onsets corresponding to pre array eye movements trials only
+maxCueOnsetToErrorTime = 5; % seconds
+cueOnsetEyeErrorPreArray = nan(numel(eyeErrorPreArrayTimes), 1);
+for i = 1:numel(eyeErrorPreArrayTimes)  
+    prevCueOnsetInd = find((eyeErrorPreArrayTimes(i) - cueOnsetEvent < maxCueOnsetToErrorTime) & ...
+            (eyeErrorPreArrayTimes(i) - cueOnsetEvent > 0), 1, 'last');
+    if ~isempty(prevCueOnsetInd)
+        cueOnsetEyeErrorPreArray(i) = cueOnsetEvent(prevCueOnsetInd);
+    else
+        warning('Eye error pre-array event without a corresponding cue onset event: %d, %f', i, eyeErrorPreArrayTimes(i));
+    end
+end
+
+isRelBalEyeErrorPreArray = cellfun(@(x) x(1) == 'R' && x(3) == 'R', arrayShapesEyeErrorPreArray);
+isHoldBalEyeErrorPreArray = cellfun(@(x) x(1) == 'H' && x(3) == 'H', arrayShapesEyeErrorPreArray);
+
+% isEyeErrorPreArrayHoldTrialLog = cellfun(@(x,y) y(1) == 'H', trialStructsEyeErrorPreArray, arrayShapesEyeErrorPreArray);
+% assert(all(isEyeErrorPreArrayHoldTrialLog == isErrorEarlyResponseHold));
+
+% get cue onset events corresponding to correct trials only
+cueOnsetEyeErrorPreArrayByLoc = cell(nLoc, 1);
+for i = 1:nLoc
+    cueOnsetEyeErrorPreArrayByLoc{i} = cueOnsetEyeErrorPreArray(cueLocEyeErrorPreArray == i);
+end    
+
+% split cue events and info by whether the trial is a hold trial or not
+cueLocRelBalEyeErrorPreArray = cueLocEyeErrorPreArray(isRelBalEyeErrorPreArray);
+cueLocHoldBalEyeErrorPreArray = cueLocEyeErrorPreArray(isHoldBalEyeErrorPreArray);
+
+cueOnsetRelBalEyeErrorPreArray = cueOnsetEyeErrorPreArray(isRelBalEyeErrorPreArray);
+cueOnsetHoldBalEyeErrorPreArray = cueOnsetEyeErrorPreArray(isHoldBalEyeErrorPreArray);
+
+cueOnsetRelBalEyeErrorPreArrayByLoc = cell(nLoc, 1);
+cueOnsetHoldBalEyeErrorPreArrayByLoc = cell(nLoc, 1);
+for i = 1:nLoc
+    cueOnsetRelBalEyeErrorPreArrayByLoc{i} = cueOnsetEyeErrorPreArray(cueLocEyeErrorPreArray == i & isRelBalEyeErrorPreArray);
+    cueOnsetHoldBalEyeErrorPreArrayByLoc{i} = cueOnsetEyeErrorPreArray(cueLocEyeErrorPreArray == i & isHoldBalEyeErrorPreArray);
+end 
+
+
 %% TODO fixation and lever times and RT for errors
 
 
@@ -432,17 +494,17 @@ usefulEvents = var2struct(...
         fixationAndLeverTimes, firstJuiceEvent, targetDimMatch, ...
         isHoldTrial, isRelBal, isHoldBal, ...
         cueOnsetError, ...
-        cueOnsetErrorByLoc, ...
-        cueOnsetRelBalError, cueOnsetHoldBalError, ...
-        cueOnsetRelBalErrorByLoc, cueOnsetHoldBalErrorByLoc, ...
+        cueOnsetErrorByLoc, cueOnsetEyeErrorPreArrayByLoc,...
+        cueOnsetRelBalError, cueOnsetRelBalEyeErrorPreArray, cueOnsetHoldBalError, cueOnsetHoldBalEyeErrorPreArray, ...
+        cueOnsetRelBalErrorByLoc, cueOnsetRelBalEyeErrorPreArrayByLoc, cueOnsetHoldBalErrorByLoc, cueOnsetHoldBalEyeErrorPreArrayByLoc, ...
         arrayOnsetError, ...
         arrayOnsetErrorByLoc, ...
         arrayOnsetRelBalError, arrayOnsetHoldBalError, ...
         arrayOnsetRelBalErrorByLoc, arrayOnsetHoldBalErrorByLoc, ...
-        cueLocError, cueLocHoldBalError, cueLocRelBalError, ...
-        cueTargetDelayDurError, ...
+        cueLocError, cueLocHoldBalError, cueLocHoldBalEyeErrorPreArray, cueLocRelBalError, cueLocRelBalEyeErrorPreArray, cueLocEyeErrorPreArray, ...
+        cueTargetDelayDurError, cueTargetDelayDurEyeErrorPreArray, ...
         isHoldTrialError, isRelBalError, isHoldBalError, ...
         isErrorEarlyResponseHold, isErrorLateResponseRel, ...
-        arrayShapes, arrayShapesCorrect, arrayShapesError);
+        arrayShapes, arrayShapesCorrect, arrayShapesError, arrayShapesEyeErrorPreArray);
 
 

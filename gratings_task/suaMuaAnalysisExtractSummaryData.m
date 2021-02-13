@@ -1,7 +1,7 @@
 function suaMuaAnalysisExtractSummaryData(processedDataRootDir, dataDirRoot, ...
         suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, isLoadSortedSua, isLoadMua)
 
-v = 13;
+v = 15;
 
 % for preallocation. make sure this is an underestimate or equal to actual
 % number of units saved
@@ -24,6 +24,7 @@ attnIndices = nan(nUnitsApprox, 4); % 2 delay periods + array response
 localization = cell(nUnitsApprox, 1);
 isInVPulvinar = false(nUnitsApprox, 1);
 isInDPulvinar = false(nUnitsApprox, 1);
+channelsFromDVPulLine = nan(nUnitsApprox, 1); % code requires that dPul is adjacent to vPul
 isMUA = false(nUnitsApprox, 1);
 channelIDByUnit = nan(nUnitsApprox, 1);
 preCueBaselineExpFit = cell(nUnitsApprox, 1);
@@ -78,9 +79,14 @@ end
 taskName = 'GRATINGS';
 scriptName = 'SUA_MUA_GRATINGS';
 isZeroDistractors = 0;
-[R, D, processedDataDir, blockName] = loadRecordingData(...
-        processedDataRootDir, dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, ...
-        sessionInd, channelsToLoad, taskName, scriptName, isLoadSortedSua, isLoadMua, 0, 0);
+isLoadLfp = 0;
+isLoadMetaDataOnly = 1;
+minSuaSepQuality = 3;
+paramsStruct = var2struct(processedDataRootDir, ...
+        dataDirRoot, suaMuaDataDirRoot, recordingInfoFileName, sessionInd, channelsToLoad, ...
+        taskName, scriptName, isLoadSortedSua, isLoadMua, isLoadLfp, isLoadMetaDataOnly, minSuaSepQuality);
+
+[R, D, processedDataDir, blockName] = loadRecordingData2(paramsStruct);
 sessionName = R.sessionName;
 areaName = R.areaName;
 
@@ -103,6 +109,10 @@ for j = 1:nUnits
         saveFileName = sprintf('%s/%s-%s-evokedSpiking-v%d.mat', ...
                 processedDataDir, unitName, blockName, v);
         fprintf('Processing %s...\n', saveFileName);
+        if exist(saveFileName, 'file') == 0
+            warning('File not found. Was there evoked spiking? Skipping...');
+            continue;
+        end
 
         ES = load(saveFileName);
 
@@ -131,13 +141,16 @@ for j = 1:nUnits
 
             isInVPulvinar(unitCount) = 0;
             isInDPulvinar(unitCount) = 0;
+            channelsFromDVPulLine(unitCount) = NaN;
             if ismember(unitStruct.channelID, R.vPulChannels)
                 isInVPulvinar(unitCount) = 1;
                 localization{unitCount} = 'vPul'; % TEMP
+                channelsFromDVPulLine(unitCount) = min(R.vPulChannels) - unitStruct.channelID - 0.5;
             end
             if ismember(unitStruct.channelID, R.dPulChannels)
                 isInDPulvinar(unitCount) = 1;
                 localization{unitCount} = 'dPul'; % TEMP
+                channelsFromDVPulLine(unitCount) = max(R.dPulChannels) - unitStruct.channelID + 0.5;
             end
             if ismember(unitStruct.channelID, R.vPulChannels) && ...
                     ismember(unitStruct.channelID, R.dPulChannels)
@@ -245,17 +258,17 @@ for j = 1:nUnits
             % note: targetDimDelayLongWindowOffset = [-0.4 0];
             
             rtRelInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isRelBal);
-            rtRelInRF = rtRelInRF(ES.arrayOnsetRelBal.trialIndicesByLoc{inRFLoc});
+            rtRelInRF = rtRelInRF(ES.arrayOnsetRelBal.validEventsByLoc{inRFLoc});
             rtRelExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isRelBal);
-            rtRelExRF = rtRelExRF(ES.arrayOnsetRelBal.trialIndicesByLoc{exRFLoc});
+            rtRelExRF = rtRelExRF(ES.arrayOnsetRelBal.validEventsByLoc{exRFLoc});
             rtHoldInRF = ES.UE.rt(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
-            rtHoldInRF = rtHoldInRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{inRFLoc});
+            rtHoldInRF = rtHoldInRF(ES.arrayOnsetHoldBal.validEventsByLoc{inRFLoc});
             rtHoldExRF = ES.UE.rt(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
-            rtHoldExRF = rtHoldExRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{exRFLoc});
+            rtHoldExRF = rtHoldExRF(ES.arrayOnsetHoldBal.validEventsByLoc{exRFLoc});
             targetDimInRF = ES.UE.targetDimMatch(ES.UE.cueLoc == inRFLoc & ES.UE.isHoldBal);
-            targetDimInRF = targetDimInRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{inRFLoc});
+            targetDimInRF = targetDimInRF(ES.arrayOnsetHoldBal.validEventsByLoc{inRFLoc});
             targetDimExRF = ES.UE.targetDimMatch(ES.UE.cueLoc == exRFLoc & ES.UE.isHoldBal);
-            targetDimExRF = targetDimExRF(ES.arrayOnsetHoldBal.trialIndicesByLoc{exRFLoc});
+            targetDimExRF = targetDimExRF(ES.arrayOnsetHoldBal.validEventsByLoc{exRFLoc});
 
             % use long balanced trials only
             cueTargetDelayRelInRFRate = ES.averageFiringRatesByCount.cueTargetDelayRelBalLong.trialRateByLoc{inRFLoc};
@@ -294,42 +307,41 @@ for j = 1:nUnits
             rfLocsUsed = false(nLoc, 1);
             rfLocsUsed([inRFLoc exRFLoc]) = 1;
             
-            % slowest RTs
-            targetDimByLocSlowThirdRT = cell(nLoc, 1);
-            targetDimByLocSlowThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(topThirdIndicesHoldInRF));
-            targetDimByLocSlowThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(topThirdIndicesHoldExRF));
-            targetDimSlowThirdRT.window = ES.targetDimBal.window;
-            targetDimSlowThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
-            targetDimSlowThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocSlowThirdRT, targetDimSlowThirdRT, ES.kernelSigma);
-            targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, rfLocsUsed);
-            
-            % fastest RTs
-            targetDimByLocFastThirdRT = cell(nLoc, 1);
-            targetDimByLocFastThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(bottomThirdIndicesHoldInRF));
-            targetDimByLocFastThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(bottomThirdIndicesHoldExRF));
-            targetDimFastThirdRT.window = ES.targetDimBal.window;
-            targetDimFastThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
-            targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
-            targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, rfLocsUsed);
-
-            fprintf('5a\n');
-            % InRF only
-            diffTargetDimLatencySplitThirdsRT(unitCount) = targetDimSlowThirdRT.latencyInfoByLoc{inRFLoc}.latency - ...
-                    targetDimFastThirdRT.latencyInfoByLoc{inRFLoc}.latency;
-            if ~isnan(diffTargetDimLatencySplitThirdsRT(unitCount))
-                figure_tr_inch(6, 5);
-                hold on;
-                targetDimT = targetDimSlowThirdRT.t - targetDimSlowThirdRT.window(1);
-                plot(targetDimT, targetDimSlowThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
-                plot(targetDimT, targetDimFastThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
-                xlabel('Time from Target Dimming (s)');
-                ylabel('Estimated Firing Rate (Hz)');
-                title(sprintf('%s Target Dim InRF - Slow vs Fast RTs', unitName), 'Interpreter', 'none');
-                legend({'Slow Third of RTs', 'Fast Third of RTs'});
-                plotFileName = sprintf('%s/%s-%s-targetDimSlowVsFastRT-v%d.png', processedDataDir, unitName, blockName, v);
-                fprintf('\tSaving figure to file %s...\n', plotFileName);
-                export_fig(plotFileName, '-nocrop');
-            end
+%             % slowest RTs
+%             targetDimByLocSlowThirdRT = cell(nLoc, 1);
+%             targetDimByLocSlowThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(topThirdIndicesHoldInRF));
+%             targetDimByLocSlowThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(topThirdIndicesHoldExRF));
+%             targetDimSlowThirdRT.window = ES.targetDimBal.window;
+%             targetDimSlowThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
+%             targetDimSlowThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocSlowThirdRT, targetDimSlowThirdRT, ES.kernelSigma);
+%             targetDimSlowThirdRT = computeResponseLatencyByLoc(targetDimSlowThirdRT, rfLocsUsed);
+%             
+%             % fastest RTs
+%             targetDimByLocFastThirdRT = cell(nLoc, 1);
+%             targetDimByLocFastThirdRT{inRFLoc} = targetDimInRF(sortRTHoldInRFInd(bottomThirdIndicesHoldInRF));
+%             targetDimByLocFastThirdRT{exRFLoc} = targetDimExRF(sortRTHoldExRFInd(bottomThirdIndicesHoldExRF));
+%             targetDimFastThirdRT.window = ES.targetDimBal.window;
+%             targetDimFastThirdRT.spdfWindowOffset = ES.targetDimBal.spdfWindowOffset;
+%             targetDimFastThirdRT = createTimeLockedSpdf(ES.spikeTs, [], targetDimByLocFastThirdRT, targetDimFastThirdRT, ES.kernelSigma);
+%             targetDimFastThirdRT = computeResponseLatencyByLoc(targetDimFastThirdRT, rfLocsUsed);
+% 
+%             % InRF only
+%             diffTargetDimLatencySplitThirdsRT(unitCount) = targetDimSlowThirdRT.latencyInfoByLoc{inRFLoc}.latency - ...
+%                     targetDimFastThirdRT.latencyInfoByLoc{inRFLoc}.latency;
+%             if ~isnan(diffTargetDimLatencySplitThirdsRT(unitCount))
+%                 figure_tr_inch(6, 5);
+%                 hold on;
+%                 targetDimT = targetDimSlowThirdRT.t - targetDimSlowThirdRT.window(1);
+%                 plot(targetDimT, targetDimSlowThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
+%                 plot(targetDimT, targetDimFastThirdRT.spdfByLoc(inRFLoc,:), 'LineWidth', 2);
+%                 xlabel('Time from Target Dimming (s)');
+%                 ylabel('Estimated Firing Rate (Hz)');
+%                 title(sprintf('%s Target Dim InRF - Slow vs Fast RTs', unitName), 'Interpreter', 'none');
+%                 legend({'Slow Third of RTs', 'Fast Third of RTs'});
+%                 plotFileName = sprintf('%s/%s-%s-targetDimSlowVsFastRT-v%d.png', processedDataDir, unitName, blockName, v);
+%                 fprintf('\tSaving figure to file %s...\n', plotFileName);
+%                 export_fig(plotFileName, '-nocrop');
+%             end
             
             % algorithm:
             % sort trials according to firing rate during each delay period
@@ -362,7 +374,7 @@ for j = 1:nUnits
             
             % make session-wise RT plots while processing the first unit
             if unitCount == 1
-                assert(all(ES.UE.rt >= 0.28 & ES.UE.rt <= 0.8)); 
+                assert(all(ES.UE.rt >= 0.2 & ES.UE.rt <= 0.8)); 
                 checkRTStatAlpha = 0.05;
                 plotFileName = sprintf('%s/%s-sessionInd%d-rtDist-v%d.png', outputDir, sessionName, sessionInd, v);
                 plotRTDistribution(rtRelInRF, rtRelExRF, rtHoldInRF, rtHoldExRF, ...
@@ -900,6 +912,7 @@ save(saveFileName, ...
         'localization', ...
         'isInVPulvinar', ...
         'isInDPulvinar', ...
+        'channelsFromDVPulLine', ...
         'isMUA', ...
         'channelIDByUnit', ...
         'meanWfs', ...

@@ -1,4 +1,4 @@
-function [flashOnsets,flashStats] = decodeFlashParams(flashEventTimes, ...
+function flashParams = decodeFlashParams(flashEventTimes, ...
         allEventTimes, distsToFix, polarAngles, gratingAngles)
 
 simultSignalTol = 0.001; % tolerance level for simultaneous signals --
@@ -8,7 +8,7 @@ simultSignalTol = 0.001; % tolerance level for simultaneous signals --
 theta = nan(size(flashEventTimes));
 distance = nan(size(flashEventTimes));
  % (x, y, grating angle, distsToFix index, polarAngles index, gratingAngles index)
-flashStats = nan(numel(flashEventTimes), 6);
+flashParams = nan(numel(flashEventTimes), 6);
 flashOnsets = nan(size(flashEventTimes));
 
 for i = 1:numel(flashEventTimes)
@@ -79,16 +79,12 @@ for i = 1:numel(flashEventTimes)
     if polarAngleBinaryCode ~= 0
         distance(i) = distsToFix(distBinaryCode + 1);
         theta(i) = polarAngles(polarAngleBinaryCode);
-        flashStats(i,1:2) = distance(i) * [cos(theta(i)) sin(theta(i))];
-        flashStats(i,3) = gratingAngles(gratingAngleBinaryCode + 1);
-        flashStats(i,4:6) = [distBinaryCode + 1 polarAngleBinaryCode gratingAngleBinaryCode + 1];
+        flashParams(i,1:2) = distance(i) * [cos(theta(i)) sin(theta(i))];
+        flashParams(i,3) = gratingAngles(gratingAngleBinaryCode + 1);
+        flashParams(i,4:6) = [distBinaryCode + 1 polarAngleBinaryCode gratingAngleBinaryCode + 1];
     end
 end
 
+assert(~any(isnan(flashParams(:))));
 assert(sum(isnan(flashOnsets)) == 0);
-
-% remove any nans - though there shouldn't be any...
-flashStats(isnan(flashStats(:,1)),:) = [];
-flashOnsets(isnan(flashOnsets)) = [];
-
-assert(numel(flashOnsets) == size(flashStats, 1));
+assert(all((flashOnsets - flashEventTimes) < simultSignalTol));

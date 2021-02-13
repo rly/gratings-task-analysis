@@ -3,7 +3,7 @@ function [eventOnsetClean,isEventOutlier] = detectOutlierLfpEvents(channelData, 
         processedDataDir, plotFileNamePrefix, rfMappingMode, v)
 
 doOutlierCheckPlot = 1;
-outlierMaxSDStep2 = 6; % second-pass threshold after LPF
+outlierMaxSDStep2 = 8; % second-pass threshold after LPF
 
 nEvents = numel(eventOnset);
 nChannels = size(channelData, 1);
@@ -47,7 +47,7 @@ if doOutlierCheckPlot && any(isEventNan)
     plotFileName = sprintf('%s/%s-rfm_mode%d-nanCheck-v%d.png', ...
             processedDataDir, plotFileNamePrefix, rfMappingMode, v);
     fprintf('\t\tSaving NaN check plot to %s...\n', plotFileName);
-    export_fig(plotFileName, '-nocrop');
+    %export_fig(plotFileName, '-nocrop');
     close;
 end
 
@@ -96,7 +96,7 @@ for j = 1:nChannels
         plotFileName = sprintf('%s/%s-rfm_mode%d-%s-outlierCheck-v%d.png', ...
                 processedDataDir, plotFileNamePrefix, rfMappingMode, channelNames{j}, v);
         fprintf('\t\tSaving outlier check plot to %s...\n', plotFileName);
-        export_fig(plotFileName, '-nocrop');
+        %export_fig(plotFileName, '-nocrop');
         close;
     end
 end

@@ -26,21 +26,29 @@ function saveFileName = computeEvokedSpiking(saveFileName, spikeStruct, nLoc, UE
 
 
 %%
-
 spikeTs = spikeStruct.ts;
 
 % Match spikeTimes with first fixation event
 if isnan(spikeStruct.unitStartTime)
-    startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue>spikeTs(1),1,'first'));
+    startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue > spikeTs(1), 1, 'first'));
 else
-    startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue>spikeStruct.unitStartTime,1,'first'));
+    startTime = UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(find(UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue > spikeStruct.unitStartTime, 1, 'first'));
 end
 % Match spikeTimes with last lever release
 if isnan(spikeStruct.unitEndTime)
-    endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<spikeTs(end),1,'last'));
+    endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice < spikeTs(end), 1, 'last'));
 else
-    endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice<spikeStruct.unitEndTime,1,'last'));
+    endTime = UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(find(UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice < spikeStruct.unitEndTime, 1, 'last'));
 end
+if isempty(startTime)
+    warning('Start time is empty. No spikes after start time / first enter fixation time.\n')
+    return
+end
+if isempty(endTime)
+    warning('End time is empty. No spikes before end time / last lever release time.\n')
+    return
+end
+assert(startTime < endTime)
     
 kernelSigma = 0.01;
 
@@ -56,6 +64,15 @@ fprintf('Computing evoked spiking with SPDF sigma %0.3f seconds and %d randomiza
         kernelSigma, numRandomizations, nTrials);
 fprintf('\t');
 
+%%
+isSpikeTsInTrial = zeros(size(spikeTs));
+for i = 1:nTrials
+    inTrial = spikeTs >= UE.fixationAndLeverTimes.firstEnterFixationTimesPreCue(i) & ...
+              spikeTs < UE.fixationAndLeverTimes.firstLeverReleaseTimesAroundJuice(i);
+    isSpikeTsInTrial = isSpikeTsInTrial | inTrial;
+end
+clear inTrial;
+
 %% align spikes to cue onset, compute spdf
 cueOnset.window = [0.8 0.8]; % seconds before, after
 cueOnset.spdfWindowOffset = [-0.7 0.7]; % tighter window for spdf to avoid edge effects
@@ -67,6 +84,8 @@ cueOnset = createTimeLockedSpdf(spikeTs, UE.cueOnset, UE.cueOnsetByLoc, cueOnset
 % cueOnsetRel = createTimeLockedSpdf(spikeTs, UE.cueOnsetRel, UE.cueOnsetRelByLoc, cueOnsetRel, kernelSigma);
 % cueOnsetHold = createTimeLockedSpdf(spikeTs, UE.cueOnsetHold, UE.cueOnsetHoldByLoc, cueOnsetHold, kernelSigma);
 cueOnsetError = createTimeLockedSpdf(spikeTs, UE.cueOnsetError, UE.cueOnsetErrorByLoc, cueOnsetError, kernelSigma, startTime, endTime);
+
+fprintf('Using %d valid trials out of %d total trials.\n', numel(cueOnset.validEvents), nTrials)
 
 %% align spikes to array onset, compute spdf
 arrayOnset.window = [0.8 0.8]; % seconds before, after
@@ -125,10 +144,10 @@ exitFixationHold = exitFixation; % copy
 
 exitFixation = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuice, ...
         UE.fixationAndLeverTimes.firstExitFixationTimesAroundJuiceByLoc, exitFixation, kernelSigma, startTime, endTime);
-exitFixationLeft = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationLeftTimesAroundJuice, ...
-        UE.fixationAndLeverTimes.firstExitFixationLeftTimesAroundJuiceByLoc, exitFixationLeft, kernelSigma, startTime, endTime);
-exitFixationRight = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationRightTimesAroundJuice, ...
-        UE.fixationAndLeverTimes.firstExitFixationRightTimesAroundJuiceByLoc, exitFixationRight, kernelSigma, startTime, endTime);
+exitFixationLeft = exitFixation; %createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationLeftTimesAroundJuice, ...
+%         UE.fixationAndLeverTimes.firstExitFixationLeftTimesAroundJuiceByLoc, exitFixationLeft, kernelSigma, startTime, endTime);
+exitFixationRight = exitFixation; %createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationRightTimesAroundJuice, ...
+%         UE.fixationAndLeverTimes.firstExitFixationRightTimesAroundJuiceByLoc, exitFixationRight, kernelSigma, startTime, endTime);
 exitFixationRel = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationRelTimesAroundJuice, ...
         UE.fixationAndLeverTimes.firstExitFixationRelTimesAroundJuiceByLoc, exitFixationRel, kernelSigma, startTime, endTime);
 exitFixationHold = createTimeLockedSpdf(spikeTs, UE.fixationAndLeverTimes.firstExitFixationHoldTimesAroundJuice, ...

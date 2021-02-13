@@ -31,4 +31,9 @@ for i = 1:nSessions
             copyfile(sourceFileName, destFileName);
         end
     end
+    
+    sourceFileName = sprintf('%s/%s-sessionInd%d-sua1-mua0-gratings-metadata.mat', processedDataDir, sessionName, sessionInd);
+    destFileName = sprintf('%s/%s-sessionInd%d-sua1-mua0-gratings-metadata.mat', processedDataRootDirLocal, sessionName, sessionInd);
+    fprintf('Copying file %s to %s...\n', sourceFileName, destFileName);
+    copyfile(sourceFileName, destFileName);
 end

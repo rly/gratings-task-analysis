@@ -1,10 +1,10 @@
-function [poissonBinary,datatmpPoisson] = calcPoisson(nTrials,spikeTimesInEvents,eventEnd,eventStart,Fs,data)
+function [poissonBinary,datatmpPoisson] = calcPoissonOld(nTrials,spikeTimesInEvents,eventEnd,eventStart,Fs,data)
 % create Poisson distributed interspike intervals or binary data 
 
 % for debugging:
-%     spikeTimesInEvents = nEAttOut;
-%     eventEnd = targetDimTrialAttOut;
-%     eventStart = cueOnsetTrialAttOut;
+%     spikeTimesInEvents = nEAttIn;
+%     eventEnd = targetDimTrialAttIn;
+%     eventStart = cueOnsetTrialAttIn;
 
 poissonBinary = [];
 datatmpPoisson = [];
@@ -12,8 +12,9 @@ for n=1:nTrials;
 %     nwinl=round(0.200*Fs);
     nwinrAttIn=round(eventEnd(n)*Fs);
     indxAttIn=spikeTimesInEvents(n):nwinrAttIn-1;
-    if indxAttIn > size(data)
-        indxAttIn = indxAttIn(1:sum(indxAttIn<=size(data,2)))
+    if indxAttIn(end) > size(data,2)
+        indxAttIn = indxAttIn(1:sum(indxAttIn<=size(data,2)));
+    end
     durationS = eventEnd(n) - eventStart(n); % length of simulation
     spikesPerS = sum(data(indxAttIn))/durationS; % avg firing rate
     timeStepS = 0.001;                  % 1 msec

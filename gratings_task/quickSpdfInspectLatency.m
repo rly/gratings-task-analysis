@@ -3,6 +3,7 @@ function quickSpdfInspectLatency(ES, blockName, ...
 
 unitName = unitStruct.name;
 nTrials = numel(ES.UE.cueOnset);
+nValidTrials = numel(ES.cueOnset.validEventTimes);
 cols = lines(6);
 
 %%
@@ -14,7 +15,7 @@ set(gcf, 'renderer', 'painters');
 axBig = axes('Position', [0.04 0.045 0.92 0.91], 'Visible', 'off');
 set(get(axBig, 'Title'), 'Visible', 'on')
 
-modTitle = sprintf('Gratings Attention Task: %s (%d trials)', unitName, nTrials);
+modTitle = sprintf('Gratings Attention Task: %s (%d/%d trials)', unitName, nValidTrials, nTrials);
 if isZeroDistractors
     modTitle = [modTitle ' (0 Distractors)'];
 end
@@ -314,6 +315,6 @@ text(axBig, -0.03, infoText2Top, {...
 %             cols(ES.exRFLoc,:), round(ES.targetDimBal.latencyBootByLoc(ES.exRFLoc) * 1000)) ... 
 %% save
 if ~isempty(plotFileName)
-%     fprintf('\tSaving figure to file %s...\n', plotFileName);
-%     export_fig(plotFileName, '-nocrop');
+    fprintf('\tSaving figure to file %s...\n', plotFileName);
+    export_fig(plotFileName, '-nocrop');
 end

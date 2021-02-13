@@ -18,7 +18,7 @@ function suaMuaAnalysisPlots(processedDataRootDir, dataDirRoot, suaMuaDataDirRoo
 % evt7 = target dim
 % evt8 = juice
 
-v = 13;
+v = 15;
 tic;
 
 fprintf('\n-------------------------------------------------------\n');
@@ -65,7 +65,7 @@ fprintf('Processing %d Units...\n', nUnits);
 for i = 1:nUnits
     unitStruct = D.allUnitStructs{i};
     unitName = unitStruct.name;
-    spikeTimes = unitStruct.ts;
+%     spikeTimes = unitStruct.ts;
     fprintf('Processing %s (%d/%d = %d%%)... \n', unitName, i, ...
             nUnits, round(i/nUnits*100));
 
@@ -76,33 +76,39 @@ for i = 1:nUnits
         ES = load(saveFileName);
 
         if isFiringRateGreaterThanMin(ES, minFiringRate)
+            plotFileName = sprintf('%s/%s-%s-raster-allTime-v%d.png', processedDataDir, unitName, blockName, v);
+            fprintf('\tPlotting...\n');
+
+            plotRasterAllTime(ES, D, i, unitStruct, isZeroDistractors, plotFileName);
+            close;
+            
             plotFileName = sprintf('%s/%s-%s-visual-v%d.png', processedDataDir, unitName, blockName, v);
             fprintf('\tPlotting...\n');
 
             quickSpdfAllVisualEvents(ES, blockName, ...
                     D, i, unitStruct, nLoc, isZeroDistractors, plotFileName);
-%             close;
+            close;
 
             plotFileName = sprintf('%s/%s-%s-visualError-v%d.png', processedDataDir, unitName, blockName, v);
             fprintf('\tPlotting...\n');
 
             quickSpdfAllVisualEventsError(ES, blockName, ...
                     D, i, unitStruct, nLoc, isZeroDistractors, plotFileName);
-%             close;
+            close;
 
             plotFileName = sprintf('%s/%s-%s-visualLatency-v%d.png', processedDataDir, unitName, blockName, v);
             fprintf('\tPlotting...\n');
 
             quickSpdfInspectLatency(ES, blockName, ...
                     D, i, unitStruct, nLoc, isZeroDistractors, plotFileName);
-%             close;
+            close;
 
             plotFileName = sprintf('%s/%s-%s-motor-v%d.png', processedDataDir, unitName, blockName, v);
             fprintf('\tPlotting...\n');
 
             quickSpdfAllMotorEvents(ES, blockName, ...
                     D, i, unitStruct, nLoc, isZeroDistractors, plotFileName);
-%             close;
+            close;
         else
             fprintf('\tTask-related firing rate < minimum task-related firing rate = %0.2f Hz - skipping.\n', ...
                     minFiringRate);
